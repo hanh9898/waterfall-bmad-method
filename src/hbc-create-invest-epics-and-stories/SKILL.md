@@ -57,7 +57,7 @@ Greet `{user_name}` in `{communication_language}`. Execute each entry in `{workf
 
 ### Stage 1: Prerequisites and Requirements Extraction
 
-Validate that required input documents exist in `{planning_artifacts}`:
+Validate that required input documents exist in `{planning_artifacts}`. Search whole documents first, fall back to sharded versions (large docs split into folder with index.md):
 - **PRD** (required) — `*prd*.md` or `*prd*/index.md`
 - **Architecture** (required) — `*architecture*.md` or `*architecture*/index.md`
 - **UX Design** (optional) — `*ux*.md` or `*ux*/index.md`
@@ -75,10 +75,10 @@ Initialize `{planning_artifacts}/invest-stories.md` from `{workflow.stories_temp
 Design epics organized around **user value**, not technical layers. Each epic delivers complete, standalone functionality. Apply these principles:
 - Group related FRs by user outcome
 - Each epic is independently valuable
-- Consider file overlap — consolidate epics that repeatedly modify the same core files
+- **File overlap check** — if multiple epics repeatedly modify the same core files, consolidate them into one epic with ordered stories (unless splitting provides genuine value via risk mitigation or feedback loops)
 - Create an FR Coverage Map ensuring every FR maps to an epic
 
-Present the epic structure for collaborative refinement and get explicit approval before proceeding.
+Present the epic structure for collaborative refinement. Explicitly show any file overlap findings. Get explicit approval before proceeding.
 
 ### Stage 3: INVEST Story Generation
 
@@ -95,6 +95,7 @@ Validate the complete document:
 5. **Size check** — no story exceeds 5 points (8 = must split)
 6. **Dependency check** — stories within an epic have no forward dependencies; cross-epic dependencies are minimized
 7. **Technical Tasks** — enabler work properly separated from user stories
+8. **File churn** — no multiple epics repeatedly modifying the same core files without justification
 
 Present validation results. Fix any issues collaboratively. Save final document.
 

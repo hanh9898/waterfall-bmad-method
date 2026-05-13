@@ -79,6 +79,30 @@ Reduce linear dependencies within each epic:
 - Only enforce sequence where data or API contracts create a genuine dependency
 - Prefer vertical slices (full stack per feature) over horizontal layers
 
+## Good and Bad Story Examples
+
+**Good stories (INVEST + 3C's compliant):**
+
+_Epic: User Authentication_
+- Story 1.1: User Registration with Email (3 pts)
+  - Card: "As a visitor, I want to create an account with my email, So that I can access personalized features."
+  - Conversation: First-time user flow. Email must be unique. Password strength requirements discussed.
+  - Confirmation: Given I am on the registration page When I submit valid email and password Then I receive a confirmation email and can log in.
+
+_Epic: Content Creation_
+- Story 2.1: Create New Blog Post (3 pts, Parallel: yes)
+- Story 2.2: Edit Existing Blog Post (2 pts, Parallel: yes)
+- Story 2.3: Publish Blog Post (2 pts)
+
+**Bad stories (violations):**
+
+- "Set up database" — no user value → Technical Task
+- "Create all models" — too large, no user value → split into stories that deliver user outcomes
+- "Build authentication system" — too large (8+ pts) → split into registration, login, password reset
+- "As a System, I want to sync data" — system actor → reframe user-centric or Technical Task
+- "Given the API returns 200 When POST /users Then user row exists in DB" — technical leakage in AC → rewrite as observable behavior
+- "Login UI (depends on Story 1.3 API)" — forward dependency → reorder so each story builds only on previous
+
 ## Per-Epic Process
 
 For each epic in the approved list:
