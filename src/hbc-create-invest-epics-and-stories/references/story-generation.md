@@ -1,6 +1,6 @@
 # INVEST Story Generation
 
-Generate stories for each approved epic following INVEST + 3C's principles. Process epics sequentially; within each epic, collaborate with the user to produce stories that pass all constraints below.
+Generate stories for each approved epic following INVEST + 3C's principles. Process epics sequentially; within each epic, collaborate with the user to produce stories that pass all constraints below. All document content must be written in `{document_output_language}`.
 
 ## INVEST Criteria (every story must pass all six)
 
