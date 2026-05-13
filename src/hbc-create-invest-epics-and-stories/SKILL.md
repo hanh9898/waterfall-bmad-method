@@ -48,6 +48,11 @@ Load available config from `{project-root}/_bmad/config.yaml` and `{project-root
 
 Greet `{user_name}` in `{communication_language}`. Execute each entry in `{workflow.activation_steps_append}` in order.
 
+**Language rules for the entire workflow:**
+- Communicate with the user in `{communication_language}`
+- Write all output document content (epics, stories, AC, technical tasks) in `{document_output_language}`
+- Template structural markers (Given/When/Then, As a/I want/So that) stay in English
+
 ## Workflow
 
 ### Stage 1: Prerequisites and Requirements Extraction
