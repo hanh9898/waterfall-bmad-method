@@ -1,0 +1,26 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-invest-epics-and-stories.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-invest-epics-and-stories.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-invest-epics-and-stories.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins * arrays (persistent_facts, activation_steps_*): append
+#   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Template for the INVEST stories output document.
+# Override to use a custom template with different structure.
+stories_template = "assets/invest-stories-template.md"
+
+# Scalar: executed when the workflow completes after final validation.
+on_complete = ""

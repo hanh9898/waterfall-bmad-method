@@ -1,0 +1,21 @@
+{
+  "name": "hblab-bmad-custom",
+  "owner": { "name": "HBLAB" },
+  "license": "UNLICENSED",
+  "homepage": "",
+  "repository": "",
+  "keywords": ["bmad", "invest-stories", "hblab-custom", "user-stories", "3cs"],
+  "plugins": [
+    {
+      "name": "hblab-bmad-custom",
+      "source": "./",
+      "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, custom templates",
+      "version": "1.0.0",
+      "author": { "name": "HBLAB" },
+      "skills": [
+        "./src/hbc-setup",
+        "./src/hbc-create-invest-epics-and-stories"
+      ]
+    }
+  ]
+}

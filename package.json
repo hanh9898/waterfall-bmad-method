@@ -1,0 +1,18 @@
+{
+  "name": "hblab-bmad-custom",
+  "version": "1.0.0",
+  "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, custom templates",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "bmad",
+    "invest-stories",
+    "hblab-custom",
+    "user-stories",
+    "3cs"
+  ]
+}

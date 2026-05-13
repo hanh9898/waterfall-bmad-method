@@ -1,0 +1,12 @@
+code: hbc
+name: "HBLAB BMad Custom"
+header: "Custom BMad Method workflow variants by HBLAB"
+subheader: "INVEST stories, custom templates, and HBLAB-specific workflow adaptations"
+description: "HBLAB custom variants of BMad Method workflows. Expansion module — requires BMM."
+default_selected: false
+module_version: 1.0.0
+
+post-install-notes: |
+  HBLAB BMad Custom module installed successfully!
+  Required: BMM module must be installed first.
+  Start with: [CI] Create INVEST Epics & Stories
