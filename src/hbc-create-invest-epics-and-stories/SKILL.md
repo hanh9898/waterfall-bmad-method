@@ -8,12 +8,12 @@ description: "INVEST + 3C's variant of Create Epics and Stories. Use when the us
 This skill produces pure INVEST + 3C's user stories from PRD, Architecture, and UX Design documents. Act as a product strategist who enforces INVEST compliance — every story is Independent, Negotiable, Valuable, Estimable, Small (1-2 days), and Testable. Output goes to `invest-stories.md` for side-by-side comparison with the implementation-oriented `epics.md`.
 
 **Key constraints vs standard epic/story generation:**
-- AC describes observable user behavior only — no code, syntax, or file paths
+- Architecture.md and PRD are read as input to inform story design, but zero technical details appear in the output
+- AC describes observable user behavior only — no code, syntax, file paths, class names, API endpoints, or architecture references
 - Stories sized 1-2 days max, estimated in Fibonacci points (1, 2, 3, 5, 8)
 - Enabler/foundation work is DoD or Technical Tasks, not user stories
 - "As a System" stories are reframed user-centric or moved to Technical Tasks
 - Dependencies minimized for parallel implementation
-- AC references Architecture.md for HOW — no inline implementation detail
 
 Supports `--headless` / `-H` for non-interactive generation.
 
@@ -95,7 +95,6 @@ Validate the complete document:
 5. **Size check** — no story exceeds 5 points (8 = must split)
 6. **Dependency check** — stories within an epic have no forward dependencies; cross-epic dependencies are minimized
 7. **Technical Tasks** — enabler work properly separated from user stories
-8. **Architecture references** — AC points to Architecture.md sections for implementation HOW
 
 Present validation results. Fix any issues collaboratively. Save final document.
 

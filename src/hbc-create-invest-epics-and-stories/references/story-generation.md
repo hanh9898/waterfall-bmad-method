@@ -31,9 +31,9 @@ Rules:
 
 **Conversation** — context and negotiation notes:
 - What the user and team discussed about scope
-- References to Architecture.md sections for implementation approach
 - Edge cases surfaced during discussion
 - Anything the dev needs to understand intent without prescribing HOW
+- Use Architecture.md and PRD to inform story design, but never surface technical details (file paths, class names, API endpoints, database schemas) in Card, Conversation, or Confirmation
 
 **Confirmation** — acceptance criteria as checklist:
 ```
@@ -42,8 +42,7 @@ Rules:
 
 AC rules:
 - Describe what the **user observes**, not what the code does
-- Zero code, syntax, file paths, class names, or database column names
-- Reference Architecture.md for implementation details: `> See Architecture.md § [section]`
+- Zero code, syntax, file paths, class names, database column names, or architecture references
 - Each AC independently testable by a QA person who cannot read code
 
 ## Story Points (Fibonacci)
@@ -86,7 +85,7 @@ For each epic in the approved list:
 
 1. Present the epic goal and its FRs
 2. Propose story breakdown following all constraints above
-3. For each story: write Card, Conversation, Confirmation with Architecture.md references
+3. For each story: write Card, Conversation, Confirmation
 4. Assign Fibonacci points — split any story at 8+
 5. Identify enabler work → Technical Tasks
 6. Note which stories can run in parallel

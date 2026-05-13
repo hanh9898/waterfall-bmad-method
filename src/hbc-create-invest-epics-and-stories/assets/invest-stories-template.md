@@ -2,13 +2,24 @@
 stepsCompleted: []
 inputDocuments: []
 format: INVEST + 3Cs
+epicCount: 0
+totalPoints: 0
+validationStatus: pending
 ---
 
 # {{project_name}} - INVEST User Stories
 
-## Overview
+Pure INVEST + 3C's user stories cho {{project_name}}. Mỗi story là Independent, Negotiable, Valuable, Estimable, Small (1-2 ngày), và Testable. Acceptance criteria chỉ mô tả hành vi user quan sát được — không chứa bất kỳ chi tiết kỹ thuật nào.
 
-Pure INVEST + 3C's user stories for {{project_name}}. Each story is Independent, Negotiable, Valuable, Estimable, Small (1-2 days), and Testable. Acceptance criteria describe observable user behavior only — implementation details live in Architecture.md.
+### Story Points Legend
+
+| Points | Ý nghĩa | Thời gian |
+|--------|---------|-----------|
+| 1 | Trivial — thay đổi đơn giản, rõ ràng | < nửa ngày |
+| 2 | Small — đơn giản, không có unknowns | nửa ngày |
+| 3 | Medium — rõ ràng nhưng nhiều phần | 1 ngày |
+| 5 | Large — có complexity, ở giới hạn | 1-2 ngày |
+| 8 | Quá lớn — **bắt buộc split** | > 2 ngày |
 
 ## Requirements Inventory
 
@@ -46,7 +57,7 @@ Pure INVEST + 3C's user stories for {{project_name}}. Each story is Independent,
 
 ### Story {{N}}.{{M}}: {{story_title_N_M}}
 
-**Story Points:** {{fibonacci_points}}
+**Story Points:** {{fibonacci_points}} | **Parallel:** {{yes_no}}
 
 **Card:**
 As a {{user_role}},
@@ -61,23 +72,22 @@ So that {{value_benefit}}.
 - [ ] **Given** {{precondition}} **When** {{user_action}} **Then** {{observable_outcome}}
 - [ ] **Given** {{precondition}} **When** {{user_action}} **Then** {{observable_outcome}}
 
-> Implementation reference: See Architecture.md § {{relevant_section}}
-
 <!-- End story repeat -->
 
 ## Technical Tasks
 
-> Items that are necessary for implementation but do not deliver direct user value.
-> These are NOT user stories — they belong in Definition of Done or sprint overhead.
+> Công việc cần thiết cho implementation nhưng không mang giá trị trực tiếp cho user.
+> Đây KHÔNG phải user stories — thuộc Definition of Done hoặc sprint overhead.
 
 {{technical_tasks_list}}
 
-## Comparison Notes
+## INVEST Validation Summary
 
-> How this document differs from epics.md (implementation stories format):
-> - AC describes user-observable behavior only (no code/syntax/file paths)
-> - Stories sized to 1-2 days max (Fibonacci: 1, 2, 3, 5, 8)
-> - Enabler/foundation work moved to Technical Tasks or DoD
-> - "As a System" stories reframed as user-centric or moved to Technical Tasks
-> - Dependencies minimized for parallel implementation
-> - Implementation HOW deferred to Architecture.md references
+| Tiêu chí | Pass | Ghi chú |
+|----------|------|---------|
+| Independent | {{pass_fail}} | {{notes}} |
+| Negotiable | {{pass_fail}} | {{notes}} |
+| Valuable | {{pass_fail}} | {{notes}} |
+| Estimable | {{pass_fail}} | {{notes}} |
+| Small | {{pass_fail}} | {{notes}} |
+| Testable | {{pass_fail}} | {{notes}} |
