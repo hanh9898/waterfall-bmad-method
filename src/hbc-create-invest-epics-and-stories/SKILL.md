@@ -8,12 +8,12 @@ description: "INVEST + 3C's variant of Create Epics and Stories. Use when the us
 This skill produces pure INVEST + 3C's user stories from PRD, Architecture, and UX Design documents. Act as a product strategist who enforces INVEST compliance — every story is Independent, Negotiable, Valuable, Estimable, Small (1-2 days), and Testable. Output goes to `invest-stories.md` for side-by-side comparison with the implementation-oriented `epics.md`.
 
 **Key constraints vs standard epic/story generation:**
-- AC describes observable user behavior only — no code, syntax, or file paths
+- Architecture.md and PRD are read as input to inform story design, but zero technical details appear in the output
+- AC describes observable user behavior only — no code, syntax, file paths, class names, API endpoints, or architecture references
 - Stories sized 1-2 days max, estimated in Fibonacci points (1, 2, 3, 5, 8)
 - Enabler/foundation work is DoD or Technical Tasks, not user stories
 - "As a System" stories are reframed user-centric or moved to Technical Tasks
 - Dependencies minimized for parallel implementation
-- AC references Architecture.md for HOW — no inline implementation detail
 
 Supports `--headless` / `-H` for non-interactive generation.
 
@@ -57,7 +57,7 @@ Greet `{user_name}` in `{communication_language}`. Execute each entry in `{workf
 
 ### Stage 1: Prerequisites and Requirements Extraction
 
-Validate that required input documents exist in `{planning_artifacts}`:
+Validate that required input documents exist in `{planning_artifacts}`. Search whole documents first, fall back to sharded versions (large docs split into folder with index.md):
 - **PRD** (required) — `*prd*.md` or `*prd*/index.md`
 - **Architecture** (required) — `*architecture*.md` or `*architecture*/index.md`
 - **UX Design** (optional) — `*ux*.md` or `*ux*/index.md`
@@ -75,10 +75,10 @@ Initialize `{planning_artifacts}/invest-stories.md` from `{workflow.stories_temp
 Design epics organized around **user value**, not technical layers. Each epic delivers complete, standalone functionality. Apply these principles:
 - Group related FRs by user outcome
 - Each epic is independently valuable
-- Consider file overlap — consolidate epics that repeatedly modify the same core files
+- **File overlap check** — if multiple epics repeatedly modify the same core files, consolidate them into one epic with ordered stories (unless splitting provides genuine value via risk mitigation or feedback loops)
 - Create an FR Coverage Map ensuring every FR maps to an epic
 
-Present the epic structure for collaborative refinement and get explicit approval before proceeding.
+Present the epic structure for collaborative refinement. Explicitly show any file overlap findings. Get explicit approval before proceeding.
 
 ### Stage 3: INVEST Story Generation
 
@@ -95,7 +95,7 @@ Validate the complete document:
 5. **Size check** — no story exceeds 5 points (8 = must split)
 6. **Dependency check** — stories within an epic have no forward dependencies; cross-epic dependencies are minimized
 7. **Technical Tasks** — enabler work properly separated from user stories
-8. **Architecture references** — AC points to Architecture.md sections for implementation HOW
+8. **File churn** — no multiple epics repeatedly modifying the same core files without justification
 
 Present validation results. Fix any issues collaboratively. Save final document.
 
