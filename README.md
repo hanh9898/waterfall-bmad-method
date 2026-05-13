@@ -10,10 +10,16 @@ Custom variants of BMad Method workflows by HBLAB.
 ## Installation
 
 ```bash
-npx bmad-method install --custom-source https://github.com/<your-org>/hblab-bmad-custom
+npx bmad-method install --modules bmm,tea --custom-source git@git.hblab.vn:stc/erp/stc-erp-bmad-custom.git
 ```
 
-Select "HBLAB BMad Custom" when prompted.
+Lệnh trên cài đồng thời:
+
+| Module | Source | Description |
+| --- | --- | --- |
+| **BMad Method (bmm)** | Built-in | Core workflow — PRD, Architecture, Epics, Sprint, Dev |
+| **Test Architect (tea)** | External | Master Test Architect for quality strategy, test automation, and release gates |
+| **HBLAB BMad Custom (hbc)** | Custom source | Custom workflow variants của HBLAB |
 
 ## Skills Included
 
