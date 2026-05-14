@@ -1,0 +1,40 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-business-flow-diagram.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-business-flow-diagram.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-business-flow-diagram.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+#   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Template for the D-06 Business Flow Diagram output document.
+# Default points to the shared HBLab D-* template set; override to use a
+# project-specific template with different structure.
+business_flow_template = "{project-root}/templates/D-06_business-flow-diagram_template.md"
+
+# Hint for the starting Mermaid diagram type surfaced at Stage 1. The workflow
+# may override per-flow when a different type fits better — this is a default,
+# not a contract. Allowed values: sequenceDiagram, flowchart, stateDiagram.
+diagram_type = "sequenceDiagram"
+
+# Single output workspace path. The workflow binds {doc_workspace} directly
+# to the resolved value at Stage 1 and writes the primary document plus the
+# session decision log there. Default uses {project_name} only so re-runs
+# resume the same workspace; add a {date} segment to opt into per-day
+# snapshots (e.g. ".../D-06-{project_name}-{date}/" with {date}=YYYY-MM-DD).
+business_flow_output_path = "{planning_artifacts}/business-flows/D-06-{project_name}/"
+
+# Scalar: executed when the workflow completes after final validation.
+# Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".
+on_complete = ""

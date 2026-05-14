@@ -1,0 +1,336 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "3.0.0",
+  "skill_path": "C:\\Users\\HanhNT2\\stc-erp-bmad-custom\\src\\hbc-create-business-flow-diagram",
+  "timestamp": "2026-05-13T20:30:55.266493+00:00",
+  "files_scanned": [
+    ".analysis\\2026-05-14-021953\\architecture-analysis.md",
+    ".analysis\\2026-05-14-021953\\customization-analysis.md",
+    ".analysis\\2026-05-14-021953\\determinism-analysis.md",
+    ".analysis\\2026-05-14-021953\\enhancement-analysis.md",
+    ".analysis\\2026-05-14-021953\\execution-deps-prepass.json",
+    ".analysis\\2026-05-14-021953\\path-standards-temp.json",
+    ".analysis\\2026-05-14-021953\\prompt-metrics-prepass.json",
+    ".analysis\\2026-05-14-021953\\quality-report.md",
+    ".analysis\\2026-05-14-021953\\report-data.json",
+    ".analysis\\2026-05-14-021953\\scripts-temp.json",
+    ".analysis\\2026-05-14-021953\\workflow-integrity-prepass.json",
+    ".analysis\\2026-05-14-030108\\architecture-analysis.md",
+    ".analysis\\2026-05-14-030108\\customization-analysis.md",
+    ".analysis\\2026-05-14-030108\\determinism-analysis.md",
+    ".analysis\\2026-05-14-030108\\enhancement-analysis.md",
+    ".analysis\\2026-05-14-030108\\execution-deps-prepass.json",
+    ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+    ".analysis\\2026-05-14-030108\\prompt-metrics-prepass.json",
+    ".analysis\\2026-05-14-030108\\quality-report.md",
+    ".analysis\\2026-05-14-030108\\report-data.json",
+    ".analysis\\2026-05-14-030108\\scripts-temp.json",
+    ".analysis\\2026-05-14-030108\\workflow-integrity-prepass.json",
+    "assets\\decision-log-template.md",
+    "references\\headless-contract.md",
+    "SKILL.md"
+  ],
+  "status": "fail",
+  "findings": [
+    {
+      "file": ".analysis\\2026-05-14-021953\\customization-analysis.md",
+      "line": 85,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project-wide polic",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\customization-analysis.md",
+      "line": 85,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project-wide polic",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\quality-report.md",
+      "line": 359,
+      "severity": "high",
+      "category": "relative-prefix",
+      "title": "Parent directory reference (../) found \u2014 fragile, breaks with reorganization",
+      "detail": "- `scan-path-standards.py` re-run: **0 structure findings, 0 frontmatter findings** on skill source files. The 6 remaini",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\quality-report.md",
+      "line": 273,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "`hbc-setup/assets/module-help.csv` currently has one row (INVEST). The new BFD skill is registered in `_bmad/_config/bma",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\quality-report.md",
+      "line": 324,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "| `src/hbc-setup/assets/module-help.csv` | BFD row added mirroring `_bmad/_config/bmad-help.csv:57` | B7. |",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\quality-report.md",
+      "line": 359,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "- `scan-path-standards.py` re-run: **0 structure findings, 0 frontmatter findings** on skill source files. The 6 remaini",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\report-data.json",
+      "line": 344,
+      "severity": "high",
+      "category": "relative-prefix",
+      "title": "Parent directory reference (../) found \u2014 fragile, breaks with reorganization",
+      "detail": "\"file\": \"../hbc-setup/assets/module-help.csv\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\report-data.json",
+      "line": 336,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"description\": \"`hbc-setup/assets/module-help.csv` currently has one row (INVEST). The new BFD skill is registered in `_",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\report-data.json",
+      "line": 339,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"action\": \"Add a row to `hbc-setup/assets/module-help.csv` mirroring the `_bmad/_config/bmad-help.csv` BFD entry (skill ",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-021953\\report-data.json",
+      "line": 617,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"change\": \"RESOLVED B7. Added BFD row mirroring _bmad/_config/bmad-help.csv:57 (phase 2-planning, after bmad-create-prd,",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\architecture-analysis.md",
+      "line": 41,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "The rationale (per the round-3 entry in `references/.decision-log.md:71`, \"dropped hand-merge fallback\") cites the round",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\customization-analysis.md",
+      "line": 40,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "- No per-skill `document_output_language` override. Project-wide policy stays in `_bmad/config.yaml` `core`, where round",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 48,
+      "severity": "high",
+      "category": "relative-prefix",
+      "title": "Parent directory reference (../) found \u2014 fragile, breaks with reorganization",
+      "detail": "\"title\": \"Parent directory reference (../) found \\u2014 fragile, breaks with reorganization\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 84,
+      "severity": "high",
+      "category": "relative-prefix",
+      "title": "Parent directory reference (../) found \u2014 fragile, breaks with reorganization",
+      "detail": "\"title\": \"Parent directory reference (../) found \\u2014 fragile, breaks with reorganization\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 85,
+      "severity": "high",
+      "category": "relative-prefix",
+      "title": "Parent directory reference (../) found \u2014 fragile, breaks with reorganization",
+      "detail": "\"detail\": \"\\\"file\\\": \\\"../hbc-setup/assets/module-help.csv\\\",\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 30,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 31,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 31,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 39,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 40,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 40,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"- It's already a `core` config value (verified in `_bmad/core/config.yaml`, `_bmad/bmm/config.yaml`). Project",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 57,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 58,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"`hbc-setup/assets/module-help.csv` currently has one row (INVEST). The new BFD skill is registered in `_bmad/",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 66,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 67,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"| `src/hbc-setup/assets/module-help.csv` | BFD row added mirroring `_bmad/_config/bmad-help.csv:57` | B7. |\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 75,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 93,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 102,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 103,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"\\\"action\\\": \\\"Add a row to `hbc-setup/assets/module-help.csv` mirroring the `_bmad/_config/bmad-help.csv` BFD",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 111,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"title\": \"Bare _bmad reference without {project-root} prefix\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis\\2026-05-14-030108\\path-standards-temp.json",
+      "line": 112,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"\\\"change\\\": \\\"RESOLVED B7. Added BFD row mirroring _bmad/_config/bmad-help.csv:57 (phase 2-planning, after bm",
+      "action": ""
+    }
+  ],
+  "assessments": {},
+  "summary": {
+    "total_findings": 31,
+    "by_severity": {
+      "critical": 0,
+      "high": 31,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "double_prefix": 0,
+      "bare_bmad": 26,
+      "absolute_path": 0,
+      "relative_prefix": 5,
+      "cross_dir_dot_slash": 0,
+      "frontmatter": 0,
+      "structure": 0
+    },
+    "assessment": "Path standards scan complete"
+  }
+}

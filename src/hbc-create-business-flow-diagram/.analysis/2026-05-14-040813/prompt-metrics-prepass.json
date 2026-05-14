@@ -1,0 +1,144 @@
+{
+  "scanner": "prompt-craft-prepass",
+  "script": "prepass-prompt-metrics.py",
+  "version": "1.0.0",
+  "skill_path": "C:\\Users\\HanhNT2\\stc-erp-bmad-custom\\src\\hbc-create-business-flow-diagram",
+  "timestamp": "2026-05-13T21:12:33.717953+00:00",
+  "status": "info",
+  "skill_md_summary": {
+    "line_count": 259,
+    "token_estimate": 4690,
+    "overview_lines": 5,
+    "table_count": 0,
+    "table_lines": 0,
+    "fenced_block_count": 6,
+    "fenced_block_lines": 31,
+    "section_count": 18
+  },
+  "prompt_health": {
+    "total_prompts": 0,
+    "prompts_with_config_header": 0,
+    "prompts_with_progression": 0
+  },
+  "aggregate": {
+    "total_files_scanned": 1,
+    "total_token_estimate": 4690,
+    "total_waste_patterns": 0,
+    "total_back_references": 0
+  },
+  "reference_sizes": {
+    "headless-contract.md": {
+      "lines": 76,
+      "tokens": 1281
+    }
+  },
+  "files": [
+    {
+      "file": "SKILL.md",
+      "line_count": 259,
+      "token_estimate": 4690,
+      "sections": [
+        {
+          "level": 2,
+          "title": "Overview",
+          "line": 8
+        },
+        {
+          "level": 2,
+          "title": "Conventions",
+          "line": 14
+        },
+        {
+          "level": 2,
+          "title": "Language Rules",
+          "line": 22
+        },
+        {
+          "level": 2,
+          "title": "On Activation",
+          "line": 29
+        },
+        {
+          "level": 3,
+          "title": "Step 1: Resolve the Workflow Block",
+          "line": 31
+        },
+        {
+          "level": 3,
+          "title": "Step 2: Execute Prepend Steps",
+          "line": 39
+        },
+        {
+          "level": 3,
+          "title": "Step 3: Load Persistent Facts",
+          "line": 43
+        },
+        {
+          "level": 3,
+          "title": "Step 4: Load Config",
+          "line": 47
+        },
+        {
+          "level": 3,
+          "title": "Step 5: Greet and Execute Append Steps",
+          "line": 51
+        },
+        {
+          "level": 2,
+          "title": "Headless Mode",
+          "line": 55
+        },
+        {
+          "level": 2,
+          "title": "Parallel-lens menu",
+          "line": 69
+        },
+        {
+          "level": 2,
+          "title": "Workflow",
+          "line": 83
+        },
+        {
+          "level": 3,
+          "title": "1. Prerequisites and Scope",
+          "line": 85
+        },
+        {
+          "level": 3,
+          "title": "2. Discovery",
+          "line": 173
+        },
+        {
+          "level": 3,
+          "title": "3. Diagram Generation",
+          "line": 193
+        },
+        {
+          "level": 3,
+          "title": "4. Validation",
+          "line": 215
+        },
+        {
+          "level": 3,
+          "title": "5. Save and Handoff",
+          "line": 241
+        },
+        {
+          "level": 2,
+          "title": "On Complete",
+          "line": 256
+        }
+      ],
+      "table_count": 0,
+      "table_lines": 0,
+      "fenced_block_count": 6,
+      "fenced_block_lines": 31,
+      "waste_patterns": [],
+      "back_references": [],
+      "has_config_header": true,
+      "has_progression": true,
+      "overview_lines": 5,
+      "is_skill_md": true
+    }
+  ]
+}

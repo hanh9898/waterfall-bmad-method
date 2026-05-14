@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/scan-path-standards.py \"C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram\")",
+      "Bash(where py *)",
+      "Bash(py --version)",
+      "Bash(py scripts/scan-path-standards.py \"C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram\")",
+      "Bash(py scripts/scan-scripts.py \"C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram\")",
+      "Bash(py C:/Users/HanhNT2/stc-erp-bmad-custom/.claude/skills/bmad-workflow-builder/scripts/scan-scripts.py C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(grep -rn \"modules.bmm\\\\|\\\\\\\\[modules.bmm\\\\\\\\]\\\\\\\\|planning_artifacts\" \"C:/Users/HanhNT2/stc-erp-bmad-custom/_bmad/\")",
+      "Bash(py C:/Users/HanhNT2/stc-erp-bmad-custom/.claude/skills/bmad-workflow-builder/scripts/prepass-prompt-metrics.py C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram)",
+      "Bash(py C:/Users/HanhNT2/stc-erp-bmad-custom/.claude/skills/bmad-workflow-builder/scripts/prepass-execution-deps.py C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram)",
+      "Bash(py C:/Users/HanhNT2/stc-erp-bmad-custom/.claude/skills/bmad-workflow-builder/scripts/prepass-workflow-integrity.py C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram)",
+      "Bash(python3 *)",
+      "Bash(where python *)",
+      "Bash(where uv *)",
+      "Bash(python *)",
+      "Bash(uv run *)",
+      "Bash(grep -n \",-H,\\\\|{-H:\" \"C:/Users/HanhNT2/stc-erp-bmad-custom/_bmad/_config/bmad-help.csv\")",
+      "Bash(git mv *)",
+      "Bash(echo \"PATH-STANDARDS EXIT=$?\")",
+      "Bash(echo \"SCRIPTS EXIT=$?\")",
+      "Bash(echo \"WORKFLOW-INTEGRITY EXIT=$?\")",
+      "Bash(echo \"PROMPT-METRICS EXIT=$?\")",
+      "Bash(echo \"EXEC-DEPS EXIT=$?\")",
+      "Bash(echo \"PATH=$?\")",
+      "Bash(echo \"SCRIPTS=$?\")",
+      "Bash(echo \"WI=$?\")",
+      "Bash(echo \"PM=$?\")",
+      "Bash(echo \"ED=$?\")"
+    ]
+  }
+}
