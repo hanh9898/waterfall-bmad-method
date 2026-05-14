@@ -21,7 +21,7 @@ persistent_facts = [
 # Template for the D-06 Business Flow Diagram output document.
 # Default points to the shared HBLab D-* template set; override to use a
 # project-specific template with different structure.
-business_flow_template = "{project-root}/templates/D-06_business-flow-diagram_template.md"
+business_flow_template = "{skill-root}/templates/D-06_business-flow-diagram_template.md"
 
 # Hint for the starting Mermaid diagram type surfaced at Stage 1. The workflow
 # may override per-flow when a different type fits better — this is a default,
