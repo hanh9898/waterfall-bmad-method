@@ -4,16 +4,18 @@
   "license": "UNLICENSED",
   "homepage": "",
   "repository": "",
-  "keywords": ["bmad", "invest-stories", "hblab-custom", "user-stories", "3cs"],
+  "keywords": ["bmad", "invest-stories", "hblab-custom", "user-stories", "3cs", "er-diagram", "database-design"],
   "plugins": [
     {
       "name": "hblab-bmad-custom",
       "source": "./",
-      "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, custom templates",
+      "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, ER diagrams, custom templates",
       "version": "1.0.0",
       "author": { "name": "HBLAB" },
       "skills": [
         "./src/hbc-setup",
+        "./src/hbc-create-business-flow-diagram",
+        "./src/hbc-create-er-diagram",
         "./src/hbc-create-invest-epics-and-stories"
       ]
     }
