@@ -1,0 +1,147 @@
+{
+  "scanner": "workflow-integrity-prepass",
+  "script": "prepass-workflow-integrity.py",
+  "version": "1.0.0",
+  "skill_path": "C:\\Users\\HanhNT2\\stc-erp-bmad-custom\\src\\hbc-create-business-flow-diagram",
+  "timestamp": "2026-05-13T20:01:31.000185+00:00",
+  "status": "fail",
+  "metadata": {
+    "frontmatter": {
+      "name": "hbc-create-business-flow-diagram",
+      "description": "Generate D-06 Business Flow Diagram with Mermaid (AS-IS/TO-BE) from PRD or interactive input. Use when user says 'create business flow diagram', 'create D-06', or 't\u1ea1o s\u01a1 \u0111\u1ed3 lu\u1ed3ng nghi\u1ec7p v\u1ee5'."
+    },
+    "sections": [
+      {
+        "level": 2,
+        "title": "Overview",
+        "line": 8
+      },
+      {
+        "level": 2,
+        "title": "Conventions",
+        "line": 16
+      },
+      {
+        "level": 2,
+        "title": "Language Rules",
+        "line": 23
+      },
+      {
+        "level": 2,
+        "title": "On Activation",
+        "line": 30
+      },
+      {
+        "level": 3,
+        "title": "Step 1: Resolve the Workflow Block",
+        "line": 32
+      },
+      {
+        "level": 3,
+        "title": "Step 2: Execute Prepend Steps",
+        "line": 38
+      },
+      {
+        "level": 3,
+        "title": "Step 3: Load Persistent Facts",
+        "line": 42
+      },
+      {
+        "level": 3,
+        "title": "Step 4: Load Config",
+        "line": 46
+      },
+      {
+        "level": 3,
+        "title": "Step 5: Greet and Execute Append Steps",
+        "line": 50
+      },
+      {
+        "level": 2,
+        "title": "Headless Mode",
+        "line": 54
+      },
+      {
+        "level": 3,
+        "title": "Input flags",
+        "line": 56
+      },
+      {
+        "level": 3,
+        "title": "Defaults table (when a flag is not provided)",
+        "line": 67
+      },
+      {
+        "level": 3,
+        "title": "JSON return contract",
+        "line": 81
+      },
+      {
+        "level": 2,
+        "title": "Workflow",
+        "line": 95
+      },
+      {
+        "level": 3,
+        "title": "1. Prerequisites and Scope",
+        "line": 97
+      },
+      {
+        "level": 3,
+        "title": "2. Discovery",
+        "line": 170
+      },
+      {
+        "level": 3,
+        "title": "3. Diagram Generation",
+        "line": 188
+      },
+      {
+        "level": 3,
+        "title": "4. Validation",
+        "line": 211
+      },
+      {
+        "level": 3,
+        "title": "5. Save and Handoff",
+        "line": 244
+      },
+      {
+        "level": 2,
+        "title": "On Complete",
+        "line": 257
+      }
+    ],
+    "workflow_type": "complex"
+  },
+  "stage_summary": {
+    "total_stages": 0,
+    "referenced": [
+      "06-business-flow-diagram.md"
+    ],
+    "actual": [],
+    "missing_stages": [
+      "06-business-flow-diagram.md"
+    ],
+    "orphaned_stages": []
+  },
+  "prompt_details": [],
+  "issues": [
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 06-business-flow-diagram.md"
+    }
+  ],
+  "summary": {
+    "total_issues": 1,
+    "by_severity": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

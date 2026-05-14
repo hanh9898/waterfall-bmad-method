@@ -1,0 +1,396 @@
+{
+  "meta": {
+    "skill_name": "hbc-create-business-flow-diagram",
+    "skill_path": "C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram",
+    "timestamp": "2026-05-14T03:30:39Z",
+    "last_updated": "2026-05-14 (round 6 — all 13 round-5 items resolved)",
+    "scanner_count": 7,
+    "round_6_resolution_status": {
+      "round_5_findings_total": 13,
+      "round_5_findings_resolved": 13,
+      "high_resolved": 1,
+      "medium_resolved": 4,
+      "low_resolved": 4,
+      "carryover_resolved": 4,
+      "tests_passing": "25/25 (1 skip — symlink test, POSIX-only)",
+      "scripts_scan_status": "pass (0 findings)",
+      "path_standards_on_skill_source": "pass (0 findings on skill files)"
+    }
+  },
+  "narrative": "Round 4 closed all nine round-3 themes with high confidence — both round-3 high items, the three mediums, and the five-finding low cluster are explicitly absent from this round's scanner output, and the architecture and customization scanners independently rate the skill Excellent. The enhancement scanner withholds the promotion on the strength of one new High (N1: undefined version-bump semantics on back-to-back Update sessions) layered over four still-open round-3 edge cases on second-and-later invocations, so the round-5 verdict is Good at the ceiling — defect-free at the surface, blocked from Excellent only by one load-bearing model judgement that has not been written down. Closing N1 (scope-of-change gate on Update) plus the Stage 1b partial-reply tightening (N2) would tip the skill to Excellent without further structural work.",
+  "grade": "Good",
+  "broken": [],
+  "opportunities": [
+    {
+      "name": "Update-then-Update version-bump semantics undefined",
+      "description": "`recommended_intent = \"Update\"` fires whenever `stage-5 in stepsCompleted`, and Stage 3 mechanically bumps the minor version every time. Back-to-back same-day fix-typo sessions therefore produce `1.0 -> 1.1 -> 1.2 -> 1.3` revision-history rows for cosmetic edits the audit reader can't distinguish from semantic changes. The version-bump rule has become load-bearing on a model judgement (\"is this a polish or a semantic change?\") that the skill never asks the model to make and the headless contract gives no flag for.",
+      "severity": "high",
+      "impact": "Closes the one finding the enhancement scanner cited as the gate between Good and Excellent; restores audit-trail signal for the most common real-world re-run pattern (downstream fix-typo loops from architecture / story review).",
+      "action": "Insert a scope-of-change gate at Stage 3 Update entry: prompt the user (interactive) or check `--scope-of-change=polish|semantic` (headless) before bumping. Polish appends a note to the prior version row; semantic bumps minor. Alternative: auto-detect by diffing the Stage 2 flush (`stage_2_actors` / `stage_2_flows`) against the prior session's flush — if both arrays unchanged, treat as polish.",
+      "finding_count": 1,
+      "findings": [
+        {
+          "title": "Back-to-back Update sessions bump version on cosmetic edits with no scope-of-change check",
+          "file": "SKILL.md",
+          "line": 186,
+          "detail": "Stage 3 reads the latest version and increments minor, but recommended_intent is Update for every completed primary regardless of whether content changed. Three same-day typo fixes write three revision-history rows.",
+          "source": "enhancement"
+        }
+      ]
+    },
+    {
+      "name": "Second-invocation ergonomics: partial-reply short-circuit and crash-recovery audit signal",
+      "description": "Two related medium findings cluster on what happens the second time a user invokes the skill against an existing workspace. (a) The Stage 1b short-circuit prose says skip 1e \"if the open-floor reply already specifies mode, scope, sources, and diagram type unambiguously\" — but a three-of-four reply with one silent dimension will likely pattern-match as \"covers everything\" and quietly commit the workflow `diagram_type` default. (b) The discover script collapses two genuinely different states (no prior workspace; prior workspace existed but `stepsCompleted == []` because the previous run crashed before any step write) into a single `recommended_intent: Fresh`, with no `discarded_partial` signal anywhere — so the headless decision-log line can't distinguish a clean greenfield run from one that just blew away crash-recovered scratch.",
+      "severity": "medium",
+      "impact": "Tightens the second-invocation contract: prevents silent commitment to the default `diagram_type` on partial open-floor replies, and gives automators an audit signal for crash-recovery cases.",
+      "action": "Tighten the SKILL.md:121-122 short-circuit clause to \"skip 1e only when the open-floor reply explicitly addresses all four dimensions; if any dimension is silent, pre-fill the ones that were addressed and ask only about the rest\". Have `discover-planning-artifacts.py` emit `resume_state.discarded_partial: true` when primary existed but `stepsCompleted == []`, and require the Stage 1a headless decision-log line to cite the flag.",
+      "finding_count": 2,
+      "findings": [
+        {
+          "title": "1b partial-reply short-circuit will read three-of-four as \"covers everything\"",
+          "file": "SKILL.md",
+          "line": 121,
+          "detail": "An expert reply naming sources + mode + scope but silent on diagram_type will likely take the workflow default rather than fall through to 1e. The 1e confirmation block exists precisely to surface overridable defaults.",
+          "source": "enhancement"
+        },
+        {
+          "title": "Fresh-with-discarded-partial is indistinguishable from clean Fresh in the audit log",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 170,
+          "detail": "Script collapses `not primary_exists` and `steps == []` into the same `recommended_intent: Fresh` with no discarded_partial flag; headless decision-log loses signal.",
+          "source": "enhancement"
+        }
+      ]
+    },
+    {
+      "name": "Carved-file contract surface drift — single-source-of-truth choices",
+      "description": "Round 4 carved the headless contract to `references/headless-contract.md` correctly (reference table, not procedure), but introduced two surface-drift items between SKILL.md and the carved file that the architecture scanner flagged as medium. (M-1) Overview line 12 says \"Sits between PRD and Architecture ... Downstream Architecture / UX / Story workflows consume the produced flows\" while Stage 5 line 228 carries the authoritative downstream-consumer list — adding a new consumer updates one and not the other. (M-2) Three later stages cite specific `reason` values by name (`template_missing`, `mermaid_validation_failed`, `fr_coverage_gap`, etc.) that are only defined inside the carved file, so an LLM hitting a `blocked` path after context compaction sees the name with no anchor to its meaning.",
+      "severity": "medium",
+      "impact": "Eliminates drift surface between SKILL.md and the carved contract; survives context compaction without re-reading the reference file.",
+      "action": "Pick one source of truth per artifact: either drop the Overview \"Sits between\" sentence and let Stage 5's named list speak, or have Stage 5 say \"hand off to the downstream workflows named in the Overview\" — not both. For reason values, either inline the closed-set table at `## Headless Mode` (it's six short rows) or have each stage that uses a reason value cite the carved file at the point of use.",
+      "finding_count": 2,
+      "findings": [
+        {
+          "title": "Downstream-consumers list duplicated between Overview and Stage 5",
+          "file": "SKILL.md",
+          "line": 12,
+          "detail": "Overview's framing and Stage 5's authoritative list are both subject to drift when a new consumer is added.",
+          "source": "architecture"
+        },
+        {
+          "title": "Stage references to reason values only defined in carved headless contract",
+          "file": "SKILL.md",
+          "line": 57,
+          "detail": "Stages 1a/1d/4/5 reference reason values by name; the names only resolve inside references/headless-contract.md. Critical instructions split between SKILL.md and the carve-out.",
+          "source": "architecture"
+        }
+      ]
+    },
+    {
+      "name": "Carryover edge cases on rare-but-real workflow inputs",
+      "description": "Four still-open items from round 3 that round 4 did not address — none regressed, none are new, all are low-impact edge cases on workflow inputs the round-3 work prioritized as deferrable. Zero-actor PRDs (data-pipeline / batch / cron only) still produce shapeless `System -> System` diagrams that the Mermaid validator passes vacuously. `--mode=migration` on a greenfield PRD will still fabricate an empty AS-IS section with no reverse heuristic. Targeted single-flow Update (\"only re-do flow B\") has no `--update-flow=<name>` path. The `\"prd\" in d.name.lower()` heuristic still matches `apprd/` and similar. Surfaced collectively rather than per-line to communicate they were deferred deliberately, not missed.",
+      "severity": "low",
+      "impact": "Closes the long-tail input failure modes — none of which currently block production use but each of which would surface as a silent quality slip if it landed in a real run.",
+      "action": "Pick up in the next polish round. Smallest first: tighten the PRD-dir heuristic to `\\bprd\\b`. Add one Stage 2 line on promoting cron / event / batch triggers to first-class participants. Add `--update-flow=<name>` to the Stage 3 Update path. Add a reverse heuristic to Stage 2 \"if AS-IS half empty under --mode=migration, surface mismatch (interactive) or `blocked: mode_mismatch` (headless).\"",
+      "finding_count": 4,
+      "findings": [
+        {
+          "title": "Zero-actor PRD produces shapeless diagram with vacuous validation",
+          "file": "SKILL.md",
+          "line": 163,
+          "detail": "Stage 2 hint mentions \"scheduled processes\" but doesn't promote cron/event triggers to participant declarations; validate-mermaid.py passes a single-participant self-loop.",
+          "source": "enhancement"
+        },
+        {
+          "title": "--mode=migration on greenfield PRD fabricates AS-IS with no reverse heuristic",
+          "file": "SKILL.md",
+          "line": 169,
+          "detail": "Stage 2's \"run discovery twice\" instruction will produce an empty AS-IS half on greenfield; nothing checks the inverse.",
+          "source": "enhancement"
+        },
+        {
+          "title": "No targeted single-flow update path",
+          "file": "SKILL.md",
+          "line": 89,
+          "detail": "Update intent rebuilds the full diagram; no --update-flow=<name> to scope the change.",
+          "source": "enhancement"
+        },
+        {
+          "title": "PRD-dir heuristic matches apprd/ and similar",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 228,
+          "detail": "`\"prd\" in d.name.lower()` is loose; tighten to `\\bprd\\b`.",
+          "source": "enhancement"
+        }
+      ]
+    },
+    {
+      "name": "Polish-the-polish: residual prose drift introduced by the round-4 carve-out",
+      "description": "Four small surface items the round-4 polish introduced or left behind. The carved `references/headless-contract.md` opens with a meta-explanation of why it was carved (\"Carved out of SKILL.md per principle ...\") — meta-explanation of a build decision, not content. SKILL.md still carries a three-line `## Headless Mode` block that only explains the carved file exists. The `## Parallel-lens menu (used at end of Stage 3 and Stage 4)` heading is over-long for a level-2 heading. The Stage 4 sentence \"If FR coverage was not requested...\" is stale since `--prd` is now `required=True`. None affects execution; all are 1-line edits.",
+      "severity": "low",
+      "impact": "Cleaner table of contents, no meta-explanation drift, removes one stale conditional that no longer maps to runtime behaviour.",
+      "action": "Cut `references/headless-contract.md:3` first sentence; delete the three-line `## Headless Mode` block at `SKILL.md:57-59` (Overview line 14 already routes); trim the parallel-lens heading to `## Parallel-lens menu`; tighten the Stage 4 sentence to \"If the PRD declares no FR identifiers, `uncovered` and `phantom` are both empty (valid pass).\"",
+      "finding_count": 4,
+      "findings": [
+        {
+          "title": "Carved headless-contract.md opens with a meta-explanation of why it was carved",
+          "file": "references/headless-contract.md",
+          "line": 3,
+          "detail": "First sentence explains the carve-out decision rather than the contract — \"What Doesn't Earn Its Keep\" anti-pattern.",
+          "source": "architecture"
+        },
+        {
+          "title": "`## Headless Mode` SKILL.md block is three lines of meta-explanation about the carve-out",
+          "file": "SKILL.md",
+          "line": 57,
+          "detail": "Block says nothing the cross-reference at line 14 doesn't; deletable per the \"meta-explanation of pattern\" anti-pattern.",
+          "source": "enhancement"
+        },
+        {
+          "title": "Parallel-lens heading is over-long for a level-2",
+          "file": "SKILL.md",
+          "line": 61,
+          "detail": "Parenthetical info duplicates the in-stage pointers at lines 192 and 218.",
+          "source": "architecture"
+        },
+        {
+          "title": "Stage 4 \"If FR coverage was not requested...\" sentence is stale",
+          "file": "SKILL.md",
+          "line": 204,
+          "detail": "`check-fr-coverage.py` has `--prd` as required=True; \"not requested\" is no longer a runtime mode.",
+          "source": "architecture"
+        }
+      ]
+    },
+    {
+      "name": "Script-side residuals: frontmatter parsing robustness and walk-exclusion completeness",
+      "description": "Five low-severity script residuals the determinism scanner surfaced. The `stepsCompleted` regex matches only inline-list YAML, treating block-style as empty and routing a block-style partial-frontmatter primary to `recommended_intent: Fresh` instead of `Resume`. Empty-quoted frontmatter values (`lastStep: ''`) survive in the JSON with quotes intact. The `auto_fixable` typo-vs-add ambiguity is undocumented in `fix_hint`. The `EXCLUDE_DIRS` set is missing `.analysis`, `.claude`, `_bmad`, `dist`, `build`, `out`, `vendor`, `.venv`, `.tox`, cache and tmp dirs. Subprocess tests use `sys.executable` rather than `uv run --script`, which would silently break the day a non-stdlib dependency is added.",
+      "severity": "low",
+      "impact": "Hardens the plumbing against the realistic ways an LLM-written primary frontmatter or operator-pointed directory will differ from the test fixtures.",
+      "action": "Extend the regex with a second pattern for block-style YAML (or adopt pyyaml via PEP 723); post-strip outer quote pairs on frontmatter values; append \"verify not a typo of an existing participant\" to fix_hint; expand EXCLUDE_DIRS with the build/cache/skill-meta dirs; document the sys.executable vs uv run choice in a script comment.",
+      "finding_count": 5,
+      "findings": [
+        {
+          "title": "stepsCompleted regex doesn't match block-style YAML",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 140,
+          "detail": "Inline-list-only regex routes block-style partial-frontmatter primaries to Fresh instead of Resume — the exact round-3 failure mode this script was built to prevent.",
+          "source": "determinism"
+        },
+        {
+          "title": "Empty-quoted frontmatter values survive with quotes in JSON",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 144,
+          "detail": "`lastStep: ''` yields `primary_last_step: \"''\"`; latent bug for future consumers comparing on truthiness.",
+          "source": "determinism"
+        },
+        {
+          "title": "auto_fixable typo-vs-add ambiguity undocumented in fix_hint",
+          "file": "scripts/validate-mermaid.py",
+          "line": 136,
+          "detail": "When a case-different participant shows up as undeclared, auto_fixable=True tells SKILL.md to add a new participant rather than fix the typo.",
+          "source": "determinism"
+        },
+        {
+          "title": "EXCLUDE_DIRS missing project-meta and build/cache dirs",
+          "file": "scripts/check-fr-coverage.py",
+          "line": 40,
+          "detail": "`.analysis/`, `.claude/`, `_bmad/`, `dist/`, `build/`, `out/`, `vendor/`, `.venv/`, `.tox/`, `.pytest_cache/`, `.mypy_cache/`, `coverage/`, `tmp/`, `temp/` all walkable today.",
+          "source": "determinism"
+        },
+        {
+          "title": "Tests invoke scripts via sys.executable, not uv run",
+          "file": "scripts/tests/test_*.py",
+          "line": 1,
+          "detail": "Future PEP-723-declared external dependencies would fail under the test interpreter even though they work via uv. Not a defect today (stdlib-only).",
+          "source": "determinism"
+        }
+      ]
+    },
+    {
+      "name": "Localization vs control-word collision in decision-log",
+      "description": "The Language Rules say \"translate all prose (section headings, table headers ...)\" but `discover-planning-artifacts.py:154` extracts the last session block via `^##\\s+Session\\s+([^\\n]+)$` — a literal English regex. A Japanese-language project that follows the Language Rules literally will get `## セッション ...` headings, and the next session's resume-state extractor returns `last_session_summary: None` because the regex doesn't match. The `## Session ...` heading isn't in the carve-out list of preserved-English forms.",
+      "severity": "low",
+      "impact": "Closes a silent failure mode for non-English projects where resume-state surfacing depends on a localized heading.",
+      "action": "Add \"Session\" (or the full `## Session yyyy-mm-ddThh:mm` heading pattern) to the preserved-English list at `SKILL.md:29`, OR switch the script regex to a date-based anchor (`^##\\s+.*?\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}`). The former is the smaller diff.",
+      "finding_count": 1,
+      "findings": [
+        {
+          "title": "Decision-log Session heading regex collides with Language Rules translation",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 154,
+          "detail": "Regex requires literal English \"Session\"; Language Rules instruct translation of all prose headings.",
+          "source": "enhancement"
+        }
+      ]
+    },
+    {
+      "name": "Cleanup: stale __pycache__ from test-file rename",
+      "description": "`scripts/tests/__pycache__/` carries both old-name and new-name compiled files from the round-4 test rename (test_check_fr / test_check-fr-coverage, etc.). Build-environment artifact, not a skill defect — but indicates no `.gitignore` covering `__pycache__/` and `*.pyc` at the skill or repo root.",
+      "severity": "low",
+      "impact": "Cosmetic; cleaner working tree, the rename is fully clean.",
+      "action": "Add `__pycache__/` and `*.pyc` to `.gitignore` at the skill or repo root, then `git rm -r --cached scripts/tests/__pycache__/`.",
+      "finding_count": 1,
+      "findings": [
+        {
+          "title": "Stale __pycache__ files from test-file rename",
+          "file": "scripts/tests/__pycache__/",
+          "line": 0,
+          "detail": "Both `test_check_fr.cpython-314.pyc` and `test_check-fr-coverage.cpython-314.pyc` coexist; symptom of missing .gitignore pattern.",
+          "source": "architecture"
+        }
+      ]
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Decision-Log Workspace + Resume state machine now lives in the script, not the prompt",
+      "detail": "`discover-planning-artifacts.py` lines 118-182 compute `recommended_intent` deterministically from primary frontmatter and the last decision-log session block; SKILL.md line 89 consumes the result by key. Round-3 had the prompt parsing two files inline. This is the textbook intelligence-placement split — set-membership in the script, judgement in the prompt — and saves ~200-500 tokens per Resume/Update activation."
+    },
+    {
+      "title": "Auto-fix gating moved out of prose and into the script",
+      "detail": "`validate-mermaid.py` lines 140-147 emit per-issue `auto_fixable: bool` + `fix_hint`. SKILL.md line 214 says \"apply only validator issues marked `auto_fixable: true`, citing fix_hint.\" The round-3 M-7 \"unambiguous from message lines\" prose-leak is fully closed — judgement lives in tested code, the prompt is mechanical."
+    },
+    {
+      "title": "Stage 2 compaction-flush preserved unchanged from round 3",
+      "detail": "Actor list + flow inventory get written to both primary frontmatter AND `.decision-log.md` before the workflow continues at SKILL.md lines 171-176. Compaction here can't drop work — the single highest-value piece of the workflow."
+    },
+    {
+      "title": "Headless contract carved to references/ with a closed-set reason enum",
+      "detail": "`references/headless-contract.md` lines 58-69 define six and only six reason values, with an explicit \"closed-set — automators rely on the closed-set guarantee\" promise. Real downstream contract, not handwaving."
+    },
+    {
+      "title": "customize.toml is now an exemplar — every scalar wired, every comment load-bearing",
+      "detail": "Four scalars (business_flow_template, business_flow_output_path, diagram_type, on_complete) plus the three always-present arrays. The round-4 drop of `{date}` from the output-path default aligned the customization surface with the workflow's own resume protocol. Every declared scalar is referenced from SKILL.md as `{workflow.<name>}` — no silent-noop overrides."
+    },
+    {
+      "title": "Wrong-skill off-ramp positioned before scripted ingestion",
+      "detail": "SKILL.md line 119 fires the off-ramp inside 1b, after the open-floor reply but before any heavier work. Matches the \"intent-before-ingestion\" pattern and explicitly names alternative skills (`bmad-create-architecture` for system architecture) rather than just declining."
+    },
+    {
+      "title": "Description quoted-trigger discipline including Vietnamese",
+      "detail": "SKILL.md line 3 carries 'vẽ sơ đồ luồng nghiệp vụ' and 'vẽ D-06' (round-4 additions) alongside English triggers; none vague enough to hijack unrelated conversations."
+    },
+    {
+      "title": "22-test scripts/tests/ suite with PEP 723 inline metadata",
+      "detail": "`scripts/tests/run-tests.py` uses importlib path-based loading to handle hyphenated test filenames; all scripts carry `# /// script` blocks with `requires-python = \">=3.10\"`. Full pass on round-5 run (`Ran 22 tests in 3.057s. OK (skipped=1)`). The script-prompt boundary is tested at the script side; the prompt trusts the script."
+    }
+  ],
+  "detailed_analysis": {
+    "architecture": {
+      "assessment": "Excellent on intent and structural cohesion — every load-bearing principle has a deliberate, traceable home, and the round-4 absorbed the round-3 deltas without over-correcting. Two real architectural calls remain on single-source-of-truth (downstream-consumers list, headless reason names); plus three 1-line polish edits and one .gitignore line.",
+      "findings": []
+    },
+    "determinism": {
+      "assessment": "Excellent. Intelligence placement is textbook on both sides: scripts contain no meaning-judgements (regex, set-diff, glob, count), and SKILL.md contains no deterministic operations the scripts already own. Round-3's nine sub-findings are end-to-end resolved.",
+      "token_savings": "~2.6k–5.2k against an in-prompt implementation, plus ~200–500 tokens per Resume/Update activation via the new resume_state shortcut",
+      "findings": []
+    },
+    "customization": {
+      "assessment": "Exemplary. Four scalars (every one wired, every one commented, default path stable for re-run resume) plus the three always-present arrays. Round-4 dropping `{date}` from the output-path default was the last real abuse on the surface. No boolean toggles, no identity / communication-style fields, no over-extension.",
+      "posture": "opted-in",
+      "findings": []
+    },
+    "enhancement": {
+      "assessment": "Good, very close to Excellent. Round 4 closed both round-3 highs and five of the round-3 mediums. The one new High (N1 version-bump on Update-then-Update) is what holds the grade — it's load-bearing on a model judgement the SKILL.md doesn't call out, and back-to-back fix-typo re-runs are extremely common in practice.",
+      "journeys": [
+        {
+          "archetype": "first-timer",
+          "summary": "Activates the skill with a freshly-shaped PRD. Stage 1a's discover script picks it up cleanly; the open-floor invitation at 1b lets them dump intent in natural language; if they cover all four dimensions the workflow short-circuits to Stage 2. Stage 2 compaction-flush survives any mid-flow context loss. Stage 4 validation runs both checks; auto-fixes are explicit; lens menu offers cost-disambiguated [A]/[P]/[C].",
+          "friction_points": [],
+          "bright_spots": [
+            "open-floor at 1b + short-circuit on full reply",
+            "Stage 2 compaction-flush",
+            "validator emits per-issue auto_fixable + fix_hint"
+          ]
+        },
+        {
+          "archetype": "expert",
+          "summary": "Drops a complete description into the open-floor reply but is silent on diagram_type because they assume it's obvious. Workflow takes the default sequenceDiagram and ships it. The expert wanted flowchart for the decision-branching flow they're documenting. They only find out at Stage 3 when the output is wrong-shaped.",
+          "friction_points": [
+            "1b short-circuit reads three-of-four as 'covers everything' (N2)"
+          ],
+          "bright_spots": [
+            "wrong-skill off-ramp at 1b catches misrouted activations"
+          ]
+        },
+        {
+          "archetype": "edge-case",
+          "summary": "Has a data-pipeline-only PRD (no human actors). Stage 2 produces System -> System self-loops; validate-mermaid.py passes vacuously. The resulting diagram is shapeless but technically valid.",
+          "friction_points": [
+            "no first-class promotion of cron/event/batch triggers to participants (SO1)"
+          ],
+          "bright_spots": []
+        },
+        {
+          "archetype": "automator",
+          "summary": "Runs the skill headlessly via `-H` against a PRD that's been edited since the last successful run. Discover script emits recommended_intent=Update; Stage 3 mechanically bumps version 1.0 -> 1.1. Three more cosmetic edits later: 1.2, 1.3, 1.4 — all looking the same in the revision history. Audit reader can't tell which was semantic.",
+          "friction_points": [
+            "no scope-of-change gate on Update (N1)",
+            "Fresh-with-discarded-partial collapses with clean Fresh (N3)"
+          ],
+          "bright_spots": [
+            "closed-set reason enum",
+            "--review-lenses + review_lenses_run audit signal",
+            "JSON contract is the smallest set of paths the caller needs"
+          ]
+        }
+      ],
+      "autonomous": {
+        "potential": "headless-ready",
+        "notes": "All round-3 headless gaps closed: --review-lenses flag + return field, --no-prd-ok opt-in for greenfield, recommended_intent server-side, auto-fix scoped to validator-emitted flags. Remaining gaps (N1 version-bump, N3 audit-signal collapse) are clarity-of-audit issues, not blockers."
+      },
+      "findings": []
+    }
+  },
+  "recommendations": [
+    {
+      "rank": 1,
+      "action": "Add a scope-of-change gate at Stage 3 Update entry (polish vs semantic) — closes the only finding the enhancement scanner cited as gating Good -> Excellent.",
+      "resolves": 1,
+      "effort": "low"
+    },
+    {
+      "rank": 2,
+      "action": "Tighten the SKILL.md:121-122 short-circuit clause to require all four dimensions explicit, and emit resume_state.discarded_partial in discover-planning-artifacts.py to distinguish crash-recovery Fresh from clean Fresh.",
+      "resolves": 2,
+      "effort": "low"
+    },
+    {
+      "rank": 3,
+      "action": "Pick single source of truth for downstream-consumers list (Overview vs Stage 5) and for headless reason names (inline at ## Headless Mode vs cite-in-stage). Two coherent decisions, no other code changes.",
+      "resolves": 2,
+      "effort": "low"
+    },
+    {
+      "rank": 4,
+      "action": "Polish-the-polish: delete carved-file meta-explanation preamble; delete the three-line ## Headless Mode block; trim parallel-lens heading; tighten stale Stage 4 FR-coverage sentence.",
+      "resolves": 4,
+      "effort": "low"
+    },
+    {
+      "rank": 5,
+      "action": "Script-side robustness: extend stepsCompleted regex for block-style YAML, expand EXCLUDE_DIRS, post-strip empty-quoted frontmatter values, document auto_fixable typo-vs-add edge in fix_hint.",
+      "resolves": 5,
+      "effort": "low"
+    },
+    {
+      "rank": 6,
+      "action": "Address the four round-3 carryover edge cases (zero-actor PRD, forced-migration on greenfield, targeted single-flow update, eager prd-dir heuristic) in the next polish round.",
+      "resolves": 4,
+      "effort": "medium"
+    },
+    {
+      "rank": 7,
+      "action": "Add 'Session' (or the full date-anchored heading pattern) to the Language Rules preserved-English list to resolve the decision-log heading collision with non-English projects.",
+      "resolves": 1,
+      "effort": "low"
+    },
+    {
+      "rank": 8,
+      "action": "Add __pycache__/ and *.pyc to .gitignore; git rm -r --cached the existing scripts/tests/__pycache__/.",
+      "resolves": 1,
+      "effort": "low"
+    }
+  ]
+}

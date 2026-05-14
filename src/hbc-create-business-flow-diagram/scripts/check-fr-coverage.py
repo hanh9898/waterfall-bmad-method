@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
+"""Stage 4 validator: extract FR-* identifiers from PRD and the D-06 output,
+return covered / uncovered / phantom sets.
+
+  covered    = FR ids referenced in both PRD and D-06
+  uncovered  = FR ids in PRD but not referenced in any D-06 flow
+  phantom    = FR ids in D-06 but not declared in PRD
+
+When `--prd` points to a directory the script walks markdown recursively,
+skipping common "stale" folders (archive, archived, notes, scratch, drafts,
+.git, node_modules) so retired PRD versions don't pollute the uncovered set.
+
+CLI shape matches the sibling validator scripts:
+  --d06 <path>       D-06 markdown file (the validation target)
+  --prd <path>       PRD source — file or directory. Repeatable for sharded
+                     PRDs or multiple sources.
+  -o / --output      JSON sink
+
+Exit codes:
+  0  no uncovered, no phantom
+  1  coverage gaps found
+  2  PRD or D-06 file unreadable / argument error
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+
+FR_RE = re.compile(r"\b(N?FR-[0-9]+(?:\.[0-9]+)*)\b")
+
+# Directories never walked for FR extraction.
+EXCLUDE_DIRS: frozenset[str] = frozenset(
+    {"archive", "archived", "old", "notes", "scratch", "drafts", ".git", "node_modules", "__pycache__"}
+)
+
+
+def _read_text(p: Path) -> str:
+    return p.read_text(encoding="utf-8", errors="replace")
+
+
+def _extract_ids(text: str) -> set[str]:
+    return set(m.group(1) for m in FR_RE.finditer(text))
+
+
+def _walk_md(root: Path) -> list[Path]:
+    """rglob('*.md') with EXCLUDE_DIRS pruned out of the path."""
+    out: list[Path] = []
+    for f in root.rglob("*.md"):
+        parts = {part.lower() for part in f.relative_to(root).parts[:-1]}
+        if parts & {d.lower() for d in EXCLUDE_DIRS}:
+            continue
+        out.append(f)
+    return sorted(out)
+
+
+def _gather_prd_ids(prd_paths: list[Path]) -> tuple[set[str], list[str]]:
+    """Return (FR id set, list of files actually read)."""
+    ids: set[str] = set()
+    read: list[str] = []
+    for p in prd_paths:
+        if not p.exists():
+            continue
+        if p.is_dir():
+            for f in _walk_md(p):
+                ids |= _extract_ids(_read_text(f))
+                read.append(str(f))
+        else:
+            ids |= _extract_ids(_read_text(p))
+            read.append(str(p))
+    return ids, read
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--prd",
+        required=True,
+        action="append",
+        help="PRD file or directory. Repeat for sharded PRDs or multiple sources.",
+    )
+    parser.add_argument(
+        "--d06",
+        required=True,
+        help="Path to D-06 markdown file (the validation target).",
+    )
+    parser.add_argument("-o", "--output", required=True, help="JSON output path")
+    args = parser.parse_args()
+
+    prd_paths = [Path(p) for p in args.prd]
+    d06 = Path(args.d06)
+
+    if not d06.exists():
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(
+            json.dumps({"passed": False, "error": "d06_missing", "path": str(d06)}),
+            encoding="utf-8",
+        )
+        return 2
+
+    missing_prd = [p for p in prd_paths if not p.exists()]
+    if missing_prd:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(
+            json.dumps(
+                {"passed": False, "error": "prd_missing", "paths": [str(p) for p in missing_prd]}
+            ),
+            encoding="utf-8",
+        )
+        return 2
+
+    prd_ids, prd_files_read = _gather_prd_ids(prd_paths)
+    d06_ids = _extract_ids(_read_text(d06))
+
+    covered = sorted(prd_ids & d06_ids)
+    uncovered = sorted(prd_ids - d06_ids)
+    phantom = sorted(d06_ids - prd_ids)
+
+    result = {
+        "passed": not uncovered and not phantom,
+        "prd_paths": [str(p) for p in prd_paths],
+        "prd_files_read": prd_files_read,
+        "d06_path": str(d06),
+        "covered": covered,
+        "uncovered": uncovered,
+        "phantom": phantom,
+        "totals": {
+            "prd_ids": len(prd_ids),
+            "d06_ids": len(d06_ids),
+            "covered": len(covered),
+            "uncovered": len(uncovered),
+            "phantom": len(phantom),
+        },
+    }
+
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "output": args.output,
+                "passed": result["passed"],
+                "covered": len(covered),
+                "uncovered": len(uncovered),
+                "phantom": len(phantom),
+            }
+        )
+    )
+    return 0 if result["passed"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

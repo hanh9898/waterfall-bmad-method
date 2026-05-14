@@ -1,0 +1,316 @@
+{
+  "meta": {
+    "skill_name": "hbc-create-business-flow-diagram",
+    "skill_path": "C:/Users/HanhNT2/stc-erp-bmad-custom/src/hbc-create-business-flow-diagram",
+    "timestamp": "2026-05-14T04:08:13Z",
+    "scanner_count": 4
+  },
+  "narrative": "All four scanners (L1 architecture, L2 determinism, L3 customization, L4 enhancement) independently land on Excellent with the same root cause: round 6 closed all 13 round-5 findings end-to-end and added one over-delivery (a third `fresh_reason` value, `stale_artifact`) without introducing any structural regression. The seven remaining findings are uniformly polish-grade — one medium contract-tightening (unspecified equality rule for `--scope-of-change=auto`), one closed-set documentation gap on `fresh_reason`, and five low/very-low nits — none of which block execution, violate a stated promise, or affect any of the six audited user archetypes.",
+  "grade": "Excellent",
+  "broken": [],
+  "opportunities": [
+    {
+      "name": "Closed-set `fresh_reason` not mirrored to the headless contract",
+      "description": "The discover script emits three `fresh_reason` values (`no_workspace`, `crashed_no_progress`, `stale_artifact`) but the headless contract documents only the first two and SKILL.md prose names only the first two. The third value is emitted by `discover-planning-artifacts.py:194` and would land in `.decision-log.md` (and in JSON output if extended) without ever appearing in the contract file — the exact closed-set drift the `reason` mirror was designed to prevent. Same author, same skill, two different levels of contract hygiene for two structurally identical closed sets.",
+      "severity": "medium",
+      "impact": "Lifts the contract from `closed-set in one place, drifty in another` to uniformly closed-set; automators can switch on `fresh_reason` values without reading the script source.",
+      "action": "Add a `## fresh_reason values` table to `references/headless-contract.md` mirroring the existing blocker-reasons table, naming all three values and when each fires. Optionally add a third bullet at `SKILL.md:97-100` for the `stale_artifact` case (or collapse it into `crashed_no_progress` at the script layer if the runtime behaviour is identical).",
+      "finding_count": 2,
+      "findings": [
+        {
+          "title": "`fresh_reason` closed-set not declared in headless contract; `stale_artifact` undocumented",
+          "file": "references/headless-contract.md",
+          "line": null,
+          "detail": "L3 finding (medium-abuse): the `reason` closed set is rigorously declared, mirrored, and annotated with a dual-write rule. The `fresh_reason` closed set lives only inside the script with no contract-file counterpart, and `stale_artifact` (emitted at `discover-planning-artifacts.py:194`) appears nowhere in human-readable documentation.",
+          "source": "L3-customization"
+        },
+        {
+          "title": "`fresh_reason: stale_artifact` not surfaced in SKILL.md prose",
+          "file": "SKILL.md",
+          "line": 97,
+          "detail": "L1 finding N-2 (low) and L2 finding S2 (low): SKILL.md lines 97-100 enumerate only `no_workspace` and `crashed_no_progress`; the third state is rare but real (primary frontmatter exists but stepsCompleted is empty and never reached stage-1). An LLM reading the prose and seeing only two enumerated values may treat the third as undefined and ad-hoc the behaviour.",
+          "source": "L1-architecture, L2-determinism"
+        }
+      ]
+    },
+    {
+      "name": "`--scope-of-change=auto` equality rule unspecified",
+      "description": "Both `SKILL.md:206-208` and `references/headless-contract.md:16` say the auto-detect mode `compares arrays — identical → polish, differs → semantic`, but neither file defines what equality means. Set vs ordered? Case-sensitive? Whitespace-stripped? Two runs against the same Update payload could produce different polish/semantic classifications depending on how the LLM happens to compare the arrays — exactly the cross-run nondeterminism the headless contract exists to prevent.",
+      "severity": "medium",
+      "impact": "Pins the determinism floor on the one Update-mode decision that drives version-history writes; eliminates the only cross-run classification ambiguity in the round-7 surface.",
+      "action": "Add one sentence to both files pinning the comparison rule (recommended: unordered set-membership on stripped, lowercased strings — reordering and whitespace do not count as semantic). Do NOT lift this into a script; both inputs are already in conversation context and the operation is one-shot per Update invocation.",
+      "finding_count": 1,
+      "findings": [
+        {
+          "title": "Equality semantics for Stage-3 auto-diff not defined",
+          "file": "SKILL.md",
+          "line": 206,
+          "detail": "L2 finding S1 (medium): `compare arrays` does not pin set-vs-list, case, or whitespace handling. L4 finding F3 (low) flags the adjacent corner: the procedure is also silent on the case where the prior flush block is malformed or missing — recommended safe default is `treat as semantic` (a missing baseline is not evidence of no-change).",
+          "source": "L2-determinism, L4-enhancement"
+        }
+      ]
+    },
+    {
+      "name": "Polish-grade ergonomics and documentation nits",
+      "description": "Four scanner-surfaced low-severity observations that don't block any user archetype and don't violate any stated promise. Grouped here because each is a one-edit fix and none individually warrants a theme.",
+      "severity": "low",
+      "impact": "Removes the residual friction for expert-Yolo callers, narrows the compaction window mid-Stage-1b, hardens two regex contracts with intent-comments, and clarifies one decision-log mirroring obligation.",
+      "action": "Apply each fix in a single polish commit; none gates anything else.",
+      "finding_count": 5,
+      "findings": [
+        {
+          "title": "Strict 4-of-4 short-circuit mildly hostile to experts omitting one obvious dimension",
+          "file": "SKILL.md",
+          "line": 130,
+          "detail": "L4 finding F1 (low): a Yolo-style expert who explicitly states mode/scope/diagram-type but lets sources default to auto-discovered PRDs is routed to full 1e. A one-line acknowledgement (`Inferred from your reply: …, confirm?`) when all four dimensions are explicit would close residual Yolo-friction without compromising the audit trail. Current strict path remains correct fallback.",
+          "source": "L4-enhancement"
+        },
+        {
+          "title": "No 1b-reply flush before 1e — narrow compaction window",
+          "file": "SKILL.md",
+          "line": 130,
+          "detail": "L4 finding F2 (low): if compaction drops mid-1b before the open-floor reply lands in `.decision-log.md`, the reply is lost and the next session re-asks. The 1b window is short so the risk is narrow; optionally add a brief `1b note` line to the decision log immediately after the reply is parsed.",
+          "source": "L4-enhancement"
+        },
+        {
+          "title": "SKILL.md is ~3% over the multi-branch soft target",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "L1 finding N-1 (low, no action required): 259 lines / 4,690 tokens vs the principles file's ~250-line soft guidance for multi-branch SKILL.md. Well under the ~500-line single-purpose hard ceiling. All 22 lines of round-6 growth pass the `what fails if I delete this?` test. If a future round adds another stage-level surface, the natural carve candidate is the seven-row closed-set reason list at SKILL.md:55-67.",
+          "source": "L1-architecture"
+        },
+        {
+          "title": "`\\bprd\\b` underscore boundary and date-anchored Session regex lack intent-comments",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 241,
+          "detail": "L2 findings S3 and S4 (very low): `\\bprd\\b` does not match `prd_legacy/` because `_` is `\\w` (no current failure mode — HBC convention is kebab-case and the `index.md` gate filters); the date-anchored Session regex contract (ISO 8601, must zero-pad) is not commented as such. Add one-line comments noting the boundary intent and the `do not loosen without changing the template` rule.",
+          "source": "L2-determinism"
+        },
+        {
+          "title": "`reason` dual-write obligation stated only on the SKILL.md side",
+          "file": "references/headless-contract.md",
+          "line": null,
+          "detail": "L3 finding (low doc nit): SKILL.md:67 says `Add new reasons only by extending this list and the contract file together`; the contract file's parallel line says `Add new reasons only by extending this table`. Adding `AND the brief mirror in SKILL.md — they are intentionally duplicated for compaction survival` to the contract makes the mirroring obligation visible from either side.",
+          "source": "L3-customization"
+        }
+      ]
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Round-6 closed all 13 round-5 findings end-to-end",
+      "detail": "L1 audit confirms each of N1/N2/N3, M-1/M-2, N-1/N-3/N-4, N-2, N5, SO1/SO2/SO3, L3 (14 items counting both prior-round nomenclature schemes) is resolved with specific file:line evidence. L4 independently re-walked the same closures from the user-journey lens. No carryovers remain into round 7."
+    },
+    {
+      "title": "Customization surface has converged across three rounds of new headless flags",
+      "detail": "L3: `--scope-of-change`, `--update-flow`, and `--allow-migration-without-as-is` all correctly landed on the headless contract surface, NOT in `[workflow]`. The author has resisted three plausible-but-wrong lifts in a row (mode toggle, language override, scope-of-change). `customize.toml` stays at four well-shaped, fully-commented scalars while the headless contract grows — the right asymmetry."
+    },
+    {
+      "title": "All eight `Patterns BMad has seen pay off` are present and operational",
+      "detail": "L4: open-floor opening, soft-gate elicitation, intent-before-ingestion, capture-don't-interrupt, dual-output, parallel review lenses, three-mode architecture, graceful degradation, plus canonical Decision-Log Workspace. The skill is in the same shape-quality bracket as `bmad-product-brief`."
+    },
+    {
+      "title": "Closed-set discipline on blocker `reason` values with compaction-survival mirror",
+      "detail": "Seven `reason` values declared in both SKILL.md:55-67 and headless-contract.md:65-73, with the dual-write requirement stated in prose at SKILL.md:67. The duplication is acknowledged as compaction-survival (the contract file calls it `a compaction-survival mirror, not a separate source of truth`), not multi-source drift."
+    },
+    {
+      "title": "Intelligence placement on three new round-6 regex/classifier additions",
+      "detail": "L2: `fresh_reason` is a closed-set enum classifier driven by structural inputs (no semantic inference); the date-anchored `^##\\s+...\\d{4}-\\d{2}-\\d{2}` Session regex generalizes from the English word `Session` to ISO 8601 structure (Vietnamese `Phiên` now parses); `\\bprd\\b` replaces a sloppy substring that would have matched `approved/` or `notes-on-the-prd/`. Each change is paired with a focused new test."
+    },
+    {
+      "title": "Headless audit trail is automator-grade",
+      "detail": "10-flag input contract, 7-reason closed-set blocker table, JSON return carries `review_lenses_run`, per-decision logging requirement, validator auto-fix gated on per-issue `auto_fixable: true` from the script (not LLM judgement). Honours the principles-file standard: `the JSON return is the smallest set of paths the caller needs; the log carries the reasoning`."
+    },
+    {
+      "title": "25 tests covering CLI contract, edge cases, and three new round-6 regressions",
+      "detail": "L2: `python scripts/tests/run-tests.py` returns `Ran 25 tests, OK (skipped=1)`. Pattern is consistent (subprocess invocation against the CLI, JSON parse, structural assertion) — no mocking, no fixtures-by-side-channel. New regressions caught at the contract level, not at a function-internal seam."
+    }
+  ],
+  "detailed_analysis": {
+    "architecture": {
+      "assessment": "L1: Excellent. All 13 round-5 findings closed with specific file:line evidence; the 22-line SKILL.md growth (237 → 258, now 259 with one trailing line counted) is fully load-bearing — every new sentence anchors a real architectural surface (gate / discriminator / branch / sanity check / closed-set mirror), not procedural padding. No structural regressions, no introduced contradictions.",
+      "findings": [
+        {
+          "title": "SKILL.md ~3% over the multi-branch soft target",
+          "file": "SKILL.md",
+          "line": 1,
+          "detail": "259 lines / 4,690 tokens vs the ~250-line soft guidance; well under the ~500-line single-purpose hard ceiling. No action required.",
+          "source": "L1-architecture"
+        },
+        {
+          "title": "`fresh_reason: stale_artifact` not surfaced in SKILL.md prose",
+          "file": "SKILL.md",
+          "line": 97,
+          "detail": "Script emits three `fresh_reason` values; SKILL.md:97-100 enumerates only the first two.",
+          "source": "L1-architecture"
+        }
+      ]
+    },
+    "determinism": {
+      "assessment": "L2: Excellent. Round 6 hit three real seams (audit-trail discrimination, language-coupled regex, sloppy substring match) with focused fixes and matching tests. Intelligence placement, contract clarity, regex hygiene, and test coverage are all where they should be. Stage-3 scope-of-change auto-diff is correctly kept in the prompt — both inputs are already in context — but the equality rule wants pinning.",
+      "token_savings": "~4000-8000 tokens saved per typical invocation vs a no-scripts variant (1500-3000 from discover, 1000-2000 per Mermaid block from validate-mermaid, 500-1500 per PRD shard from check-fr-coverage). Round 6 added no new scripts.",
+      "findings": [
+        {
+          "title": "`--scope-of-change=auto` equality rule unspecified",
+          "file": "SKILL.md",
+          "line": 206,
+          "detail": "Set vs ordered, case, whitespace all undefined. Document the rule (do not lift to a script).",
+          "source": "L2-determinism"
+        },
+        {
+          "title": "`fresh_reason` closed-set not tabulated in headless contract",
+          "file": "references/headless-contract.md",
+          "line": null,
+          "detail": "Mirror the existing blocker-`reason` table treatment; include `stale_artifact`.",
+          "source": "L2-determinism"
+        },
+        {
+          "title": "`\\bprd\\b` underscore exclusion not commented",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 241,
+          "detail": "Python `\\b` is a `\\w`/`\\W` boundary; `_` is `\\w` so `prd_legacy/` would not match. No current failure (HBC is kebab-case + `index.md` gate); add one-line comment.",
+          "source": "L2-determinism"
+        },
+        {
+          "title": "Date-anchored Session regex contract not commented as ISO 8601",
+          "file": "scripts/discover-planning-artifacts.py",
+          "line": 154,
+          "detail": "Comment as `ISO 8601 (YYYY-MM-DD) is the contract; do not loosen without updating the decision-log template`.",
+          "source": "L2-determinism"
+        }
+      ]
+    },
+    "customization": {
+      "assessment": "L3: Excellent. `customize.toml` is unchanged since round 5 and remains right-sized — four well-shaped, fully-commented scalars with no boolean toggles. The three new round-6 headless flags (`--scope-of-change`, `--update-flow`, `--allow-migration-without-as-is`) were all correctly kept off the customization surface; the author has now resisted three plausible-but-wrong lifts in a row. One concrete fix worth landing: the `fresh_reason` closed-set is enforced in the script but undeclared in the contract.",
+      "posture": "opted-in",
+      "findings": [
+        {
+          "title": "`fresh_reason` closed-set not declared in headless contract",
+          "file": "references/headless-contract.md",
+          "line": null,
+          "detail": "Medium-abuse: `reason` is rigorously declared and mirrored; `fresh_reason` is not. `stale_artifact` is emitted but documented nowhere in the human-readable contract.",
+          "source": "L3-customization"
+        },
+        {
+          "title": "`reason` dual-write obligation stated only on the SKILL.md side",
+          "file": "references/headless-contract.md",
+          "line": null,
+          "detail": "Add the symmetric `…AND the brief mirror in SKILL.md — intentionally duplicated for compaction survival` to the contract file.",
+          "source": "L3-customization"
+        }
+      ]
+    },
+    "enhancement": {
+      "assessment": "L4: Excellent. Round 6 closed every round-5 enhancement finding (N1 high, N2/N3 medium, N4/N5 low) and every round-3 carryover (SO1/SO2/SO3, L3), with one over-delivery (`fresh_reason: stale_artifact` as a fourth sub-case). All six user archetypes pass; all eight `Patterns BMad has seen pay off` are present and operational. Three polish-grade findings remain — none blocks any archetype or violates a stated promise.",
+      "journeys": [
+        {
+          "archetype": "first-timer",
+          "summary": "Activates with partial PRD knowledge; Stage 1a runs the discover script silently and surfaces `no_workspace`. Stage 1b opens with the broad invitation plus wrong-skill off-ramp. Partial reply correctly routes to 1e for confirmation. Zero-actor branch protects data-pipeline domains. No visible friction.",
+          "friction_points": [],
+          "bright_spots": [
+            "Wrong-skill off-ramp at 1b fires before any heavier work",
+            "Zero-actor branch promotes triggers to first-class actors for data-pipeline products"
+          ]
+        },
+        {
+          "archetype": "expert",
+          "summary": "Wants Yolo. Open-floor reply naming all four dimensions (mode/scope/sources/diagram-type) short-circuits past 1e. The strict 4-of-4 gate is safety-correct but mildly hostile if one obvious dimension is omitted (e.g. sources defaulted to auto-discovered).",
+          "friction_points": [
+            "Strict short-circuit falls through to full 1e when one obvious dimension is implicit (F1)"
+          ],
+          "bright_spots": [
+            "Audit trail logs which dimensions were inferred from 1b vs confirmed in 1e",
+            "Yolo path preserved when all four are explicit"
+          ]
+        },
+        {
+          "archetype": "confused",
+          "summary": "Activates thinking this is a class-diagram skill (`tạo sơ đồ class cho User module`). Stage 1a runs deterministically with no token spend; Stage 1b's wrong-skill off-ramp fires before consuming the source inventory. Redirected to the right skill at the cheapest possible point.",
+          "friction_points": [],
+          "bright_spots": [
+            "Wrong-skill detection costs one prompt, no tokens-wasted-on-elicitation"
+          ]
+        },
+        {
+          "archetype": "edge-case",
+          "summary": "Zero-actor (data-pipeline) gets the trigger promoted to an actor. Migration-on-greenfield hits the Stage 1e sanity check and either acknowledges via `--allow-migration-without-as-is` or blocks. Targeted single-flow update via U2 / `--update-flow=<name>` re-renders only the named flow. Day-2 re-run resumes via workspace + `fresh_reason` discrimination. Crashed prior run gets `crashed_no_progress`. Localised decision logs parse via date-anchored regex.",
+          "friction_points": [],
+          "bright_spots": [
+            "Every edge-case has a named branch and a closed-set audit signal",
+            "Round-6 over-delivery: `stale_artifact` covers a fourth sub-case (frontmatter exists, no stage-1 yet)"
+          ]
+        },
+        {
+          "archetype": "hostile-environment",
+          "summary": "Customisation resolver missing falls back to hand-merge with `resolver_missing` blocker. Template missing blocks with `template_missing` reason. Compaction mid-Stage-2 survives via the required flush. Compaction mid-Stage-3 is defensible (the primary IS the cache). Compaction mid-Stage-1b has a narrow window where the open-floor reply isn't yet captured (F2).",
+          "friction_points": [
+            "Mid-1b compaction window — open-floor reply not flushed to decision log before 1e (F2)",
+            "Stage-3 auto-diff silent on malformed/missing prior flush block (F3)"
+          ],
+          "bright_spots": [
+            "Stage 2 flush is required-not-optional and survives compaction",
+            "All script crashes / missing artefacts route to closed-set blocker reasons with audit"
+          ]
+        },
+        {
+          "archetype": "automator",
+          "summary": "Headless invocation with 10 flags; closed-set returns. `review_lenses_run` carries which lenses fired. `.decision-log.md` carries all auto-decisions with rationale including `fresh_reason`, scope-of-change classification, and per-issue auto-fix entries citing the validator's `fix_hint`. Meets the principles-file standard to the letter.",
+          "friction_points": [
+            "`fresh_reason: stale_artifact` not in the contract file; automator must read the script to enumerate the closed set"
+          ],
+          "bright_spots": [
+            "Validator auto-fix gated on per-issue `auto_fixable: true` from the script, not LLM judgement",
+            "JSON return is the smallest set of paths the caller needs; the log carries the reasoning"
+          ]
+        }
+      ],
+      "autonomous": {
+        "potential": "headless-ready",
+        "notes": "10-flag input contract, 7-reason closed-set blocker table mirrored across SKILL.md and the contract file, JSON return + `.decision-log.md` carry the audit trail. One residual closed-set gap (`fresh_reason` not in the contract) is medium-grade documentation polish, not a blocker."
+      },
+      "findings": [
+        {
+          "title": "Strict 4-of-4 short-circuit mildly hostile to experts (F1)",
+          "file": "SKILL.md",
+          "line": 130,
+          "detail": "Add a one-line `Inferred from your reply: …, confirm?` acknowledgement when 4-of-4 are explicit as a Yolo-friendly midpoint.",
+          "source": "L4-enhancement"
+        },
+        {
+          "title": "No 1b-reply flush before 1e — narrow compaction window (F2)",
+          "file": "SKILL.md",
+          "line": 130,
+          "detail": "Optional brief `1b note` line to `.decision-log.md` immediately after the open-floor reply is parsed.",
+          "source": "L4-enhancement"
+        },
+        {
+          "title": "Stage-3 scope-of-change auto-detect silent on malformed prior flush (F3)",
+          "file": "SKILL.md",
+          "line": 206,
+          "detail": "Safe default: `if no prior flush block is parseable, treat as semantic` (missing baseline is not evidence of no-change).",
+          "source": "L4-enhancement"
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "rank": 1,
+      "action": "Add a `fresh_reason values` closed-set table to references/headless-contract.md mirroring the existing blocker-`reason` table, naming all three values (no_workspace, crashed_no_progress, stale_artifact) and when each fires. Optionally add a third bullet at SKILL.md:97-100 for stale_artifact.",
+      "resolves": 2,
+      "effort": "low"
+    },
+    {
+      "rank": 2,
+      "action": "Pin the `--scope-of-change=auto` equality rule in both SKILL.md:206 and references/headless-contract.md:16 (recommended: unordered set-membership on stripped, lowercased strings). Add the F3 safe-default sentence: `if no prior flush block is parseable, treat as semantic`.",
+      "resolves": 1,
+      "effort": "low"
+    },
+    {
+      "rank": 3,
+      "action": "Polish commit covering the four remaining low/very-low items: F1 one-line Yolo acknowledgement at SKILL.md:130, F2 brief 1b-reply flush, intent-comments on the `\\bprd\\b` and date-anchored regex in discover-planning-artifacts.py, and the symmetric dual-write note in references/headless-contract.md.",
+      "resolves": 5,
+      "effort": "low"
+    }
+  ]
+}

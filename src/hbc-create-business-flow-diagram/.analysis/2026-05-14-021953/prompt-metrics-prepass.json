@@ -1,0 +1,175 @@
+{
+  "scanner": "prompt-craft-prepass",
+  "script": "prepass-prompt-metrics.py",
+  "version": "1.0.0",
+  "skill_path": "C:\\Users\\HanhNT2\\stc-erp-bmad-custom\\src\\hbc-create-business-flow-diagram",
+  "timestamp": "2026-05-13T19:23:50.687204+00:00",
+  "status": "info",
+  "skill_md_summary": {
+    "line_count": 113,
+    "token_estimate": 1837,
+    "overview_lines": 0,
+    "table_count": 0,
+    "table_lines": 0,
+    "fenced_block_count": 0,
+    "fenced_block_lines": 0,
+    "section_count": 14
+  },
+  "prompt_health": {
+    "total_prompts": 1,
+    "prompts_with_config_header": 0,
+    "prompts_with_progression": 0
+  },
+  "aggregate": {
+    "total_files_scanned": 2,
+    "total_token_estimate": 2744,
+    "total_waste_patterns": 0,
+    "total_back_references": 0
+  },
+  "reference_sizes": {},
+  "files": [
+    {
+      "file": "SKILL.md",
+      "line_count": 113,
+      "token_estimate": 1837,
+      "sections": [
+        {
+          "level": 2,
+          "title": "Conventions",
+          "line": 12
+        },
+        {
+          "level": 2,
+          "title": "On Activation",
+          "line": 19
+        },
+        {
+          "level": 3,
+          "title": "Step 1: Resolve the Workflow Block",
+          "line": 21
+        },
+        {
+          "level": 3,
+          "title": "Step 2: Execute Prepend Steps",
+          "line": 27
+        },
+        {
+          "level": 3,
+          "title": "Step 3: Load Persistent Facts",
+          "line": 31
+        },
+        {
+          "level": 3,
+          "title": "Step 4: Load Config",
+          "line": 35
+        },
+        {
+          "level": 3,
+          "title": "Step 5: Greet and Execute Append Steps",
+          "line": 39
+        },
+        {
+          "level": 2,
+          "title": "Workflow",
+          "line": 48
+        },
+        {
+          "level": 3,
+          "title": "Stage 1: Prerequisites and Scope",
+          "line": 50
+        },
+        {
+          "level": 3,
+          "title": "Stage 2: Discovery",
+          "line": 68
+        },
+        {
+          "level": 3,
+          "title": "Stage 3: Diagram Generation",
+          "line": 79
+        },
+        {
+          "level": 3,
+          "title": "Stage 4: Validation",
+          "line": 89
+        },
+        {
+          "level": 3,
+          "title": "Stage 5: Save and Handoff",
+          "line": 100
+        },
+        {
+          "level": 2,
+          "title": "On Complete",
+          "line": 108
+        }
+      ],
+      "table_count": 0,
+      "table_lines": 0,
+      "fenced_block_count": 0,
+      "fenced_block_lines": 0,
+      "waste_patterns": [],
+      "back_references": [],
+      "has_config_header": true,
+      "has_progression": false,
+      "overview_lines": 0,
+      "is_skill_md": true
+    },
+    {
+      "file": ".decision-log.md",
+      "line_count": 54,
+      "token_estimate": 907,
+      "sections": [
+        {
+          "level": 2,
+          "title": "Session 2026-05-14 \u2014 Initial build",
+          "line": 12
+        },
+        {
+          "level": 3,
+          "title": "Intent and classification",
+          "line": 14
+        },
+        {
+          "level": 3,
+          "title": "Disambiguation (D-05 vs D-06)",
+          "line": 19
+        },
+        {
+          "level": 3,
+          "title": "Spec",
+          "line": 25
+        },
+        {
+          "level": 3,
+          "title": "Workspace pattern decision",
+          "line": 35
+        },
+        {
+          "level": 3,
+          "title": "Catalog integration",
+          "line": 40
+        },
+        {
+          "level": 3,
+          "title": "Downstream consumers",
+          "line": 46
+        },
+        {
+          "level": 3,
+          "title": "Open items",
+          "line": 52
+        }
+      ],
+      "table_count": 0,
+      "table_lines": 0,
+      "fenced_block_count": 0,
+      "fenced_block_lines": 0,
+      "waste_patterns": [],
+      "back_references": [],
+      "has_config_header": false,
+      "has_progression": false,
+      "is_skill_md": false
+    }
+  ]
+}
