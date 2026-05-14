@@ -1,0 +1,33 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-er-diagram.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-er-diagram.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-er-diagram.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+#   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Template for the D-19 ER Diagram output document.
+# Default points to the shared HBLab D-* template set; override to use a
+# project-specific template with different structure.
+er_diagram_template = "{project-root}/templates/D-19_データベース設計書_template.md"
+
+# Single output workspace path. The workflow binds {doc_workspace} directly
+# to the resolved value at Stage 1 and writes the primary document plus the
+# session decision log there.
+er_diagram_output_path = "{planning_artifacts}/database-design/D-19-{project_name}/"
+
+# Scalar: executed when the workflow completes after final validation.
+# Common hooks: "invoke bmad-create-epics-and-stories".
+on_complete = ""
