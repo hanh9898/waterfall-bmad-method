@@ -14,6 +14,7 @@
       "author": { "name": "HBLAB" },
       "skills": [
         "./src/hbc-setup",
+        "./src/hbc-create-business-flow-diagram",
         "./src/hbc-create-invest-epics-and-stories"
       ]
     }
