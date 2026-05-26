@@ -204,8 +204,6 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
     # 8. Orphan CSV entries
     setup_name = setup_dir.name if setup_dir else ""
     for skill in csv_skills:
-        if skill == "_meta":
-            continue
         if skill not in skill_folders and skill != setup_name:
             # Check if it's the setup skill itself (valid)
             if not (module_dir / skill / "SKILL.md").is_file():
@@ -245,10 +243,8 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
                             f"'{display}' {field} references '{ref}' which is not a valid capability",
                             "Expected format: skill-name:action-name")
 
-    # 11. Required fields in each row (skip _meta rows)
+    # 11. Required fields in each row
     for row in rows:
-        if row.get("skill", "").strip() == "_meta":
-            continue
         display = row.get("display-name", "?")
         for field in ("skill", "display-name", "menu-code", "description"):
             if not row.get(field, "").strip():

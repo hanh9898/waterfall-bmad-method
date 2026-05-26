@@ -1,0 +1,29 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-traceability.
+# Team overrides:     {project-root}/_bmad/custom/hbc-traceability.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-traceability.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+#   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Path to the living traceability matrix.
+# To override: set this key in {project-root}/_bmad/custom/hbc-traceability.toml
+matrix_path = "{project-root}/_hbc_output/traceability/matrix.md"
+
+# Optional: source code root for Phase 3 code_ref mapping.
+# Leave empty to prompt user at runtime.
+source_code_path = ""
+
+on_complete = ""

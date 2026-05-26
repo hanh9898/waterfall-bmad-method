@@ -1,0 +1,44 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "3.0.0",
+  "skill_path": "/Users/hanhnt2/project/opms/hblab-bmad-custom/src/hbc-traceability",
+  "timestamp": "2026-05-26T10:36:22.391888+00:00",
+  "files_scanned": [
+    ".decision-log.md",
+    "SKILL.md",
+    "assets/matrix-template.md"
+  ],
+  "status": "fail",
+  "findings": [
+    {
+      "file": ".decision-log.md",
+      "line": 0,
+      "severity": "high",
+      "category": "structure",
+      "title": "Prompt file at skill root: .decision-log.md",
+      "detail": "All progressive disclosure content must be in ./references/ \u2014 only SKILL.md belongs at root",
+      "action": "Move .decision-log.md to references/.decision-log.md"
+    }
+  ],
+  "assessments": {},
+  "summary": {
+    "total_findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "double_prefix": 0,
+      "bare_bmad": 0,
+      "absolute_path": 0,
+      "relative_prefix": 0,
+      "cross_dir_dot_slash": 0,
+      "frontmatter": 0,
+      "structure": 1
+    },
+    "assessment": "Path standards scan complete"
+  }
+}

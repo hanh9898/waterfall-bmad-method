@@ -1,0 +1,278 @@
+{
+  "meta": {
+    "skill_name": "hbc-traceability",
+    "skill_path": "src/hbc-traceability",
+    "timestamp": "2026-05-26",
+    "scanner_count": 4
+  },
+  "grade": "B",
+  "narrative": "Strong intelligence placement and cohesive four-capability design with clean scripts. Downgraded from A due to: SKILL.md 24% over size ceiling, an unwired On Complete exit hook, headless convention non-compliance that will break phase-gate integration, missing runtime decision log for audit trail, and no mapping confirmation soft-gate. All fixable without architectural rework.",
+  "broken": [
+    {
+      "id": "B1",
+      "title": "Decision-log file at skill root instead of references/",
+      "severity": "high",
+      "detail": "Path standards scanner flagged .decision-log.md at skill root. BMad conventions require all progressive-disclosure content except SKILL.md to live in references/.",
+      "action": "Move .decision-log.md to references/.decision-log.md and update any internal references.",
+      "file": ".decision-log.md",
+      "line": null
+    },
+    {
+      "id": "B2",
+      "title": "No unit tests for scripts",
+      "severity": "high",
+      "detail": "scripts/tests/ directory does not exist. Both extract-trace-ids.py and trace-report.py have no test coverage. Script scan flagged 3 test-related issues.",
+      "action": "Create scripts/tests/ with test-extract-trace-ids.py and test-trace-report.py covering happy path, no-files, no-matches, and malformed-input cases.",
+      "file": "scripts/",
+      "line": null
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "O1",
+      "name": "on-complete-exit-hook",
+      "title": "On Complete is a de facto exit hook that won't reliably fire",
+      "description": "Principles file explicitly states no exit hooks. On Complete behaves identically — fires 'after workflow finishes' which is the exit-hook pattern under a different name.",
+      "detail": "The On Complete section (lines 158-161) and corresponding on_complete scalar in customize.toml are dead placeholders that will silently do nothing.",
+      "severity": "high",
+      "impact": "high",
+      "theme": "architecture",
+      "action": "Remove ## On Complete from SKILL.md and on_complete from customize.toml. If chaining is needed, add next-step suggestions at the end of each capability's report output.",
+      "findings": [],
+      "finding_count": 2
+    },
+    {
+      "id": "O2",
+      "name": "skill-md-size-ceiling",
+      "title": "SKILL.md at 161 lines exceeds ~130 line ceiling for simple workflow",
+      "description": "24% over the hard ceiling. On Activation boilerplate (28 lines) repeats standard BMad patterns the agent already knows. Update section has verbose per-phase sub-procedures.",
+      "detail": "Compressing On Activation Steps 1-4 into a single line referencing the standard pattern, plus tightening Update to outcome language, targets ~120 lines.",
+      "severity": "high",
+      "impact": "high",
+      "theme": "architecture",
+      "action": "Collapse On Activation Steps 1-4 into: 'Resolve customization, load persistent facts and config per standard BMad activation.' Keep Step 5. Tighten Update sub-steps to outcome language.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O3",
+      "name": "headless-convention-compliance",
+      "title": "Headless return does not conform to BMad convention",
+      "description": "Missing 'status' field, no 'decision_log' path in return. trace-report.py exits 1 on gaps (which are normal data, not errors). Cross-skill invocation from phase gate will be fragile.",
+      "detail": "Calling skill cannot distinguish 'report succeeded with gaps' from 'report failed because matrix does not exist'.",
+      "severity": "high",
+      "impact": "high",
+      "theme": "integration",
+      "action": "Add 'status: complete|blocked' to headless return. Change trace-report.py to exit 0 on successful parse, exit 1 only on actual errors. Add optional --strict flag for non-zero on gaps.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O4",
+      "name": "runtime-decision-log",
+      "title": "Runtime decision log for mapping rationale",
+      "description": "LLM mapping decisions (REQ-003 -> Entity_User) vanish with the conversation. Auditors see WHAT traces to what but not WHY. For waterfall lifecycle where traceability is audited, the reasoning is as important as the mapping.",
+      "detail": "A lightweight .trace-decisions.md capturing one line per non-obvious mapping transforms the matrix from 'coverage tracker' to 'auditable evidence generator'.",
+      "severity": "high",
+      "impact": "high",
+      "theme": "user-experience",
+      "action": "Add runtime decision record: after each mapping, append a line to {workflow.gate_output_path}/../traceability/.trace-decisions.md with REQ ID, target ref, and rationale.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O5",
+      "name": "mapping-confirmation-soft-gate",
+      "title": "Soft-gate missing on mapping confirmation before write",
+      "description": "Phase 2 Update uses LLM judgment to map REQs to design entities — the highest-stakes decision in the skill. A wrong mapping means a requirement appears traced when it is not. No explicit confirmation step before writing.",
+      "detail": "Instruction should be explicit: present proposed mappings as a table, confirm with user before writing. In headless mode, write directly and log confidence levels.",
+      "severity": "medium",
+      "impact": "high",
+      "theme": "user-experience",
+      "action": "After mapping step, add: 'Present proposed REQ-to-design and REQ-to-test mappings as a table. Confirm with user before writing. In headless, write directly and log confidence.'",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O6",
+      "name": "phase-detection-prepass",
+      "title": "Phase detection reads entire matrix into LLM context",
+      "description": "Update capability reads full matrix just to check which columns are empty — a pure counting operation. 400-2000 tokens per invocation depending on matrix size.",
+      "detail": "Extend trace-report.py with --detect-phase flag to return compact JSON: {next_phase: 2, empty_columns: [...], total_rows: 23}. LLM receives ~50 tokens instead.",
+      "severity": "medium",
+      "impact": "medium",
+      "theme": "determinism",
+      "action": "Add --detect-phase flag to trace-report.py returning empty-column analysis as compact JSON.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O7",
+      "name": "matrix-template-customizable",
+      "title": "Matrix template path not exposed in customize.toml",
+      "description": "assets/matrix-template.md is hardcoded in Initialize section. Teams wanting different columns (priority, module) must fork the skill.",
+      "detail": "Only genuine lift candidate identified by customization scanner. Low-risk, high-value for teams with custom matrix schemas.",
+      "severity": "medium",
+      "impact": "medium",
+      "theme": "customization",
+      "action": "Add matrix_template scalar to customize.toml defaulting to 'assets/matrix-template.md'. Reference as {workflow.matrix_template} in SKILL.md.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O8",
+      "name": "entity-regex-intelligence-leak",
+      "title": "Entity-name regex leaks intelligence into the script",
+      "description": "The regex pattern for D-19 entity names mixes Japanese and English locale patterns, and \\w+ won't match multi-word entity names. This is semantic understanding dressed as regex.",
+      "detail": "Per intelligence placement principle: 'Script using regex to decide what content MEANS = intelligence leak into the script.' Entity extraction should be LLM judgment.",
+      "severity": "medium",
+      "impact": "medium",
+      "theme": "determinism",
+      "action": "Remove entity-name regex from script invocation. Let LLM extract entity names from D-19 alongside the REQ-to-entity mapping judgment. Keep extract-trace-ids.py for well-structured ID patterns only (REQ-xxx, TC-xxx).",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O9",
+      "name": "compaction-recovery",
+      "title": "No recoverability after compaction during Update",
+      "description": "Phase 2 Update involves multiple steps. If compaction drops SKILL.md mid-update, LLM loses column-mapping instructions. Matrix has no state marker.",
+      "detail": "Write a status marker before Update starts, clear on completion. On re-activation with marker present, surface: 'A Phase 2 update was interrupted. Resume or restart?'",
+      "severity": "medium",
+      "impact": "medium",
+      "theme": "user-experience",
+      "action": "Before Update, write brief state to matrix frontmatter or sibling .trace-state.json. Clear on completion. Check on activation.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O10",
+      "name": "update-diff-output",
+      "title": "No 'what changed' diff shown after Update",
+      "description": "After Update, skill reports aggregate coverage (X/Y) but not what specifically changed. User cannot verify the right mappings were written.",
+      "detail": "Show brief diff: new mappings added this session, any mappings that changed if Update is re-run. Costs almost nothing, dramatically improves confidence.",
+      "severity": "low",
+      "impact": "medium",
+      "theme": "user-experience",
+      "action": "After writing updated matrix, show which REQs got new mappings and any changes to existing mappings.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O11",
+      "name": "post-write-validation",
+      "title": "No structural validation after matrix write",
+      "description": "After writing/updating matrix, no check that markdown table is well-formed. A formatting error cascades silently to next trace-report.py invocation.",
+      "detail": "A --validate flag on trace-report.py checking column count, no duplicate req_ids, no empty req_id cells prevents cascading errors.",
+      "severity": "low",
+      "impact": "low",
+      "theme": "determinism",
+      "action": "Add --validate flag to trace-report.py for post-write structural checks.",
+      "findings": [],
+      "finding_count": 1
+    },
+    {
+      "id": "O12",
+      "name": "python-prerequisite-check",
+      "title": "Missing Python 3.10+ prerequisite documentation",
+      "description": "Both scripts require Python 3.10+ (PEP 723 metadata) but SKILL.md does not mention this. Script failures on older Python give no helpful message.",
+      "detail": "Either note in Overview or check python3 --version during activation.",
+      "severity": "low",
+      "impact": "low",
+      "theme": "user-experience",
+      "action": "Add brief note in Overview: 'Requires Python 3.10+ for deterministic scripts.'",
+      "findings": [],
+      "finding_count": 1
+    }
+  ],
+  "strengths": [
+    {
+      "title": "Exemplary intelligence placement",
+      "detail": "Scripts handle deterministic work (regex extraction, markdown parsing, statistics) while LLM judgment is reserved for semantic mapping (REQ-to-design, REQ-to-code). This is exactly the split the principles document calls for."
+    },
+    {
+      "title": "Cohesive four-capability design",
+      "detail": "Init, Update, Report, Audit all operate on the same living document and share context. Single skill with capability routing is the right abstraction — avoids four separate skills that would need cross-coordination."
+    },
+    {
+      "title": "Phase detection from column fill state",
+      "detail": "Inferring which phase's data to populate by reading empty columns reduces friction without losing clarity. The confirmation prompt before acting on inference is the right balance of automation and user control."
+    },
+    {
+      "title": "Headless mode from day one",
+      "detail": "Learned from phase gate's O3 finding and included upfront. Prevents costly retrofitting. JSON contract enables cross-skill orchestration."
+    },
+    {
+      "title": "Well-reasoned decision log",
+      "detail": "Documents 6 key decisions with rationale and 3 rejected alternatives. 'Incremental update never remove' and 'fully deterministic mapping rejected' show thoughtful design."
+    },
+    {
+      "title": "Clean customize.toml with no abuse patterns",
+      "detail": "6 fields — 3 standard, 3 workflow-specific. No boolean toggles, no identity fields, no unkeyed arrays. All scalars consumed by SKILL.md. Comments on every field."
+    },
+    {
+      "title": "Scripts return structured JSON",
+      "detail": "Both scripts output well-formed JSON with status fields, counts, and lists. The LLM consumes compact structured data, not raw file content — the pre-pass pattern already applied."
+    }
+  ],
+  "recommendations": [
+    {
+      "rank": 1,
+      "action": "Remove ## On Complete and on_complete scalar — exit hooks don't fire reliably. Add next-step suggestions inline in capability outputs instead."
+    },
+    {
+      "rank": 2,
+      "action": "Compress SKILL.md to ~120 lines: collapse On Activation Steps 1-4 into one line, tighten Update sub-steps to outcome language."
+    },
+    {
+      "rank": 3,
+      "action": "Fix headless convention: add status field, fix trace-report.py exit codes (0 on success regardless of gaps, 1 on actual errors)."
+    },
+    {
+      "rank": 4,
+      "action": "Add runtime .trace-decisions.md capturing mapping rationales during Update for audit trail."
+    },
+    {
+      "rank": 5,
+      "action": "Add mapping confirmation soft-gate: present proposed mappings as table, confirm before writing. Skip in headless."
+    },
+    {
+      "rank": 6,
+      "action": "Remove entity-name regex from script invocation — let LLM handle entity extraction as part of mapping judgment."
+    },
+    {
+      "rank": 7,
+      "action": "Add --detect-phase flag to trace-report.py for compact phase detection without full matrix read."
+    },
+    {
+      "rank": 8,
+      "action": "Expose matrix_template as customize.toml scalar for teams with custom column schemas."
+    },
+    {
+      "rank": 9,
+      "action": "Create scripts/tests/ with unit tests for both Python scripts."
+    },
+    {
+      "rank": 10,
+      "action": "Add compaction recovery: state marker before Update, check on re-activation."
+    }
+  ],
+  "detailed_analysis": {
+    "architecture": {
+      "assessment": "Well-structured simple workflow with clean intelligence placement. SKILL.md at 161 lines is 24% over ceiling — compressible via collapsing boilerplate activation steps and tightening Update sub-procedures. On Complete is a de facto exit hook. Scripts are focused and purposeful. Customize.toml follows conventions.",
+      "findings": []
+    },
+    "determinism": {
+      "assessment": "Unusually good intelligence placement. Two scripts already handle the hardest deterministic tasks (ID extraction, coverage reporting). LLM correctly reserved for semantic mapping. One medium opportunity: phase detection as script pre-pass. Entity-name regex is an intelligence leak — should move to LLM judgment.",
+      "findings": []
+    },
+    "customization": {
+      "assessment": "About right, leaning slightly thin. All 6 customize.toml fields consumed. One genuine lift: matrix_template path. Remaining hardcoded values (D-02 paths, regex patterns) are module-level conventions that belong at system level, not skill customization. No abuse patterns.",
+      "findings": []
+    },
+    "enhancement": {
+      "assessment": "Three high-impact gaps: runtime decision log for audit trail, headless convention compliance for cross-skill integration, and mapping confirmation soft-gate. Four medium/low items around compaction recovery, update diffs, validation, and prerequisites. All additive — no architectural rework needed.",
+      "findings": []
+    }
+  }
+}

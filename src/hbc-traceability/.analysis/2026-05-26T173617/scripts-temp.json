@@ -1,0 +1,76 @@
+{
+  "scanner": "scripts",
+  "script": "scan-scripts.py",
+  "version": "2.0.0",
+  "skill_path": "/Users/hanhnt2/project/opms/hblab-bmad-custom/src/hbc-traceability",
+  "timestamp": "2026-05-26T10:36:32.392027+00:00",
+  "status": "warning",
+  "findings": [
+    {
+      "file": "scripts/extract-trace-ids.py",
+      "line": 1,
+      "severity": "medium",
+      "category": "tests",
+      "title": "No unit test found for extract-trace-ids.py",
+      "detail": "",
+      "action": "Create scripts/tests/test-extract-trace-ids.py with test cases"
+    },
+    {
+      "file": "scripts/trace-report.py",
+      "line": 1,
+      "severity": "medium",
+      "category": "tests",
+      "title": "No unit test found for trace-report.py",
+      "detail": "",
+      "action": "Create scripts/tests/test-trace-report.py with test cases"
+    },
+    {
+      "file": "scripts/tests/",
+      "line": 0,
+      "severity": "high",
+      "category": "tests",
+      "title": "scripts/tests/ directory does not exist \u2014 no unit tests",
+      "detail": "",
+      "action": "Create scripts/tests/ with test files for each script"
+    }
+  ],
+  "assessments": {
+    "lint_summary": {
+      "tools_used": [],
+      "files_linted": 2,
+      "lint_issues": 0
+    },
+    "script_summary": {
+      "total_scripts": 2,
+      "by_type": {
+        "python": 2,
+        "shell": 0,
+        "node": 0,
+        "other": 0
+      },
+      "scripts": {
+        "python": [
+          "extract-trace-ids.py",
+          "trace-report.py"
+        ]
+      },
+      "missing_tests": [
+        "extract-trace-ids.py",
+        "trace-report.py"
+      ]
+    }
+  },
+  "summary": {
+    "total_findings": 3,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 2,
+      "low": 0
+    },
+    "by_category": {
+      "tests": 3
+    },
+    "assessment": ""
+  }
+}
