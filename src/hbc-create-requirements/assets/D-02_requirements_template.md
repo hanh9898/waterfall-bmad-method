@@ -1,3 +1,4 @@
+<!-- {project_name}: filled by LLM from project context at generation time, not a workflow config variable. -->
 ---
 document_id: D-02
 title: "{project_name} 要件定義書"

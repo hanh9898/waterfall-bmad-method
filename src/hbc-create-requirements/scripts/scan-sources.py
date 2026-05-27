@@ -117,6 +117,8 @@ def main():
     else:
         print(text)
 
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

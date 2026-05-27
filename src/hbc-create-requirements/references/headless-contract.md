@@ -21,6 +21,7 @@ Example: `hbc-create-requirements --headless --sources "brief.md,interviews.md" 
     "valid": true,
     "total_issues": 0,
     "auto_fixable_count": 0,
+    "auto_fixes": [],
     "manual_fix_count": 0,
     "req_count": 15
   },
@@ -38,3 +39,4 @@ Example: `hbc-create-requirements --headless --sources "brief.md,interviews.md" 
 - `"no_source_documents"` — no inputs provided and none discoverable.
 - `"validation_manual_fix"` — validation found issues requiring human judgment.
 - `"empty_discovery"` — source documents contain insufficient information to extract requirements.
+- `"mode_conflict"` — existing complete D-02 found but `--mode create` specified. Pass `--mode update` to revise or remove existing D-02 first.

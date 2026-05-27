@@ -18,7 +18,7 @@ persistent_facts = [
 ]
 
 # D-02 template path. Override to use a custom template with different sections.
-template_path = "templates/D-02_requirements_template.md"
+template_path = "assets/D-02_requirements_template.md"
 
 # Output path for the generated D-02 document.
 output_dir = "{project-root}/_hbc_output/plan"
@@ -26,6 +26,6 @@ output_dir = "{project-root}/_hbc_output/plan"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-requirements.py"
 
-# Vague terms to flag during validation.
+# Vague terms to flag during validation. Resolver joins array with commas for CLI.
 # Override to adjust for your domain. Arrays use BMad append-merge.
 vague_terms = ["fast", "easy", "user-friendly", "simple", "good", "nice", "efficient", "appropriate", "adequate", "reasonable"]

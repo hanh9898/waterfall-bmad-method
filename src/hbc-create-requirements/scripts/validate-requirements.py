@@ -16,12 +16,12 @@ import sys
 from pathlib import Path
 
 REQUIRED_SECTIONS = [
-    "プロジェクト概要",
-    "スコープ",
-    "ユーザーロール",
-    "機能要件",
-    "非機能要件",
-    "制約と前提条件",
+    ("プロジェクト概要", "Project Overview"),
+    ("スコープ", "Scope"),
+    ("ユーザーロール", "User Roles"),
+    ("機能要件", "Functional Requirements"),
+    ("非機能要件", "Non-Functional Requirements"),
+    ("制約と前提条件", "Constraints"),
 ]
 
 DEFAULT_VAGUE_TERMS = [
@@ -131,14 +131,16 @@ def check_sections(content: str) -> list[dict]:
     """Verify required sections exist and are non-empty."""
     issues: list[dict] = []
 
-    for section in REQUIRED_SECTIONS:
-        pattern = re.compile(rf"#+\s.*{re.escape(section)}.*", re.IGNORECASE)
-        match = pattern.search(content)
+    for section_names in REQUIRED_SECTIONS:
+        ja_name, en_name = section_names
+        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
+        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
+        match = pattern_ja.search(content) or pattern_en.search(content)
         if not match:
             issues.append({
                 "type": "SECTION_MISSING",
-                "message": f"Required section '{section}' not found",
-                "section": section,
+                "message": f"Required section '{ja_name}' / '{en_name}' not found",
+                "section": ja_name,
                 "auto_fixable": False,
             })
             continue
@@ -154,8 +156,8 @@ def check_sections(content: str) -> list[dict]:
         if not has_content:
             issues.append({
                 "type": "SECTION_EMPTY",
-                "message": f"Section '{section}' exists but has no content",
-                "section": section,
+                "message": f"Section '{ja_name}' exists but has no content",
+                "section": ja_name,
                 "auto_fixable": False,
             })
 

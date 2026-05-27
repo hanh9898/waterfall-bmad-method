@@ -1,0 +1,73 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "3.0.0",
+  "skill_path": "src/hbc-create-requirements",
+  "timestamp": "2026-05-27T12:23:04.878102+00:00",
+  "files_scanned": [
+    ".analysis/2026-05-27T103000/architecture-analysis.md",
+    ".analysis/2026-05-27T103000/customization-analysis.md",
+    ".analysis/2026-05-27T103000/determinism-analysis.md",
+    ".analysis/2026-05-27T103000/enhancement-analysis.md",
+    ".analysis/2026-05-27T103000/execution-deps-prepass.json",
+    ".analysis/2026-05-27T103000/path-standards-temp.json",
+    ".analysis/2026-05-27T103000/prompt-metrics-prepass.json",
+    ".analysis/2026-05-27T103000/report-data.json",
+    ".analysis/2026-05-27T103000/scripts-temp.json",
+    ".analysis/2026-05-27T103000/workflow-integrity-prepass.json",
+    "SKILL.md",
+    "references/.decision-log.md",
+    "references/headless-contract.md",
+    "templates/D-02_requirements_template.md"
+  ],
+  "status": "fail",
+  "findings": [
+    {
+      "file": ".analysis/2026-05-27T103000/customization-analysis.md",
+      "line": 97,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "**Note on `vague_terms` wiring:** The script reads the override TOML file directly (`_bmad/custom/hbc-create-requirement",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-27T103000/customization-analysis.md",
+      "line": 119,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "1. **The `vague_terms` merge chain is broken for personal overrides.** The validation script bypasses the BMad resolver ",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-27T103000/report-data.json",
+      "line": 45,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"description\": \"The validation script reads _bmad/custom/hbc-create-requirements.toml directly, bypassing the BMad resol",
+      "action": ""
+    }
+  ],
+  "assessments": {},
+  "summary": {
+    "total_findings": 3,
+    "by_severity": {
+      "critical": 0,
+      "high": 3,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "double_prefix": 0,
+      "bare_bmad": 3,
+      "absolute_path": 0,
+      "relative_prefix": 0,
+      "cross_dir_dot_slash": 0,
+      "frontmatter": 0,
+      "structure": 0
+    },
+    "assessment": "Path standards scan complete"
+  }
+}
