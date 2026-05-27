@@ -20,18 +20,8 @@
 
 ## Failed Items Detail
 
-<!-- For each FAIL item: what was expected, what was found, suggested fix -->
-
 ## Decision
-
-<!-- PASSED: Phase {N} complete, proceed to Phase {N+1} -->
-<!-- FAILED: Resolve items above before re-running gate -->
-<!-- WARNING: Proceeding with known risks (lenient mode) -->
 
 ---
 
-**Revision History**
-
-| Date | Status | Notes |
-|------|--------|-------|
-| | | |
+**Evaluation history:** See `phase-{N}-gate-log.md` for delta tracking across re-evaluations.

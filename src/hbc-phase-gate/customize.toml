@@ -14,6 +14,8 @@ activation_steps_prepend = []
 
 activation_steps_append = []
 
+# Foundational context loaded on activation. Append project-specific artifacts
+# (e.g. "file:{project-root}/_hbc_output/traceability/matrix.md") in your team override.
 persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
@@ -27,10 +29,16 @@ phase_2_checklist = "assets/phase-2-gate-checklist.md"
 phase_3_checklist = "assets/phase-3-gate-checklist.md"
 phase_4_checklist = "assets/phase-4-gate-checklist.md"
 
+# Report template for generated gate reports.
+# Override to customize layout or add org-specific sections (e.g. sign-off block).
+gate_report_template = "assets/gate-report-template.md"
+
 # Output path for gate reports.
 gate_output_path = "{project-root}/_hbc_output/gates"
 
 # gate_mode (strict/lenient) is intentionally NOT here — it's project-level
 # policy sourced from _bmad/config.yaml [hbc] section, not a per-skill override.
 
+# Post-gate hook (PASSED only). Set to a skill invocation string
+# (e.g. "invoke hbc-traceability") to trigger automatically after a passing gate.
 on_complete = ""

@@ -1,0 +1,75 @@
+{
+  "scanner": "workflow-integrity-prepass",
+  "script": "prepass-workflow-integrity.py",
+  "version": "1.0.0",
+  "skill_path": "src/hbc-traceability",
+  "timestamp": "2026-05-27T11:54:20.063975+00:00",
+  "status": "pass",
+  "metadata": {
+    "frontmatter": {
+      "name": "hbc-traceability",
+      "description": "Living traceability matrix for HBC waterfall lifecycle. Use when user says 'traceability', 'ma tr\u1eadn', 'truy v\u1ebft', or agent menu [TR]."
+    },
+    "sections": [
+      {
+        "level": 2,
+        "title": "Overview",
+        "line": 8
+      },
+      {
+        "level": 2,
+        "title": "Conventions",
+        "line": 16
+      },
+      {
+        "level": 2,
+        "title": "Headless Mode",
+        "line": 23
+      },
+      {
+        "level": 2,
+        "title": "On Activation",
+        "line": 31
+      },
+      {
+        "level": 2,
+        "title": "Initialize",
+        "line": 40
+      },
+      {
+        "level": 2,
+        "title": "Update",
+        "line": 56
+      },
+      {
+        "level": 2,
+        "title": "Report",
+        "line": 72
+      },
+      {
+        "level": 2,
+        "title": "Audit",
+        "line": 90
+      }
+    ],
+    "workflow_type": "simple-workflow"
+  },
+  "stage_summary": {
+    "total_stages": 0,
+    "referenced": [],
+    "actual": [],
+    "missing_stages": [],
+    "orphaned_stages": []
+  },
+  "prompt_details": [],
+  "issues": [],
+  "summary": {
+    "total_issues": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

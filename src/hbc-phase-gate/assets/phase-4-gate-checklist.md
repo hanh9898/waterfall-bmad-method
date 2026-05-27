@@ -8,4 +8,4 @@
 | P4-04 | Acceptance report exists | FILE | yes | _hbc_output/test/acceptance-report* | | hbc-acceptance-review |
 | P4-05 | Acceptance decision is ACCEPTED or DEFERRED | CONTENT | yes | _hbc_output/test/acceptance-report* | status:\s*(ACCEPTED\|DEFERRED) | hbc-acceptance-review |
 | P4-06 | Traceability matrix fully populated | QUALITY | yes | _hbc_output/traceability/matrix* | Every row in the traceability matrix should have non-empty values in: req_id, design_ref, code_ref, test_ref. Report any rows with empty cells. | hbc-traceability |
-| P4-07 | All previous gates PASSED | FILE | yes | _hbc_output/gates/phase-1-gate*,_hbc_output/gates/phase-2-gate*,_hbc_output/gates/phase-3-gate* | | |
+| P4-07 | All previous gates PASSED | CONTENT | yes | _hbc_output/gates/phase-1-gate*,_hbc_output/gates/phase-2-gate*,_hbc_output/gates/phase-3-gate* | Each gate report must contain **Status:** PASSED (not FAILED or WARNING). | |
