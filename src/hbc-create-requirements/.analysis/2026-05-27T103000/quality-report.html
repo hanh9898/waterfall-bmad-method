@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMad Method · Quality Analysis: Unknown</title>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+  --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+  --critical: #f85149; --high: #f0883e; --medium: #d29922; --low: #58a6ff;
+  --strength: #3fb950; --suggestion: #a371f7;
+  --accent: #58a6ff; --accent-hover: #79c0ff;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff; --surface: #f6f8fa; --surface2: #eaeef2; --border: #d0d7de;
+    --text: #1f2328; --text-muted: #656d76; --text-dim: #8c959f;
+    --critical: #cf222e; --high: #bc4c00; --medium: #9a6700; --low: #0969da;
+    --strength: #1a7f37; --suggestion: #8250df;
+    --accent: #0969da; --accent-hover: #0550ae;
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; padding: 2rem; max-width: 900px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+.subtitle a { color: var(--accent); text-decoration: none; }
+.subtitle a:hover { text-decoration: underline; }
+.grade { font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+.grade-Excellent { color: var(--strength); }
+.grade-Good { color: var(--low); }
+.grade-Fair { color: var(--medium); }
+.grade-Poor { color: var(--critical); }
+.narrative { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6; }
+.badge { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; }
+.badge-critical { background: color-mix(in srgb, var(--critical) 20%, transparent); color: var(--critical); }
+.badge-high { background: color-mix(in srgb, var(--high) 20%, transparent); color: var(--high); }
+.badge-medium { background: color-mix(in srgb, var(--medium) 20%, transparent); color: var(--medium); }
+.badge-low { background: color-mix(in srgb, var(--low) 20%, transparent); color: var(--low); }
+.badge-strength { background: color-mix(in srgb, var(--strength) 20%, transparent); color: var(--strength); }
+.section { border: 1px solid var(--border); border-radius: 0.5rem; margin: 0.75rem 0; overflow: hidden; }
+.section-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--surface); cursor: pointer; user-select: none; }
+.section-header:hover { background: var(--surface2); }
+.section-header .arrow { font-size: 0.7rem; transition: transform 0.15s; color: var(--text-muted); width: 1rem; }
+.section-header.open .arrow { transform: rotate(90deg); }
+.section-header .label { font-weight: 600; flex: 1; }
+.section-header .count { font-size: 0.8rem; color: var(--text-muted); }
+.section-header .actions { display: flex; gap: 0.5rem; }
+.section-body { display: none; }
+.section-body.open { display: block; }
+.item { padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
+.item:hover { background: var(--surface); }
+.item-title { font-weight: 600; font-size: 0.9rem; }
+.item-file { font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); }
+.item-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+.item-action { font-size: 0.85rem; margin-top: 0.25rem; }
+.item-action strong { color: var(--strength); }
+.opp { padding: 1rem; border-top: 1px solid var(--border); }
+.opp-header { display: flex; align-items: center; gap: 0.75rem; }
+.opp-name { font-weight: 600; font-size: 1rem; flex: 1; }
+.opp-count { font-size: 0.8rem; color: var(--text-muted); }
+.opp-desc { font-size: 0.9rem; color: var(--text-muted); margin: 0.5rem 0; }
+.opp-impact { font-size: 0.85rem; color: var(--text-dim); font-style: italic; }
+.opp-findings { margin-top: 0.75rem; padding-left: 1rem; border-left: 2px solid var(--border); display: none; }
+.opp-findings.open { display: block; }
+.opp-finding { font-size: 0.85rem; padding: 0.25rem 0; color: var(--text-muted); }
+.opp-finding .source { font-size: 0.75rem; color: var(--text-dim); }
+.btn { background: none; border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.3rem 0.7rem; cursor: pointer; color: var(--text-muted); font-size: 0.8rem; transition: all 0.15s; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn.copied { border-color: var(--strength); color: var(--strength); }
+.strength-item { padding: 0.5rem 1rem; border-top: 1px solid var(--border); }
+.strength-item .title { font-weight: 600; font-size: 0.9rem; color: var(--strength); }
+.strength-item .detail { font-size: 0.85rem; color: var(--text-muted); }
+.analysis-section { padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
+.analysis-section h4 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+.analysis-section p { font-size: 0.85rem; color: var(--text-muted); }
+.analysis-finding { font-size: 0.85rem; padding: 0.25rem 0 0.25rem 1rem; border-left: 2px solid var(--border); margin: 0.25rem 0; color: var(--text-muted); }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.visible { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1.5rem; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; }
+.modal h3 { margin-bottom: 0.75rem; }
+.modal pre { background: var(--bg); border: 1px solid var(--border); border-radius: 0.375rem; padding: 1rem; font-family: var(--mono); font-size: 0.8rem; white-space: pre-wrap; word-wrap: break-word; max-height: 50vh; overflow-y: auto; }
+.modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: flex-end; }
+.recs { padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
+.rec { padding: 0.3rem 0; font-size: 0.9rem; }
+.rec-rank { font-weight: 700; color: var(--accent); margin-right: 0.5rem; }
+.rec-resolves { font-size: 0.8rem; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<div style="color:#a371f7;font-size:0.8rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:0.25rem">BMad Method</div>
+<h1>Quality Analysis: <span id="skill-name"></span></h1>
+<div class="subtitle" id="subtitle"></div>
+
+<div id="grade-area"></div>
+<div class="narrative" id="narrative"></div>
+
+<div id="broken-section"></div>
+<div id="opportunities-section"></div>
+<div id="strengths-section"></div>
+<div id="user-experience-section"></div>
+<div id="recommendations-section"></div>
+<div id="detailed-section"></div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Generated Prompt</h3>
+    <pre id="modal-content"></pre>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="copyModal()">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<script id="report-data" type="application/json">{"skill": "src/hbc-create-requirements", "timestamp": "2026-05-27T10:30:00", "grade": "B+", "grade_rationale": "Clean architecture, well-scoped customization surface, exemplary validation script with tests. Zero broken items. The vague_terms merge-chain bypass and missing headless input contract are the two most actionable findings. Most opportunities improve facilitation patterns and edge-case resilience.", "broken": [], "opportunities": [{"id": "O1", "severity": "high", "theme": "Facilitative Patterns", "title": "No open-floor opening in Discovery", "scanner": "enhancement", "location": "SKILL.md Stage 2", "description": "Discovery jumps into structured categories without first inviting the user to dump everything they know. Forces Q&A interrogation instead of collaborative conversation.", "suggestion": "Add one sentence before the category list: 'Begin Discovery with an open invitation for the user to share everything available — goals, documents, constraints, concerns, prior art — then identify which areas still need elicitation.'"}, {"id": "O2", "severity": "high", "theme": "Headless Completeness", "title": "Headless input contract missing", "scanner": "enhancement", "location": "references/headless-contract.md", "description": "The contract defines the return schema but not the input schema. An automator cannot invoke headless mode without guessing what args to pass.", "suggestion": "Add an 'Input Schema' section: required --sources (file paths), optional --mode (create/update/validate), optional --vague-terms. Include a minimal invocation example."}, {"id": "O3", "severity": "high", "theme": "Headless Completeness", "title": "Decision-log path absent from headless return", "scanner": "enhancement", "location": "references/headless-contract.md", "description": "Quality principles require headless returns to include the decision-log path for audit trail. Current schema omits it.", "suggestion": "Add 'decision_log' field to the return schema."}, {"id": "O4", "severity": "medium", "theme": "Customization Correctness", "title": "vague_terms merge chain broken for personal overrides", "scanner": "customization", "location": "scripts/validate-requirements.py load_vague_terms()", "description": "The validation script reads _bmad/custom/hbc-create-requirements.toml directly, bypassing the BMad resolver. Personal .user.toml overrides are silently ignored.", "suggestion": "Pass the resolved {workflow.vague_terms} as a --vague-terms CLI argument from SKILL.md instead of reading TOML directly in the script."}, {"id": "O5", "severity": "medium", "theme": "Customization Correctness", "title": "vague_terms should be a TOML array, not comma-separated string", "scanner": "customization", "location": "customize.toml line 28", "description": "TOML natively supports arrays. Comma-separated strings force manual parsing and are error-prone for override authors.", "suggestion": "Change to vague_terms = ['fast', 'easy', ...]. Update CLI parsing to accept the resolved array. Keep --vague-terms CLI as comma-separated for ergonomics."}, {"id": "O6", "severity": "medium", "theme": "Facilitative Patterns", "title": "No soft-gate transitions in Discovery", "scanner": "enhancement", "location": "SKILL.md Stage 2", "description": "Six discovery areas listed without guidance on transitioning between them. Users in flow get cut off; users needing more time get pushed forward.", "suggestion": "Add: 'At each area boundary, use soft-gate elicitation — Anything else on [area], or shall we move on?'"}, {"id": "O7", "severity": "medium", "theme": "Compaction Resilience", "title": "No compaction flush at Stages 3-4", "scanner": "enhancement", "location": "SKILL.md Stages 3 and 4", "description": "Stage 2 has explicit compaction flush but Stages 3 and 4 don't. If compaction fires after validation but before save, validation findings are lost.", "suggestion": "Add compaction flush notes at end of Stages 3 and 4."}, {"id": "O8", "severity": "medium", "theme": "Facilitative Patterns", "title": "Parallel-lens menu unexplained", "scanner": "enhancement", "location": "SKILL.md Stages 3 and 4", "description": "[A]/[P]/[C] appears without context. 'Party Mode' is an HBC convention new users won't know.", "suggestion": "Add one-line parenthetical for each option."}, {"id": "O9", "severity": "medium", "theme": "Expert Path", "title": "No import-and-convert path for experts", "scanner": "enhancement", "location": "SKILL.md Args", "description": "Expert with pre-structured requirements has no way to skip Discovery. Neither create (from scratch) nor update (existing D-02) covers 'import and convert.'", "suggestion": "Document in Stage 2 that when source documents contain structured requirements, Discovery should detect and skip to confirmation."}, {"id": "O10", "severity": "medium", "theme": "Facilitative Patterns", "title": "Capture-don't-interrupt for cross-artifact insights", "scanner": "enhancement", "location": "SKILL.md Stage 2", "description": "Users frequently mention glossary terms or business-flow processes during requirements discovery. Nothing captures these for handoff.", "suggestion": "Add: 'Silently capture glossary-worthy terms and business-flow processes — surface them in Stage 5 handoff.'"}, {"id": "O11", "severity": "medium", "theme": "Determinism", "title": "Source inventory pre-pass script opportunity", "scanner": "determinism", "location": "SKILL.md Stage 1b", "description": "The LLM scans the project tree to discover existing documents — a deterministic operation costing 200-400 tokens per invocation.", "suggestion": "A Python script scanning {project-root} for known HBC patterns, checking D-02 frontmatter, returning a compact JSON manifest."}, {"id": "O12", "severity": "medium", "theme": "Customization Surface", "title": "Validation script path not liftable to customize.toml", "scanner": "customization", "location": "SKILL.md Stage 4", "description": "The validation script path is hardcoded. Teams wanting a stricter validator cannot swap it without forking.", "suggestion": "Add validation_script scalar to customize.toml with a comment about interface contract."}, {"id": "O13", "severity": "low", "theme": "Architecture", "title": "Build-time decision log in references/", "scanner": "architecture", "location": "references/.decision-log.md", "description": "Build-time decision log mixed with runtime-loaded content in references/. The dotfile prefix mitigates but doesn't eliminate ambiguity.", "suggestion": "Acceptable as-is given dotfile convention. No action needed unless references/ gains more build artifacts."}, {"id": "O14", "severity": "low", "theme": "Resilience", "title": "No graceful degradation when Python unavailable", "scanner": "enhancement", "location": "SKILL.md Stage 4", "description": "Skill requires Python 3.10+ for validation but doesn't specify fallback when unavailable.", "suggestion": "Add: 'If validation script unavailable, fall back to LLM-only validation and note limitation in decision log.'"}, {"id": "O15", "severity": "low", "theme": "Facilitative Patterns", "title": "Smart defaults from project-context.md", "scanner": "enhancement", "location": "SKILL.md Stage 2", "description": "project-context.md listed as source but skill doesn't say to pre-populate Discovery fields from it.", "suggestion": "Add: 'Pre-populate Discovery fields from project-context.md where available; present as defaults for confirmation.'"}, {"id": "O16", "severity": "low", "theme": "Architecture", "title": "output_path naming ambiguity", "scanner": "customization", "location": "customize.toml line 24", "description": "output_path points to a directory, not a file. Name is slightly ambiguous.", "suggestion": "Rename to output_dir or document that this is a directory."}], "strengths": ["Right-sized SKILL.md at 96 lines / 1228 tokens — compact, no padding", "Exemplary intelligence placement: deterministic validation in script, judgment in LLM", "Validation script with 11 tests, auto_fixable flags, configurable vague terms", "Minimal customization surface: 3 scalars covering real variance dimensions", "Outcome-based prose throughout — stages describe goals, not step-by-step procedures", "Compact resume/update handling in single natural block", "Stage 2 compaction flush preserves discovery state across context compaction", "Headless return contract is clean with clear status values and blocked reasons", "Template structure aligns exactly with validation script checks", "Script invocation syntax is exact in SKILL.md — fragile-operation done right"], "recommendations": ["Fix vague_terms merge chain — pass resolved value as CLI arg instead of reading TOML directly (O4)", "Add headless input schema to the contract document (O2, O3)", "Add open-floor opening to Discovery stage (O1)", "Add compaction flush to Stages 3-4 (O7)", "Consider soft-gate transitions and capture-don't-interrupt patterns (O6, O10)"]}</script>
+<script>
+const RAW = JSON.parse(document.getElementById('report-data').textContent);
+const DATA = normalize(RAW);
+
+function normalize(d) {
+  // Fix meta field variants
+  if (d.meta) {
+    d.meta.skill_name = d.meta.skill_name || d.meta.skill || d.meta.name || 'Unknown';
+    d.meta.scanner_count = typeof d.meta.scanner_count === 'number' ? d.meta.scanner_count
+      : Array.isArray(d.meta.scanners_run) ? d.meta.scanners_run.length
+      : d.meta.scanner_count || 0;
+  }
+  // Fix strengths: plain strings → objects
+  d.strengths = (d.strengths || []).map(s =>
+    typeof s === 'string' ? { title: s, detail: '' } : { title: s.title || '', detail: s.detail || '' }
+  );
+  // Fix opportunities: title→name, findings_resolved→findings
+  (d.opportunities || []).forEach(o => {
+    o.name = o.name || o.title || '';
+    o.finding_count = o.finding_count || (o.findings || o.findings_resolved || []).length;
+    if (!o.findings && o.findings_resolved) o.findings = [];
+    o.action = o.action || o.fix || '';
+  });
+  // Fix broken: description→detail, fix→action
+  (d.broken || []).forEach(b => {
+    b.detail = b.detail || b.description || '';
+    b.action = b.action || b.fix || '';
+  });
+  // Fix recommendations: description→action
+  (d.recommendations || []).forEach((r, i) => {
+    r.action = r.action || r.description || '';
+    r.rank = r.rank || i + 1;
+  });
+  // Fix journeys: persona→archetype, friction→friction_points
+  // Accept both `enhancement` (new) and `experience` (legacy) section keys
+  const expSection = d.detailed_analysis && (d.detailed_analysis.enhancement || d.detailed_analysis.experience);
+  if (expSection) {
+    expSection.journeys = (expSection.journeys || []).map(j => ({
+      archetype: j.archetype || j.persona || j.name || 'Unknown',
+      summary: j.summary || j.journey_summary || j.description || j.friction || '',
+      friction_points: j.friction_points || (j.friction ? [j.friction] : []),
+      bright_spots: j.bright_spots || (j.bright ? [j.bright] : [])
+    }));
+  }
+  return d;
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function init() {
+  const m = DATA.meta;
+  document.getElementById('skill-name').textContent = m.skill_name;
+  document.getElementById('subtitle').innerHTML =
+    `${esc(m.skill_path)} &bull; ${m.timestamp ? m.timestamp.split('T')[0] : ''} &bull; ${m.scanner_count || 0} scanners &bull; <a href="quality-report.md">Full Report &nearr;</a>`;
+
+  document.getElementById('grade-area').innerHTML =
+    `<div class="grade grade-${DATA.grade}">${esc(DATA.grade)}</div>`;
+  document.getElementById('narrative').textContent = DATA.narrative || '';
+
+  renderBroken();
+  renderOpportunities();
+  renderStrengths();
+  renderUserExperience();
+  renderRecommendations();
+  renderDetailed();
+}
+
+function renderBroken() {
+  const items = DATA.broken || [];
+  if (!items.length) return;
+  let html = `<div class="section"><div class="section-header open" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">Broken / Critical (${items.length})</span>`;
+  html += `<div class="actions"><button class="btn btn-primary" onclick="event.stopPropagation();showBrokenPrompt()">Fix These</button></div>`;
+  html += `</div><div class="section-body open">`;
+  items.forEach(item => {
+    const loc = item.file ? `${item.file}${item.line ? ':'+item.line : ''}` : '';
+    html += `<div class="item">`;
+    html += `<span class="badge badge-${item.severity || 'high'}">${esc(item.severity || 'high')}</span> `;
+    if (loc) html += `<span class="item-file">${esc(loc)}</span>`;
+    html += `<div class="item-title">${esc(item.title)}</div>`;
+    if (item.detail) html += `<div class="item-desc">${esc(item.detail)}</div>`;
+    if (item.action) html += `<div class="item-action"><strong>Fix:</strong> ${esc(item.action)}</div>`;
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('broken-section').innerHTML = html;
+}
+
+function renderOpportunities() {
+  const opps = DATA.opportunities || [];
+  if (!opps.length) return;
+  let html = `<div class="section"><div class="section-header open" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">Opportunities (${opps.length})</span>`;
+  html += `</div><div class="section-body open">`;
+  opps.forEach((opp, idx) => {
+    html += `<div class="opp">`;
+    html += `<div class="opp-header">`;
+    html += `<span class="badge badge-${opp.severity || 'medium'}">${esc(opp.severity || 'medium')}</span>`;
+    html += `<span class="opp-name">${idx+1}. ${esc(opp.name)}</span>`;
+    html += `<span class="opp-count">${opp.finding_count || (opp.findings||[]).length} observations</span>`;
+    html += `<button class="btn" onclick="toggleFindings(${idx})">Details</button>`;
+    html += `<button class="btn btn-primary" onclick="showThemePrompt(${idx})">Fix This</button>`;
+    html += `</div>`;
+    html += `<div class="opp-desc">${esc(opp.description)}</div>`;
+    if (opp.impact) html += `<div class="opp-impact">Impact: ${esc(opp.impact)}</div>`;
+    html += `<div class="opp-findings" id="findings-${idx}">`;
+    (opp.findings || []).forEach(f => {
+      const loc = f.file ? `${f.file}${f.line ? ':'+f.line : ''}` : '';
+      html += `<div class="opp-finding">`;
+      html += `<strong>${esc(f.title)}</strong>`;
+      if (loc) html += ` <span class="item-file">${esc(loc)}</span>`;
+      if (f.source) html += ` <span class="source">[${esc(f.source)}]</span>`;
+      if (f.detail) html += `<br>${esc(f.detail)}`;
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('opportunities-section').innerHTML = html;
+}
+
+function renderStrengths() {
+  const items = DATA.strengths || [];
+  if (!items.length) return;
+  let html = `<div class="section"><div class="section-header" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">Strengths (${items.length})</span>`;
+  html += `</div><div class="section-body">`;
+  items.forEach(s => {
+    html += `<div class="strength-item"><div class="title">${esc(s.title)}</div>`;
+    if (s.detail) html += `<div class="detail">${esc(s.detail)}</div>`;
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('strengths-section').innerHTML = html;
+}
+
+function renderRecommendations() {
+  const recs = DATA.recommendations || [];
+  if (!recs.length) return;
+  let html = `<div class="section"><div class="section-header open" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">Recommendations</span>`;
+  html += `</div><div class="section-body open"><div class="recs">`;
+  recs.forEach(r => {
+    html += `<div class="rec">`;
+    html += `<span class="rec-rank">#${r.rank}</span>`;
+    html += `${esc(r.action)}`;
+    if (r.resolves) html += ` <span class="rec-resolves">(resolves ${r.resolves} observations)</span>`;
+    html += `</div>`;
+  });
+  html += `</div></div></div>`;
+  document.getElementById('recommendations-section').innerHTML = html;
+}
+
+function renderUserExperience() {
+  const ux = DATA.detailed_analysis && DATA.detailed_analysis.enhancement;
+  if (!ux) return;
+  let html = `<div class="section"><div class="section-header open" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">User Experience</span>`;
+  html += `</div><div class="section-body open">`;
+  if (ux.assessment) html += `<p>${esc(ux.assessment)}</p>`;
+  if (ux.journeys && ux.journeys.length) {
+    html += `<div style="margin:1rem 0"><strong>User Journeys:</strong></div>`;
+    ux.journeys.forEach(j => {
+      html += `<div style="margin:0.75rem 0;padding:0.75rem;border-left:3px solid var(--accent);background:var(--surface2);">`;
+      html += `<div style="font-weight:600;margin-bottom:0.5rem">${esc(j.archetype)}</div>`;
+      html += `<p style="margin:0 0 0.5rem 0;font-size:0.95rem">${esc(j.summary || '')}</p>`;
+      if (j.friction_points && j.friction_points.length) {
+        html += `<div style="color:var(--high);font-size:0.85rem;margin:0.25rem 0"><strong>Friction Points:</strong></div>`;
+        html += `<ul style="margin:0.25rem 0 0.5rem 1.25rem;color:var(--high);font-size:0.85rem">`;
+        j.friction_points.forEach(fp => { html += `<li>${esc(fp)}</li>`; });
+        html += `</ul>`;
+      }
+      if (j.bright_spots && j.bright_spots.length) {
+        html += `<div style="color:var(--strength);font-size:0.85rem;margin:0.25rem 0"><strong>Bright Spots:</strong></div>`;
+        html += `<ul style="margin:0.25rem 0 0 1.25rem;color:var(--strength);font-size:0.85rem">`;
+        j.bright_spots.forEach(bs => { html += `<li>${esc(bs)}</li>`; });
+        html += `</ul>`;
+      }
+      html += `</div>`;
+    });
+  }
+  if (ux.autonomous) {
+    const a = ux.autonomous;
+    html += `<div style="margin:1rem 0;padding:0.75rem;background:var(--surface2);border-left:3px solid var(--suggestion);">`;
+    html += `<div style="font-weight:600;margin-bottom:0.5rem">Headless / Automation Potential</div>`;
+    html += `<div><strong>${esc(a.potential || '')}</strong>`;
+    if (a.notes) html += `: ${esc(a.notes)}`;
+    html += `</div></div>`;
+  }
+  (ux.findings || []).forEach(f => {
+    const loc = f.file ? `${f.file}${f.line ? ':'+f.line : ''}` : '';
+    html += `<div class="analysis-finding">`;
+    if (f.severity) html += `<span class="badge badge-${f.severity}">${esc(f.severity)}</span> `;
+    html += `${esc(f.title)}`;
+    if (loc) html += ` <span class="item-file">${esc(loc)}</span>`;
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('user-experience-section').innerHTML = html;
+}
+
+function renderDetailed() {
+  const da = DATA.detailed_analysis;
+  if (!da) return;
+  const dims = [
+    ['architecture', 'Architecture (Structure, Craft, Cohesion)'],
+    ['determinism', 'Determinism & Distribution'],
+    ['customization', 'Customization Surface']
+  ];
+  let html = `<div class="section"><div class="section-header" onclick="toggleSection(this)">`;
+  html += `<span class="arrow">&#9654;</span><span class="label">Detailed Analysis</span>`;
+  html += `</div><div class="section-body">`;
+  dims.forEach(([key, label]) => {
+    const dim = da[key];
+    if (!dim) return;
+    html += `<div class="analysis-section"><h4>${label}</h4>`;
+    if (dim.assessment) html += `<p>${esc(dim.assessment)}</p>`;
+    if (dim.dimensions) {
+      html += `<table style="width:100%;font-size:0.85rem;margin:0.5rem 0;border-collapse:collapse;">`;
+      html += `<tr><th style="text-align:left;padding:0.3rem;border-bottom:1px solid var(--border)">Dimension</th><th style="text-align:left;padding:0.3rem;border-bottom:1px solid var(--border)">Score</th><th style="text-align:left;padding:0.3rem;border-bottom:1px solid var(--border)">Notes</th></tr>`;
+      Object.entries(dim.dimensions).forEach(([d, v]) => {
+        if (v && typeof v === 'object') {
+          html += `<tr><td style="padding:0.3rem;border-bottom:1px solid var(--border)">${esc(d.replace(/_/g,' '))}</td><td style="padding:0.3rem;border-bottom:1px solid var(--border)">${esc(v.score||'')}</td><td style="padding:0.3rem;border-bottom:1px solid var(--border)">${esc(v.notes||'')}</td></tr>`;
+        }
+      });
+      html += `</table>`;
+    }
+    if (dim.journeys && dim.journeys.length) {
+      dim.journeys.forEach(j => {
+        html += `<div style="margin:0.5rem 0"><strong>${esc(j.archetype)}</strong>: ${esc(j.summary || j.journey_summary || '')}`;
+        if (j.friction_points && j.friction_points.length) {
+          html += `<ul style="color:var(--high);font-size:0.85rem;padding-left:1.25rem">`;
+          j.friction_points.forEach(fp => { html += `<li>${esc(fp)}</li>`; });
+          html += `</ul>`;
+        }
+        html += `</div>`;
+      });
+    }
+    if (dim.autonomous) {
+      const a = dim.autonomous;
+      html += `<p><strong>Headless Potential:</strong> ${esc(a.potential||'')}`;
+      if (a.notes) html += ` — ${esc(a.notes)}`;
+      html += `</p>`;
+    }
+    (dim.findings || []).forEach(f => {
+      const loc = f.file ? `${f.file}${f.line ? ':'+f.line : ''}` : '';
+      html += `<div class="analysis-finding">`;
+      if (f.severity) html += `<span class="badge badge-${f.severity}">${esc(f.severity)}</span> `;
+      html += `${esc(f.title)}`;
+      if (loc) html += ` <span class="item-file">${esc(loc)}</span>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div></div>`;
+  document.getElementById('detailed-section').innerHTML = html;
+}
+
+// --- Interactions ---
+function toggleSection(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+function toggleFindings(idx) {
+  document.getElementById('findings-'+idx).classList.toggle('open');
+}
+
+// --- Prompt Generation ---
+function showThemePrompt(idx) {
+  const opp = DATA.opportunities[idx];
+  if (!opp) return;
+  let prompt = `## Task: ${opp.name}\nSkill path: ${DATA.meta.skill_path}\n\n`;
+  prompt += `### Problem\n${opp.description}\n\n`;
+  prompt += `### Fix\n${opp.action}\n\n`;
+  if (opp.findings && opp.findings.length) {
+    prompt += `### Specific observations to address:\n\n`;
+    opp.findings.forEach((f, i) => {
+      const loc = f.file ? (f.line ? `${f.file}:${f.line}` : f.file) : '';
+      prompt += `${i+1}. **${f.title}**`;
+      if (loc) prompt += ` (${loc})`;
+      if (f.detail) prompt += `\n   ${f.detail}`;
+      prompt += `\n`;
+    });
+  }
+  document.getElementById('modal-title').textContent = `Fix: ${opp.name}`;
+  document.getElementById('modal-content').textContent = prompt.trim();
+  document.getElementById('modal').classList.add('visible');
+}
+
+function showBrokenPrompt() {
+  const items = DATA.broken || [];
+  let prompt = `## Task: Fix Critical Issues\nSkill path: ${DATA.meta.skill_path}\n\n`;
+  items.forEach((item, i) => {
+    const loc = item.file ? (item.line ? `${item.file}:${item.line}` : item.file) : '';
+    prompt += `${i+1}. **[${(item.severity||'high').toUpperCase()}] ${item.title}**\n`;
+    if (loc) prompt += `   File: ${loc}\n`;
+    if (item.detail) prompt += `   Context: ${item.detail}\n`;
+    if (item.action) prompt += `   Fix: ${item.action}\n`;
+    prompt += `\n`;
+  });
+  document.getElementById('modal-title').textContent = 'Fix Critical Issues';
+  document.getElementById('modal-content').textContent = prompt.trim();
+  document.getElementById('modal').classList.add('visible');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('visible'); }
+
+function copyModal() {
+  const text = document.getElementById('modal-content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.modal .btn-primary');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy to Clipboard'; }, 1500);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

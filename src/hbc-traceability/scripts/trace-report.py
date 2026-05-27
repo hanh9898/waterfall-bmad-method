@@ -97,6 +97,55 @@ def generate_report(rows: list[dict]) -> dict:
     }
 
 
+def detect_phase(rows: list[dict]) -> dict:
+    """Determine which phase update is needed from empty column analysis."""
+    total = len(rows)
+    if total == 0:
+        return {"next_phase": 1, "empty_columns": COVERAGE_COLUMNS, "total_rows": 0}
+
+    empty_cols = [
+        col for col in COVERAGE_COLUMNS
+        if all(not r.get(col) for r in rows)
+    ]
+
+    phase_map = {"design_ref": 2, "code_ref": 3, "test_ref": 4}
+    next_phase = min((phase_map[col] for col in empty_cols), default=0)
+
+    return {
+        "next_phase": next_phase,
+        "empty_columns": empty_cols,
+        "total_rows": total,
+    }
+
+
+def validate_matrix(rows: list[dict]) -> dict:
+    """Validate matrix structural integrity."""
+    issues: list[str] = []
+
+    req_ids = [r.get("req_id", "") for r in rows]
+    empty_ids = [i for i, rid in enumerate(req_ids, 1) if not rid]
+    if empty_ids:
+        issues.append(f"Empty req_id in row(s): {empty_ids}")
+
+    seen: dict[str, int] = {}
+    for i, rid in enumerate(req_ids, 1):
+        if rid and rid in seen:
+            issues.append(f"Duplicate req_id '{rid}' in rows {seen[rid]} and {i}")
+        elif rid:
+            seen[rid] = i
+
+    for i, r in enumerate(rows, 1):
+        col_count = sum(1 for c in COLUMNS if c in r)
+        if col_count < len(COLUMNS):
+            issues.append(f"Row {i} has {col_count}/{len(COLUMNS)} columns")
+
+    return {
+        "valid": len(issues) == 0,
+        "issues": issues,
+        "rows_checked": len(rows),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate traceability coverage report from matrix."
@@ -105,6 +154,18 @@ def main():
         "--matrix", required=True, help="Path to traceability matrix markdown"
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
+    parser.add_argument(
+        "--strict", action="store_true",
+        help="Exit 1 when gaps exist (default: exit 0 on successful parse)",
+    )
+    parser.add_argument(
+        "--detect-phase", action="store_true",
+        help="Return compact phase detection instead of full report",
+    )
+    parser.add_argument(
+        "--validate", action="store_true",
+        help="Validate matrix structure (column count, duplicate/empty req_ids)",
+    )
     args = parser.parse_args()
 
     matrix_path = Path(args.matrix)
@@ -117,16 +178,26 @@ def main():
         sys.exit(1)
 
     rows = parse_matrix(str(matrix_path))
-    report = generate_report(rows)
 
-    text = json.dumps(report, indent=2, ensure_ascii=False)
+    if args.validate:
+        result = validate_matrix(rows)
+    elif args.detect_phase:
+        result = detect_phase(rows)
+    else:
+        result = generate_report(rows)
+
+    text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
         print(f"Report written to {args.output}", file=sys.stderr)
     else:
         print(text)
 
-    sys.exit(0 if not report["gaps"] else 1)
+    if args.validate:
+        sys.exit(0 if result.get("valid") else 1)
+    if args.detect_phase:
+        sys.exit(0)
+    sys.exit(1 if args.strict and result.get("gaps") else 0)
 
 
 if __name__ == "__main__":

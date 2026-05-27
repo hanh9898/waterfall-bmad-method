@@ -1,0 +1,99 @@
+{
+  "scanner": "prompt-craft-prepass",
+  "script": "prepass-prompt-metrics.py",
+  "version": "1.0.0",
+  "skill_path": "src/hbc-agent-ba",
+  "timestamp": "2026-05-27T10:23:05.005517+00:00",
+  "status": "info",
+  "skill_md_summary": {
+    "line_count": 96,
+    "token_estimate": 1592,
+    "overview_lines": 7,
+    "table_count": 0,
+    "table_lines": 0,
+    "fenced_block_count": 1,
+    "fenced_block_lines": 11,
+    "section_count": 9
+  },
+  "prompt_health": {
+    "total_prompts": 0,
+    "prompts_with_config_header": 0,
+    "prompts_with_progression": 0
+  },
+  "aggregate": {
+    "total_files_scanned": 1,
+    "total_token_estimate": 1592,
+    "total_waste_patterns": 0,
+    "total_back_references": 0
+  },
+  "reference_sizes": {
+    ".decision-log.md": {
+      "lines": 36,
+      "tokens": 499
+    }
+  },
+  "files": [
+    {
+      "file": "SKILL.md",
+      "line_count": 96,
+      "token_estimate": 1592,
+      "sections": [
+        {
+          "level": 2,
+          "title": "Overview",
+          "line": 8
+        },
+        {
+          "level": 2,
+          "title": "Conventions",
+          "line": 16
+        },
+        {
+          "level": 2,
+          "title": "Headless Mode",
+          "line": 23
+        },
+        {
+          "level": 2,
+          "title": "On Activation",
+          "line": 43
+        },
+        {
+          "level": 3,
+          "title": "Step 1: Resolve the Agent Block",
+          "line": 45
+        },
+        {
+          "level": 3,
+          "title": "Embody Persona and Load Context",
+          "line": 57
+        },
+        {
+          "level": 3,
+          "title": "Scan Phase 1 State",
+          "line": 63
+        },
+        {
+          "level": 3,
+          "title": "Greet and Present",
+          "line": 71
+        },
+        {
+          "level": 2,
+          "title": "Menu Dispatch",
+          "line": 81
+        }
+      ],
+      "table_count": 0,
+      "table_lines": 0,
+      "fenced_block_count": 1,
+      "fenced_block_lines": 11,
+      "waste_patterns": [],
+      "back_references": [],
+      "has_config_header": true,
+      "has_progression": false,
+      "overview_lines": 7,
+      "is_skill_md": true
+    }
+  ]
+}

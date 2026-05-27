@@ -1,0 +1,150 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "3.0.0",
+  "skill_path": "src/hbc-phase-gate",
+  "timestamp": "2026-05-27T10:33:50.685164+00:00",
+  "files_scanned": [
+    ".analysis/2026-05-26T160200/architecture-analysis.md",
+    ".analysis/2026-05-26T160200/customization-analysis.md",
+    ".analysis/2026-05-26T160200/determinism-analysis.md",
+    ".analysis/2026-05-26T160200/enhancement-analysis.md",
+    ".analysis/2026-05-26T160200/execution-deps-prepass.json",
+    ".analysis/2026-05-26T160200/memory-output-folder.md",
+    ".analysis/2026-05-26T160200/path-standards-temp.json",
+    ".analysis/2026-05-26T160200/prompt-metrics-prepass.json",
+    ".analysis/2026-05-26T160200/quality-report.md",
+    ".analysis/2026-05-26T160200/report-data.json",
+    ".analysis/2026-05-26T160200/scripts-temp.json",
+    ".analysis/2026-05-26T160200/workflow-integrity-prepass.json",
+    "SKILL.md",
+    "assets/gate-report-template.md",
+    "assets/phase-1-gate-checklist.md",
+    "assets/phase-2-gate-checklist.md",
+    "assets/phase-3-gate-checklist.md",
+    "assets/phase-4-gate-checklist.md",
+    "references/.decision-log.md"
+  ],
+  "status": "fail",
+  "findings": [
+    {
+      "file": ".analysis/2026-05-26T160200/customization-analysis.md",
+      "line": 42,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "**Issue:** The gate-evaluation logic references `{gate_mode}` (strict vs lenient), but it's sourced from `_bmad/config.y",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/customization-analysis.md",
+      "line": 134,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "3. **Phase skill override mechanism is underdiscoverable.** The decision log (line 16) mentions phase skills can overrid",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/enhancement-analysis.md",
+      "line": 7,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "**Primary user:** Phase gate reviewers (architects, QA leads, dev leads) invoking from agent context menus. **Key assump",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/execution-deps-prepass.json",
+      "line": 5,
+      "severity": "high",
+      "category": "absolute-path",
+      "title": "Absolute path found \u2014 not portable across machines",
+      "detail": "\"skill_path\": \"/Users/hanhnt2/project/opms/hblab-bmad-custom/skills/hbc-phase-gate\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/path-standards-temp.json",
+      "line": 5,
+      "severity": "high",
+      "category": "absolute-path",
+      "title": "Absolute path found \u2014 not portable across machines",
+      "detail": "\"skill_path\": \"/Users/hanhnt2/project/opms/hblab-bmad-custom/skills/hbc-phase-gate\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/prompt-metrics-prepass.json",
+      "line": 5,
+      "severity": "high",
+      "category": "absolute-path",
+      "title": "Absolute path found \u2014 not portable across machines",
+      "detail": "\"skill_path\": \"/Users/hanhnt2/project/opms/hblab-bmad-custom/skills/hbc-phase-gate\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/report-data.json",
+      "line": 139,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"description\": \"gate_mode (strict/lenient) is sourced from _bmad/config.yaml, preventing per-skill or per-team overrides",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/report-data.json",
+      "line": 140,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"detail\": \"gate_mode (strict/lenient) is sourced from _bmad/config.yaml, preventing per-skill or per-team overrides. Dec",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/report-data.json",
+      "line": 157,
+      "severity": "high",
+      "category": "bare-bmad",
+      "title": "Bare _bmad reference without {project-root} prefix",
+      "detail": "\"action\": \"Add a one-sentence comment in customize.toml field: 'Phase skills can override by setting the same scalar in ",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/scripts-temp.json",
+      "line": 5,
+      "severity": "high",
+      "category": "absolute-path",
+      "title": "Absolute path found \u2014 not portable across machines",
+      "detail": "\"skill_path\": \"/Users/hanhnt2/project/opms/hblab-bmad-custom/skills/hbc-phase-gate\",",
+      "action": ""
+    },
+    {
+      "file": ".analysis/2026-05-26T160200/workflow-integrity-prepass.json",
+      "line": 5,
+      "severity": "high",
+      "category": "absolute-path",
+      "title": "Absolute path found \u2014 not portable across machines",
+      "detail": "\"skill_path\": \"/Users/hanhnt2/project/opms/hblab-bmad-custom/skills/hbc-phase-gate\",",
+      "action": ""
+    }
+  ],
+  "assessments": {},
+  "summary": {
+    "total_findings": 11,
+    "by_severity": {
+      "critical": 0,
+      "high": 11,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "double_prefix": 0,
+      "bare_bmad": 6,
+      "absolute_path": 5,
+      "relative_prefix": 0,
+      "cross_dir_dot_slash": 0,
+      "frontmatter": 0,
+      "structure": 0
+    },
+    "assessment": "Path standards scan complete"
+  }
+}

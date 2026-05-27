@@ -22,8 +22,10 @@ persistent_facts = [
 # To override: set this key in {project-root}/_bmad/custom/hbc-traceability.toml
 matrix_path = "{project-root}/_hbc_output/traceability/matrix.md"
 
+# Template used when initializing a new matrix.
+# Override to add custom columns (e.g. priority, module) or change header format.
+matrix_template = "assets/matrix-template.md"
+
 # Optional: source code root for Phase 3 code_ref mapping.
 # Leave empty to prompt user at runtime.
 source_code_path = ""
-
-on_complete = ""

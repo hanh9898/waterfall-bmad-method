@@ -6,7 +6,21 @@ description: "HBLAB custom variants of BMad Method workflows. Expansion module �
 default_selected: false
 module_version: 1.0.0
 
+agents:
+  hbc-agent-ba:
+    name: ""
+    title: "Business Analyst"
+    icon: "💼"
+    description: "Phase 1 Analysis coordinator. Guides requirements, glossary, and business flow creation."
+    module: "hbc"
+    team: "hbc"
+
 post-install-notes: |
   HBLAB BMad Custom module installed successfully!
   Required: BMM module must be installed first.
-  Start with: [CI] Create INVEST Epics & Stories
+  Agents: [BA] Business Analyst (Phase 1)
+  Phase 1 Analysis: [REQ] Requirements → [GLO] Glossary → [BFD] Business Flow
+  Phase 2 Design: [ERD] ER Diagram
+  Phase 3 Implementation: [CI] INVEST Epics & Stories
+  Cross-cutting: [PG] Phase Gate, [TR] Traceability Matrix
+  Start with: [BA] Business Analyst or [REQ] Create Requirements

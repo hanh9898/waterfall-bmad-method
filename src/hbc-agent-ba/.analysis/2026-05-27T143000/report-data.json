@@ -1,0 +1,195 @@
+{
+  "skill": "hbc-agent-ba",
+  "scan_date": "2026-05-27",
+  "skill_type": "agent",
+  "grade": "B-",
+  "grade_rationale": "Structurally sound BMad agent implementation — faithful to the reference pattern, well-wired customize.toml, correct key-merge semantics. One functional gap (missing output_path scalar) and several enhancement opportunities (headless, resume, open-floor opening) prevent a B or higher. The agent does its core job — Phase 1 coordination with state scan and menu dispatch — correctly.",
+  "findings": [
+    {
+      "id": "O1",
+      "severity": "HIGH",
+      "title": "Missing output_path scalar in customize.toml",
+      "source": ["L1-architecture", "L4-enhancement"],
+      "file": "SKILL.md:49-65, customize.toml",
+      "description": "Step 5 references 'output location from the hbc module section' but no output_path scalar exists in customize.toml. Step 6 depends on this path for artifact scanning. Without a declared scalar, the agent must infer what 'hbc module section' means — intelligence leaked into a path resolution step. Non-default output layouts will silently break.",
+      "fix": "Add output_path scalar to customize.toml [agent] block. Reference as {agent.output_path} in Steps 5-6."
+    },
+    {
+      "id": "O2",
+      "severity": "HIGH",
+      "title": "Missing open-floor opening before menu dispatch",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:66-71 (Step 7)",
+      "description": "Agent greets and immediately presents the menu. Users arriving with context (project brief, stakeholder notes, document paths) have no invitation to share it before being forced into menu-driven mode. The open-floor opening pattern is explicitly named in BMad facilitative patterns as high-value.",
+      "fix": "Add to Step 7: if user's initial message contains substantive context, acknowledge and absorb it before presenting menu. Otherwise, invite them to share what they're working with before proceeding."
+    },
+    {
+      "id": "O3",
+      "severity": "HIGH",
+      "title": "No headless path for Phase 1 status query",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md overall, customize.toml",
+      "description": "The Phase 1 state scan produces conversational prose, not machine-readable output. An orchestrator agent or CI process cannot query Phase 1 completeness programmatically. The BMad headless contract (status: complete|blocked, reason, log path) is absent.",
+      "fix": "Add headless activation branch: if invoked with headless mode, execute Steps 1/5/6, return structured JSON status, and exit. No persona, no greeting, no menu."
+    },
+    {
+      "id": "O4",
+      "severity": "HIGH",
+      "title": "No resume protocol across sessions",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:57-71 (Steps 6-7)",
+      "description": "State scan shows exists/missing but no timestamps or structured resume offer. A user returning after weeks sees the same static table. The BMad decision-log workspace pattern says to surface 'updated' timestamps and offer resume — this is absent.",
+      "fix": "In Step 6, when artifacts found, also read their frontmatter updated field. In Step 7, surface timestamps and offer 'pick up where you left off or start fresh?'"
+    },
+    {
+      "id": "O5",
+      "severity": "MEDIUM",
+      "title": "Prescriptive step numbering could be collapsed",
+      "source": ["L1-architecture"],
+      "file": "SKILL.md:23-75 (Steps 1-8)",
+      "description": "Eight numbered sub-headings mirror the reference pattern but Steps 2-5 and 7-8 describe operations the LLM does naturally. Numbered procedure framing biases toward mechanical compliance over informed judgment. Steps 1 (script invocation) and 6 (artifact scan) warrant procedural labels; others do not.",
+      "fix": "Collapse Steps 2-5 into one outcome-oriented block. Collapse Steps 7-8 similarly. Keep Step 1 and Step 6 as labeled procedures."
+    },
+    {
+      "id": "O6",
+      "severity": "MEDIUM",
+      "title": "Context carry has no mechanical backing",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:77-83 (Menu Dispatch)",
+      "description": "'Carry domain context forward — terms from GLO inform REQ review' is stated as aspiration but mechanism is undefined. When dispatching to REQ after GLO exists, does the agent pass a D-03 distillate? Load D-03? Without instruction, this silently fails.",
+      "fix": "Add one sentence: when dispatching to a workflow skill with predecessor artifact available, note the predecessor path in dispatch context. Or clarify that dispatched workflows self-load dependencies."
+    },
+    {
+      "id": "O7",
+      "severity": "MEDIUM",
+      "title": "Silent failure on missing project-context.md",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:45-48 (Step 4), customize.toml persistent_facts",
+      "description": "file:{project-root}/**/project-context.md glob silently resolves to nothing if file doesn't exist. Agent proceeds without foundational context, user gets no signal that quality may suffer.",
+      "fix": "Add to Step 4: if no project-context.md found, note the gap and ask user for brief project summary, or acknowledge reduced context."
+    },
+    {
+      "id": "O8",
+      "severity": "MEDIUM",
+      "title": "Description trigger 'phân tích' is too broad",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md frontmatter description",
+      "description": "'phân tích' (Vietnamese: analyze) is a general-purpose word. Any analytical task in Vietnamese could inadvertently activate this agent. Risk of hijacking unrelated conversations.",
+      "fix": "Tighten to specific phrases: 'phân tích yêu cầu' (requirements analysis), 'phân tích nghiệp vụ' (business analysis), or 'giai đoạn 1' (Phase 1)."
+    },
+    {
+      "id": "O9",
+      "severity": "MEDIUM",
+      "title": "No explicit redirect for confused/wrong-place users",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:77-85 (Menu Dispatch)",
+      "description": "When no menu item fits user's goal, skill falls back to 'continue conversation'. No 'this isn't the right agent' path, no adjacent skill suggestion, no clean persona dismissal.",
+      "fix": "Add: if no menu item fits, acknowledge mismatch, suggest appropriate adjacent skill, and offer to dismiss persona."
+    },
+    {
+      "id": "O10",
+      "severity": "MEDIUM",
+      "title": "Phase 1 state scan could be a deterministic script",
+      "source": ["L2-determinism"],
+      "file": "SKILL.md:57-65 (Step 6)",
+      "description": "Pure filesystem existence check for 4 glob patterns. Given the same directory, result is always the same. Currently LLM does filesystem reads (150-250 tokens/activation). A script would emit compact JSON, making status deterministic and testable.",
+      "fix": "Create scripts/scan-phase1-state.py accepting output path, returning JSON {D-02: {exists, file}, D-03: {...}, D-06: {...}, phase-1-gate: {...}}."
+    },
+    {
+      "id": "O11",
+      "severity": "MEDIUM",
+      "title": "name scalar comment unclear on non-configurable contract",
+      "source": ["L3-customization"],
+      "file": "customize.toml:8-9",
+      "description": "name = '' with comment 'non-configurable skill frontmatter' may confuse override authors who try to set a name. The comment could be clearer about why name is intentionally blank.",
+      "fix": "Strengthen comment: 'Non-configurable. Name is intentionally blank for this module agent; title field is the display identity. Fork the skill to change it.'"
+    },
+    {
+      "id": "O12",
+      "severity": "LOW",
+      "title": "Menu dispatch lacks 'stop and wait' signal",
+      "source": ["L1-architecture"],
+      "file": "SKILL.md:77-87",
+      "description": "Reference pattern ends dispatch with 'Stop and wait for input.' Without explicit stop signal, agents may continue processing instead of presenting menu and pausing.",
+      "fix": "Add 'Present the menu and stop. Wait for the user's selection.' to Menu Dispatch section."
+    },
+    {
+      "id": "O13",
+      "severity": "LOW",
+      "title": "Overview lacks domain framing",
+      "source": ["L1-architecture"],
+      "file": "SKILL.md:8-12",
+      "description": "Overview tells LLM what it does (coordinator, Phase 1) but not why precision matters. Domain framing enables judgment; customize.toml principles partially compensate.",
+      "fix": "Add 1-2 sentences: 'In waterfall, vague requirements compound downstream — a missed term produces an ambiguous function produces an untestable criterion. Precision at Phase 1 gates prevents re-work.'"
+    },
+    {
+      "id": "O14",
+      "severity": "LOW",
+      "title": "No comment on scalar override behavior",
+      "source": ["L3-customization"],
+      "file": "customize.toml:13-14",
+      "description": "Merge rules comment covers arrays but doesn't state that icon, role, identity, communication_style are scalars (override replaces entirely, not appends). Teams adding a sentence to communication_style would accidentally drop the default.",
+      "fix": "Add one line: '# icon, role, identity, communication_style: scalar -- override replaces entirely.'"
+    },
+    {
+      "id": "O15",
+      "severity": "LOW",
+      "title": "persistent_facts lacks literal-sentence example",
+      "source": ["L3-customization"],
+      "file": "customize.toml:32-34",
+      "description": "Single file: glob entry is correct but no doc hint showing the literal-sentence form. Teams wanting to add org-standards as persistent context must read schema docs.",
+      "fix": "Add comment example: '# Literal example: \"Our org is AWS-only -- do not propose GCP or Azure.\"'"
+    },
+    {
+      "id": "O16",
+      "severity": "LOW",
+      "title": "Post-workflow return lacks artifact confirmation",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:81",
+      "description": "After workflow completes, returns to menu with updated status but no confirmation of what was produced and where. User may not know if D-03 was written successfully.",
+      "fix": "When returning to menu, lead with artifact confirmation: 'D-03 Glossary written to [path]' before updated status table."
+    },
+    {
+      "id": "O17",
+      "severity": "LOW",
+      "title": "Append steps run after menu presentation",
+      "source": ["L4-enhancement"],
+      "file": "SKILL.md:74-76 (Step 8)",
+      "description": "Step 7 presents menu, Step 8 runs append steps. If append steps modify context relevant to menu recommendation, user sees stale guidance. Comment in customize.toml says 'after the user has been acknowledged' but SKILL.md ordering could mislead.",
+      "fix": "Clarify in SKILL.md that append steps are post-greeting side effects, or reorder to run before menu presentation."
+    },
+    {
+      "id": "O18",
+      "severity": "LOW",
+      "title": "Merge rules re-explained in fallback block",
+      "source": ["L2-determinism"],
+      "file": "SKILL.md:27-33",
+      "description": "~40 tokens of merge-rule re-explanation in the resolver fallback. Defensible as safety net but could be trimmed to 'apply BMad structural merge rules to base → team → user' without loss.",
+      "fix": "Trim fallback merge rules to one sentence referencing BMad convention."
+    }
+  ],
+  "dismissed": [
+    {
+      "source": "L1-architecture",
+      "title": "Decision log placement in references/ diverges from convention",
+      "reason": "CONTRADICTS user feedback. User explicitly requires .decision-log.md in references/, not skill root. Memory feedback_decision-log-location confirms."
+    }
+  ],
+  "strengths": [
+    "Script-first fallback architecture — Step 1 runs resolve_customization.py with manual fallback. Correct pattern for fragile TOML merge.",
+    "Phase 1 state scan is genuine HBC-specific value — scanning D-02/D-03/D-06/gate artifacts before greeting gives users immediate orientation.",
+    "customize.toml well-structured — [agent] block matches reference pattern, principles are concrete and domain-appropriate, key-merge semantics correct on all 5 menu items.",
+    "Context-carry aspiration between workflows — 'terms from GLO inform REQ review' is the right design even if mechanism needs specification.",
+    "Proactive gate suggestion correctly wired — testable condition (all 3 core artifacts exist) that advances workflow without requiring user initiative.",
+    "Decision log records genuine trade-offs — 5 entries document real decisions (empty name rationale, context-carry choice) not build summaries.",
+    "No subagent spawning — agent dispatches to skills via menu, correctly staying within agent pattern boundaries.",
+    "Menu dispatch is outcome-based — 'Accept number, code, or fuzzy match. Only clarify when genuinely ambiguous.' Correct form."
+  ],
+  "summary": {
+    "high": 4,
+    "medium": 7,
+    "low": 7,
+    "total": 18,
+    "dismissed": 1
+  }
+}

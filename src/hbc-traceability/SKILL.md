@@ -11,7 +11,7 @@ Maintain a living traceability matrix that maps requirements through design, imp
 
 Seven-column matrix: `req_id`, `story_id`, `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Four capabilities: **Initialize**, **Update**, **Report**, **Audit**.
 
-**Args:** Capability name (`init`, `update`, `report`, `audit`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output.
+**Args:** Capability name (`init`, `update`, `report`, `audit`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
 
 ## Conventions
 
@@ -26,48 +26,11 @@ When invoked with `--headless` or by another skill passing `headless=true`:
 
 1. Capability is **required** (no interactive prompt).
 2. Skip all user-facing output.
-3. Return a **single JSON block**:
-
-   ```json
-   {
-     "capability": "init | update | report | audit",
-     "matrix_path": "_hbc_output/traceability/matrix.md",
-     "total_requirements": 23,
-     "coverage": {
-       "design_ref": 20,
-       "code_ref": 18,
-       "test_ref": 15,
-       "fully_traced": 15
-     },
-     "gaps": ["REQ-002", "REQ-015"]
-   }
-   ```
-
-4. Matrix file is still written/updated on disk.
+3. Return JSON with `status` (`complete` or `blocked`), `capability`, `matrix_path`, and summary stats. On `blocked`, include `reason`. Matrix file is still written/updated on disk.
 
 ## On Activation
 
-### Step 1: Resolve the Workflow Block
-
-Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow`
-
-If the script fails, resolve manually: `{skill-root}/customize.toml` → `{project-root}/_bmad/custom/{skill-name}.toml` → `{project-root}/_bmad/custom/{skill-name}.user.toml`. Scalars override, tables deep-merge, arrays append.
-
-### Step 2: Execute Prepend Steps
-
-Execute each entry in `{workflow.activation_steps_prepend}` in order.
-
-### Step 3: Load Persistent Facts
-
-Load `{workflow.persistent_facts}` as foundational context. `file:` prefixed entries load file contents.
-
-### Step 4: Load Config
-
-Load from `{project-root}/_bmad/config.yaml` and `{project-root}/_bmad/config.user.yaml` (root and `hbc` section). Resolve `{project_name}`, `{communication_language}`, `{document_output_language}`.
-
-### Step 5: Execute Append Steps and Determine Capability
-
-Execute `{workflow.activation_steps_append}`. Determine capability:
+Resolve customization, load persistent facts and config per standard BMad activation. Then determine capability:
 - Explicit argument (e.g. "traceability init") → use that capability.
 - Agent context → infer: BA after Phase 1 gate → `init`, Architect/Dev/Tester after gate → `update`.
 - Otherwise → ask user which capability (`init`, `update`, `report`, `audit`).
@@ -86,38 +49,25 @@ Create the traceability matrix from D-02 requirements.
 
    Returns JSON array of discovered IDs.
 
-2. **Create matrix** at `{workflow.matrix_path}` using `assets/matrix-template.md`. Populate one row per REQ ID with `req_id` and `timestamp` filled, all other columns empty.
+2. **Create matrix** at `{workflow.matrix_path}` using `{workflow.matrix_template}`. Populate one row per REQ ID with `req_id` and `timestamp` filled, all other columns empty.
 
 3. **Report:** _"Initialized matrix with {count} requirements from D-02. Next: run Phase 1 gate, then update after Phase 2."_
 
 ## Update
 
-Populate columns for the current phase. Detect which columns need filling by reading the existing matrix.
+Populate columns for the current phase. First check for `{project-root}/_hbc_output/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Resume or restart?"_ In headless mode, restart automatically.
 
-1. **Read current matrix** from `{workflow.matrix_path}`. If missing, suggest running `init` first.
+Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
-2. **Detect phase** from which columns are empty:
-   - `design_ref` empty → Phase 2 update needed.
-   - `code_ref` empty → Phase 3 update needed.
-   - `test_ref` empty → Phase 4 update needed.
+**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_hbc_output/design/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-02, D-19, D-27. Use LLM judgment to extract design entities from D-19 and map each REQ to entities and test cases. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`.
 
-3. **Phase 2 update — design_ref + test_ref:**
-   - Extract entity/table names from D-19: `python3 scripts/extract-trace-ids.py --source {project-root}/_hbc_output/design/D-19-* --pattern "(?:テーブル|Table|Entity)[\s:：]*(\w+)" --project-root {project-root}`
-   - Extract TC IDs from D-27: `python3 scripts/extract-trace-ids.py --source {project-root}/_hbc_output/design/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`
-   - For each REQ, use LLM judgment to match design entities and test cases. Read D-02, D-19, D-27 to determine which entities and TCs trace to which REQs. Populate `design_ref` and `test_ref` columns.
+**Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user. For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
-4. **Phase 3 update — code_ref:**
-   - Ask user for the source code root path (or use `{workflow.source_code_path}` if configured).
-   - For each REQ, use LLM judgment to identify implementing files/functions. Populate `code_ref` column with file:function references.
+**Phase 4 — gate_status + timestamp:** Read gate reports from `{project-root}/_hbc_output/gates/phase-*-gate.md`. Set `gate_status` per REQ. Set `timestamp` to current date.
 
-5. **Phase 4 update — gate_status + timestamp:**
-   - Read gate reports from `{project-root}/_hbc_output/gates/phase-*-gate.md`.
-   - For each REQ, set `gate_status` to PASSED if all gates passed, or note which gate failed.
-   - Set `timestamp` to current date.
+Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{project-root}/_hbc_output/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
 
-6. **Write updated matrix** back to `{workflow.matrix_path}`.
-
-7. **Report coverage** after update: _"Updated {column}. Coverage: {X}/{Y} requirements now have {column} populated."_
+Report with diff: list which REQs received new mappings this session, and any mappings that changed (if re-running Update). Then: _"Updated {column}. Coverage: {X}/{Y} requirements now have {column} populated. Next: run `hbc-phase-gate` for the next gate check."_
 
 ## Report
 
@@ -154,7 +104,3 @@ Find gaps — requirements without coverage in any column.
    - Any column empty in earlier phase → **INFO** — expected, not yet at that phase.
 
 4. **Present audit** with severity-sorted gap list.
-
-## On Complete
-
-If `{workflow.on_complete}` is non-empty, treat it as a skill invocation command and execute it. If the value is not a recognized skill, present it to the user as a suggested next step.

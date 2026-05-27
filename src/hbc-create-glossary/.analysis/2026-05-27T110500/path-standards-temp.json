@@ -1,0 +1,35 @@
+{
+  "scanner": "path-standards",
+  "script": "scan-path-standards.py",
+  "version": "3.0.0",
+  "skill_path": "src/hbc-create-glossary",
+  "timestamp": "2026-05-27T07:29:12.185797+00:00",
+  "files_scanned": [
+    "SKILL.md",
+    "references/.decision-log.md",
+    "references/headless-contract.md",
+    "templates/D-03_\u7528\u8a9e\u96c6_template.md"
+  ],
+  "status": "pass",
+  "findings": [],
+  "assessments": {},
+  "summary": {
+    "total_findings": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "by_category": {
+      "double_prefix": 0,
+      "bare_bmad": 0,
+      "absolute_path": 0,
+      "relative_prefix": 0,
+      "cross_dir_dot_slash": 0,
+      "frontmatter": 0,
+      "structure": 0
+    },
+    "assessment": "Path standards scan complete"
+  }
+}

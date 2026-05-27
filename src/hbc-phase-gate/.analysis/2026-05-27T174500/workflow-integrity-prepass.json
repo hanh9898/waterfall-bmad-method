@@ -1,0 +1,120 @@
+{
+  "scanner": "workflow-integrity-prepass",
+  "script": "prepass-workflow-integrity.py",
+  "version": "1.0.0",
+  "skill_path": "src/hbc-phase-gate",
+  "timestamp": "2026-05-27T10:33:52.979926+00:00",
+  "status": "fail",
+  "metadata": {
+    "frontmatter": {
+      "name": "hbc-phase-gate",
+      "description": "Phase gate validation engine for HBC waterfall lifecycle. Use when user says 'phase gate', 'gate check', 'ki\u1ec3m tra gate', or '\u0111\u00e1nh gi\u00e1 gate'."
+    },
+    "sections": [
+      {
+        "level": 2,
+        "title": "Overview",
+        "line": 8
+      },
+      {
+        "level": 2,
+        "title": "Headless Mode",
+        "line": 18
+      },
+      {
+        "level": 2,
+        "title": "Conventions",
+        "line": 42
+      },
+      {
+        "level": 2,
+        "title": "On Activation",
+        "line": 49
+      },
+      {
+        "level": 3,
+        "title": "Step 1: Resolve the Workflow Block",
+        "line": 51
+      },
+      {
+        "level": 3,
+        "title": "Step 2: Execute Prepend Steps",
+        "line": 57
+      },
+      {
+        "level": 3,
+        "title": "Step 3: Load Persistent Facts",
+        "line": 61
+      },
+      {
+        "level": 3,
+        "title": "Step 4: Load Config",
+        "line": 65
+      },
+      {
+        "level": 3,
+        "title": "Step 5: Execute Append Steps and Determine Phase",
+        "line": 69
+      },
+      {
+        "level": 2,
+        "title": "Evaluate Gate",
+        "line": 76
+      },
+      {
+        "level": 2,
+        "title": "On Complete",
+        "line": 115
+      }
+    ],
+    "workflow_type": "complex"
+  },
+  "stage_summary": {
+    "total_stages": 0,
+    "referenced": [
+      "1-gate-checklist.md",
+      "2-gate-log.md",
+      "2-gate.md"
+    ],
+    "actual": [],
+    "missing_stages": [
+      "1-gate-checklist.md",
+      "2-gate-log.md",
+      "2-gate.md"
+    ],
+    "orphaned_stages": []
+  },
+  "prompt_details": [],
+  "issues": [
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 1-gate-checklist.md"
+    },
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 2-gate-log.md"
+    },
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 2-gate.md"
+    }
+  ],
+  "summary": {
+    "total_issues": 3,
+    "by_severity": {
+      "critical": 3,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}

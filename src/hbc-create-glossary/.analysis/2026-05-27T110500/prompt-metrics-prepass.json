@@ -1,0 +1,98 @@
+{
+  "scanner": "prompt-craft-prepass",
+  "script": "prepass-prompt-metrics.py",
+  "version": "1.0.0",
+  "skill_path": "src/hbc-create-glossary",
+  "timestamp": "2026-05-27T07:29:16.088622+00:00",
+  "status": "info",
+  "skill_md_summary": {
+    "line_count": 96,
+    "token_estimate": 1142,
+    "overview_lines": 7,
+    "table_count": 0,
+    "table_lines": 0,
+    "fenced_block_count": 2,
+    "fenced_block_lines": 2,
+    "section_count": 8
+  },
+  "prompt_health": {
+    "total_prompts": 0,
+    "prompts_with_config_header": 0,
+    "prompts_with_progression": 0
+  },
+  "aggregate": {
+    "total_files_scanned": 1,
+    "total_token_estimate": 1142,
+    "total_waste_patterns": 0,
+    "total_back_references": 0
+  },
+  "reference_sizes": {
+    ".decision-log.md": {
+      "lines": 26,
+      "tokens": 304
+    },
+    "headless-contract.md": {
+      "lines": 40,
+      "tokens": 276
+    }
+  },
+  "files": [
+    {
+      "file": "SKILL.md",
+      "line_count": 96,
+      "token_estimate": 1142,
+      "sections": [
+        {
+          "level": 2,
+          "title": "Overview",
+          "line": 8
+        },
+        {
+          "level": 2,
+          "title": "Conventions",
+          "line": 16
+        },
+        {
+          "level": 2,
+          "title": "Headless Mode",
+          "line": 23
+        },
+        {
+          "level": 2,
+          "title": "On Activation",
+          "line": 27
+        },
+        {
+          "level": 2,
+          "title": "Stage 1: Prerequisites",
+          "line": 31
+        },
+        {
+          "level": 2,
+          "title": "Stage 2: Discovery",
+          "line": 46
+        },
+        {
+          "level": 2,
+          "title": "Stage 3: Generation",
+          "line": 62
+        },
+        {
+          "level": 2,
+          "title": "Stage 4: Save and Handoff",
+          "line": 89
+        }
+      ],
+      "table_count": 0,
+      "table_lines": 0,
+      "fenced_block_count": 2,
+      "fenced_block_lines": 2,
+      "waste_patterns": [],
+      "back_references": [],
+      "has_config_header": true,
+      "has_progression": true,
+      "overview_lines": 7,
+      "is_skill_md": true
+    }
+  ]
+}

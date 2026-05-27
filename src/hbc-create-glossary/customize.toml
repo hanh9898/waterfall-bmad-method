@@ -1,0 +1,33 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-glossary.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-glossary.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-glossary.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Source scan script. Override to use a custom scanner with the same CLI interface.
+scan_script = "scripts/scan-glossary-sources.py"
+
+# D-03 template path. Override to use a custom template.
+template_path = "templates/D-03_用語集_template.md"
+
+# Output path for the generated D-03 document. Override to change location or filename.
+glossary_output_path = "{project-root}/_hbc_output/plan/D-03_用語集.md"
+
+# Validation script. Override to use a custom validator with the same CLI interface.
+validation_script = "scripts/validate-glossary.py"
+
+# Shell command to run after D-03 is saved. Empty = no hook.
+on_complete = ""

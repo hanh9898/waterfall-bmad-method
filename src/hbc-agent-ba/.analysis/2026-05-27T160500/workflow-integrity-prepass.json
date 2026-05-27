@@ -1,0 +1,101 @@
+{
+  "scanner": "workflow-integrity-prepass",
+  "script": "prepass-workflow-integrity.py",
+  "version": "1.0.0",
+  "skill_path": "src/hbc-agent-ba",
+  "timestamp": "2026-05-27T10:22:58.028540+00:00",
+  "status": "fail",
+  "metadata": {
+    "frontmatter": {
+      "name": "hbc-agent-ba",
+      "description": "Phase 1 Analysis coordinator for HBC waterfall lifecycle. Use when user says 'BA', 'business analyst', 'ph\u00e2n t\u00edch y\u00eau c\u1ea7u', 'ph\u00e2n t\u00edch nghi\u1ec7p v\u1ee5', 'giai \u0111o\u1ea1n 1', or agent menu [BA]."
+    },
+    "sections": [
+      {
+        "level": 2,
+        "title": "Overview",
+        "line": 8
+      },
+      {
+        "level": 2,
+        "title": "Conventions",
+        "line": 16
+      },
+      {
+        "level": 2,
+        "title": "Headless Mode",
+        "line": 23
+      },
+      {
+        "level": 2,
+        "title": "On Activation",
+        "line": 43
+      },
+      {
+        "level": 3,
+        "title": "Step 1: Resolve the Agent Block",
+        "line": 45
+      },
+      {
+        "level": 3,
+        "title": "Embody Persona and Load Context",
+        "line": 57
+      },
+      {
+        "level": 3,
+        "title": "Scan Phase 1 State",
+        "line": 63
+      },
+      {
+        "level": 3,
+        "title": "Greet and Present",
+        "line": 71
+      },
+      {
+        "level": 2,
+        "title": "Menu Dispatch",
+        "line": 81
+      }
+    ],
+    "workflow_type": "complex"
+  },
+  "stage_summary": {
+    "total_stages": 0,
+    "referenced": [
+      "02-requirements.md",
+      "06-business-flow.md"
+    ],
+    "actual": [],
+    "missing_stages": [
+      "02-requirements.md",
+      "06-business-flow.md"
+    ],
+    "orphaned_stages": []
+  },
+  "prompt_details": [],
+  "issues": [
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 02-requirements.md"
+    },
+    {
+      "file": "SKILL.md",
+      "line": 0,
+      "severity": "critical",
+      "category": "missing-stage",
+      "issue": "Referenced stage file does not exist: 06-business-flow.md"
+    }
+  ],
+  "summary": {
+    "total_issues": 2,
+    "by_severity": {
+      "critical": 2,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}
