@@ -211,8 +211,13 @@ def main() -> int:
 
     covered, uncovered, phantom = _fuzzy_match(prd_entities, d19_entities)
 
+    warn = None
+    if not prd_entities and prd_files_read:
+        warn = "prd_entity_extraction_empty"
+
     result = {
         "passed": not uncovered and not phantom,
+        "warn": warn,
         "prd_paths": [str(p) for p in prd_paths],
         "prd_files_read": prd_files_read,
         "d19_path": str(d19),

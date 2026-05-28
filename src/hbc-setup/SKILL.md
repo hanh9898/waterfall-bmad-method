@@ -5,7 +5,16 @@ description: Sets up HBLAB BMad Custom module in a project. Use when the user re
 
 # Module Setup
 
+## Conventions
+
+- Bare paths (e.g. `assets/module.yaml`) resolve from the skill root.
+- `{skill-root}` resolves to this skill's installed directory.
+- `{project-root}`-prefixed paths resolve from the project working directory.
+- `{skill-name}` resolves to the skill directory's basename.
+
 ## Overview
+
+This skill bootstraps the customization system itself, so it does not use customize.toml — there is no config to read before config exists.
 
 Installs and configures a BMad module into a project. Module identity (name, code, version) comes from `assets/module.yaml`. Collects user preferences and writes them to three files:
 

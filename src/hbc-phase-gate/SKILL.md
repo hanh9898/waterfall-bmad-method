@@ -13,7 +13,7 @@ Four phases: Analysis (1), Design (2), Implementation (3), Testing (4). Each che
 
 `gate_mode` config: `strict` blocks next phase on failure, `lenient` warns but allows.
 
-**Args:** Phase number (1-4), or inferred from calling agent context. Optional: `--headless` for non-interactive JSON output.
+**Args:** Phase number (1-4), or inferred from calling agent context. Optional: `--headless` for non-interactive JSON output. To preview a checklist without evaluation, ask _"show phase N checklist"_.
 
 ## Conventions
 
@@ -24,13 +24,13 @@ Four phases: Analysis (1), Design (2), Implementation (3), Testing (4). Each che
 
 ## On Activation
 
-### Step 1: Resolve the Workflow Block
+### Resolve the Workflow Block
 
 Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow`
 
 If the script fails, resolve manually: `{skill-root}/customize.toml` → `{project-root}/_bmad/custom/{skill-name}.toml` → `{project-root}/_bmad/custom/{skill-name}.user.toml`. Scalars override, tables deep-merge, arrays append.
 
-### Step 2: Load Context and Determine Phase
+### Load Context and Determine Phase
 
 Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}`, then load config from `{project-root}/_bmad/config.yaml` (root and `hbc` section) — resolve `{gate_mode}` (default: `strict`), `{coverage_threshold}` (default: `80`), `{project_name}`, `{communication_language}`, `{document_output_language}`. Execute `{workflow.activation_steps_append}`. Determine target phase:
 - Explicit argument (e.g. "phase gate 2") → use that number.
@@ -41,7 +41,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 
 1. **Load checklist** from `{workflow.phase_N_checklist}` where N is the target phase. Variable substitution: `{coverage_threshold}` in criteria fields, `{project_name}` in artifact patterns. If file not found at resolved path, fall back to `assets/phase-{N}-gate-checklist.md`.
 
-2. **Check previous gate report** at `{workflow.gate_output_path}/phase-{N}-gate.md`. If present, extract per-item statuses into a `prior_results` map (`item_id → status`). This enables delta comparison after evaluation.
+2. **Check previous results** at `{workflow.gate_output_path}/phase-{N}-gate-results.json`. If present, load directly as `prior_results` (structured JSON — no markdown parsing needed). Fall back to parsing `phase-{N}-gate.md` if the JSON doesn't exist. This enables delta comparison after evaluation.
 
 3. **Evaluate deterministic items** via script, then judge QUALITY items:
 
@@ -49,11 +49,15 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
    python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var coverage_threshold={coverage_threshold} --var project_name={project_name}
    ```
 
-   The script evaluates `[FILE]`, `[CONTENT]`, and `[METRIC]` items deterministically and returns JSON with per-item status + evidence. `[QUALITY]` items return as `PENDING_LLM`. If the script fails, evaluate manually following the same JSON schema: `{"summary": {...}, "results": [{"item_id", "status", "evidence", ...}]}` per item.
+   The script evaluates `[FILE]`, `[CONTENT]`, and `[METRIC]` items deterministically and returns JSON with per-item status + evidence. `[QUALITY]` items return as `PENDING_LLM`. Script exit code 1 means required items failed deterministically — this is a partial signal, not the final gate verdict (QUALITY items still need evaluation). If the script fails entirely, evaluate manually following the same JSON schema: `{"summary": {...}, "results": [{"item_id", "status", "evidence", ...}]}` per item.
 
    For each `PENDING_LLM` item: read the referenced artifacts, apply judgment against the stated criteria. PASS/FAIL with **quantified evidence** — cite specific counts, IDs, and gaps (e.g., "found 23 requirements but only 19 test cases; missing coverage for REQ-002, REQ-015, REQ-021"). Never use vague evidence like "looks good" or "mostly complete". Be strict — vague or incomplete artifacts fail.
 
-   For each `FAIL` on a `[FILE]` item: search for near-matches across `{project-root}` (typos, alternate locations) and include any discoveries in the evidence. If the checklist item references a document ID (e.g. D-19), map it to the creating skill from the module catalog and suggest it: _"Missing D-19. Create with `hbc-create-db-design`."_
+   If `{workflow.quality_parallel_review}` is true: for `required=yes` QUALITY items, evaluate with two lenses — skeptic (actively looks for gaps) and acceptance (evaluates whether the artifact meets stated intent). PASS only when both agree. If they disagree, mark as `CONTESTED` with both evidence summaries; in interactive mode surface the disagreement for user decision, in headless mode include both in the JSON.
+
+   For each `FAIL` on a `[FILE]` item: the script returns a `near_matches` array of candidate files found via relaxed glob. Surface any near-matches in the evidence. Use the `skill_to_create` field from the JSON (if present) to suggest the creating skill: _"Missing D-19. Create with `hbc-create-er-diagram`."_ If the suggested skill doesn't exist yet, note the expected document type and content instead.
+
+### Report and Present
 
 4. **Determine overall status:**
    - **PASSED** — every `required=yes` item is PASS.
@@ -61,7 +65,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
    - If `{gate_mode}=lenient` and FAILED → downgrade to **WARNING**.
 
 5. **Write gate report and decision log:**
-   - Write gate report to `{workflow.gate_output_path}/phase-{N}-gate.md` using `{workflow.gate_report_template}` in `{document_output_language}`. Include: timestamp, phase, overall status, item-by-item results with evidence, summary statistics.
+   - Write gate report to `{workflow.gate_output_path}/phase-{N}-gate.md` using `{workflow.gate_report_template}` in `{document_output_language}`. Include: timestamp, phase, overall status, item-by-item results with evidence, summary statistics. Also save the final evaluation JSON (with QUALITY items resolved) to `{workflow.gate_output_path}/phase-{N}-gate-results.json` — the delta script consumes this directly on re-evaluation.
    - Generate the delta entry via script and append to `{workflow.gate_output_path}/phase-{N}-gate-log.md`:
 
      ```
@@ -71,9 +75,9 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
      Omit `--prior` on first evaluation. The script produces a ready-to-append markdown block (delta table with summary, or "First evaluation" note). Append the output verbatim. Create the log file with a `# Phase {N} Gate Log` heading and a two-line status header (`Current status: {overall_status}` / `Last evaluated: {timestamp}`) if it doesn't exist; update the header on each run.
 
 6. **Present results:**
-   - If re-evaluation (prior_results exists), lead with delta summary: items fixed, items regressed, items unchanged. Highlight regressions prominently.
+   - If re-evaluation (prior_results exists), lead with delta summary: items fixed, items regressed, items unchanged. Highlight regressions prominently. For QUALITY items that remain FAIL across runs, include a one-line prior-evidence note: _"Previously: {prior evidence summary}. Now: {current evidence summary}."_ — this surfaces progress even when the status hasn't changed (e.g. 19/23 → 21/23).
    - PASSED → congratulate, suggest invoking `hbc-traceability` [TR] to update matrix, then proceeding to next phase.
-   - FAILED (strict) → list failures with fix guidance, recommend addressing each before re-running gate.
+   - FAILED (strict) → list failures with fix guidance. Separate actionable failures (missing artifacts with a generation command in criteria, e.g. P3-03/P3-04) from quality failures — present actionable items first with their commands so the user can generate artifacts and re-run immediately.
    - WARNING (lenient) → list failures as risks, note user chose to proceed at own discretion.
 
 ## Headless Mode
@@ -92,15 +96,15 @@ When invoked with `--headless` or by another skill passing `headless=true`:
      "gate_mode": "strict | lenient",
      "summary": { "total": 10, "passed": 8, "failed": 1, "skipped": 0 },
      "required_failed": ["P2-03"],
-     "delta": { "fixed": ["P2-01"], "regressed": [], "new": ["P2-10"], "unchanged": ["P2-02", "..."] },
-     "report_path": "_hbc_output/gates/phase-2-gate.md",
-     "log_path": "_hbc_output/gates/phase-2-gate-log.md"
+     "delta": { "is_first_run": false, "fixed": ["P2-01"], "regressed": [], "new": ["P2-10"], "unchanged": ["P2-02", "..."] },
+     "report_path": "{workflow.gate_output_path}/phase-2-gate.md",
+     "log_path": "{workflow.gate_output_path}/phase-2-gate-log.md"
    }
    ```
 
 5. Gate report and decision log are still written to disk as normal.
-6. `on_complete` hook still fires if configured (PASSED only — see On Complete).
+6. `on_complete` hook still fires if configured (PASSED only — see Post-Gate Hook).
 
-## On Complete
+## Post-Gate Hook
 
 If `{workflow.on_complete}` is non-empty and the gate status is PASSED, treat it as a skill invocation command (e.g., `"invoke hbc-traceability"`) and execute it. If the value is not a recognized skill, present it to the user as a suggested next step. For FAILED or WARNING, mention the configured hook as a next step after failures are resolved — do not execute it.

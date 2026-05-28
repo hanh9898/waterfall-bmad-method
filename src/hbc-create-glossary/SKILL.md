@@ -1,6 +1,6 @@
 ---
 name: hbc-create-glossary
-description: "Generate D-03 Glossary with domain terms and definitions. Use when user says 'glossary', 'thuật ngữ', '用語集', or agent menu [GLO]."
+description: "Generate D-03 Glossary with domain terms and definitions. Use when user says 'glossary', 'thuật ngữ', '用語集作成', or agent menu [GLO]."
 ---
 
 # Create Glossary
@@ -26,11 +26,11 @@ When `--headless`: all stages run non-interactively. Source documents are requir
 
 ## On Activation
 
-Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
+Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`. If `{workflow.glossary_output_path}` exists with `lastStep` not `complete`, surface it with its `updated` timestamp and offer to resume before proceeding to Stage 1.
 
 ## Stage 1: Prerequisites
 
-1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill, suggest the right one (e.g., if user wants API reference, suggest `hbc-create-requirements` [REQ]). Headless: skip — intent is given by invocation.
+1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ER], business flows → `hbc-create-business-flow-diagram` [BF]. Headless: skip — intent is given by invocation.
 
 1b. **Source scan.** Run pre-pass to discover project state:
 
@@ -38,16 +38,18 @@ Resolve customization, load persistent facts and config per standard BMad activa
 python3 {workflow.scan_script} --project-root {project-root}
 ```
 
+Headless: forward `--sources` arg if provided: `python3 {workflow.scan_script} --project-root {project-root} --sources "{sources}"`.
+
 Returns JSON with `state` (fresh/resume/update), `existing_d03`, `source_docs` (D-02, project-context, etc.), and `raw_candidates` (each with `term` and `method`: quoted/abbreviation). Candidates are raw structural extractions — filter for domain relevance using LLM judgment in Stage 2. Use `state` to route:
    - **Fresh** — no prior D-03. Proceed to Stage 2.
-   - **Resume** — partial D-03 found (`lastStep` < `complete`). Show summary, offer resume or restart.
-   - **Update** — complete D-03 exists. Load as baseline, show current term count.
+   - **Resume** — partial D-03 found (`lastStep` < `complete`). Show summary, offer resume or restart. Restart: overwrite with fresh template, reset frontmatter, append restart note to decision log.
+   - **Update** — complete D-03 exists. Show current term count, proceed to Update Mode.
+
+After routing: initialize `.decision-log.md` as a peer of `{workflow.glossary_output_path}` — create if absent, append a date-stamped session heading if present. If scan script fails or Python is unavailable, ask the user to provide source paths directly and proceed with empty candidates.
 
 ## Stage 2: Discovery
 
-Filter `raw_candidates` from scan for domain relevance — discard common abbreviations (API, SQL, HTML, etc.) and generic terms. Present filtered candidates as defaults for confirmation. If `candidate_count == 0` and `source_count > 0`, note that auto-extraction found no marked terms and ask the user to provide terms directly.
-
-Open with an invitation for the user to share domain-specific terms, abbreviations, and jargon beyond what was auto-extracted. Capture term, project-specific definition (not generic dictionary definitions), and optional category (e.g., business, technical) for each.
+Open with an invitation for the user to share domain-specific terms, abbreviations, and jargon they consider essential for this project. Then filter `raw_candidates` from scan for domain relevance — discard common abbreviations (API, SQL, HTML, etc.) and generic terms. Present filtered candidates for confirmation: _"Here's what we also found in your documents — confirm, modify, or discard."_ If `candidate_count == 0` and `source_count > 0`, note that auto-extraction found no marked terms. Capture term, project-specific definition (not generic dictionary definitions), and optional category (e.g., business, technical) for each.
 
 At each batch of terms, soft-gate: _"Any more terms, or shall we finalize?"_
 
@@ -57,7 +59,7 @@ Silently capture any requirements or business-flow insights mentioned — surfac
 
 ## Stage 3: Generation
 
-Populate `{workflow.template_path}` with discovered terms. Ensure:
+Using `{workflow.template_path}` as the base, write the populated document to `{workflow.glossary_output_path}`. Ensure:
 - Terms sorted alphabetically within each category (if categorized) or overall.
 - No duplicate terms.
 - Every definition is project-specific (flag generic definitions for revision).
@@ -81,21 +83,22 @@ Script checks: no duplicate terms, no empty definitions, minimum term count > 0.
 
 **Compaction flush:** Write term count and validation summary to decision log.
 
-**Parallel-lens menu:**
-- `[A]` Advanced — challenge definitions for ambiguity, find missing terms from D-02
-- `[P]` Multi-lens review — multiple reviewer perspectives (terminology specialist, domain expert, end user)
-- `[C]` Continue — proceed to save
+**Parallel-lens menu:** `[A]` Advanced (challenge definitions, find missing D-02 terms) / `[P]` Multi-lens (terminology specialist, domain expert, end user perspectives) / `[C]` Continue. If subagents unavailable, apply lens perspectives directly. Headless: skip to Stage 4.
+
+## Validate Mode
+
+When invoked with `validate` arg: run Stage 1b scan to locate existing D-03, then run the validation script against it. Present results (interactive) or return headless JSON with validation object. No discovery or generation stages run. If no D-03 found, return `blocked` with `reason: "no_existing_d03"`.
 
 ## Update Mode
 
-When invoked with `update` arg or when scan returns `state: update`: load existing D-03 as baseline. Run scan script to extract new term candidates from updated source documents. Present diff — new candidates not in existing glossary, existing terms with changed source context. Merge non-duplicate terms; surface duplicates (same term, different definition) for user resolution. Auto-append a new row to 改訂履歴 with today's date and change summary. Headless: auto-merge non-conflicting terms, return `blocked` with `reason: "duplicate_conflict"` when definitions clash.
+When `state: update` from scan or `update` arg: read the scan JSON for the existing D-03 path and new candidates. Present diff — candidates not yet in the existing glossary. Merge non-duplicate terms; surface duplicates (same term, different definition) for user resolution. Auto-append a new row to 改訂履歴 with today's date and change summary. Then proceed to Stage 3 (Generation) for validation. Headless: auto-merge non-conflicting terms, return `blocked` with `reason: "duplicate_conflict"` when definitions clash.
 
 ## Stage 4: Save and Handoff
 
-Save document to `{workflow.glossary_output_path}` — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). Populate the Revision History row's date with today's date. Append closing session to decision log.
+Save document to `{workflow.glossary_output_path}` — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). On create: fill the blank date in the pre-seeded 改訂履歴 row. On update: revision row already appended in Update Mode. Audit decision-log entries against D-03: every logged decision reflected in the document or explicitly set aside. Append closing session to decision log.
 
-Write `glossary-distillate.json` alongside D-03 in the same directory — a flat `{"terms": {"term": "definition", ...}, "abbreviations": {"abbr": "full_name", ...}}` map for downstream skill consumption.
+Write `glossary-distillate.json` alongside D-03 — `{"terms": [{"term": "...", "definition": "...", "category": "..."}], "abbreviations": [{"abbr": "...", "full_name": "...", "definition": "..."}]}` for downstream skill consumption.
 
-If `{workflow.on_complete}` is set, run it after saving. Then suggest next steps: _"D-03 complete ({term_count} terms). Recommended: create D-06 Business Flow (`hbc-create-business-flow-diagram` [BF]) if not done, then run Phase 1 gate (`hbc-phase-gate` [PG])."_
+If `{workflow.on_complete}` is a non-empty string, run it as a shell command after saving. Then suggest next steps: _"D-03 complete ({term_count} terms). Recommended: create D-06 Business Flow (`hbc-create-business-flow-diagram` [BF]) if not done, then run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.

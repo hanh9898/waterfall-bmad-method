@@ -1,5 +1,7 @@
 # Headless Contract
 
+Communicate with the user in `{communication_language}`.
+
 Authoritative reference for `--headless` / `-H` invocation of `hbc-create-business-flow-diagram`. Stages in `SKILL.md` cite this file for the closed-set of `reason` values and the defaults heuristics; the brief reason list in SKILL.md is a compaction-survival mirror, not a separate source of truth.
 
 ## Input flags
@@ -44,6 +46,10 @@ On success:
   "skill": "{skill-name}",
   "artifact": "{doc_workspace}/D-06-business-flow-diagram.md",
   "decision_log": "{doc_workspace}/.decision-log.md",
+  "validation": {
+    "mermaid": "{doc_workspace}/.scan/mermaid.json",
+    "fr": "{doc_workspace}/.scan/fr.json"
+  },
   "review_lenses_run": []
 }
 ```
@@ -56,6 +62,7 @@ On block:
   "status": "blocked",
   "skill": "{skill-name}",
   "reason": "<one of the values below>",
+  "decision_log": "{doc_workspace}/.decision-log.md",
   "review_lenses_run": []
 }
 ```

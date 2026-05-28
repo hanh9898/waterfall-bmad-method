@@ -7,10 +7,10 @@ module_description: 'Framework-agnostic waterfall + TDD development lifecycle wi
 architecture: 'hybrid — agents coordinate workflows'
 standalone: false
 expands_module: 'hbc (HBLAB BMad Custom)'
-skills_planned: [hbc-agent-ba, hbc-agent-architect, hbc-agent-qa, hbc-agent-dev, hbc-agent-tester, hbc-create-requirements, hbc-create-glossary, hbc-create-business-flow-diagram, hbc-create-db-design, hbc-create-coding-standards, hbc-create-test-plan, hbc-create-test-spec, hbc-create-api-spec, hbc-task-breakdown, hbc-implement, hbc-test-execution, hbc-acceptance-check, hbc-phase-gate, hbc-traceability]
+skills_planned: [hbc-agent-ba, hbc-agent-architect, hbc-agent-qa, hbc-agent-dev, hbc-agent-tester, hbc-create-requirements, hbc-create-glossary, hbc-create-business-flow-diagram, hbc-create-er-diagram, hbc-create-coding-standards, hbc-create-test-plan, hbc-create-test-spec, hbc-create-api-spec, hbc-task-breakdown, hbc-implement, hbc-test-execution, hbc-acceptance-check, hbc-phase-gate, hbc-traceability]
 config_variables: [acceptance_owner, coverage_threshold, e2e_framework, gate_mode, output_language, project_context_path]
 created: '2026-05-26'
-updated: '2026-05-26'
+updated: '2026-05-28'
 ---
 
 # HBC Waterfall-TDD Module Plan
@@ -65,7 +65,7 @@ Lý do chọn hybrid:
 | Agent | Phase | Workflows (menu items) |
 |-------|-------|----------------------|
 | 💼 `hbc-agent-ba` | 1-Analysis | `hbc-create-requirements` [REQ], `hbc-create-glossary` [GLO], `hbc-create-business-flow-diagram` [BF] |
-| 🏗️ `hbc-agent-architect` | 2-Design | `hbc-create-db-design` [DB], `hbc-create-coding-standards` [CS], `hbc-create-api-spec` [API] |
+| 🏗️ `hbc-agent-architect` | 2-Design | `hbc-create-er-diagram` [DB], `hbc-create-coding-standards` [CS], `hbc-create-api-spec` [API] |
 | 🧪 `hbc-agent-qa` | 2-Design (Test) | `hbc-create-test-plan` [TP], `hbc-create-test-spec` [TS] |
 | 💻 `hbc-agent-dev` | 3-Impl | `hbc-task-breakdown` [TB], `hbc-implement` [IM] |
 | 🔍 `hbc-agent-tester` | 4-Testing | `hbc-test-execution` [TE], `hbc-acceptance-check` [AC] |
@@ -97,7 +97,7 @@ Gate checklist content sống trong `assets/` của skill cuối mỗi phase. `h
 | **customize.toml** | Workflow config, roles, thresholds | `acceptance_owner = "PM"`, `coverage_min = 80` |
 | **project-context.md** | Tech stack, framework conventions | Odoo: `_inherit`, `Many2one`, `ir.model.access.csv` |
 
-Skill đọc `project-context.md` qua `persistent_facts` → LLM tự adapt output theo framework. Cùng `hbc-create-db-design` nhưng output khác nhau: Odoo models vs Django ORM vs Prisma schema.
+Skill đọc `project-context.md` qua `persistent_facts` → LLM tự adapt output theo framework. Cùng `hbc-create-er-diagram` nhưng output khác nhau: Odoo models vs Django ORM vs Prisma schema.
 
 ### Traceability Matrix (Cross-cutting)
 
@@ -210,7 +210,7 @@ hbc-agent-ba tạo D-02 → file nằm trong _hbc_output/plan/
 
 | Capability | Outcome | Inputs | Outputs |
 |------------|---------|--------|---------|
-| [DB] DB Design | D-19 Database Design (ER + table defs) | D-02, D-06, project-context.md | `_hbc_output/design/D-19-*.md` via `hbc-create-db-design` |
+| [DB] DB Design | D-19 Database Design (ER + table defs) | D-02, D-06, project-context.md | `_hbc_output/design/D-19-*.md` via `hbc-create-er-diagram` |
 | [CS] Coding Standards | D-12 Coding Standards per-project | project-context.md, team preferences | `_hbc_output/design/D-12-*.md` via `hbc-create-coding-standards` |
 | [API] API Spec | D-21 API Specification (optional) | D-02, D-19, project-context.md | `_hbc_output/design/D-21-*.md` via `hbc-create-api-spec` |
 | [PG] Phase Gate | Validate Phase 2 completeness | Phase 2 artifacts + Phase 1 gate | `_hbc_output/gates/phase-2-gate.md` via `hbc-phase-gate` |
@@ -226,7 +226,7 @@ hbc-agent-ba tạo D-02 → file nằm trong _hbc_output/plan/
 
 **Design Notes:**
 - Gate check on activation — soft block if Phase 1 gate not passed (warn, user can override with `gate_mode = lenient`).
-- `hbc-create-db-design` MAY leverage existing `hbc-create-er-diagram` skill (already built) — brief below clarifies relationship.
+- `hbc-create-er-diagram` is the D-19 skill (already built, Grade A). No rename or wrapper needed.
 - [API] is optional — some projects (Odoo internal modules) don't expose APIs. Agent should ask, not assume.
 - Reads `project-context.md` để adapt output: Odoo models vs Django ORM vs Prisma schema.
 
@@ -425,31 +425,17 @@ hbc-agent-ba tạo D-02 → file nằm trong _hbc_output/plan/
 
 ---
 
-### Workflow: hbc-create-db-design
+### Workflow: hbc-create-er-diagram
 
-**Type:** workflow
+**Type:** workflow — **ALREADY BUILT** ✅ (Grade A)
 
-**Purpose:** Generate D-19 データベース設計書 (Database Design) — ER diagrams, table definitions, index definitions adapted to project framework.
+**Purpose:** Generate D-19 データベース設計書 (Database Design) — ER diagrams in Mermaid adapted to project framework.
 
-**Status:** Relationship with existing `hbc-create-er-diagram` — that skill already generates D-19 ER diagrams. This skill either **IS** `hbc-create-er-diagram` (rename in lifecycle context) or **extends** it with full table definitions + index definitions beyond just ER. Decision at build time: if existing skill already covers full D-19 template, reuse as-is. If only ER portion, extend.
+**Status:** Existing skill at `src/hbc-create-er-diagram/`. Full 5-stage HBC workflow pattern with resume state, decision-log, headless contract, 3 validation scripts (discover-planning-artifacts, validate-mermaid-er, check-entity-coverage), 21 unit tests. Grade A quality.
 
-**Capabilities:**
+**Decision (2026-05-28):** This IS the D-19 skill. No rename to `hbc-create-db-design` needed. The skill already covers the full D-19 template scope. D-20 (table definitions) is optional and out of 19-skill scope.
 
-| Capability | Outcome | Inputs | Outputs |
-|------------|---------|--------|---------|
-| Create | Full D-19 (ER + tables + indexes) | D-02, D-06, project-context.md | `_hbc_output/design/D-19-{project_name}-db-design.md` |
-| Update | Revise existing D-19 | Existing D-19 + design changes | Updated D-19 with revision history |
-| Validate | Check ER/table consistency | D-19 | Validation report |
-
-**Template:** `{project-root}/templates/D-19_データベース設計書_template.md`
-
-**Workflow stages:** Follows existing `hbc-create-er-diagram` 5-stage pattern.
-
-**Design Notes:**
-- Framework adaptation critical here: Odoo (`_name`, `_inherit`, `Many2one`), Django ORM (`models.Model`, `ForeignKey`), Prisma (`model`, `@relation`).
-- Reads `project-context.md` for framework detection.
-- ER diagram in Mermaid `erDiagram` format. Table definitions in markdown tables per D-19 template.
-- Index definitions section — suggest optimal indexes based on relationships and query patterns.
+**Role in lifecycle:** Phase 2 first document. Combined with D-12, D-26, D-27 (and optional D-21), completes the Design phase artifacts.
 
 **Relationships:** `preceded-by: Phase 1 gate PASSED`, `followed-by: hbc-create-coding-standards`.
 
@@ -484,7 +470,7 @@ hbc-agent-ba tạo D-02 → file nằm trong _hbc_output/plan/
 - This document becomes reference for `hbc-implement` — TDD code must follow these standards.
 - Lighter workflow — 4 stages sufficient. No parallel-lens menu needed (standards are opinionated, not discovered).
 
-**Relationships:** `preceded-by: hbc-create-db-design`, `followed-by: hbc-create-api-spec (optional)`.
+**Relationships:** `preceded-by: hbc-create-er-diagram`, `followed-by: hbc-create-api-spec (optional)`.
 
 ---
 
@@ -816,7 +802,7 @@ reason: ...
 
 **Design Notes:**
 - Living document — not generated once, updated incrementally. Each invoke adds data, never removes.
-- `story_id` column optional — populated only if project uses story-level tracking (from `hbc-create-invest-epics-and-stories`).
+- `story_id` column optional — populated only if project uses story-level tracking.
 - Cross-cutting: invoked from any agent's [TR] menu. Most valuable after phase gate passes.
 - Audit capability is the "health check" — shows exactly where traceability breaks.
 - Future: HTML report output for visual matrix with color-coded coverage.
@@ -885,7 +871,7 @@ Setup skill thực hiện:
 
 - Sử dụng existing `_hbc_output/` structure đã có từ các skills hiện tại (`hbc-create-er-diagram`, `hbc-create-business-flow-diagram`).
 - Existing skills vẫn hoạt động standalone — không phụ thuộc vào module mới.
-- New workflow skills reference existing outputs khi relevant (e.g., `hbc-create-db-design` kiểm tra existing ER diagram tại `_hbc_output/design/`).
+- New workflow skills reference existing outputs khi relevant (e.g., `hbc-create-er-diagram` output tại `_hbc_output/design/`).
 - Module help CSV mở rộng entries hiện có, không replace.
 - Phase gate skills kiểm tra artifacts từ cả existing và new skills.
 
@@ -960,7 +946,7 @@ Build trong 5 waves, mỗi wave có thể build parallel nếu đủ resource:
 6. `hbc-agent-ba` (agent) — coordinator cho Wave 2 workflows
 
 **Wave 3: Phase 2 — Design skills**
-7. `hbc-create-db-design` (workflow) — D-19, check relationship with existing `hbc-create-er-diagram`
+7. `hbc-create-er-diagram` — ✅ **ALREADY BUILT (Grade A)**, skip
 8. `hbc-create-coding-standards` (workflow) — D-12, per-project
 9. `hbc-create-api-spec` (workflow) — D-21, optional
 10. `hbc-create-test-plan` (workflow) — D-26, test strategy

@@ -4,19 +4,35 @@
   "license": "UNLICENSED",
   "homepage": "",
   "repository": "",
-  "keywords": ["bmad", "invest-stories", "hblab-custom", "user-stories", "3cs", "er-diagram", "database-design"],
+  "keywords": ["bmad", "hblab-custom", "waterfall", "tdd", "requirements", "business-flow", "er-diagram", "traceability", "phase-gate", "test-plan", "coding-standards"],
   "plugins": [
     {
       "name": "hblab-bmad-custom",
       "source": "./",
-      "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, ER diagrams, custom templates",
+      "description": "HBLAB custom BMad workflows for waterfall + TDD lifecycle — 5 agents, 14 workflows, phase gates, and requirements traceability",
       "version": "1.0.0",
       "author": { "name": "HBLAB" },
       "skills": [
         "./src/hbc-setup",
+        "./src/hbc-agent-ba",
+        "./src/hbc-agent-architect",
+        "./src/hbc-agent-qa",
+        "./src/hbc-agent-dev",
+        "./src/hbc-agent-tester",
+        "./src/hbc-create-requirements",
+        "./src/hbc-create-glossary",
         "./src/hbc-create-business-flow-diagram",
         "./src/hbc-create-er-diagram",
-        "./src/hbc-create-invest-epics-and-stories"
+        "./src/hbc-create-coding-standards",
+        "./src/hbc-create-api-spec",
+        "./src/hbc-create-test-plan",
+        "./src/hbc-create-test-spec",
+        "./src/hbc-task-breakdown",
+        "./src/hbc-implement",
+        "./src/hbc-test-execution",
+        "./src/hbc-acceptance-check",
+        "./src/hbc-phase-gate",
+        "./src/hbc-traceability"
       ]
     }
   ]

@@ -21,12 +21,22 @@ persistent_facts = [
 # Template for the D-19 ER Diagram output document.
 # Default points to the shared HBLab D-* template set; override to use a
 # project-specific template with different structure.
-er_diagram_template = "templates/D-19_データベース設計書_template.md"
+er_diagram_template = "assets/D-19_データベース設計書_template.md"
+
+# Decision log template initialized at Stage 1a.
+# Override for teams requiring custom log structure or language.
+decision_log_template = "assets/decision-log-template.md"
 
 # Single output workspace path. The workflow binds {doc_workspace} directly
 # to the resolved value at Stage 1 and writes the primary document plus the
 # session decision log there.
-er_diagram_output_path = "{planning_artifacts}/database-design/D-19-{project_name}/"
+er_diagram_output_path = "{planning_artifacts}/D-19-{project_name}/"
+
+# Controls distillate production at Stage 5.
+# "offer" (default): interactive asks, headless skips.
+# "always": produce distillate in both modes.
+# "never": skip entirely.
+on_complete_distillate = "offer"
 
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-epics-and-stories".

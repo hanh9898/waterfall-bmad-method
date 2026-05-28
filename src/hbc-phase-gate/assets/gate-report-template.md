@@ -1,4 +1,4 @@
-# Phase {N} Gate Report
+# {phase_name} Gate Report
 
 **Date:** {timestamp}
 **Project:** {project_name}
@@ -6,21 +6,21 @@
 **Status:** {overall_status}
 **Gate Mode:** {gate_mode}
 
-## Summary
+## {section:summary}
 
 | Total Items | Passed | Failed | Skipped | Required Passed | Required Failed |
 |-------------|--------|--------|---------|-----------------|-----------------|
 | | | | | | |
 
-## Checklist Results
+## {section:results}
 
 | Item ID | Description | Type | Required | Status | Evidence |
 |---------|-------------|------|----------|--------|----------|
 | | | | | | |
 
-## Failed Items Detail
+## {section:failed_detail}
 
-## Decision
+## {section:decision}
 
 ---
 

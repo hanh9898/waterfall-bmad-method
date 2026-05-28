@@ -30,7 +30,7 @@ def test_empty_dir_returns_fresh():
 def test_complete_d02_returns_update():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        plan_dir = root / "_hbc_output" / "plan"
+        plan_dir = root / "_bmad-output" / "planning-artifacts"
         plan_dir.mkdir(parents=True)
         d02 = plan_dir / "D-02-test-project.md"
         d02.write_text(
@@ -47,7 +47,7 @@ def test_complete_d02_returns_update():
 def test_partial_d02_returns_resume():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        plan_dir = root / "_hbc_output" / "plan"
+        plan_dir = root / "_bmad-output" / "planning-artifacts"
         plan_dir.mkdir(parents=True)
         d02 = plan_dir / "D-02-test-project.md"
         d02.write_text(
@@ -85,7 +85,7 @@ def test_source_docs_discovery():
 def test_source_docs_dedup():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        hbc = root / "_hbc_output" / "plan"
+        hbc = root / "_bmad-output" / "planning-artifacts"
         hbc.mkdir(parents=True)
         (root / "D-01-brief.md").write_text("# Brief\n", encoding="utf-8")
         (hbc / "D-01-brief.md").write_text("# Brief\n", encoding="utf-8")
@@ -97,7 +97,7 @@ def test_source_docs_dedup():
 def test_d02_not_in_source_docs():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        plan = root / "_hbc_output" / "plan"
+        plan = root / "_bmad-output" / "planning-artifacts"
         plan.mkdir(parents=True)
         (plan / "D-02-test.md").write_text(
             "---\nlastStep: complete\n---\n# D-02\n", encoding="utf-8"

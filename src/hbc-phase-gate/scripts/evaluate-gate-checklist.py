@@ -66,12 +66,21 @@ def evaluate_file(pattern: str, project_root: str, variables: dict) -> dict:
     """Check if files matching glob pattern exist."""
     resolved = resolve_pattern(pattern, project_root, variables)
     matches = glob.glob(resolved, recursive=True)
+    if matches:
+        return {
+            "status": "PASS",
+            "evidence": f"Found: {', '.join(Path(m).name for m in matches[:5])}",
+            "matched_files": matches[:10],
+        }
+    keyword = Path(resolved).name.replace("*", "").replace("-", "").strip()
+    near = []
+    if keyword:
+        near = glob.glob(str(Path(project_root) / "**" / f"*{keyword}*"), recursive=True)[:5]
     return {
-        "status": "PASS" if matches else "FAIL",
-        "evidence": f"Found: {', '.join(Path(m).name for m in matches[:5])}"
-        if matches
-        else f"No files matching {resolved}",
-        "matched_files": matches[:10],
+        "status": "FAIL",
+        "evidence": f"No files matching {resolved}",
+        "matched_files": [],
+        "near_matches": [str(Path(p).relative_to(project_root)) for p in near],
     }
 
 
@@ -242,16 +251,29 @@ def main():
 
         results.append(result)
 
+    required_failed = sum(
+        1 for r in results if r["status"] == "FAIL" and r["required"]
+    )
+    pending_llm = sum(1 for r in results if r["status"] == "PENDING_LLM")
+    gate_mode = variables.get("gate_mode", "strict")
+
+    if pending_llm > 0:
+        overall_status = "PENDING_LLM"
+    elif required_failed > 0:
+        overall_status = "FAILED" if gate_mode == "strict" else "WARNING"
+    else:
+        overall_status = "PASSED"
+
     summary = {
         "total": len(results),
         "evaluated": sum(1 for r in results if r["status"] != "PENDING_LLM"),
         "passed": sum(1 for r in results if r["status"] == "PASS"),
         "failed": sum(1 for r in results if r["status"] == "FAIL"),
         "skipped": sum(1 for r in results if r["status"] == "SKIP"),
-        "pending_llm": sum(1 for r in results if r["status"] == "PENDING_LLM"),
-        "required_failed": sum(
-            1 for r in results if r["status"] == "FAIL" and r["required"]
-        ),
+        "pending_llm": pending_llm,
+        "required_failed": required_failed,
+        "gate_mode": gate_mode,
+        "overall_status": overall_status,
     }
 
     output = {"summary": summary, "results": results}

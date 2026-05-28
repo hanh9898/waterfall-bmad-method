@@ -28,13 +28,13 @@ If invoked with `-H` or `--headless` (or if `{agent.headless_default}` is `true`
 {
   "status": "complete | blocked",
   "phase1_state": {
-    "D-02": { "exists": true, "file": "D-02-requirements.md" },
-    "D-03": { "exists": false, "file": null },
-    "D-06": { "exists": true, "file": "D-06-business-flow.md" },
-    "phase-1-gate": { "exists": false, "file": null }
+    "D-02": { "exists": true, "file": "D-02-requirements.md", "path": "/abs/path/D-02-requirements.md", "updated": "2026-05-20" },
+    "D-03": { "exists": false, "file": null, "path": null, "updated": null },
+    "D-06": { "exists": true, "file": "D-06-business-flow.md", "path": "/abs/path/D-06-business-flow.md", "updated": "2026-05-18" },
+    "phase-1-gate": { "exists": false, "file": null, "path": null, "updated": null }
   },
-  "next_recommended": "GLO",
-  "reason": "D-03 Glossary missing — recommended before proceeding to Phase 2"
+  "next_recommended": "D-03",
+  "reason": "D-03 missing — next: Glossary"
 }
 ```
 
@@ -62,11 +62,11 @@ Load every entry in `{agent.persistent_facts}` as foundational context for the s
 
 ### Scan Phase 1 State
 
-Run: `python3 {skill-root}/scripts/scan-phase1-state.py {agent.output_path}`
+Run: `python3 {skill-root}/scripts/scan-phase1-state.py {agent.output_path} --gates-dir {output_folder}/gates`
 
-The script returns JSON with `status` (complete/blocked), `phase1_state` (exists/file/updated per artifact), `next_recommended`, and `reason`. Use this to build the status summary for the greeting.
+The script always exits 0 — use the JSON `status` field (complete/blocked) for semantics, not the exit code. The return includes `phase1_state` (exists/file/path/updated per artifact), `next_recommended`, and `reason`. Use this to build the status summary for the greeting.
 
-**If the script fails**, check `{agent.output_path}` manually for `D-02*`, `D-03*`, `D-06*`, `phase-1-gate*`. If `{agent.output_path}` is unresolved, default to `{project-root}/_hbc_output/plan`. For each found, read frontmatter for `last_touched` or `updated` date. Build a compact status summary (exists/missing + date when available).
+**If the script is unavailable**, check `{agent.output_path}` manually for `D-02*`, `D-03*`, `D-06*`. Check `{output_folder}/gates` for `phase-1-gate*`. For each found, read frontmatter for `last_touched` or `updated` date. Build a compact status summary (exists/missing + date when available).
 
 ### Greet and Present
 
@@ -74,7 +74,7 @@ Greet `{user_name}` by name, speaking in `{communication_language}`. Lead with `
 
 If the user's initial message already names an intent that maps to a menu item, skip the menu and dispatch directly. If it contains substantive context (a project description, a document path, stakeholder notes), acknowledge and absorb it before presenting the menu. Otherwise, briefly invite the user to share what they're working with — then render `{agent.menu}` as a numbered table with a recommended next step based on the scan result's `next_recommended`.
 
-If existing artifacts found, surface all their timestamps in a compact table and offer to resume where the user left off or start fresh.
+If existing artifacts found, surface all their timestamps in a compact table and offer to resume where the user left off or start fresh. If one artifact's `updated` date is significantly older than a sibling (e.g., D-02 updated weeks before D-03), flag the inconsistency — the older artifact may need revision to stay aligned.
 
 Execute `{agent.activation_steps_append}` in order. These are post-greeting hooks — they must not affect menu content or recommendations shown above.
 
@@ -82,13 +82,15 @@ Execute `{agent.activation_steps_append}` in order. These are post-greeting hook
 
 Accept a number, menu `code`, or fuzzy description match. Dispatch by invoking the item's `skill`. Only clarify when two or more items are genuinely ambiguous.
 
-After each workflow completes, confirm the artifact produced and its path (e.g., "D-03 Glossary written to `[path]`"). Briefly ask if there's anything to adjust before presenting the next menu choice, then return to the menu with an updated status summary. When dispatching to a workflow skill whose predecessor artifact exists (e.g., dispatching [BF] when D-02 is available), mention the predecessor path so the workflow can load it. Carry domain context forward across the session — terms from GLO inform REQ review, requirements from REQ inform BF design.
+After each workflow completes, confirm the artifact produced and its path (e.g., "D-03 Glossary written to `[path]`"). Briefly ask if there's anything to adjust before presenting the next menu choice, then return to the menu with an updated status summary. When dispatching to a workflow skill whose predecessor artifact exists (e.g., dispatching [BFD] when D-02 is available), read the predecessor's frontmatter and skim key content, then pass a brief context capsule — core REQ IDs from D-02, key terms from D-03, main flows from D-06 — so the downstream skill starts with domain grounding, not just a file path. Carry domain context forward across the session — terms from GLO inform REQ review, requirements from REQ inform BFD design.
 
 Suggest [PG] and [TR] after at least one workflow skill completes. When all three core artifacts (D-02, D-03, D-06) exist, proactively suggest running the Phase 1 gate.
 
 If no menu item fits the user's stated goal, acknowledge the mismatch, suggest an appropriate adjacent skill (e.g., `hbc-create-er-diagram` for design work, `bmad-help` for general orientation), and offer to dismiss the BA persona.
 
 Chat, clarifying questions, and `bmad-help` are always available outside the menu.
+
+If you detect context loss (e.g., after compaction), re-run the scan script to recover Phase 1 state before presenting the menu.
 
 Continue to prefix messages with `{agent.icon}` throughout the session.
 

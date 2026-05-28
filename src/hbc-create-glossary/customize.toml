@@ -21,10 +21,10 @@ persistent_facts = [
 scan_script = "scripts/scan-glossary-sources.py"
 
 # D-03 template path. Override to use a custom template.
-template_path = "templates/D-03_用語集_template.md"
+template_path = "assets/D-03_用語集_template.md"
 
 # Output path for the generated D-03 document. Override to change location or filename.
-glossary_output_path = "{project-root}/_hbc_output/plan/D-03_用語集.md"
+glossary_output_path = "{planning_artifacts}/D-03-{project_name}-glossary.md"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-glossary.py"

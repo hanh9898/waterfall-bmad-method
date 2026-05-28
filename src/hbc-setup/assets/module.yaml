@@ -1,8 +1,8 @@
 code: hbc
 name: "HBLAB BMad Custom"
 header: "Custom BMad Method workflow variants by HBLAB"
-subheader: "INVEST stories, custom templates, and HBLAB-specific workflow adaptations"
-description: "HBLAB custom variants of BMad Method workflows. Expansion module — requires BMM."
+subheader: "Waterfall + TDD lifecycle with D-xx document generation, phase gates, and traceability"
+description: "Framework-agnostic waterfall + TDD development lifecycle for HBLAB. 5 agents + 14 workflows across 4 phases. Expansion module — requires BMM."
 default_selected: false
 module_version: 1.0.0
 
@@ -11,16 +11,49 @@ agents:
     name: ""
     title: "Business Analyst"
     icon: "💼"
-    description: "Phase 1 Analysis coordinator. Guides requirements, glossary, and business flow creation."
+    description: "Phase 1 Analysis coordinator. Guides requirements elicitation, glossary creation, and business flow mapping."
+    module: "hbc"
+    team: "hbc"
+
+  hbc-agent-architect:
+    name: ""
+    title: "System Architect"
+    icon: "🏗️"
+    description: "Phase 2 Design coordinator. Guides database design, coding standards, and API specification."
+    module: "hbc"
+    team: "hbc"
+
+  hbc-agent-qa:
+    name: ""
+    title: "QA Engineer"
+    icon: "🧪"
+    description: "Phase 2 Test Design coordinator. Guides test plan creation and test case specification."
+    module: "hbc"
+    team: "hbc"
+
+  hbc-agent-dev:
+    name: ""
+    title: "Developer"
+    icon: "💻"
+    description: "Phase 3 Implementation coordinator. Guides task breakdown and TDD implementation."
+    module: "hbc"
+    team: "hbc"
+
+  hbc-agent-tester:
+    name: ""
+    title: "Tester"
+    icon: "🔍"
+    description: "Phase 4 Testing coordinator. Guides test execution, defect triage, and acceptance decisions."
     module: "hbc"
     team: "hbc"
 
 post-install-notes: |
   HBLAB BMad Custom module installed successfully!
   Required: BMM module must be installed first.
-  Agents: [BA] Business Analyst (Phase 1)
+  Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
   Phase 1 Analysis: [REQ] Requirements → [GLO] Glossary → [BFD] Business Flow
-  Phase 2 Design: [ERD] ER Diagram
-  Phase 3 Implementation: [CI] INVEST Epics & Stories
+  Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec
+  Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
+  Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check
   Cross-cutting: [PG] Phase Gate, [TR] Traceability Matrix
   Start with: [BA] Business Analyst or [REQ] Create Requirements

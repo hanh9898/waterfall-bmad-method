@@ -1,0 +1,33 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-acceptance-check.
+# Team overrides:     {project-root}/_bmad/custom/hbc-acceptance-check.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-acceptance-check.user.toml
+
+[workflow]
+
+activation_steps_prepend = []
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Output directory for the acceptance report.
+output_dir = "{implementation_artifacts}"
+
+# Validation script.
+validation_script = "scripts/validate-acceptance-check.py"
+
+# Who makes the acceptance decision.
+# Examples: "PM", "PO", "Tech Lead", "Client"
+acceptance_owner = "PM"
+
+# Coverage threshold for acceptance criteria.
+coverage_threshold = 80
+
+# Input paths from other skills (override if team changes output dirs).
+input_test_report = "{implementation_artifacts}/test-execution-report.md"
+input_traceability = "{output_folder}/traceability/matrix.md"
+input_gates = "{output_folder}/gates"
+input_requirements = "{planning_artifacts}"

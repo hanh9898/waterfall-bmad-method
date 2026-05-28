@@ -44,20 +44,22 @@ def read_frontmatter_date(filepath: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
-def scan(output_path: str) -> dict:
+def scan(output_path: str, gates_dir: str | None = None) -> dict:
     phase1_state = {}
 
     for key, pattern in ARTIFACT_PATTERNS.items():
-        matches = glob.glob(os.path.join(output_path, pattern))
+        search_dir = gates_dir if ("gate" in key and gates_dir and os.path.isdir(gates_dir)) else output_path
+        matches = glob.glob(os.path.join(search_dir, pattern))
         if matches:
             filepath = matches[0]
             phase1_state[key] = {
                 "exists": True,
                 "file": os.path.basename(filepath),
+                "path": filepath,
                 "updated": read_frontmatter_date(filepath),
             }
         else:
-            phase1_state[key] = {"exists": False, "file": None, "updated": None}
+            phase1_state[key] = {"exists": False, "file": None, "path": None, "updated": None}
 
     core_complete = all(
         phase1_state.get(k, {}).get("exists", False) for k in CORE_ARTIFACTS
@@ -88,20 +90,21 @@ def main():
     parser.add_argument(
         "-o", "--output", help="Write JSON to file instead of stdout"
     )
+    parser.add_argument("--gates-dir", help="Separate directory for gate reports")
     args = parser.parse_args()
 
     if not os.path.isdir(args.output_path):
         result = {
             "status": "blocked",
             "phase1_state": {
-                k: {"exists": False, "file": None, "updated": None}
+                k: {"exists": False, "file": None, "path": None, "updated": None}
                 for k in ARTIFACT_PATTERNS
             },
             "next_recommended": "D-02",
             "reason": f"Output directory not found: {args.output_path}",
         }
     else:
-        result = scan(args.output_path)
+        result = scan(args.output_path, gates_dir=args.gates_dir)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
 
@@ -112,7 +115,7 @@ def main():
     else:
         print(output)
 
-    sys.exit(0 if result["status"] == "complete" else 1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,39 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-test-plan.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-test-plan.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-test-plan.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Scan script for source discovery and state detection.
+scan_script = "scripts/scan-test-plan-sources.py"
+
+# D-26 template path.
+template_path = "assets/D-26_test-plan_template.md"
+
+# Output path for the generated D-26 document.
+output_dir = "{planning_artifacts}"
+
+# Validation script.
+validation_script = "scripts/validate-test-plan.py"
+
+# Minimum test coverage threshold (used in exit criteria).
+coverage_threshold = 80
+
+# E2E test framework name (e.g., "playwright", "cypress", "selenium").
+e2e_framework = ""
+
+# Hook to run after D-26 is saved (e.g., a notification or downstream trigger).
+on_complete = ""

@@ -15,7 +15,7 @@ activation_steps_prepend = []
 activation_steps_append = []
 
 # Foundational context loaded on activation. Append project-specific artifacts
-# (e.g. "file:{project-root}/_hbc_output/traceability/matrix.md") in your team override.
+# (e.g. "file:{project-root}/_bmad-output/traceability/matrix.md") in your team override.
 persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
@@ -23,7 +23,7 @@ persistent_facts = [
 # Gate checklist per phase. Default checklists ship with this skill.
 # To override: set the same key in {project-root}/_bmad/custom/hbc-phase-gate.toml
 # with an absolute or {project-root}-relative path to your custom checklist.
-# Example: phase_2_checklist = "{project-root}/_hbc_output/custom-checklists/phase-2.md"
+# Example: phase_2_checklist = "{project-root}/_bmad-output/custom-checklists/phase-2.md"
 phase_1_checklist = "assets/phase-1-gate-checklist.md"
 phase_2_checklist = "assets/phase-2-gate-checklist.md"
 phase_3_checklist = "assets/phase-3-gate-checklist.md"
@@ -34,11 +34,17 @@ phase_4_checklist = "assets/phase-4-gate-checklist.md"
 gate_report_template = "assets/gate-report-template.md"
 
 # Output path for gate reports.
-gate_output_path = "{project-root}/_hbc_output/gates"
+gate_output_path = "{output_folder}/gates"
 
 # gate_mode (strict/lenient) is intentionally NOT here — it's project-level
 # policy sourced from _bmad/config.yaml [hbc] section, not a per-skill override.
+# coverage_threshold is also project-level from _bmad/config.yaml [hbc], not per-skill.
+
+# Two-lens evaluation for required QUALITY items (skeptic + acceptance).
+# Default: false (single-pass evaluation). Set true for high-stakes gate decisions.
+quality_parallel_review = false
 
 # Post-gate hook (PASSED only). Set to a skill invocation string
 # (e.g. "invoke hbc-traceability") to trigger automatically after a passing gate.
+# Failure handling is intentionally manual — gate failures require human triage.
 on_complete = ""

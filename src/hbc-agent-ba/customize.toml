@@ -16,7 +16,7 @@ title = "Business Analyst"
 #   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
 
 icon = "💼"
-output_path = "{project-root}/_hbc_output/plan"
+output_path = "{planning_artifacts}"
 headless_default = false
 
 # Steps to run before the standard activation (persona, config, greet).
@@ -62,7 +62,7 @@ description = "Create or update D-03 Glossary with domain terms and definitions"
 skill = "hbc-create-glossary"
 
 [[agent.menu]]
-code = "BF"
+code = "BFD"
 description = "Create D-06 Business Flow Diagram (AS-IS/TO-BE) in Mermaid"
 skill = "hbc-create-business-flow-diagram"
 

@@ -33,7 +33,7 @@ Resolve customization, load persistent facts and config per standard BMad activa
 1a. **Source scan.** Run pre-pass to discover project state and sources:
 
 ```
-python3 scripts/scan-sources.py --project-root {project-root}
+python3 {workflow.scan_script} --project-root {project-root}
 ```
 
 Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmatter), `source_docs` list, and `project_context` path. Use this to route:
@@ -44,6 +44,8 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 1b. **Source inventory.** Supplement scan results with user-provided inputs (interview notes, descriptions). In headless mode, sources are required via `--sources` arg.
 
 1c. **Intent gate.** Confirm user wants to create/update requirements (not a different artifact). If wrong skill: product brief → `hbc-create-prd`, brainstorming → `hbc-brainstorming`, project setup → `hbc-project-setup`.
+
+1d. **Brainstorming suggestion** (interactive only, Fresh state only). If the domain is complex or the user seems uncertain about scope, suggest: _"Domain này có vẻ phức tạp — muốn chạy `bmad-brainstorming` trước để khám phá problem space và phát hiện requirements ẩn không? Kết quả brainstorming sẽ feed trực tiếp vào D-02."_ If declined or in headless mode, proceed to Stage 2. If accepted, pause this workflow — the user runs brainstorming in a separate context window, then resumes here (the resume-state in 1a will detect the partial D-02). If a brainstorming session file exists in `{output_folder}/brainstorming/`, note it as an available source in the source inventory.
 
 ## Stage 2: Discovery
 

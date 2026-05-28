@@ -46,7 +46,7 @@ def parse_frontmatter(path: Path) -> dict:
 def scan_sources(project_root: str) -> dict:
     """Scan project for source documents and D-02 state."""
     root = Path(project_root)
-    hbc_output = root / "_hbc_output"
+    hbc_output = root / "_bmad-output"
 
     existing_d02: dict | None = None
     source_docs: list[dict] = []
@@ -56,7 +56,7 @@ def scan_sources(project_root: str) -> dict:
         project_context = str(ctx.relative_to(root))
         break
 
-    search_dirs = [root, hbc_output / "plan"] if hbc_output.exists() else [root]
+    search_dirs = [root, hbc_output / "planning-artifacts"] if hbc_output.exists() else [root]
 
     for search_dir in search_dirs:
         if not search_dir.exists():

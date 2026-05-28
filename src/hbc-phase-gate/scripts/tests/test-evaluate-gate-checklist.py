@@ -2,9 +2,6 @@
 """Tests for evaluate-gate-checklist.py."""
 
 import os
-import sys
-
-import pytest
 
 from importlib.util import module_from_spec, spec_from_file_location
 
@@ -12,6 +9,7 @@ _spec = spec_from_file_location(
     "evaluate_gate_checklist",
     os.path.join(os.path.dirname(__file__), "..", "evaluate-gate-checklist.py"),
 )
+assert _spec is not None and _spec.loader is not None
 mod = module_from_spec(_spec)
 _spec.loader.exec_module(mod)
 
@@ -33,10 +31,10 @@ SAMPLE_CHECKLIST = """\
 
 | item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
 |---------|-------------|------|----------|------------------|----------|-----------------|
-| P1-01 | Requirements doc exists | FILE | yes | _hbc_output/plan/D-02* | | hbc-create-requirements |
-| P1-02 | All REQs have IDs | CONTENT | yes | _hbc_output/plan/D-02* | REQ-\\d{3} | |
-| P1-03 | Coverage threshold met | METRIC | yes | _hbc_output/impl/coverage* | >= 80% | |
-| P1-04 | Requirements quality | QUALITY | no | _hbc_output/plan/D-02* | Check clarity | |
+| P1-01 | Requirements doc exists | FILE | yes | _bmad-output/planning-artifacts/D-02* | | hbc-create-requirements |
+| P1-02 | All REQs have IDs | CONTENT | yes | _bmad-output/planning-artifacts/D-02* | REQ-\\d{3} | |
+| P1-03 | Coverage threshold met | METRIC | yes | _bmad-output/implementation-artifacts/coverage* | >= 80% | |
+| P1-04 | Requirements quality | QUALITY | no | _bmad-output/planning-artifacts/D-02* | Check clarity | |
 """
 
 
@@ -56,7 +54,7 @@ class TestParseChecklist:
         assert item["description"] == "Requirements doc exists"
         assert item["type"] == "FILE"
         assert item["required"] is True
-        assert item["artifact_pattern"] == "_hbc_output/plan/D-02*"
+        assert item["artifact_pattern"] == "_bmad-output/planning-artifacts/D-02*"
         assert item["skill_to_create"] == "hbc-create-requirements"
 
     def test_quality_item_parsed(self, tmp_path):
@@ -84,14 +82,14 @@ class TestParseChecklist:
 class TestResolvePattern:
     def test_substitutes_variables(self):
         result = resolve_pattern(
-            "_hbc_output/{project_name}/D-02*",
+            "_bmad-output/{project_name}/D-02*",
             "/project",
             {"project_name": "acme"},
         )
         assert "acme" in result
 
     def test_prepends_project_root_for_relative(self):
-        result = resolve_pattern("_hbc_output/plan/D-02*", "/project", {})
+        result = resolve_pattern("_bmad-output/planning-artifacts/D-02*", "/project", {})
         assert result.startswith("/project")
 
     def test_absolute_path_unchanged(self):

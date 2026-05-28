@@ -20,7 +20,7 @@ persistent_facts = [
 
 # Path to the living traceability matrix.
 # To override: set this key in {project-root}/_bmad/custom/hbc-traceability.toml
-matrix_path = "{project-root}/_hbc_output/traceability/matrix.md"
+matrix_path = "{output_folder}/traceability/matrix.md"
 
 # Template used when initializing a new matrix.
 # Override to add custom columns (e.g. priority, module) or change header format.

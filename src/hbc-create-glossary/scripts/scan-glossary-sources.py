@@ -67,16 +67,16 @@ def extract_candidates(path: Path) -> list[dict]:
     return list(seen.values())
 
 
-def scan_sources(project_root: str) -> dict:
+def scan_sources(project_root: str, explicit_sources: list[str] | None = None) -> dict:
     """Scan project for glossary sources and existing D-03."""
     root = Path(project_root)
-    hbc_output = root / "_hbc_output"
+    hbc_output = root / "_bmad-output"
 
     existing_d03: dict | None = None
     source_docs: list[dict] = []
     all_candidates: list[dict] = []
 
-    search_dirs = [hbc_output / "plan"] if hbc_output.exists() else []
+    search_dirs = [hbc_output / "planning-artifacts"] if hbc_output.exists() else []
     search_dirs.append(root)
 
     for search_dir in search_dirs:
@@ -92,21 +92,29 @@ def scan_sources(project_root: str) -> dict:
                 }
                 break
 
-    for search_dir in search_dirs:
-        if not search_dir.exists():
-            continue
-        for pattern in ["D-02*", "D-01*"]:
-            for path in search_dir.glob(pattern):
-                if path.is_file():
-                    rel = str(path.relative_to(root))
-                    source_docs.append({"path": rel, "name": path.name})
-                    all_candidates.extend(extract_candidates(path))
+    if explicit_sources:
+        for src in explicit_sources:
+            path = root / src if not Path(src).is_absolute() else Path(src)
+            if path.is_file():
+                rel = str(path.relative_to(root)) if path.is_relative_to(root) else str(path)
+                source_docs.append({"path": rel, "name": path.name})
+                all_candidates.extend(extract_candidates(path))
+    else:
+        for search_dir in search_dirs:
+            if not search_dir.exists():
+                continue
+            for pattern in ["D-02*", "D-01*"]:
+                for path in search_dir.glob(pattern):
+                    if path.is_file():
+                        rel = str(path.relative_to(root))
+                        source_docs.append({"path": rel, "name": path.name})
+                        all_candidates.extend(extract_candidates(path))
 
-    for ctx in root.rglob("project-context.md"):
-        rel = str(ctx.relative_to(root))
-        source_docs.append({"path": rel, "name": ctx.name})
-        all_candidates.extend(extract_candidates(ctx))
-        break
+        for ctx in root.rglob("project-context.md"):
+            rel = str(ctx.relative_to(root))
+            source_docs.append({"path": rel, "name": ctx.name})
+            all_candidates.extend(extract_candidates(ctx))
+            break
 
     seen: dict[str, dict] = {}
     for c in all_candidates:
@@ -138,10 +146,14 @@ def main():
     parser.add_argument(
         "--project-root", required=True, help="Project root directory"
     )
+    parser.add_argument(
+        "--sources", help="Comma-separated source file paths (skips auto-discovery)"
+    )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
 
-    result = scan_sources(args.project_root)
+    sources = [s.strip() for s in args.sources.split(",") if s.strip()] if args.sources else None
+    result = scan_sources(args.project_root, explicit_sources=sources)
 
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:
@@ -149,6 +161,8 @@ def main():
         print(f"Results written to {args.output}", file=sys.stderr)
     else:
         print(text)
+
+    sys.exit(0)
 
 
 if __name__ == "__main__":

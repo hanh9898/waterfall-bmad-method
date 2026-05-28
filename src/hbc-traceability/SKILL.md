@@ -45,10 +45,10 @@ Create the traceability matrix from D-02 requirements.
 1. **Extract REQ IDs** deterministically:
 
    ```
-   python3 scripts/extract-trace-ids.py --source {project-root}/_hbc_output/plan/D-02-* --pattern "REQ-\d{3,}" --project-root {project-root}
+   python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-02-* --pattern "REQ-\d{3,}" --project-root {project-root}
    ```
 
-   Returns JSON array of discovered IDs. If script returns `NO_FILES`, suggest running `hbc-create-prd` to generate D-02 first.
+   Returns JSON array of discovered IDs. If script returns `NO_FILES`, suggest running `hbc-create-requirements` to generate D-02 first.
 
 2. **Create matrix** at `{workflow.matrix_path}` using `{workflow.matrix_template}`. Populate one row per REQ ID with `req_id` and `timestamp` filled, all other columns empty.
 
@@ -56,17 +56,17 @@ Create the traceability matrix from D-02 requirements.
 
 ## Update
 
-Populate columns for the current phase. First check for `{project-root}/_hbc_output/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
+Populate columns for the current phase. First check for `{project-root}/_bmad-output/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
 
 Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, note which REQs have empty target columns (the diff baseline). Write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
-**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_hbc_output/design/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 (REQ IDs are already in the matrix from Initialize; TC IDs come from the script output above). D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`.
+**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 (REQ IDs are already in the matrix from Initialize; TC IDs come from the script output above). D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`.
 
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
-**Phase 4 — gate_status + timestamp:** Read gate reports from `{project-root}/_hbc_output/gates/phase-*-gate.md`. Set `gate_status` per REQ. Set `timestamp` to current date.
+**Phase 4 — gate_status + timestamp:** Read gate reports from `{project-root}/_bmad-output/gates/phase-*-gate.md`. Set `gate_status` per REQ. Set `timestamp` to current date.
 
-Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{project-root}/_hbc_output/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
+Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{project-root}/_bmad-output/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
 
 Report with diff: list which REQs received new mappings this session, and any mappings that changed (if re-running Update). Then: _"Updated {column}. Coverage: {X}/{Y} requirements now have {column} populated. Next: run `hbc-phase-gate` for the next gate check."_
 

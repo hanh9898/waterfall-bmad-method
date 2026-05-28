@@ -50,6 +50,7 @@ class TestAllMissing:
         for v in result["phase1_state"].values():
             assert v["exists"] is False
             assert v["file"] is None
+            assert v["path"] is None
             assert v["updated"] is None
 
 
@@ -60,6 +61,7 @@ class TestPartialArtifacts:
         assert result["status"] == "blocked"
         assert result["phase1_state"]["D-02"]["exists"] is True
         assert result["phase1_state"]["D-02"]["file"] == "D-02-requirements.md"
+        assert result["phase1_state"]["D-02"]["path"].endswith("D-02-requirements.md")
         assert result["phase1_state"]["D-03"]["exists"] is False
         assert result["phase1_state"]["D-06"]["exists"] is False
         assert result["next_recommended"] == "D-03"
@@ -175,7 +177,7 @@ class TestOutputToFile:
             [sys.executable, script, str(scan_dir), "-o", out_file],
             capture_output=True,
         )
-        assert result.returncode == 1
+        assert result.returncode == 0
         with open(out_file, encoding="utf-8") as f:
             data = json.load(f)
         assert data["status"] == "blocked"
