@@ -336,14 +336,9 @@ def detect_workflow_type(skill_content: str, has_prompts: bool) -> str:
     """Detect workflow type from SKILL.md content."""
     has_stage_refs = bool(re.search(r'(?:prompts/)?\d+-\S+\.md', skill_content))
     has_routing = bool(re.search(r'(?i)(rout|stage|branch|path)', skill_content))
-    has_inline_stages = bool(re.search(r'(?m)^##\s+Stage\s+\d+', skill_content))
-    has_decision_log = bool(re.search(r'(?i)decision.?log', skill_content))
-    has_headless = bool(re.search(r'(?i)headless', skill_content))
 
     if has_stage_refs or (has_prompts and has_routing):
         return 'complex'
-    elif has_inline_stages or (has_decision_log and has_headless):
-        return 'multi-stage-workflow'
     elif re.search(r'(?m)^\d+\.\s', skill_content):
         return 'simple-workflow'
     else:

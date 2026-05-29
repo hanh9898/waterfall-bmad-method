@@ -1,0 +1,23 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-task-breakdown.
+# Team overrides:     {project-root}/_bmad/custom/hbc-task-breakdown.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-task-breakdown.user.toml
+
+[workflow]
+
+activation_steps_prepend = []
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Output directory for the task breakdown.
+output_dir = "{implementation_artifacts}"
+
+# Validation script.
+validation_script = "scripts/validate-task-breakdown.py"
+
+# Maximum hours per task (guidance for decomposition).
+max_hours_per_task = 4

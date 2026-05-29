@@ -204,9 +204,8 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
     # 8. Orphan CSV entries
     setup_name = setup_dir.name if setup_dir else ""
     for skill in csv_skills:
-        if skill == "_meta":
-            continue
         if skill not in skill_folders and skill != setup_name:
+            # Check if it's the setup skill itself (valid)
             if not (module_dir / skill / "SKILL.md").is_file():
                 finding("high", "orphan-entry", f"CSV references skill '{skill}' which does not exist in the module folder")
 
@@ -227,10 +226,8 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
     for row in rows:
         skill = row.get("skill", "").strip()
         action = row.get("action", "").strip()
-        if skill:
-            valid_refs.add(skill)
-            if action:
-                valid_refs.add(f"{skill}:{action}")
+        if skill and action:
+            valid_refs.add(f"{skill}:{action}")
 
     for row in rows:
         display = row.get("display-name", "?")
@@ -238,18 +235,16 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
             value = row.get(field, "").strip()
             if not value:
                 continue
+            # Can be comma-separated
             for ref in value.split(","):
                 ref = ref.strip()
                 if ref and ref not in valid_refs:
                     finding("medium", "invalid-ref",
                             f"'{display}' {field} references '{ref}' which is not a valid capability",
-                            "Expected format: skill-name or skill-name:action-name")
+                            "Expected format: skill-name:action-name")
 
     # 11. Required fields in each row
     for row in rows:
-        skill = row.get("skill", "").strip()
-        if skill == "_meta":
-            continue
         display = row.get("display-name", "?")
         for field in ("skill", "display-name", "menu-code", "description"):
             if not row.get(field, "").strip():

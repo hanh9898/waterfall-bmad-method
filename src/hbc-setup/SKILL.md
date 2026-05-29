@@ -20,7 +20,7 @@ Installs and configures a BMad module into a project. Module identity (name, cod
 
 - **`{project-root}/_bmad/config.yaml`** — shared project config: core settings at root (e.g. `output_folder`, `document_output_language`) plus a section per module with metadata and module-specific values. User-only keys (`user_name`, `communication_language`) are **never** written here.
 - **`{project-root}/_bmad/config.user.yaml`** — personal settings intended to be gitignored: `user_name`, `communication_language`, and any module variable marked `user_setting: true` in `assets/module.yaml`. These values live exclusively here.
-- **`{project-root}/_bmad/module-help.csv`** — registers module capabilities for the help system.
+- **`{project-root}/_bmad/_config/bmad-help.csv`** — registers module capabilities for the help system.
 
 Both config scripts use an anti-zombie pattern — existing entries for this module are removed before writing fresh ones, so stale values never persist.
 
@@ -53,7 +53,7 @@ Write a temp JSON file with the collected answers structured as `{"core": {...},
 
 ```bash
 python3 scripts/merge-config.py --config-path "{project-root}/_bmad/config.yaml" --user-config-path "{project-root}/_bmad/config.user.yaml" --module-yaml assets/module.yaml --answers {temp-file} --legacy-dir "{project-root}/_bmad"
-python3 scripts/merge-help-csv.py --target "{project-root}/_bmad/module-help.csv" --source assets/module-help.csv --legacy-dir "{project-root}/_bmad" --module-code {module-code}
+python3 scripts/merge-help-csv.py --target "{project-root}/_bmad/_config/bmad-help.csv" --source assets/module-help.csv --legacy-dir "{project-root}/_bmad" --module-code {module-code}
 ```
 
 Both scripts output JSON to stdout with results. If either exits non-zero, surface the error and stop. The scripts automatically read legacy config values as fallback defaults, then delete the legacy files after a successful merge. Check `legacy_configs_deleted` and `legacy_csvs_deleted` in the output to confirm cleanup.
@@ -69,16 +69,16 @@ After writing config, create any output directories that were configured. For fi
 After both merge scripts complete successfully, remove the installer's package directories. Skills and agents in these directories are already installed at `.claude/skills/` — the `_bmad/` directory should only contain config files.
 
 ```bash
-python3 scripts/cleanup-legacy.py --bmad-dir "{project-root}/_bmad" --module-code {module-code} --also-remove _config --skills-dir "{project-root}/.claude/skills"
+python3 scripts/cleanup-legacy.py --bmad-dir "{project-root}/_bmad" --module-code {module-code} --skills-dir "{project-root}/.claude/skills"
 ```
 
-The script verifies that every skill in the legacy directories exists at `.claude/skills/` before removing anything. Directories without skills (like `_config/`) are removed directly. If the script exits non-zero, surface the error and stop. Missing directories (already cleaned by a prior run) are not errors — the script is idempotent.
+The script verifies that every skill in the legacy directories exists at `.claude/skills/` before removing anything. If the script exits non-zero, surface the error and stop. Missing directories (already cleaned by a prior run) are not errors — the script is idempotent.
 
 Check `directories_removed` and `files_removed_count` in the JSON output for the confirmation step. Run `scripts/cleanup-legacy.py --help` for full usage.
 
 ## Confirm
 
-Use the script JSON output to display what was written — config values set (written to `config.yaml` at root for core, module section for module values), user settings written to `config.user.yaml` (`user_keys` in result), help entries added, fresh install vs update. If legacy files were deleted, mention the migration. If legacy directories were removed, report the count and list (e.g. "Cleaned up 106 installer package files from bmb/, core/, \_config/ — skills are installed at .claude/skills/"). Then display the `module_greeting` from `assets/module.yaml` to the user.
+Use the script JSON output to display what was written — config values set (written to `config.yaml` at root for core, module section for module values), user settings written to `config.user.yaml` (`user_keys` in result), help entries added, fresh install vs update. If legacy files were deleted, mention the migration. If legacy directories were removed, report the count and list (e.g. "Cleaned up 106 installer package files from bmb/, core/ — skills are installed at .claude/skills/"). Then display the `module_greeting` from `assets/module.yaml` to the user.
 
 ## Outcome
 
