@@ -22,9 +22,9 @@ Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an 
 ## Language Rules
 
 - Communicate with the user in `{communication_language}`.
-- Templates loaded from `{workflow.business_flow_template}` and `assets/decision-log-template.md` are English-source i18n skeletons. When rendering an output document or decision log, translate all prose (section headings, table headers and contents, Mermaid `as <label>` text, comments, revision-history entries) to `{document_output_language}`. Never emit the template verbatim.
-- File names and folder names are always English (kebab-case or snake_case). Never embed `{document_output_language}` characters in any file path.
-- Carve-outs that stay in their original form in both template and output: Mermaid keywords (`sequenceDiagram`, `flowchart`, `participant`, `actor`, `->>`, `-->>`, etc.), Mermaid code identifiers (variable names like `User`, `System`, `NewSystem`), and the business-jargon labels `AS-IS` / `TO-BE`.
+- Templates loaded from `{workflow.business_flow_template}` and `{workflow.decision_log_template}` are English-source i18n skeletons. Translate all output prose to `{document_output_language}`. Never emit the template verbatim.
+- File names and folder names are always English (kebab-case or snake_case).
+- Carve-outs (keep in original form): Mermaid keywords (`sequenceDiagram`, `flowchart`, `participant`, `actor`, `->>`, `-->>`, etc.), Mermaid code identifiers (`User`, `System`, `NewSystem`), and `AS-IS` / `TO-BE`.
 
 ## On Activation
 
@@ -71,14 +71,12 @@ Add new reasons only by extending this list and the contract file together.
 Used at the end of Stage 3 and Stage 4. In headless mode the choice is taken from `--review-lenses=skip|advanced|party` (default `skip`); every fire is appended to `review_lenses_run` in the JSON return contract.
 
 ```
-[A] Advanced Elicitation — single deep lens via bmad-advanced-elicitation.
-    Cost: ~5 minutes. Current draft preserved on cancel.
-[P] Party Mode — three parallel lenses (analyst + architect + UX) via bmad-party-mode.
-    Cost: ~15 minutes. Heavier; use when the artifact will drive multiple downstream skills.
-[C] Continue — proceed without an additional review pass.
+[A] Advanced Elicitation — bmad-advanced-elicitation
+[P] Party Mode — bmad-party-mode (analyst + architect + UX)
+[C] Continue
 ```
 
-`[A]` and `[P]` are structurally different patterns; the labels make the cost and shape explicit so the user (or automator) chooses with eyes open.
+Headless mapping: `--review-lenses=skip` → `[C]`, `advanced` → `[A]`, `party` → `[P]`.
 
 ## Workflow
 
@@ -91,8 +89,10 @@ Bind `{doc_workspace} = {workflow.business_flow_output_path}` (resolves to a sin
 Run the discover script with the workspace flag to get both source inventory and resume state in one JSON:
 
 ```
-python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --workspace {doc_workspace} -o {doc_workspace}/.scan/artifacts.json
+python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --workspace {doc_workspace} --check-as-is -o {doc_workspace}/.scan/artifacts.json
 ```
+
+If the discover script fails to execute (Python missing, crash), fall back to globbing `{planning_artifacts}` yourself and constructing a minimal inventory; note the fallback in `.decision-log.md`.
 
 Consume the JSON. If `fatal: "template_missing"` → HALT (interactive) or return `blocked` with `reason: "template_missing"` (headless). Otherwise read `resume_state.recommended_intent` and `resume_state.fresh_reason`:
 
@@ -101,7 +101,7 @@ Consume the JSON. If `fatal: "template_missing"` → HALT (interactive) or retur
 - `Resume` — primary has at least `stage-1` in `stepsCompleted` and not yet `stage-5`. Show the user the prior session summary (`resume_state.last_session_summary`) and offer to continue from `primary_last_step`.
 - `Update` — primary completed (`stage-5` in `stepsCompleted`). Treat as revisable artifact: read latest revision-history version. Stage 3 will gate the version bump on scope-of-change.
 
-Present this menu (interactive only):
+Present this menu (interactive only). When `recommended_intent` is `Fresh` and `fresh_reason` is `no_workspace`, show only `[N] Start fresh` and `[X] Exit`. Otherwise show the full menu:
 
 ```
 Recommended: {recommended_intent}{ if fresh_reason: " ({fresh_reason})" }
@@ -119,7 +119,7 @@ Steps complete: {resume_state.primary_steps_completed}
 
 **Headless resolution:** take `resume_state.recommended_intent`; log the auto-choice (plus `fresh_reason` if applicable) to `.decision-log.md`. For targeted single-flow update, the automator uses `--update-flow=<name>` (see headless contract).
 
-If `.decision-log.md` is absent at the start of the session, initialize it from `assets/decision-log-template.md` — interpolate placeholders (`{skill-name}`, `{project_name}`, `{user_name}`, date) the same way Stage 1e interpolates the primary template.
+If `.decision-log.md` is absent at the start of the session, initialize it from `{workflow.decision_log_template}` — interpolate placeholders (`{skill-name}`, `{project_name}`, `{user_name}`, date) the same way Stage 1e interpolates the primary template.
 
 #### 1b. Open-floor invitation, intent gate, and wrong-skill off-ramp (interactive only)
 
@@ -132,6 +132,10 @@ Then one intent check: capturing an existing flow, designing a new one, or both.
 **Short-circuit Stage 1e** — strict gate. Only skip 1e when the open-floor reply *explicitly* covers **all four** of: mode, scope, sources (which docs to include or exclude), and diagram type. A partial reply (any of the four absent or ambiguous) falls through to 1e for confirmation. Log which dimensions were inferred from 1b vs confirmed in 1e to `.decision-log.md`.
 
 In headless mode 1b is skipped entirely.
+
+#### 1b′. Brainstorming suggestion (interactive only, Fresh state only)
+
+If the user is designing TO-BE flows and the domain is complex or requirements are sparse, suggest: _"TO-BE flow cần sáng tạo — muốn chạy `bmad-brainstorming` trước để explore alternative flows và improvement ideas không? Output sẽ feed vào D-06."_ If declined, proceed. If accepted, pause — user runs brainstorming separately, then resumes here. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load it as supplementary source alongside PRD and D-02. Skip this suggestion for AS-IS capture or Update/Resume states.
 
 #### 1c. Consume source inventory
 
@@ -158,15 +162,9 @@ Options:
 
 #### 1e. Inferred-defaults confirmation (interactive only, unless short-circuited by 1b)
 
-```
-Detected: {prd_count} PRD doc(s), {ux_count} UX doc(s), {use_case_count} use-case doc(s)
-Inferred: mode={greenfield|migration}, scope={single|multi}, type={diagram_type}
+Present detected sources (PRD, UX, use-case counts), inferred mode/scope/type, and let the user confirm or override any dimension.
 
-[C] Confirm and proceed
-Or specify overrides: mode=… / scope=… / type=… / sources=include:…,exclude:…
-```
-
-**Migration-vs-AS-IS sanity check** (fires at confirmation): if mode resolves to `migration` (either auto-inferred or via `--mode=migration`) but no PRD source contains AS-IS / 現状 / "current state" / similar markers, warn the user and offer to switch to `greenfield`. In headless mode this returns `blocked` with `reason: "migration_without_as_is"` unless the user passes `--allow-migration-without-as-is` to acknowledge.
+**Migration-vs-AS-IS sanity check** (fires at confirmation): if mode resolves to `migration` (either auto-inferred or via `--mode=migration`) but `artifacts.json` reports `as_is.has_as_is: false`, warn the user and offer to switch to `greenfield`. In headless mode this returns `blocked` with `reason: "migration_without_as_is"` unless the user passes `--allow-migration-without-as-is` to acknowledge.
 
 Initialize the primary document from `{workflow.business_flow_template}`, translating template prose to `{document_output_language}` per the Language Rules. Append a new session block to `.decision-log.md`. Mark `stepsCompleted` to include `stage-1`. Set primary frontmatter `updated` to today.
 
@@ -179,7 +177,7 @@ From the chosen sources or interactive elicitation, extract:
 - **Decision points** — conditional branches (for `flowchart` variant)
 - **Outcomes** — success and failure end states
 
-Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly.
+Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to `{doc_workspace}/addendum.md` without pausing the flow.
 
 **Zero-actor branch** — if the source contains no human or system actors (e.g. pure data-pipeline products triggered solely by cron or queue events), do not render a vacuous "System talks to itself" diagram. Promote the trigger (scheduled job, queue, webhook) to a first-class actor and explain the choice in the decision log. Interactive: confirm with the user. Headless: log and continue.
 
@@ -189,6 +187,8 @@ Present extracted actors and flows for confirmation. For migration mode, run dis
 - Update primary frontmatter `stepsCompleted` to include `stage-2` and `updated` to today.
 
 If compaction drops the conversation mid-stage, the next run resumes from these artifacts rather than re-eliciting.
+
+**Soft gate (interactive only):** Present the actor/flow summary and ask "anything to adjust before I generate diagrams?" before proceeding. Headless: skip, proceed immediately.
 
 ### 3. Diagram Generation
 
@@ -203,10 +203,10 @@ For each in-scope flow, render one Mermaid block per the resolved diagram type:
 
 - **Create / Fresh** (`fresh_reason: "no_workspace"` or `"crashed_no_progress"`): today's date, version `1.0`, "Initial version" → `{user_name}`, translated to `{document_output_language}`.
 - **Update** — *do not bump the minor version mechanically*. Determine scope-of-change first:
-  - **Auto-detect default:** compare current `stage_2_actors` and `stage_2_flows` against the prior session's flush block in `.decision-log.md`. If both arrays are identical → **polish** (append a note about the polish to the existing latest revision row; do not add a new row). If either differs → **semantic** (append a new row, bumping minor: `1.2` → `1.3`).
+  - **Auto-detect default:** run `python3 {skill-root}/scripts/diff-stage2-flush.py {doc_workspace}/D-06-business-flow-diagram.md {doc_workspace}/.decision-log.md -o {doc_workspace}/.scan/scope-diff.json`. The script returns `scope: "polish"|"semantic"`, `actors_changed`, `flows_changed`. Polish → append a note to the existing latest revision row. Semantic → append a new row, bumping minor: `1.2` → `1.3`.
   - **Manual override** (interactive): ask the user "polish (typo / wording / layout) or semantic (actors / flows / outcomes)?".
-  - **Headless override:** `--scope-of-change=polish|semantic|auto` (default `auto`). Polish and semantic skip the diff; `auto` runs the diff as described.
-  - Either path: log the chosen scope and the rationale (which arrays differed) to `.decision-log.md`.
+  - **Headless override:** `--scope-of-change=polish|semantic|auto` (default `auto`). Polish and semantic skip the diff; `auto` runs the script.
+  - Either path: log the chosen scope and the rationale to `.decision-log.md`.
 
 Update primary frontmatter `stepsCompleted` to include `stage-3` and `updated` to today.
 
@@ -214,15 +214,17 @@ Then present the **Parallel-lens menu** (defined above). Stage-3 lens-targets: s
 
 ### 4. Validation
 
-Run the two deterministic validators:
+Run the two deterministic validators in parallel (they are independent):
 
 ```
 python3 {skill-root}/scripts/validate-mermaid.py {doc_workspace}/D-06-business-flow-diagram.md --expected-actors "<comma-separated stage-2 actors>" -o {doc_workspace}/.scan/mermaid.json
 
-python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {doc_workspace}/D-06-business-flow-diagram.md -o {doc_workspace}/.scan/fr.json
+python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {doc_workspace}/D-06-business-flow-diagram.md --pattern "{workflow.fr_id_pattern}" -o {doc_workspace}/.scan/fr.json
 ```
 
-Pass each PRD path (or each shard from `artifacts.json` for sharded PRDs) as a separate `--prd` argument. If the PRD has no FR identifiers, `uncovered` and `phantom` will both be empty.
+If either validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check.
+
+Pass each PRD path (or each shard from `artifacts.json` for sharded PRDs) as a separate `--prd` argument. If `fr.json` reports `vacuous: true` (zero identifiers in both PRD and D-06), surface a warning: "FR coverage check passed vacuously — PRD contains no FR-*/NFR-* identifiers. Consider whether your PRD uses a different naming convention." In headless mode, log the vacuous result to `.decision-log.md`.
 
 Judgment checks (LLM, not script):
 - **Layout readability** — message ordering reads naturally; participant ordering minimises crossings.
@@ -247,7 +249,7 @@ Finalize `{doc_workspace}/D-06-business-flow-diagram.md`. Set `stepsCompleted` t
 - Lenses run (`review_lenses_run`)
 - Handoff target — which downstream skill should consume this output
 
-Downstream consumers: `bmad-create-architecture`, `bmad-create-ux-design`, `bmad-create-epics-and-stories`, `hbc-create-invest-epics-and-stories`.
+Downstream consumers: `hbc-create-er-diagram`, `hbc-create-test-plan`.
 
 If the flow will feed downstream LLM consumers, offer to invoke `bmad-distillator` against the primary to produce a token-efficient distillate. Skip with a note if distillator is unavailable; never inline a substitute.
 

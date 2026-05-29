@@ -36,4 +36,4 @@ This file is a peer of the primary document inside `{doc_workspace}`. The skill 
 - Auto-fixes applied (headless only): list with rationale
 
 ### Handoff target
-- Which downstream skill should consume this output (`bmad-create-epics-and-stories`, `hbc-create-invest-epics-and-stories`).
+- Which downstream skill should consume this output (`hbc-create-coding-standards`, `hbc-create-api-spec`, `hbc-task-breakdown`).

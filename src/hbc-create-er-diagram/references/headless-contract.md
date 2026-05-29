@@ -40,6 +40,7 @@ On success:
   "status": "complete",
   "skill": "{skill-name}",
   "artifact": "{doc_workspace}/D-19-er-diagram.md",
+  "workspace": "{doc_workspace}",
   "decision_log": "{doc_workspace}/.decision-log.md",
   "review_lenses_run": []
 }
@@ -53,6 +54,7 @@ On block:
   "status": "blocked",
   "skill": "{skill-name}",
   "reason": "<one of the values below>",
+  "decision_log": "{doc_workspace}/.decision-log.md",
   "review_lenses_run": []
 }
 ```

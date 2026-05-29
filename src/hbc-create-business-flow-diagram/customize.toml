@@ -21,7 +21,11 @@ persistent_facts = [
 # Template for the D-06 Business Flow Diagram output document.
 # Default points to the shared HBLab D-* template set; override to use a
 # project-specific template with different structure.
-business_flow_template = "{skill-root}/templates/D-06_business-flow-diagram_template.md"
+business_flow_template = "{skill-root}/assets/D-06_business-flow-diagram_template.md"
+
+# Template for the session decision log (.decision-log.md).
+# Override to change the log's structure, frontmatter fields, or section layout.
+decision_log_template = "{skill-root}/assets/decision-log-template.md"
 
 # Hint for the starting Mermaid diagram type surfaced at Stage 1. The workflow
 # may override per-flow when a different type fits better — this is a default,
@@ -33,7 +37,11 @@ diagram_type = "sequenceDiagram"
 # session decision log there. Default uses {project_name} only so re-runs
 # resume the same workspace; add a {date} segment to opt into per-day
 # snapshots (e.g. ".../D-06-{project_name}-{date}/" with {date}=YYYY-MM-DD).
-business_flow_output_path = "{planning_artifacts}/business-flows/D-06-{project_name}/"
+business_flow_output_path = "{planning_artifacts}/D-06-{project_name}/"
+
+# Regex pattern for functional requirement identifiers used by check-fr-coverage.py.
+# Override for projects using REQ-001, UC-01, US-001, etc.
+fr_id_pattern = '\b(REQ-[0-9]+(?:\.[0-9]+)*)\b'
 
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".

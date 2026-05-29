@@ -123,8 +123,30 @@ def _block_uses(block: str) -> tuple[set[str], dict[str, int]]:
     return used, arrow_count
 
 
+DIAGRAM_TYPE_RE = re.compile(r"^\s*(sequenceDiagram|flowchart|graph|stateDiagram(?:-v2)?)\b", re.MULTILINE)
+
+
+def _detect_diagram_type(block: str) -> str | None:
+    m = DIAGRAM_TYPE_RE.search(block)
+    return m.group(1) if m else None
+
+
 def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
     issues: list[dict[str, object]] = []
+
+    diagram_type = _detect_diagram_type(block)
+    if diagram_type and diagram_type != "sequenceDiagram":
+        issues.append(
+            {
+                "block": idx,
+                "kind": "diagram_type_unsupported",
+                "diagram_type": diagram_type,
+                "auto_fixable": False,
+                "detail": f"Structural checks only cover sequenceDiagram; {diagram_type} block validated by LLM judgment only",
+            }
+        )
+        return issues
+
     decls = _block_declarations(block)
     declared = set(decls.keys())
     used, arrow_count = _block_uses(block)

@@ -1,0 +1,34 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-coding-standards.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-coding-standards.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-coding-standards.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# D-12 template path. Override to use a custom template with different sections.
+template_path = "assets/D-12_coding-standards_template.md"
+
+# Output path for the generated D-12 document.
+output_dir = "{planning_artifacts}"
+
+# Validation script. Override to use a custom validator with the same CLI interface.
+validation_script = "scripts/validate-coding-standards.py"
+
+# Detected or overridden framework name. Leave empty for auto-detection from project-context.md.
+framework = ""
+
+# Comment language preference for code examples in the generated D-12.
+# Options: "en", "ja", "vi". Default: follows document_output_language.
+comment_language = ""

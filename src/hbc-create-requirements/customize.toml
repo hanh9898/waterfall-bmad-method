@@ -1,0 +1,34 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-requirements.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-requirements.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-requirements.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# D-02 template path. Override to use a custom template with different sections.
+template_path = "assets/D-02_requirements_template.md"
+
+# Output path for the generated D-02 document.
+output_dir = "{planning_artifacts}"
+
+# Validation script. Override to use a custom validator with the same CLI interface.
+validation_script = "scripts/validate-requirements.py"
+
+# Vague terms to flag during validation. Resolver joins array with commas for CLI.
+# Override to adjust for your domain. Arrays use BMad append-merge.
+# Scan script for source discovery.
+scan_script = "scripts/scan-sources.py"
+
+vague_terms = ["fast", "easy", "user-friendly", "simple", "good", "nice", "efficient", "appropriate", "adequate", "reasonable"]

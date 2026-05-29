@@ -106,6 +106,26 @@ def _classify_prd(prd_path: Path) -> dict[str, object]:
     return entry
 
 
+AS_IS_RE = re.compile(r"AS-IS|現状|current\s+state", re.IGNORECASE)
+
+
+def _check_as_is(prd_entries: list[dict[str, object]]) -> dict[str, object]:
+    """Scan PRD files for AS-IS / 現状 / 'current state' markers."""
+    matches: list[dict[str, str]] = []
+    for entry in prd_entries:
+        p = Path(str(entry["path"]))
+        shards = entry.get("shard_paths", [])
+        paths_to_scan = [p] if not shards else [Path(str(s["path"])) for s in shards]
+        for sp in paths_to_scan:
+            try:
+                text = sp.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for m in AS_IS_RE.finditer(text):
+                matches.append({"file": str(sp), "match": m.group(0)})
+    return {"has_as_is": len(matches) > 0, "matches": matches}
+
+
 def _read_first_match(path: Path, pattern: re.Pattern[str]) -> str | None:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -209,6 +229,11 @@ def main() -> int:
         default=None,
         help="Optional: path to {doc_workspace}. When provided, the script emits resume_state for Stage 1a.",
     )
+    parser.add_argument(
+        "--check-as-is",
+        action="store_true",
+        help="Scan PRD files for AS-IS / 現状 / 'current state' markers. Returns as_is object in output.",
+    )
     parser.add_argument("-o", "--output", required=True, help="JSON output path")
     args = parser.parse_args()
 
@@ -248,6 +273,9 @@ def main() -> int:
         result["ux"] = [_make_entry(p) for p in _glob(artifacts, UX_GLOBS)]
         result["use_case"] = [_make_entry(p) for p in _glob(artifacts, USE_CASE_GLOBS)]
         result["research"] = [_make_entry(p) for p in _glob(artifacts, RESEARCH_GLOBS)]
+
+    if args.check_as_is and result["prd"]:
+        result["as_is"] = _check_as_is(result["prd"])
 
     if args.workspace:
         result["resume_state"] = _extract_resume_state(Path(args.workspace))

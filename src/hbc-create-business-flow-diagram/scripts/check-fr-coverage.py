@@ -34,7 +34,8 @@ import sys
 from pathlib import Path
 
 
-FR_RE = re.compile(r"\b(N?FR-[0-9]+(?:\.[0-9]+)*)\b")
+DEFAULT_FR_PATTERN = r"\b(N?FR-[0-9]+(?:\.[0-9]+)*)\b"
+FR_RE = re.compile(DEFAULT_FR_PATTERN)
 
 # Directories never walked for FR extraction.
 EXCLUDE_DIRS: frozenset[str] = frozenset(
@@ -92,7 +93,15 @@ def main() -> int:
         help="Path to D-06 markdown file (the validation target).",
     )
     parser.add_argument("-o", "--output", required=True, help="JSON output path")
+    parser.add_argument(
+        "--pattern",
+        default=DEFAULT_FR_PATTERN,
+        help="Regex for requirement identifiers (default: FR-*/NFR-*). Must contain one capture group.",
+    )
     args = parser.parse_args()
+
+    global FR_RE
+    FR_RE = re.compile(args.pattern)
 
     prd_paths = [Path(p) for p in args.prd]
     d06 = Path(args.d06)
@@ -123,8 +132,11 @@ def main() -> int:
     uncovered = sorted(prd_ids - d06_ids)
     phantom = sorted(d06_ids - prd_ids)
 
+    vacuous = len(prd_ids) == 0 and len(d06_ids) == 0
+
     result = {
         "passed": not uncovered and not phantom,
+        "vacuous": vacuous,
         "prd_paths": [str(p) for p in prd_paths],
         "prd_files_read": prd_files_read,
         "d06_path": str(d06),
@@ -142,17 +154,16 @@ def main() -> int:
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(
-        json.dumps(
-            {
-                "output": args.output,
-                "passed": result["passed"],
-                "covered": len(covered),
-                "uncovered": len(uncovered),
-                "phantom": len(phantom),
-            }
-        )
-    )
+    summary: dict[str, object] = {
+        "output": args.output,
+        "passed": result["passed"],
+        "covered": len(covered),
+        "uncovered": len(uncovered),
+        "phantom": len(phantom),
+    }
+    if vacuous:
+        summary["vacuous"] = True
+    print(json.dumps(summary))
     return 0 if result["passed"] else 1
 
 
