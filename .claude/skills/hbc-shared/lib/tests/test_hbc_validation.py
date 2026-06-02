@@ -146,6 +146,35 @@ def test_section_body_stops_at_same_level_heading():
     assert "body-b" not in body  # stops at next ## B
 
 
+# --- check_required_sections / section_has_content ---
+
+def test_check_required_sections_all_present():
+    doc = "## Overview\n\ntext\n\n## Bảo mật\n\nrules\n"
+    issues = hv.check_required_sections(doc, [("Overview", "Tổng quan"), ("Security", "Bảo mật")])
+    assert issues == []
+
+
+def test_check_required_sections_missing_reports_canonical():
+    doc = "## Overview\n\ntext\n"
+    issues = hv.check_required_sections(doc, [("Overview", "Tổng quan"), ("Security", "Bảo mật")])
+    assert len(issues) == 1
+    assert issues[0]["type"] == "SECTION_MISSING"
+    assert issues[0]["section"] == "Security"  # English canonical reported
+
+
+def test_check_required_sections_empty():
+    doc = "## Overview\n\n## Security\n\nx\n"
+    issues = hv.check_required_sections(doc, [("Overview",), ("Security",)])
+    empty = [i for i in issues if i["type"] == "SECTION_EMPTY"]
+    assert len(empty) == 1 and empty[0]["section"] == "Overview"
+
+
+def test_section_has_content_ignores_scaffolding():
+    assert hv.section_has_content("| H |\n|---|\n") is False  # header+separator only
+    assert hv.section_has_content("<!-- note -->") is False
+    assert hv.section_has_content("real text") is True
+
+
 if __name__ == "__main__":
     import pytest
 

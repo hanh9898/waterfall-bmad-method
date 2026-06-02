@@ -119,7 +119,7 @@ class TestCheckSections:
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "セキュリティ"
+        assert missing[0]["section"] == "Security"
 
     def test_empty_section(self, tmp_path):
         content = MINIMAL_VALID.replace(
@@ -129,7 +129,7 @@ class TestCheckSections:
         issues = check_sections(content)
         empty = [i for i in issues if i["type"] == "SECTION_EMPTY"]
         assert len(empty) == 1
-        assert empty[0]["section"] == "セキュリティ"
+        assert empty[0]["section"] == "Security"
 
     def test_english_section_names_work(self):
         content = """

@@ -108,6 +108,72 @@ def extract_column(rows: list[list[str]], index: int) -> list[str]:
     return [r[index] for r in rows if index < len(r)]
 
 
+def section_has_content(text: str) -> bool:
+    """True if ``text`` has real content beyond scaffolding.
+
+    Scaffolding = blank lines, table separators, and standalone table headers
+    (a header row immediately followed by a separator, with no data rows) and
+    HTML comment lines. Shared by every validator's section non-emptiness check.
+    """
+    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+    skip: set[int] = set()
+    for i, line in enumerate(non_blank):
+        if i + 1 < len(non_blank):
+            nxt = non_blank[i + 1]
+            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
+            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
+            if is_header and is_separator:
+                skip.add(i)
+                skip.add(i + 1)
+
+    for i, line in enumerate(non_blank):
+        if i in skip:
+            continue
+        if set(line) <= {"|", "-", " ", ":"}:
+            continue
+        if line.startswith("<!--") and line.endswith("-->"):
+            continue
+        return True
+
+    return False
+
+
+def check_required_sections(content: str, sections) -> list[dict]:
+    """Standard SECTION_MISSING / SECTION_EMPTY issues for required sections.
+
+    ``sections`` is an iterable of ``(canonical, *acceptable_labels)`` tuples —
+    canonical is the English name reported in issues; any label (canonical or a
+    configured-language alias) satisfies the presence check. No language is
+    hardcoded. This is the shared replacement for each validator's bespoke
+    ``check_sections`` (S-1 + C-1).
+    """
+    issues: list[dict] = []
+    for entry in sections:
+        canonical = entry[0]
+        labels = entry[1:]
+        match = find_section(content, canonical, *labels)
+        if not match:
+            alt = f" / {' / '.join(labels)}" if labels else ""
+            issues.append({
+                "type": "SECTION_MISSING",
+                "message": f"Required section '{canonical}'{alt} not found",
+                "section": canonical,
+                "auto_fixable": False,
+            })
+            continue
+        body = section_body(content, match)
+        stripped = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
+        if not section_has_content(stripped):
+            issues.append({
+                "type": "SECTION_EMPTY",
+                "message": f"Section '{canonical}' exists but has no content",
+                "section": canonical,
+                "auto_fixable": False,
+            })
+    return issues
+
+
 def verdict(
     structure_ok: bool,
     *,
