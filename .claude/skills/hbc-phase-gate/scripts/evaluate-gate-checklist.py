@@ -62,10 +62,28 @@ def resolve_pattern(pattern: str, project_root: str, variables: dict) -> str:
     return result
 
 
+def _expand_matches(resolved: str) -> list[str]:
+    """Glob a pattern, expanding any directory match to the markdown files inside.
+
+    C-4 dir-aware resolution: a pattern like `.../D-06-*` that matches a workspace
+    FOLDER resolves to the `.md` document(s) within it, not the directory itself —
+    so FILE checks find a real file and CONTENT checks read the document instead of
+    failing on a directory (the source of the confusing "1 file(s)" message).
+    """
+    out: list[str] = []
+    for m in glob.glob(resolved, recursive=True):
+        p = Path(m)
+        if p.is_dir():
+            out.extend(str(f) for f in sorted(p.rglob("*.md")))
+        else:
+            out.append(m)
+    return out
+
+
 def evaluate_file(pattern: str, project_root: str, variables: dict) -> dict:
     """Check if files matching glob pattern exist."""
     resolved = resolve_pattern(pattern, project_root, variables)
-    matches = glob.glob(resolved, recursive=True)
+    matches = _expand_matches(resolved)
     if matches:
         return {
             "status": "PASS",
@@ -96,7 +114,7 @@ def evaluate_content(
 
     for pat in patterns:
         pat_resolved = pat if Path(pat).is_absolute() else str(Path(project_root) / pat)
-        for fpath in glob.glob(pat_resolved, recursive=True):
+        for fpath in _expand_matches(pat_resolved):
             files_checked.append(fpath)
             try:
                 content = Path(fpath).read_text(encoding="utf-8")

@@ -39,11 +39,11 @@ Hệ quả nguyên tắc:
 - **Đo thành công:** ✅ requirements + glossary chạy trên lib; output có structure_ok/semantic_review; lib 16 + validators 44 test xanh.
 
 ### Đợt 1 — Quick wins (cắm vào nền, đóng defect rẻ)
-- [~] **S-1** Nhãn section EN + `document_output_language` (bỏ JP cứng). ✅ requirements + glossary (Đợt 0). Còn lại: các validator/skill khác.
-- [~] **S-4** Chỉ quét ô cột bảng (bỏ `REQ-\d+` toàn file, `entity.lower() in content`). ✅ requirements (Đợt 0). Còn lại: task-breakdown (entity-substring) + validator khác.
-- [ ] **E-2** Xóa đường fail im lặng (thiếu `project-context.md` → cảnh báo rõ "bỏ qua infra").
+- [x] **S-1** Nhãn section EN + `document_output_language` (bỏ JP cứng) qua lib `check_required_sections`. ✅ 9 validator: requirements, glossary, task-breakdown, coding-standards, api-spec, test-spec, test-plan, test-execution, acceptance-check.
+- [x] **S-4** Chỉ quét ô cột bảng. ✅ requirements (REQ column), task-breakdown (entity coverage theo design_ref).
+- [x] **E-2** Cảnh báo khi thiếu `project-context.md` (task-breakdown SKILL.md Stage 2).
 - [ ] **E-1** Strip tiếng Nhật khỏi template gốc BMad mà skill phát ra.
-- [ ] **C-4** Artifact resolver dir-aware tra theo tiền tố D-ID → đóng discover-bỏ-D02, D06-folder-glob, P1-05-khó-hiểu.
+- [x] **C-4** Dir-aware: phase-gate glob trúng thư mục → lặn vào lấy .md (đóng D06-folder-glob + P1-05); discover nhận D-02 làm nguồn yêu cầu (+EN/VI globs).
 
 ### Đợt 2 — Tầng ngữ nghĩa (giá trị thật)
 - [ ] **A-1** Nâng cơ chế `QUALITY → PENDING_LLM` của phase-gate thành primitive chung.

@@ -26,8 +26,16 @@ import sys
 from pathlib import Path
 
 
-# English + Japanese PRD names — HBC templates use 要件定義書 / 企画書.
-PRD_GLOBS = ["*prd*.md", "*PRD*.md", "*要件定義書*.md", "*要件*.md", "*企画書*.md"]
+# Requirement-source names. D-02 is HBC's canonical requirement doc (C-4: was
+# previously missed because only "PRD"-named files were recognised). English +
+# Vietnamese first; legacy Japanese names kept for backward compatibility only.
+PRD_GLOBS = [
+    "D-02*.md",
+    "*prd*.md", "*PRD*.md",
+    "*requirements*.md", "*requirement*.md",
+    "*yêu cầu*.md", "*yeu cau*.md",
+    "*要件定義書*.md", "*要件*.md", "*企画書*.md",
+]
 UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md", "*画面*.md"]
 USE_CASE_GLOBS = [
     "*use-case*.md",

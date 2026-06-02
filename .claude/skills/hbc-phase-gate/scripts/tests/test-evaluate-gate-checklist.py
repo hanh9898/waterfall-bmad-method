@@ -207,3 +207,16 @@ class TestEdgeCases:
         assert items[0]["required"] is True
         assert items[1]["required"] is True
         assert items[2]["required"] is False
+
+
+def test_dir_aware_glob_resolves_md_inside(tmp_path):
+    # C-4: a D-06 workspace FOLDER matched by the glob resolves to the .md inside,
+    # not the directory itself (fixes D-06 folder-vs-flat + "1 file(s)" confusion).
+    ws = tmp_path / "planning-artifacts" / "D-06-business-flow"
+    _write(str(ws / "D-06-business-flow-diagram.md"), "```mermaid\nsequenceDiagram\n  A->>B: hi\n```\n")
+    res_file = evaluate_file("planning-artifacts/D-06-*", str(tmp_path), {})
+    assert res_file["status"] == "PASS"
+    assert any(m.endswith(".md") for m in res_file["matched_files"])
+    res_content = evaluate_content("planning-artifacts/D-06-*", "mermaid", str(tmp_path), {})
+    assert res_content["status"] == "PASS"
+    assert res_content["match_count"] >= 1
