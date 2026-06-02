@@ -60,7 +60,7 @@ Hệ quả nguyên tắc:
 - [ ] **A-4** Traceability ↔ D-02 sync (mượn covered/uncovered/phantom của check-fr-coverage).
 
 ### Track song song
-- [ ] **S-2** `validate-mermaid.py`: regex → parser thật (`mmdc` render thử); actor-coverage làm lớp phụ. Cô lập, làm bất cứ lúc nào sau Đợt 0.
+- [x] **S-2** `validate-mermaid.py` render thật qua `mmdc` (fail→FAIL); khi vắng mmdc báo `render_check: skipped` trung thực (hết false-safety). Actor-coverage giữ làm lớp cấu trúc.
 
 ## Bản đồ defect → giải pháp
 
