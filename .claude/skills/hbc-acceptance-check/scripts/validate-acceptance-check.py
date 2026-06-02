@@ -14,46 +14,45 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("受入基準チェックリスト", "Acceptance Criteria Checklist"),
-    ("トレーサビリティサマリー", "Traceability Summary"),
-    ("決定", "Decision"),
+    ("Acceptance Criteria Checklist", "Danh sách tiêu chí nghiệm thu"),
+    ("Traceability Summary", "Tóm tắt truy vết"),
+    ("Decision", "Quyết định"),
 ]
 
 VALID_DECISIONS = {"ACCEPTED", "REJECTED", "DEFERRED", "PENDING"}
 
 DECISION_RE = re.compile(
-    r"\*\*(?:Status|ステータス):\*\*\s*(ACCEPTED|REJECTED|DEFERRED|PENDING)",
+    r"\*\*(?:Status|Trạng thái):\*\*\s*(ACCEPTED|REJECTED|DEFERRED|PENDING)",
     re.IGNORECASE,
 )
 
 DECIDED_BY_RE = re.compile(
-    r"\*\*(?:Decided by|決定者):\*\*[ \t]*(.+)",
+    r"\*\*(?:Decided by|Người quyết định):\*\*[ \t]*(.+)",
     re.IGNORECASE,
 )
 
 REASON_RE = re.compile(
-    r"\*\*(?:Reason|理由):\*\*[ \t]*(.+)",
+    r"\*\*(?:Reason|Lý do):\*\*[ \t]*(.+)",
     re.IGNORECASE,
 )
 
 
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present (presence-only; English or VN label, shared lib)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=False)
 
 
 def check_decision(content: str) -> list[dict]:
@@ -94,7 +93,7 @@ def check_decision(content: str) -> list[dict]:
 
     if decision == "REJECTED":
         action_section = re.search(
-            r"#+\s.*(?:Action Items|アクションアイテム)",
+            r"#+\s.*(?:Action Items|Hạng mục hành động)",
             content,
             re.IGNORECASE,
         )
@@ -112,7 +111,7 @@ def check_criteria_checklist(content: str) -> list[dict]:
     issues: list[dict] = []
 
     checklist_match = re.search(
-        r"#+\s.*(?:受入基準チェックリスト|Acceptance Criteria Checklist)(.*?)(?=\n#|\Z)",
+        r"#+\s.*(?:Acceptance Criteria Checklist|Danh sách tiêu chí nghiệm thu)(.*?)(?=\n#|\Z)",
         content,
         re.DOTALL | re.IGNORECASE,
     )
@@ -144,7 +143,7 @@ def check_traceability_summary(content: str) -> list[dict]:
     issues: list[dict] = []
 
     trace_match = re.search(
-        r"#+\s.*(?:トレーサビリティサマリー|Traceability Summary)(.*?)(?=\n#|\Z)",
+        r"#+\s.*(?:Traceability Summary|Tóm tắt truy vết)(.*?)(?=\n#|\Z)",
         content,
         re.DOTALL | re.IGNORECASE,
     )
@@ -153,10 +152,10 @@ def check_traceability_summary(content: str) -> list[dict]:
 
     trace_body = trace_match.group(1)
     has_total = bool(
-        re.search(r"(?:Total Requirements|総要件数)", trace_body, re.IGNORECASE)
+        re.search(r"(?:Total Requirements|Tổng số yêu cầu)", trace_body, re.IGNORECASE)
     )
     has_coverage = bool(
-        re.search(r"(?:Trace Coverage|トレースカバレッジ)", trace_body, re.IGNORECASE)
+        re.search(r"(?:Trace Coverage|Độ bao phủ truy vết)", trace_body, re.IGNORECASE)
     )
 
     if not has_total:
@@ -187,12 +186,20 @@ def validate(doc_path: str) -> dict:
     decision_match = DECISION_RE.search(content)
     decision = decision_match.group(1).upper() if decision_match else None
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "decision validity + owner + reason", "criteria checklist non-empty", "traceability summary present"],
+        not_checked=["acceptance judgement soundness (LLM/human review)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "decision": decision,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():
