@@ -21,7 +21,7 @@ persistent_facts = [
 scan_script = "scripts/scan-glossary-sources.py"
 
 # D-03 template path. Override to use a custom template.
-template_path = "assets/D-03_用語集_template.md"
+template_path = "assets/D-03_glossary_template.md"
 
 # Output path for the generated D-03 document. Override to change location or filename.
 glossary_output_path = "{planning_artifacts}/D-03-{project_name}-glossary.md"
