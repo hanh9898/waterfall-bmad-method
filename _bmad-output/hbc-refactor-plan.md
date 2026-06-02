@@ -32,15 +32,15 @@ Hệ quả nguyên tắc:
 
 ## Lộ trình 4 đợt
 
-### Đợt 0 — Nền móng (mở khóa mọi thứ)
-- [ ] **C-1** Tạo thư viện chung `hbc_validation` (`parse_table`, `extract_column`, `section_labels(config)`, `verdict(...)`).
-- [ ] **S-3** Schema phán-quyết-trung-thực: `{ structure_ok, semantic_review: pending|passed|n/a, checked[], not_checked[] }`; `passed` tổng = `structure_ok && semantic_review != pending`.
-- [ ] **C-2** Hợp đồng rubric review (Lớp 1) + kỷ luật tách-facet.
-- **Đo thành công:** requirements + glossary chạy trên lib, output có `structure_ok/semantic_review`, test xanh (TDD: test lib trước).
+### Đợt 0 — Nền móng (mở khóa mọi thứ) ✅ commit 188614a (2026-06-02)
+- [x] **C-1** Thư viện chung `hbc_validation` (`parse_table`, `extract_column`, `find_section`, `section_body`, `verdict`).
+- [x] **S-3** Schema phán-quyết-trung-thực `{ structure_ok, semantic_review, checked[], not_checked[], passed }`; `passed = structure_ok && semantic_review != pending`.
+- [~] **C-2** Hợp đồng review: phần **format output** (Lớp 1) đã xong trong verdict; **rubric + kỷ luật tách-facet** dời sang Đợt 2 (A-2).
+- **Đo thành công:** ✅ requirements + glossary chạy trên lib; output có structure_ok/semantic_review; lib 16 + validators 44 test xanh.
 
 ### Đợt 1 — Quick wins (cắm vào nền, đóng defect rẻ)
-- [ ] **S-1** Nhãn section: English canonical + `document_output_language` (bỏ JP cứng) → đóng glossary-JP, requirements-VN, yêu cầu bỏ Nhật.
-- [ ] **S-4** Chỉ quét trong ô cột bảng (bỏ `entity.lower() in content`, `REQ-\d+` toàn file) → đóng REQ-over-count, entity-substring.
+- [~] **S-1** Nhãn section EN + `document_output_language` (bỏ JP cứng). ✅ requirements + glossary (Đợt 0). Còn lại: các validator/skill khác.
+- [~] **S-4** Chỉ quét ô cột bảng (bỏ `REQ-\d+` toàn file, `entity.lower() in content`). ✅ requirements (Đợt 0). Còn lại: task-breakdown (entity-substring) + validator khác.
 - [ ] **E-2** Xóa đường fail im lặng (thiếu `project-context.md` → cảnh báo rõ "bỏ qua infra").
 - [ ] **E-1** Strip tiếng Nhật khỏi template gốc BMad mà skill phát ra.
 - [ ] **C-4** Artifact resolver dir-aware tra theo tiền tố D-ID → đóng discover-bỏ-D02, D06-folder-glob, P1-05-khó-hiểu.
