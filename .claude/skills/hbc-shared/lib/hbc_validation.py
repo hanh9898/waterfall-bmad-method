@@ -139,7 +139,7 @@ def section_has_content(text: str) -> bool:
     return False
 
 
-def check_required_sections(content: str, sections) -> list[dict]:
+def check_required_sections(content: str, sections, empty_check: bool = True) -> list[dict]:
     """Standard SECTION_MISSING / SECTION_EMPTY issues for required sections.
 
     ``sections`` is an iterable of ``(canonical, *acceptable_labels)`` tuples —
@@ -147,6 +147,9 @@ def check_required_sections(content: str, sections) -> list[dict]:
     configured-language alias) satisfies the presence check. No language is
     hardcoded. This is the shared replacement for each validator's bespoke
     ``check_sections`` (S-1 + C-1).
+
+    ``empty_check`` — when False, only presence is checked (no SECTION_EMPTY),
+    matching validators that historically did presence-only.
     """
     issues: list[dict] = []
     for entry in sections:
@@ -161,6 +164,8 @@ def check_required_sections(content: str, sections) -> list[dict]:
                 "section": canonical,
                 "auto_fixable": False,
             })
+            continue
+        if not empty_check:
             continue
         body = section_body(content, match)
         stripped = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)

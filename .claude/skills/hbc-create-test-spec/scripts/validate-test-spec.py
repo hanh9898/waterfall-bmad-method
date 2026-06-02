@@ -14,58 +14,32 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("概要", "Overview"),
-    ("テストケース一覧", "Test Case Summary"),
-    ("テストケース詳細", "Detailed Test Cases"),
-    ("カバレッジマトリクス", "Coverage Matrix"),
+    ("Overview", "Tổng quan"),
+    ("Test Case Summary", "Danh sách test case"),
+    ("Detailed Test Cases", "Chi tiết test case"),
+    ("Coverage Matrix", "Ma trận bao phủ"),
 ]
 
 TC_ID_RE = re.compile(r"TC-(\d{3,})")
 REQ_ID_RE = re.compile(r"REQ-(\d{3,})")
 
 
-def _section_has_content(text: str) -> bool:
-    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    skip: set[int] = set()
-    for i, line in enumerate(non_blank):
-        if i + 1 < len(non_blank):
-            nxt = non_blank[i + 1]
-            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
-            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
-            if is_header and is_separator:
-                skip.add(i)
-                skip.add(i + 1)
-
-    for i, line in enumerate(non_blank):
-        if i in skip:
-            continue
-        if set(line) <= {"|", "-", " ", ":"}:
-            continue
-        if line.startswith("<!--") and line.endswith("-->"):
-            continue
-        return True
-
-    return False
-
-
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present (presence-only; English or VN label, shared lib)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=False)
 
 
 def check_tc_ids(content: str) -> list[dict]:
@@ -214,15 +188,23 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
     total_reqs = len(d02_req_ids) if d02_req_ids else 0
     coverage_pct = round(covered / total_reqs * 100) if total_reqs > 0 else 0
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "TC id uniqueness", "REQ coverage vs D-02", "required fields per TC"],
+        not_checked=["test-case adequacy / đủ-nghĩa (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "tc_count": len(tc_ids),
         "req_coverage_pct": coverage_pct,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

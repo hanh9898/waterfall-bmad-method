@@ -115,7 +115,7 @@ class TestCheckSections:
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "リスク管理"
+        assert missing[0]["section"] == "Risk"
 
 
 class TestEntryExitCriteria:

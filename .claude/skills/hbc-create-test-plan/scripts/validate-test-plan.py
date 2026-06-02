@@ -14,83 +14,35 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("概要", "Overview"),
-    ("テスト範囲", "Test Scope"),
-    ("テストレベル", "Test Levels"),
-    ("テストアプローチ", "Test Approach"),
-    ("テスト環境", "Test Environment"),
-    ("開始・終了基準", "Entry"),
-    ("スケジュール", "Schedule"),
-    ("体制・役割", "Team"),
-    ("リスク管理", "Risk"),
-    ("成果物", "Deliverables"),
+    ("Overview", "Tổng quan"),
+    ("Test Scope", "Phạm vi kiểm thử"),
+    ("Test Levels", "Cấp độ kiểm thử"),
+    ("Test Approach", "Phương pháp kiểm thử"),
+    ("Test Environment", "Môi trường kiểm thử"),
+    ("Entry", "Tiêu chí vào/ra"),
+    ("Schedule", "Lịch trình"),
+    ("Team", "Đội ngũ / vai trò"),
+    ("Risk", "Quản lý rủi ro"),
+    ("Deliverables", "Sản phẩm bàn giao"),
 ]
 
 
-def _section_has_content(text: str) -> bool:
-    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    skip: set[int] = set()
-    for i, line in enumerate(non_blank):
-        if i + 1 < len(non_blank):
-            nxt = non_blank[i + 1]
-            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
-            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
-            if is_header and is_separator:
-                skip.add(i)
-                skip.add(i + 1)
-
-    for i, line in enumerate(non_blank):
-        if i in skip:
-            continue
-        if set(line) <= {"|", "-", " ", ":"}:
-            continue
-        if line.startswith("<!--") and line.endswith("-->"):
-            continue
-        if line.startswith("```"):
-            continue
-        return True
-
-    return False
-
-
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-            continue
-
-        heading_level = len(match.group().split()[0])
-        start = match.end()
-        same_level_pattern = re.compile(r"\n#{1," + str(heading_level) + r"}\s")
-        next_heading = same_level_pattern.search(content[start:])
-        section_body = (
-            content[start : start + next_heading.start()]
-            if next_heading
-            else content[start:]
-        )
-
-        stripped = re.sub(r"<!--.*?-->", "", section_body, flags=re.DOTALL)
-        if not _section_has_content(stripped):
-            issues.append({
-                "type": "SECTION_EMPTY",
-                "message": f"Section '{ja_name}' exists but has no content",
-                "section": ja_name,
-                "auto_fixable": True,
-            })
-
-    return issues
+    """Required sections present + non-empty (shared lib; English or VN label)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=True)
 
 
 def check_entry_exit_criteria(content: str) -> list[dict]:
@@ -173,14 +125,22 @@ def validate(doc_path: str) -> dict:
 
     section_count = len(re.findall(r"^##\s", content, re.MULTILINE))
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "entry/exit criteria", "risk table", "schedule presence"],
+        not_checked=["test strategy adequacy (LLM review)", "admin/lifecycle test-area fencing (LLM review)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "section_count": section_count,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

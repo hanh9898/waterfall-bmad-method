@@ -14,10 +14,22 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("テスト実行サマリー", "Test Execution Summary"),
-    ("失敗テスト詳細", "Failed Tests Detail"),
-    ("不具合トリアージ", "Defect Triage"),
+    ("Test Execution Summary", "Tóm tắt thực thi kiểm thử"),
+    ("Failed Tests Detail", "Chi tiết test thất bại"),
+    ("Defect Triage", "Phân loại lỗi"),
 ]
 
 VALID_CLASSIFICATIONS = {"code_bug", "test_bug", "missing_coverage", "environment", "spec_issue"}
@@ -33,21 +45,8 @@ COVERAGE_RE = re.compile(
 
 
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present (presence-only; English or VN label, shared lib)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=False)
 
 
 def check_summary(content: str) -> list[dict]:
@@ -173,8 +172,15 @@ def validate(doc_path: str, coverage_threshold: float = 80.0) -> dict:
     failed_match = FAILED_RE.search(content)
     cov_match = COVERAGE_RE.search(content)
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "summary metrics present/consistent", "defect triage", "coverage threshold"],
+        not_checked=["root-cause classification correctness (LLM review)", "acceptance decision (acceptance-check)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "summary": {
             "total": int(total_match.group(1)) if total_match else 0,
@@ -183,7 +189,8 @@ def validate(doc_path: str, coverage_threshold: float = 80.0) -> dict:
             "coverage_pct": float(cov_match.group(1)) if cov_match else 0.0,
         },
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():
