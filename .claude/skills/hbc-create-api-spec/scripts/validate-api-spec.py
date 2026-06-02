@@ -14,13 +14,25 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("概要", "Overview"),
-    ("認証", "Authentication"),
-    ("共通仕様", "Common Specifications"),
-    ("エンドポイント一覧", "Endpoint List"),
-    ("エンドポイント詳細", "Endpoint Details"),
-    ("データモデル", "Data Models"),
+    ("Overview", "Tổng quan"),
+    ("Authentication", "Xác thực"),
+    ("Common Specifications", "Quy cách chung"),
+    ("Endpoint List", "Danh sách endpoint"),
+    ("Endpoint Details", "Chi tiết endpoint"),
+    ("Data Models", "Mô hình dữ liệu"),
 ]
 
 ENDPOINT_TABLE_RE = re.compile(
@@ -32,67 +44,9 @@ REQ_ID_RE = re.compile(r"REQ-(\d{3,})")
 HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 
 
-def _section_has_content(text: str) -> bool:
-    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    skip: set[int] = set()
-    for i, line in enumerate(non_blank):
-        if i + 1 < len(non_blank):
-            nxt = non_blank[i + 1]
-            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
-            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
-            if is_header and is_separator:
-                skip.add(i)
-                skip.add(i + 1)
-
-    for i, line in enumerate(non_blank):
-        if i in skip:
-            continue
-        if set(line) <= {"|", "-", " ", ":"}:
-            continue
-        if line.startswith("<!--") and line.endswith("-->"):
-            continue
-        return True
-
-    return False
-
-
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-            continue
-
-        heading_level = len(match.group().split()[0])
-        start = match.end()
-        same_level_pattern = re.compile(r"\n#{1," + str(heading_level) + r"}\s")
-        next_heading = same_level_pattern.search(content[start:])
-        section_body = (
-            content[start : start + next_heading.start()]
-            if next_heading
-            else content[start:]
-        )
-
-        stripped = re.sub(r"<!--.*?-->", "", section_body, flags=re.DOTALL)
-        if not _section_has_content(stripped):
-            issues.append({
-                "type": "SECTION_EMPTY",
-                "message": f"Section '{ja_name}' exists but has no content",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present + non-empty (shared lib; English or VN label)."""
+    return check_required_sections(content, REQUIRED_SECTIONS)
 
 
 def check_endpoints(content: str) -> list[dict]:
@@ -191,7 +145,7 @@ def check_entity_consistency(content: str, d19_path: str | None) -> list[dict]:
         return issues
 
     model_section = re.search(
-        r"#+\s.*(?:データモデル|Data Models)(.*?)(?=\n##\s|\Z)",
+        r"#+\s.*(?:Data Models|Mô hình dữ liệu)(.*?)(?=\n##\s|\Z)",
         content, re.DOTALL | re.IGNORECASE,
     )
     if not model_section:
@@ -235,14 +189,22 @@ def validate(
 
     endpoint_rows = ENDPOINT_TABLE_RE.findall(content)
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "endpoint completeness", "REQ traceability vs D-02", "entity consistency vs D-19"],
+        not_checked=["API design correctness (LLM review)", "REQ admin/write facet coverage (LLM review + readiness gate)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "endpoint_count": len(endpoint_rows),
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

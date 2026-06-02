@@ -90,7 +90,7 @@ class TestCheckSections:
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "認証"
+        assert missing[0]["section"] == "Authentication"
 
     def test_empty_section(self):
         content = MINIMAL_VALID.replace(
