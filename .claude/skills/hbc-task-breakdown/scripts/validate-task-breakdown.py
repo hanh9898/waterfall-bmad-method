@@ -14,6 +14,17 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import SEMANTIC_NA, verdict  # noqa: E402
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
 TASK_ID_RE = re.compile(r"TASK-(\d{3,})")
 TC_ID_RE = re.compile(r"TC-(\d{3,})")
 ENTITY_RE = re.compile(r"```mermaid.*?erDiagram(.*?)```", re.DOTALL)
@@ -106,8 +117,10 @@ def check_entity_coverage(content: str, d19_path: str | None) -> list[dict]:
     if not entities:
         return issues
 
-    content_lower = content.lower()
-    uncovered = [e for e in entities if e.lower() not in content_lower]
+    # S-4: only the design_ref column of the task table counts as coverage —
+    # an entity merely mentioned in prose/description is not "covered".
+    design_refs = " ".join(row[2] for row in TASK_ROW_RE.findall(content)).lower()
+    uncovered = [e for e in entities if e.lower() not in design_refs]
 
     for entity in uncovered:
         issues.append({
@@ -160,12 +173,29 @@ def validate(
 
     rows = TASK_ROW_RE.findall(content)
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=[
+            "task id uniqueness",
+            "dependency ordering / unknown deps",
+            "D-19 entity coverage (design_ref column)",
+            "D-27 test-case assignment",
+        ],
+        not_checked=[
+            "task granularity / correctness (LLM review)",
+            "REQ→task completeness (readiness gate)",
+            "task type completeness incl UI/admin/service (LLM review)",
+        ],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "total_tasks": len(rows),
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

@@ -46,6 +46,7 @@ Decompose design artifacts into tasks:
 - **API tasks** — one task per D-21 endpoint group (if applicable).
 - **Integration tasks** — cross-entity workflows derived from D-06 business flows.
 - **Infrastructure tasks** — project setup, configuration, CI/CD (from project-context.md).
+  - **E-2 — không fail im lặng:** nếu `project-context.md` không tồn tại, KHÔNG bỏ qua infra một cách im lặng. Báo rõ cho user: _"Không tìm thấy project-context.md → bỏ qua phần Infrastructure tasks. Chạy `bmad-generate-project-context` nếu cần infra coverage."_ rồi mới tiếp tục.
 
 For each task, identify:
 - `design_ref` — which D-19 entity or D-21 endpoint group this implements.
