@@ -4,9 +4,13 @@
 # ///
 """Validate a D-02 Requirements Specification document.
 
-Checks REQ ID uniqueness and sequencing, flags vague terms,
-verifies required sections are present and non-empty,
-and returns structured JSON with per-issue auto_fixable flag.
+Checks REQ ID uniqueness and sequencing (counted ONLY from the functional
+requirements table's ID column — not prose references), flags vague terms,
+verifies required sections are present and non-empty (English canonical +
+configured document language, no hardcoded Japanese), and returns a structured
+JSON honest verdict (structure_ok / semantic_review / checked / not_checked).
+
+Shares table/section/verdict primitives with the HBC validation library.
 """
 
 import argparse
@@ -15,13 +19,32 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        find_section,
+        parse_table,
+        section_body,
+        verdict,
+    )
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# Each entry: (English canonical, configured-language label). The English label
+# is reported in issues; either label satisfies the presence check. No Japanese.
 REQUIRED_SECTIONS = [
-    ("プロジェクト概要", "Project Overview"),
-    ("スコープ", "Scope"),
-    ("ユーザーロール", "User Roles"),
-    ("機能要件", "Functional Requirements"),
-    ("非機能要件", "Non-Functional Requirements"),
-    ("制約と前提条件", "Constraints"),
+    ("Project Overview", "Tổng quan dự án"),
+    ("Scope", "Phạm vi"),
+    ("User Roles", "Vai trò người dùng"),
+    ("Functional Requirements", "Yêu cầu chức năng"),
+    ("Non-Functional Requirements", "Yêu cầu phi chức năng"),
+    ("Constraints", "Ràng buộc"),
 ]
 
 DEFAULT_VAGUE_TERMS = [
@@ -32,15 +55,40 @@ DEFAULT_VAGUE_TERMS = [
 REQ_ID_PATTERN = re.compile(r"REQ-(\d{3,})")
 
 
+def functional_req_ids(content: str) -> list[str]:
+    """REQ ID numbers defined in the functional requirements table.
+
+    Takes the first REQ-xxx found in each table row (the row's own ID column,
+    wherever it sits — tolerates a leading "No." column). Prose references
+    outside the table are never seen, so they cannot inflate counts (S-4).
+    """
+    rows = parse_table(content, "Functional Requirements", "Yêu cầu chức năng")
+    ids: list[str] = []
+    for cells in rows:
+        for cell in cells:
+            m = REQ_ID_PATTERN.search(cell)
+            if m:
+                ids.append(m.group(1))
+                break  # one ID per row
+    return ids
+
+
 def check_req_ids(content: str) -> list[dict]:
-    """Validate REQ IDs are unique and sequential."""
+    """Validate REQ IDs are unique and sequential.
+
+    Definitions are taken ONLY from the functional requirements table — a
+    REQ-xxx mentioned in prose (User Roles, Assumptions, Acceptance Criteria,
+    etc.) is a reference, not a definition, and must not trigger duplicate/order
+    issues (S-4).
+    """
     issues: list[dict] = []
-    matches = REQ_ID_PATTERN.findall(content)
+
+    matches = functional_req_ids(content)
 
     if not matches:
         issues.append({
             "type": "REQ_ID_MISSING",
-            "message": "No REQ-xxx IDs found in document",
+            "message": "No REQ-xxx IDs found in the functional requirements table",
             "auto_fixable": False,
         })
         return issues
@@ -51,7 +99,7 @@ def check_req_ids(content: str) -> list[dict]:
         if req_num in seen:
             issues.append({
                 "type": "REQ_ID_DUPLICATE",
-                "message": f"REQ-{req_num:03d} appears at positions {seen[req_num]} and {i}",
+                "message": f"REQ-{req_num:03d} appears at table positions {seen[req_num]} and {i}",
                 "auto_fixable": True,
                 "req_id": f"REQ-{req_num:03d}",
             })
@@ -72,7 +120,7 @@ def check_req_ids(content: str) -> list[dict]:
     if ids != sorted(ids):
         issues.append({
             "type": "REQ_ID_ORDER",
-            "message": "REQ IDs are not in ascending order in the document",
+            "message": "REQ IDs are not in ascending order in the functional table",
             "auto_fixable": True,
         })
 
@@ -128,36 +176,27 @@ def _section_has_content(text: str) -> bool:
 
 
 def check_sections(content: str) -> list[dict]:
-    """Verify required sections exist and are non-empty."""
+    """Verify required sections exist and are non-empty (English or configured label)."""
     issues: list[dict] = []
 
-    for section_names in REQUIRED_SECTIONS:
-        ja_name, en_name = section_names
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
+    for en_name, lang_name in REQUIRED_SECTIONS:
+        match = find_section(content, en_name, lang_name)
         if not match:
             issues.append({
                 "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
+                "message": f"Required section '{en_name}' / '{lang_name}' not found",
+                "section": en_name,
                 "auto_fixable": False,
             })
             continue
 
-        heading_level = len(match.group().split()[0])
-        start = match.end()
-        same_level_pattern = re.compile(r"\n#{1," + str(heading_level) + r"}\s")
-        next_heading = same_level_pattern.search(content[start:])
-        section_body = content[start:start + next_heading.start()] if next_heading else content[start:]
-
-        stripped = re.sub(r"<!--.*?-->", "", section_body, flags=re.DOTALL)
-        has_content = _section_has_content(stripped)
-        if not has_content:
+        body = section_body(content, match)
+        stripped = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
+        if not _section_has_content(stripped):
             issues.append({
                 "type": "SECTION_EMPTY",
-                "message": f"Section '{ja_name}' exists but has no content",
-                "section": ja_name,
+                "message": f"Section '{en_name}' exists but has no content",
+                "section": en_name,
                 "auto_fixable": False,
             })
 
@@ -168,14 +207,11 @@ def check_nfr_measurable(content: str) -> list[dict]:
     """Check non-functional requirements have measurable criteria."""
     issues: list[dict] = []
 
-    nfr_match = re.search(r"#+\s.*非機能要件", content)
+    nfr_match = find_section(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
     if not nfr_match:
         return issues
 
-    nfr_start = nfr_match.end()
-    next_major = re.search(r"\n##\s", content[nfr_start:])
-    nfr_body = content[nfr_start:nfr_start + next_major.start()] if next_major else content[nfr_start:]
-
+    nfr_body = section_body(content, nfr_match)
     nfr_rows = re.findall(r"\|\s*(NFR-\d+)\s*\|([^|]*)\|([^|]*)\|", nfr_body)
     for nfr_id, _, criteria in nfr_rows:
         criteria_clean = criteria.strip()
@@ -190,8 +226,23 @@ def check_nfr_measurable(content: str) -> list[dict]:
     return issues
 
 
+# Structural checks this validator performs, and the semantic facets it
+# deliberately does NOT judge (deferred to the LLM review layer — Đợt 2).
+CHECKED = [
+    "REQ ID uniqueness/sequence (functional table column)",
+    "vague terminology",
+    "required sections present and non-empty",
+    "NFR measurable-criteria presence",
+]
+NOT_CHECKED = [
+    "REQ semantic correctness / đủ-nghĩa (LLM review)",
+    "REQ facet coverage: read/write · api/admin (LLM review)",
+    "cross-document consistency D-02 ↔ D-03/D-06/... (readiness gate)",
+]
+
+
 def validate(doc_path: str, project_root: str, vague_terms_override: str | None = None) -> dict:
-    """Run all validation checks and return structured result."""
+    """Run all structural validation checks and return the honest verdict."""
     content = Path(doc_path).read_text(encoding="utf-8")
 
     if vague_terms_override:
@@ -208,16 +259,25 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     auto_fixable = [i for i in all_issues if i.get("auto_fixable")]
     manual_fix = [i for i in all_issues if not i.get("auto_fixable")]
 
-    req_count = len(REQ_ID_PATTERN.findall(content))
+    req_count = len(functional_req_ids(content))
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=CHECKED,
+        not_checked=NOT_CHECKED,
+    )
+    # Backward-compatible keys (consumed by SKILL.md / phase-gate) + new verdict fields.
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "req_count": req_count,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():
