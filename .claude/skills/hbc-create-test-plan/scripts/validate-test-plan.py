@@ -48,8 +48,8 @@ def check_sections(content: str) -> list[dict]:
 def check_entry_exit_criteria(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    entry_match = re.search(r"#+\s.*(?:開始基準|Entry Criteria)", content, re.IGNORECASE)
-    exit_match = re.search(r"#+\s.*(?:終了基準|Exit Criteria)", content, re.IGNORECASE)
+    entry_match = re.search(r"#+\s.*(?:Entry Criteria|Tiêu chí vào)", content, re.IGNORECASE)
+    exit_match = re.search(r"#+\s.*(?:Exit Criteria|Tiêu chí ra)", content, re.IGNORECASE)
 
     if not entry_match:
         issues.append({

@@ -1,6 +1,6 @@
 ---
 document_id: D-27
-title: "{project_name} テスト仕様書"
+title: "{project_name} — Đặc tả kiểm thử"
 version: "1.0"
 status: draft
 tc_count: 0
@@ -10,29 +10,29 @@ lastStep: ""
 updated: ""
 ---
 
-# {project_name} テスト仕様書 (Test Specification)
+# {project_name} — Đặc tả kiểm thử (Test Specification)
 
-## 1. 概要 (Overview)
+## 1. Tổng quan (Overview)
 
-### 1.1 目的 (Purpose)
+### 1.1 Mục đích (Purpose)
 
 <!-- Purpose and scope of this test specification -->
 
-### 1.2 対象ドキュメント (Reference Documents)
+### 1.2 Tài liệu tham chiếu (Reference Documents)
 
 | Document | ID | Description |
 |----------|----|-------------|
 
-### 1.3 テストケースID体系 (Test Case ID Format)
+### 1.3 Quy ước mã test case (Test Case ID Format)
 
 Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx IDs.
 
-## 2. テストケース一覧 (Test Case Summary)
+## 2. Danh sách test case (Test Case Summary)
 
 | TC ID | Category | REQ ID | Description | Severity | Status |
 |-------|----------|--------|-------------|----------|--------|
 
-## 3. テストケース詳細 (Detailed Test Cases)
+## 3. Chi tiết test case (Detailed Test Cases)
 
 <!-- Repeat this block for each test case -->
 
@@ -59,16 +59,16 @@ Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx 
 
 <!-- Expected state after test execution -->
 
-## 4. カバレッジマトリクス (Coverage Matrix)
+## 4. Ma trận bao phủ (Coverage Matrix)
 
 | REQ ID | Requirement Summary | Test Cases | Coverage |
 |--------|-------------------|------------|----------|
 
-## 5. テストデータ要件 (Test Data Requirements)
+## 5. Yêu cầu dữ liệu kiểm thử (Test Data Requirements)
 
 <!-- Shared test data specifications, data generation strategy -->
 
-## 改訂履歴 (Revision History)
+## Lịch sử sửa đổi (Revision History)
 
 | Version | Date | Author | Scope of Change |
 |---------|------|--------|----------------|
