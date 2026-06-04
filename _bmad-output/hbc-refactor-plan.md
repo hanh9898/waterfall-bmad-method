@@ -54,7 +54,7 @@ Hệ quả nguyên tắc:
 - [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.
 
 ### Đợt 3 — Bộ răng + gate liên-doc
-- [~] **R-1** Mặc định "chưa review = CHƯA pass": đã hiện diện ở verdict (`passed` cần semantic_review != pending) + gate REVIEW. Còn: gắn REVIEW item vào checklist (sau Lớp-2 embed).
+- [x] **R-1** "chưa review = CHƯA pass": verdict (passed cần semantic_review != pending) + phase-gate REVIEW item P2-12 (D-27) active + Lớp-2 embed ghi status. Gánh nặng chứng minh đã đảo.
 - [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
 - [~] **P-1** Wire reconciliation liên-doc vào gate P2-11 (bắt buộc, dùng trace-report --d02 + check-fr-coverage + rubric). Skill `hbc-check-implementation-readiness` chuyên biệt CHƯA tạo (chỉ có bmad-check… cho PRD/UX) — còn lại.
 - [x] **A-4** `trace-report.py --d02`: so matrix REQ ids ↔ D-02 → orphan_in_matrix / missing_from_matrix; --strict & --validate fail nếu lệch. Tests +2.
