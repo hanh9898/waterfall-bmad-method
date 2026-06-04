@@ -51,7 +51,7 @@ Hệ quả nguyên tắc:
 - [ ] **Lớp-2 embed** Thêm Stage review ngữ nghĩa vào các create-skill.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
 - [ ] **M-1** Metric coverage facet-aware (đếm theo ô facet, không theo REQ).
-- [ ] **R-2** Taxonomy task mở — suy loại task từ artifact có mặt (đóng taxonomy-thiếu-loại + entity=CRUD).
+- [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.
 
 ### Đợt 3 — Bộ răng + gate liên-doc
 - [~] **R-1** Mặc định "chưa review = CHƯA pass": đã hiện diện ở verdict (`passed` cần semantic_review != pending) + gate REVIEW. Còn: gắn REVIEW item vào checklist (sau Lớp-2 embed).
