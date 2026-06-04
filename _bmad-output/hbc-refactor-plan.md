@@ -50,13 +50,13 @@ Hệ quả nguyên tắc:
 - [x] **A-2** Rubric facet (read/write × api/admin/ui/batch × lifecycle, mở rộng) tại `hbc-shared/references/semantic-review-rubric.md` — cũng là phần rubric của C-2.
 - [ ] **Lớp-2 embed** Thêm Stage review ngữ nghĩa vào các create-skill.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
-- [ ] **M-1** Metric coverage facet-aware (đếm theo ô facet, không theo REQ).
+- [~] **M-1** Facet-aware coverage: đã wire vào gate P2-08 (QUALITY/LLM dùng rubric facet). Metric TỰ ĐỘNG (đếm ô facet) cần D-27 mang dữ liệu facet — còn lại.
 - [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.
 
 ### Đợt 3 — Bộ răng + gate liên-doc
 - [~] **R-1** Mặc định "chưa review = CHƯA pass": đã hiện diện ở verdict (`passed` cần semantic_review != pending) + gate REVIEW. Còn: gắn REVIEW item vào checklist (sau Lớp-2 embed).
 - [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
-- [ ] **P-1** `hbc-check-implementation-readiness` = gate bắt buộc trước phase-gate 2.
+- [~] **P-1** Wire reconciliation liên-doc vào gate P2-11 (bắt buộc, dùng trace-report --d02 + check-fr-coverage + rubric). Skill `hbc-check-implementation-readiness` chuyên biệt CHƯA tạo (chỉ có bmad-check… cho PRD/UX) — còn lại.
 - [x] **A-4** `trace-report.py --d02`: so matrix REQ ids ↔ D-02 → orphan_in_matrix / missing_from_matrix; --strict & --validate fail nếu lệch. Tests +2.
 
 ### Track song song
