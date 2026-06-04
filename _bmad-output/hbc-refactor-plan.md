@@ -35,7 +35,7 @@ Hệ quả nguyên tắc:
 ### Đợt 0 — Nền móng (mở khóa mọi thứ) ✅ commit 188614a (2026-06-02)
 - [x] **C-1** Thư viện chung `hbc_validation` (`parse_table`, `extract_column`, `find_section`, `section_body`, `verdict`).
 - [x] **S-3** Schema phán-quyết-trung-thực `{ structure_ok, semantic_review, checked[], not_checked[], passed }`; `passed = structure_ok && semantic_review != pending`.
-- [~] **C-2** Hợp đồng review: phần **format output** (Lớp 1) đã xong trong verdict; **rubric + kỷ luật tách-facet** dời sang Đợt 2 (A-2).
+- [x] **C-2** Hợp đồng review (Lớp 1): format verdict (lib) + rubric/kỷ luật tách-facet (`semantic-review-rubric.md`). Hoàn tất qua A-2.
 - **Đo thành công:** ✅ requirements + glossary chạy trên lib; output có structure_ok/semantic_review; lib 16 + validators 44 test xanh.
 
 ### Đợt 1 — Quick wins (cắm vào nền, đóng defect rẻ)
@@ -46,8 +46,8 @@ Hệ quả nguyên tắc:
 - [x] **C-4** Dir-aware: phase-gate glob trúng thư mục → lặn vào lấy .md (đóng D06-folder-glob + P1-05); discover nhận D-02 làm nguồn yêu cầu (+EN/VI globs).
 
 ### Đợt 2 — Tầng ngữ nghĩa (giá trị thật)
-- [ ] **A-1** Nâng cơ chế `QUALITY → PENDING_LLM` của phase-gate thành primitive chung.
-- [ ] **A-2** Rubric facet tái dùng `{read|write} × {api|admin}` (mở rộng được).
+- [x] **A-1** Primitive review-ngữ-nghĩa dùng chung: verdict `semantic_review` (n/a|pending|passed) + phase-gate REVIEW + rubric Lớp 1 — máy giao việc LLM một cách chuẩn hóa.
+- [x] **A-2** Rubric facet (read/write × api/admin/ui/batch × lifecycle, mở rộng) tại `hbc-shared/references/semantic-review-rubric.md` — cũng là phần rubric của C-2.
 - [ ] **Lớp-2 embed** Thêm Stage review ngữ nghĩa vào các create-skill.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
 - [ ] **M-1** Metric coverage facet-aware (đếm theo ô facet, không theo REQ).
