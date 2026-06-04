@@ -57,7 +57,7 @@ Hệ quả nguyên tắc:
 - [~] **R-1** Mặc định "chưa review = CHƯA pass": đã hiện diện ở verdict (`passed` cần semantic_review != pending) + gate REVIEW. Còn: gắn REVIEW item vào checklist (sau Lớp-2 embed).
 - [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
 - [ ] **P-1** `hbc-check-implementation-readiness` = gate bắt buộc trước phase-gate 2.
-- [ ] **A-4** Traceability ↔ D-02 sync (mượn covered/uncovered/phantom của check-fr-coverage).
+- [x] **A-4** `trace-report.py --d02`: so matrix REQ ids ↔ D-02 → orphan_in_matrix / missing_from_matrix; --strict & --validate fail nếu lệch. Tests +2.
 
 ### Track song song
 - [x] **S-2** `validate-mermaid.py` render thật qua `mmdc` (fail→FAIL); khi vắng mmdc báo `render_check: skipped` trung thực (hết false-safety). Actor-coverage giữ làm lớp cấu trúc.
