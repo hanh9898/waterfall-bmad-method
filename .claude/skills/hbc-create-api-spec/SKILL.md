@@ -101,9 +101,13 @@ Script checks: all endpoints have required fields (method, URL, description), en
 
 **Parallel-lens menu:** `[A]` Advanced (security audit, performance concerns) / `[P]` Party Mode (multi-reviewer) / `[C]` Continue.
 
+## Stage 4b: Semantic Review (Lớp 2)
+
+Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: when a REQ has an admin/lifecycle/write facet that is deliberately kept out of REST scope, state that explicitly here so downstream D-26/D-27 know to test it elsewhere — do not let the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty). The Phase 2 gate REVIEW item (#5) reads it.
+
 ## Stage 5: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). Audit decision-log entries against D-21. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-21. Append closing session.
 
 Suggest next steps: _"D-21 complete. All Phase 2 design artifacts are ready — run Phase 2 gate (`hbc-phase-gate` [PG]) to validate completeness."_
 

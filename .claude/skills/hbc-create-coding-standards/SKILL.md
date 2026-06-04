@@ -96,9 +96,13 @@ Script checks: all required sections present and non-empty, no internal contradi
 
 **Compaction flush:** Write validation results summary to decision log.
 
+## Stage 3b: Semantic Review (Lớp 2)
+
+Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm the standards are internally consistent, actually fit the project's framework, and contain no contradictory rules. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets`/open concerns empty, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
+
 ## Stage 4: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). Audit decision-log entries against D-12: every preference decision reflected in the document. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-12: every preference decision reflected in the document. Append closing session.
 
 Suggest next steps: _"D-12 complete. Recommended: create D-21 API Spec (`hbc-create-api-spec` [API]) if project exposes APIs, or proceed to Phase 2 gate (`hbc-phase-gate` [PG]) if all design artifacts are ready."_
 

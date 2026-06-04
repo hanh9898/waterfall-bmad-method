@@ -48,7 +48,7 @@ Hệ quả nguyên tắc:
 ### Đợt 2 — Tầng ngữ nghĩa (giá trị thật)
 - [x] **A-1** Primitive review-ngữ-nghĩa dùng chung: verdict `semantic_review` (n/a|pending|passed) + phase-gate REVIEW + rubric Lớp 1 — máy giao việc LLM một cách chuẩn hóa.
 - [x] **A-2** Rubric facet (read/write × api/admin/ui/batch × lifecycle, mở rộng) tại `hbc-shared/references/semantic-review-rubric.md` — cũng là phần rubric của C-2.
-- [ ] **Lớp-2 embed** Thêm Stage review ngữ nghĩa vào các create-skill.
+- [x] **Lớp-2 embed** Stage "Semantic Review (Lớp 2)" + ghi `semanticReview` frontmatter, trỏ rubric chung, vào 6 create-skill: requirements, glossary, coding-standards, api-spec, test-spec, test-plan.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
 - [~] **M-1** Facet-aware coverage: đã wire vào gate P2-08 (QUALITY/LLM dùng rubric facet). Metric TỰ ĐỘNG (đếm ô facet) cần D-27 mang dữ liệu facet — còn lại.
 - [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.

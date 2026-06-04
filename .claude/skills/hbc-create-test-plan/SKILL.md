@@ -101,9 +101,13 @@ Script checks: all required sections present and non-empty, entry/exit criteria 
 
 **Parallel-lens menu:** `[A]` Advanced (test strategy completeness) / `[P]` Party Mode / `[C]` Continue.
 
+## Stage 4b: Semantic Review (Lớp 2)
+
+Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: identify REQs with an admin/lifecycle/write facet (e.g. key rotation, approval) and confirm D-26 fences a test area for each applicable facet — even when D-21 cut it from REST scope — or marks it explicitly out-of-scope. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+
 ## Stage 5: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). Audit decision-log entries against D-26. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-26. Append closing session.
 
 Write `test-plan-distillate.json` alongside D-26 — `{"strategy": ..., "scope": ..., "entry_exit": ..., "risks": [...]}` for downstream D-27 consumption.
 
