@@ -196,9 +196,54 @@ def evaluate_metric(
     }
 
 
+def _semantic_review_status(text: str) -> str | None:
+    """Extract frontmatter ``semanticReview.status`` (block or inline YAML).
+
+    Returns the lowercased status (``pending``/``passed``/...) or None if absent.
+    """
+    block = re.search(r"semanticReview:\s*\n((?:[ \t]+\S.*\n)+)", text)
+    if block:
+        sm = re.search(r"status:\s*['\"]?([A-Za-z_]+)", block.group(1))
+        if sm:
+            return sm.group(1).lower()
+    inline = re.search(r"semanticReview:\s*\{[^}]*status:\s*['\"]?([A-Za-z_]+)", text)
+    return inline.group(1).lower() if inline else None
+
+
+def evaluate_review(pattern: str, project_root: str, variables: dict) -> dict:
+    """REVIEW item (#5): pass only when the target doc's frontmatter
+    ``semanticReview.status`` is ``passed`` — the deterministic teeth that make
+    the LLM semantic-review layer non-skippable. Missing/``pending`` → FAIL.
+    """
+    resolved = resolve_pattern(pattern, project_root, variables)
+    files = _expand_matches(resolved)
+    if not files:
+        return {"status": "FAIL", "evidence": f"No files matching {resolved}", "review_status": {}}
+    statuses: dict[str, str | None] = {}
+    for fpath in files:
+        try:
+            statuses[Path(fpath).name] = _semantic_review_status(
+                Path(fpath).read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeDecodeError):
+            statuses[Path(fpath).name] = None
+    not_passed = {n: s for n, s in statuses.items() if s != "passed"}
+    if not_passed:
+        return {
+            "status": "FAIL",
+            "evidence": f"semanticReview not passed (need 'passed'): {not_passed}",
+            "review_status": statuses,
+        }
+    return {
+        "status": "PASS",
+        "evidence": f"semanticReview passed in {len(statuses)} file(s)",
+        "review_status": statuses,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Evaluate FILE, CONTENT, and METRIC gate checklist items."
+        description="Evaluate FILE, CONTENT, METRIC, and REVIEW gate checklist items."
     )
     parser.add_argument("checklist", help="Path to phase gate checklist markdown file")
     parser.add_argument("--project-root", required=True, help="Project root directory")
@@ -263,6 +308,11 @@ def main():
             result["evidence"] = "Requires LLM judgment"
             result["criteria"] = item["criteria"]
             result["artifact_pattern"] = item["artifact_pattern"]
+        elif item["type"] == "REVIEW":
+            eval_result = evaluate_review(
+                item["artifact_pattern"], args.project_root, variables
+            )
+            result.update(eval_result)
         else:
             result["status"] = "SKIP"
             result["evidence"] = f"Unknown type: {item['type']}"

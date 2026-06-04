@@ -220,3 +220,32 @@ def test_dir_aware_glob_resolves_md_inside(tmp_path):
     res_content = evaluate_content("planning-artifacts/D-06-*", "mermaid", str(tmp_path), {})
     assert res_content["status"] == "PASS"
     assert res_content["match_count"] >= 1
+
+
+def test_review_status_passed(tmp_path):
+    # #5: REVIEW item passes only when semanticReview.status == passed
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: passed\n  reviewedBy: llm\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res
+
+
+def test_review_status_pending_fails(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: pending\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL", res
+
+
+def test_review_status_missing_fails(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\ntitle: x\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL", res
+
+
+def test_review_inline_yaml(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview: {status: passed}\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res

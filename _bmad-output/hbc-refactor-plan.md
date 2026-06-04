@@ -49,13 +49,13 @@ Hệ quả nguyên tắc:
 - [ ] **A-1** Nâng cơ chế `QUALITY → PENDING_LLM` của phase-gate thành primitive chung.
 - [ ] **A-2** Rubric facet tái dùng `{read|write} × {api|admin}` (mở rộng được).
 - [ ] **Lớp-2 embed** Thêm Stage review ngữ nghĩa vào các create-skill.
-- [ ] **A-3** Frontmatter `semanticReview: {status, reviewedBy, date, openFacets}`.
+- [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
 - [ ] **M-1** Metric coverage facet-aware (đếm theo ô facet, không theo REQ).
 - [ ] **R-2** Taxonomy task mở — suy loại task từ artifact có mặt (đóng taxonomy-thiếu-loại + entity=CRUD).
 
 ### Đợt 3 — Bộ răng + gate liên-doc
-- [ ] **R-1** Mặc định "chưa review = CHƯA pass" (đảo gánh nặng chứng minh).
-- [ ] **#5** phase-gate thêm item loại `REVIEW`, chặn nếu `semanticReview.status != passed`; liệt kê `openFacets`.
+- [~] **R-1** Mặc định "chưa review = CHƯA pass": đã hiện diện ở verdict (`passed` cần semantic_review != pending) + gate REVIEW. Còn: gắn REVIEW item vào checklist (sau Lớp-2 embed).
+- [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
 - [ ] **P-1** `hbc-check-implementation-readiness` = gate bắt buộc trước phase-gate 2.
 - [ ] **A-4** Traceability ↔ D-02 sync (mượn covered/uncovered/phantom của check-fr-coverage).
 
