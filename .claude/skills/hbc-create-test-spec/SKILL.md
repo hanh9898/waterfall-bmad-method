@@ -88,9 +88,27 @@ Script checks: TC IDs unique and sequential, every REQ-xxx has ≥1 TC-xxx, no o
 
 **Parallel-lens menu:** `[A]` Advanced (coverage gap analysis) / `[P]` Party Mode / `[C]` Continue.
 
+## Stage 4b: Semantic Review (Lớp 2)
+
+Structural validation (Stage 4) only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric: `{project-root}/.claude/skills/hbc-shared/lib/../references/semantic-review-rubric.md` (canonical: `.claude/skills/hbc-shared/references/semantic-review-rubric.md`).
+
+Apply the **facet-split discipline** to every REQ this D-27 covers: for each REQ, ask which facets apply (read/write · api/admin · lifecycle) and whether **each applicable facet** has a TC — not just "≥1 TC exists". This is the seam-catching step (e.g. a REQ whose admin/write facet was cut from REST must still be tested or explicitly out-of-scope).
+
+Record the outcome in the D-27 frontmatter (A-3):
+
+```yaml
+semanticReview:
+  status: passed        # passed only when openFacets is empty; else pending
+  reviewedBy: llm
+  date: "{date}"
+  openFacets: []        # e.g. ["REQ-013 admin/write facet has no TC"]
+```
+
+Headless: if any facet is uncovered, set `status: pending`, list `openFacets`, and return `blocked`. The Phase 2 gate REVIEW item (#5) reads this status.
+
 ## Stage 5: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `tc_count`, `coverage`). Audit decision-log entries against D-27. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `tc_count`, `coverage`, `semanticReview`). Audit decision-log entries against D-27. Append closing session.
 
 Write `test-spec-distillate.json` alongside D-27 — `{"tc_count": N, "coverage_pct": N, "req_tc_map": {"REQ-001": ["TC-001","TC-002"], ...}, "severity_dist": {"High": N, "Medium": N, "Low": N}}` for downstream consumption by Phase 3 agents.
 
