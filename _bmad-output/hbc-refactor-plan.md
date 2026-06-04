@@ -42,7 +42,7 @@ Hệ quả nguyên tắc:
 - [x] **S-1** Nhãn section EN + `document_output_language` (bỏ JP cứng) qua lib `check_required_sections`. ✅ 9 validator: requirements, glossary, task-breakdown, coding-standards, api-spec, test-spec, test-plan, test-execution, acceptance-check.
 - [x] **S-4** Chỉ quét ô cột bảng. ✅ requirements (REQ column), task-breakdown (entity coverage theo design_ref).
 - [x] **E-2** Cảnh báo khi thiếu `project-context.md` (task-breakdown SKILL.md Stage 2).
-- [ ] **E-1** Strip tiếng Nhật khỏi template gốc BMad mà skill phát ra.
+- [x] **E-1** Strip JP khỏi 7 template skill phát ra (assets/): D-02,D-03,D-12,D-19,D-21,D-26,D-27 — headings EN+VI, rename file JP (D-03/D-19), update customize.toml. (Root `templates/` 31 file JP là legacy, KHÔNG skill nào dùng → để deferred.)
 - [x] **C-4** Dir-aware: phase-gate glob trúng thư mục → lặn vào lấy .md (đóng D06-folder-glob + P1-05); discover nhận D-02 làm nguồn yêu cầu (+EN/VI globs).
 
 ### Đợt 2 — Tầng ngữ nghĩa (giá trị thật)
