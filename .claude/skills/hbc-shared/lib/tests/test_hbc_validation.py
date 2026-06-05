@@ -180,6 +180,49 @@ def test_section_has_content_ignores_scaffolding():
     assert hv.section_has_content("real text") is True
 
 
+# --- TC-block helpers (shared by readiness + facet engines) ---
+
+def test_tc_field_same_line_and_wrapped():
+    assert hv.tc_field("**REQ ID:** REQ-001\n", "REQ ID") == "REQ-001"
+    assert hv.tc_field("**REQ ID:**\nREQ-001\n\n", "REQ ID") == "REQ-001"  # wrapped
+
+
+def test_tc_field_empty_does_not_swallow_next_field():
+    # CRITICAL regression: a bare **REQ ID:** must NOT absorb the next field's line
+    # (else an empty binding would steal a later REQ id and falsely bind it).
+    block = "**REQ ID:**\n**Trace:** REQ-555 related\n**Facets:** read\n"
+    assert hv.tc_field(block, "REQ ID") == ""        # empty, not "**Trace:** ..."
+    assert hv.tc_field(block, "Facets") == "read"
+
+
+def test_tc_field_absent_is_none():
+    assert hv.tc_field("**Facets:** read\n", "REQ ID") is None
+
+
+def test_strip_code_fences_backtick_tilde_indented():
+    assert "### TC-" not in hv.strip_code_fences("```\n### TC-9\n```\n")
+    assert "### TC-" not in hv.strip_code_fences("~~~\n### TC-9\n~~~\n")          # tilde
+    assert "### TC-" not in hv.strip_code_fences("    ```\n### TC-9\n    ```\n")  # indented
+    assert "### TC-" not in hv.strip_code_fences("```python\n### TC-9\n```\n")   # info-string
+
+
+def test_strip_code_fences_unclosed_is_failsafe():
+    # Unclosed fence drops to EOF — fenced example never leaks as a real TC.
+    assert "### TC-" not in hv.strip_code_fences("```\n### TC-9\n")
+
+
+def test_strip_code_fences_keeps_real_content_after_block():
+    assert "### TC-2" in hv.strip_code_fences("```\nx\n```\n### TC-2\n")
+
+
+def test_iter_tc_blocks_levels_and_case():
+    assert len(hv.iter_tc_blocks("### TC-1\nbody\n")) == 1
+    assert len(hv.iter_tc_blocks("#### TC-1\nbody\n")) == 1        # 4-hash
+    assert len(hv.iter_tc_blocks("###### TC-1\nbody\n")) == 1      # 6-hash
+    assert len(hv.iter_tc_blocks("### tc-1\nbody\n")) == 1         # lowercase
+    assert hv.iter_tc_blocks("```\n### TC-1\n```\n") == []         # fenced example
+
+
 if __name__ == "__main__":
     import pytest
 

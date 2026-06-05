@@ -68,6 +68,61 @@ def section_body(content: str, match: re.Match) -> str:
     return content[start:start + nxt.start()] if nxt else content[start:]
 
 
+# --- Test-case (TC) block parsing — shared by D-27 readiness + facet engines ---
+_FENCE_LINE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
+_TC_HEADING_RE = re.compile(r"^#{3,6}[ \t]+TC-", re.MULTILINE | re.IGNORECASE)
+
+
+def strip_code_fences(text: str) -> str:
+    """Remove fenced code blocks so markup inside them (e.g. an example ``### TC-``
+    heading) is never read as real document structure.
+
+    A line-state scan (not a regex) so it pairs fences correctly regardless of
+    info-string, indentation, or fence char (``` or ~~~). An UNCLOSED fence drops
+    to end-of-input — fail-safe: fenced/garbled example content never leaks out to
+    be miscounted as a real TC.
+    """
+    out: list[str] = []
+    fence: str | None = None  # the opening fence char (` or ~) while inside a block
+    for line in text.splitlines(keepends=True):
+        m = _FENCE_LINE_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)[0]
+            else:
+                out.append(line)
+        elif m and m.group(1)[0] == fence:
+            fence = None  # matching close — drop the closing line too
+    return "".join(out)
+
+
+def iter_tc_blocks(text: str) -> list[str]:
+    """Each test-case detail block body, split on a ``### … TC-`` heading at levels
+    3–6 (so ``#### TC-`` is not silently missed; case-insensitive), with fenced
+    code stripped first. Returns the bodies AFTER each TC heading; text before the
+    first heading is dropped.
+    """
+    return _TC_HEADING_RE.split(strip_code_fences(text))[1:]
+
+
+def tc_field(block: str, label: str) -> str | None:
+    """Value of a ``**Label:**`` field inside a TC block, captured up to the next
+    ``**…:**`` field, blank line, or end — so a value wrapped onto the next line is
+    still read. ``None`` if the field is absent, ``""`` if present but empty.
+
+    The gap after the label is matched with ``[ \\t]*`` (NOT ``\\s*``): a bare
+    ``**Label:**`` at end of line must NOT consume the newline and swallow the next
+    field's line (which would, e.g., let an empty REQ ID field absorb a later
+    ``**Trace:** REQ-555`` and falsely bind it). HTML comments stripped first.
+    """
+    cleaned = re.sub(r"<!--.*?-->", "", block, flags=re.DOTALL)
+    m = re.search(
+        rf"\*\*{re.escape(label)}:\*\*[ \t]*(.*?)(?=\n\s*\*\*|\n\s*\n|\Z)",
+        cleaned, re.DOTALL,
+    )
+    return m.group(1).strip() if m else None
+
+
 def parse_table(content: str, *labels: str) -> list[list[str]]:
     """Locate the section identified by ``labels`` and return its markdown
     table's DATA rows (header and separator excluded) as lists of cell strings.
