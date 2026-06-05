@@ -56,7 +56,7 @@ Hệ quả nguyên tắc:
 ### Đợt 3 — Bộ răng + gate liên-doc
 - [x] **R-1** "chưa review = CHƯA pass": verdict (passed cần semantic_review != pending) + phase-gate REVIEW item P2-12 (D-27) active + Lớp-2 embed ghi status. Gánh nặng chứng minh đã đảo.
 - [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
-- [~] **P-1** Wire reconciliation liên-doc vào gate P2-11 (bắt buộc, dùng trace-report --d02 + check-fr-coverage + rubric). Skill `hbc-check-implementation-readiness` chuyên biệt CHƯA tạo (chỉ có bmad-check… cho PRD/UX) — còn lại.
+- [x] **P-1** Skill `hbc-check-implementation-readiness` ([IR]): engine `check-readiness.py` reconcile D-02 ↔ D-21/D-26/D-27 + matrix (uncovered/orphan/missing, verdict S-3); SKILL.md; đăng ký bmad-help.csv; wire gate P2-11 (required). Tests 6.
 - [x] **A-4** `trace-report.py --d02`: so matrix REQ ids ↔ D-02 → orphan_in_matrix / missing_from_matrix; --strict & --validate fail nếu lệch. Tests +2.
 
 ### Track song song
