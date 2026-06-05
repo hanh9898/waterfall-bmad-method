@@ -39,7 +39,12 @@ Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx 
 ### TC-xxx: {test_case_name}
 
 **REQ ID:** REQ-xxx
-**Facets:** read | write | api | admin | ui | batch  (comma-separated facets this TC exercises — see semantic-review-rubric.md; enables automated facet coverage M-1)
+**Facets:** TODO
+<!-- Replace TODO with the comma-separated facets THIS TC exercises (choose from
+     read/write · api/admin/ui/batch · lifecycle); see semantic-review-rubric.md —
+     enables automated facet coverage (M-1). A TC may list several REQ IDs
+     (comma-separated) above. Leaving "TODO" fails the M-1 check LOUDLY rather than
+     silently claiming a facet the TC does not actually exercise. -->
 **Category:** Functional | Non-Functional | Security | Performance | Integration
 **Severity:** Critical | High | Medium | Low
 **Preconditions:**
@@ -63,7 +68,9 @@ Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx 
 ## 4. Ma trận bao phủ (Coverage Matrix)
 
 <!-- `Facets` lists the facets REQUIRED for each REQ (read/write · api/admin · lifecycle).
-     check-facet-coverage.py (M-1) verifies every required facet has a covering TC. -->
+     check-facet-coverage.py (M-1) verifies every required facet has a covering TC.
+     Required facets may instead (or also) be declared in a `Facets` column on the
+     D-02 functional requirements table — M-1 UNIONS both sources (pass --d02). -->
 
 | REQ ID | Requirement Summary | Test Cases | Facets | Coverage |
 |--------|-------------------|------------|--------|----------|
