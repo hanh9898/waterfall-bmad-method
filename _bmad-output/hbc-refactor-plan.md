@@ -50,13 +50,13 @@ Hệ quả nguyên tắc:
 - [x] **A-2** Rubric facet (read/write × api/admin/ui/batch × lifecycle, mở rộng) tại `hbc-shared/references/semantic-review-rubric.md` — cũng là phần rubric của C-2.
 - [x] **Lớp-2 embed** Stage "Semantic Review (Lớp 2)" + ghi `semanticReview` frontmatter, trỏ rubric chung, vào 6 create-skill: requirements, glossary, coding-standards, api-spec, test-spec, test-plan.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
-- [x] **M-1** Engine `check-facet-coverage.py`: required-facets (cột Facets D-02/Coverage Matrix) vs covered-facets (**Facets:** tag mỗi TC) → uncovered_facets per REQ. Convention thêm vào template D-27; wire test-spec Stage 4b + gate P2-08. Tests 3.
+- [x] **M-1** Engine `check-facet-coverage.py`: required-facets (cột Facets D-02/Coverage Matrix) vs covered-facets (**Facets:** tag mỗi TC) → uncovered_facets per REQ. Convention thêm vào template D-27; wire test-spec Stage 4b + gate P2-08. Tests 13 (3 gốc + 10 hardening post-review: union D1, multi-REQ D3, pipe split, column scoring, comment-leak, exit-2, verdict-contract).
 - [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.
 
 ### Đợt 3 — Bộ răng + gate liên-doc
 - [x] **R-1** "chưa review = CHƯA pass": verdict (passed cần semantic_review != pending) + phase-gate REVIEW item P2-12 (D-27) active + Lớp-2 embed ghi status. Gánh nặng chứng minh đã đảo.
 - [x] **#5** phase-gate `evaluate_review` + nhánh REVIEW: đọc frontmatter `semanticReview.status`, FAIL nếu != passed (block/inline YAML). A-3 schema `semanticReview:{status,reviewedBy,date,openFacets}`. Chưa thêm REVIEW row vào checklist (bật sau embed).
-- [x] **P-1** Skill `hbc-check-implementation-readiness` ([IR]): engine `check-readiness.py` reconcile D-02 ↔ D-21/D-26/D-27 + matrix (uncovered/orphan/missing, verdict S-3); SKILL.md; đăng ký bmad-help.csv; wire gate P2-11 (required). Tests 6.
+- [x] **P-1** Skill `hbc-check-implementation-readiness` ([IR]): engine `check-readiness.py` reconcile D-02 ↔ D-21/D-26/D-27 + matrix (uncovered/orphan/missing, verdict S-3); SKILL.md; đăng ký bmad-help.csv; wire gate P2-11 (required). Tests 15 (6 gốc + 9 hardening post-review: D-21 informational, D4 vắng-section=lỗi, P6 gated-any, D-26 path, orphan-via-D21, matrix happy, --output, verdict-contract).
 - [x] **A-4** `trace-report.py --d02`: so matrix REQ ids ↔ D-02 → orphan_in_matrix / missing_from_matrix; --strict & --validate fail nếu lệch. Tests +2.
 
 ### Track song song
