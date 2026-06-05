@@ -39,6 +39,7 @@ Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx 
 ### TC-xxx: {test_case_name}
 
 **REQ ID:** REQ-xxx
+**Facets:** read | write | api | admin | ui | batch  (comma-separated facets this TC exercises — see semantic-review-rubric.md; enables automated facet coverage M-1)
 **Category:** Functional | Non-Functional | Security | Performance | Integration
 **Severity:** Critical | High | Medium | Low
 **Preconditions:**
@@ -61,8 +62,11 @@ Format: `TC-xxx` (sequential from TC-001). Each TC links to one or more REQ-xxx 
 
 ## 4. Ma trận bao phủ (Coverage Matrix)
 
-| REQ ID | Requirement Summary | Test Cases | Coverage |
-|--------|-------------------|------------|----------|
+<!-- `Facets` lists the facets REQUIRED for each REQ (read/write · api/admin · lifecycle).
+     check-facet-coverage.py (M-1) verifies every required facet has a covering TC. -->
+
+| REQ ID | Requirement Summary | Test Cases | Facets | Coverage |
+|--------|-------------------|------------|--------|----------|
 
 ## 5. Yêu cầu dữ liệu kiểm thử (Test Data Requirements)
 

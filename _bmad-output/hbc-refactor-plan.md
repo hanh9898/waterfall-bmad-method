@@ -50,7 +50,7 @@ Hệ quả nguyên tắc:
 - [x] **A-2** Rubric facet (read/write × api/admin/ui/batch × lifecycle, mở rộng) tại `hbc-shared/references/semantic-review-rubric.md` — cũng là phần rubric của C-2.
 - [x] **Lớp-2 embed** Stage "Semantic Review (Lớp 2)" + ghi `semanticReview` frontmatter, trỏ rubric chung, vào 6 create-skill: requirements, glossary, coding-standards, api-spec, test-spec, test-plan.
 - [x] **A-3** Schema `semanticReview:{status,reviewedBy,date,openFacets}` + reader trong phase-gate (`_semantic_review_status`).
-- [~] **M-1** Facet-aware coverage: đã wire vào gate P2-08 (QUALITY/LLM dùng rubric facet). Metric TỰ ĐỘNG (đếm ô facet) cần D-27 mang dữ liệu facet — còn lại.
+- [x] **M-1** Engine `check-facet-coverage.py`: required-facets (cột Facets D-02/Coverage Matrix) vs covered-facets (**Facets:** tag mỗi TC) → uncovered_facets per REQ. Convention thêm vào template D-27; wire test-spec Stage 4b + gate P2-08. Tests 3.
 - [x] **R-2** task-breakdown Stage 2: taxonomy mở (checklist, không đóng kín) + thêm UI/Screen & Behavior/Service category; entity gồm cả business-logic (không chỉ CRUD); thêm taxonomy-completeness check.
 
 ### Đợt 3 — Bộ răng + gate liên-doc

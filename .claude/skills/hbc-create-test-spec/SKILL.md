@@ -94,6 +94,12 @@ Structural validation (Stage 4) only proves cấu trúc. Before saving, run the 
 
 Apply the **facet-split discipline** to every REQ this D-27 covers: for each REQ, ask which facets apply (read/write · api/admin · lifecycle) and whether **each applicable facet** has a TC — not just "≥1 TC exists". This is the seam-catching step (e.g. a REQ whose admin/write facet was cut from REST must still be tested or explicitly out-of-scope).
 
+**Automated check (M-1):** declare each TC's facets (`**Facets:**` field) and each REQ's required facets (Coverage Matrix `Facets` column), then run:
+```
+python3 {skill-root}/scripts/check-facet-coverage.py --d27 "{workflow.output_dir}/D-27-{project_name}-test-spec.md" [--d02 "{d02_path}"]
+```
+`facet_covered: false` ⇒ list `uncovered_facets` in `openFacets` and keep `status: pending`. The metric only checks declared facets — your LLM judgment still decides whether the declared facet set is COMPLETE.
+
 Record the outcome in the D-27 frontmatter (A-3):
 
 ```yaml
