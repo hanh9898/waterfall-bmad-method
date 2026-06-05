@@ -249,3 +249,22 @@ def test_review_inline_yaml(tmp_path):
     _write(str(doc), "---\nsemanticReview: {status: passed}\n---\n\n# D-27\n")
     res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
     assert res["status"] == "PASS", res
+
+
+def test_review_status_no_trailing_newline(tmp_path):
+    # F3: file whose final line is `status: passed` with no trailing newline still parses
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    doc.write_text("---\nsemanticReview:\n  status: passed", encoding="utf-8")  # no \n at EOF
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res
+
+
+def test_review_status_hyphenated_not_truncated(tmp_path):
+    # F3: a hyphenated status is not truncated to before the hyphen
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: not-applicable\n---\n")
+    # 'not-applicable' != 'passed' → FAIL, but must capture the FULL token (not 'not')
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL"
+    assert res["review_status"][doc.name] == "not-applicable"

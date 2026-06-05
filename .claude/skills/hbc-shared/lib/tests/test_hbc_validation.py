@@ -97,21 +97,26 @@ def test_extract_column_out_of_range_is_safe():
 
 # --- regression patches from review ---
 
-def test_parse_table_stops_before_second_table():
+def test_parse_table_collects_all_subtables_without_header_bleed():
+    # F1: a section with multiple sub-tables contributes ALL data rows, and the
+    # second table's HEADER row must NOT leak in as data.
     doc = """\
 ## Yêu cầu chức năng
+
+### 4.1
 
 | REQ ID | Cat |
 |--------|-----|
 | REQ-001 | A |
+
+### 4.2
 
 | REQ ID | Cat |
 |--------|-----|
 | REQ-002 | B |
 """
     rows = hv.parse_table(doc, "Yêu cầu chức năng")
-    # only the first contiguous table block — no bleed of the 2nd table's header
-    assert rows == [["REQ-001", "A"]]
+    assert rows == [["REQ-001", "A"], ["REQ-002", "B"]]
 
 
 def test_parse_table_row_without_trailing_pipe():

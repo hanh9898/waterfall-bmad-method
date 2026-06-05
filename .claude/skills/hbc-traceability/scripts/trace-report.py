@@ -148,6 +148,27 @@ def validate_matrix(rows: list[dict]) -> dict:
     }
 
 
+def _d02_req_ids(text: str) -> set[str]:
+    """REQ ids DEFINED in D-02 — taken from the functional requirements table's ID
+    column only, NOT prose references (mirrors the S-4 fix; F2). Falls back to a
+    whole-file scan if the shared lib is unavailable."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+        from hbc_validation import parse_table  # noqa: E402
+        ids: set[str] = set()
+        for cells in parse_table(text, "Functional Requirements", "Yêu cầu chức năng"):
+            for cell in cells:
+                m = REQ_ID_RE.match(cell.strip())
+                if m:
+                    ids.add(m.group(0))
+                    break
+        if ids:
+            return ids
+    except Exception:
+        pass
+    return set(REQ_ID_RE.findall(text))
+
+
 def sync_with_d02(rows: list[dict], d02_path: str) -> dict:
     """Cross-check matrix REQ ids against D-02 (A-4).
 
@@ -160,7 +181,7 @@ def sync_with_d02(rows: list[dict], d02_path: str) -> dict:
         text = Path(d02_path).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return {"error": f"D-02 not readable: {d02_path}", "in_sync": False}
-    d02_ids = set(REQ_ID_RE.findall(text))
+    d02_ids = _d02_req_ids(text)
     matrix_ids = {r["req_id"] for r in rows if r.get("req_id")}
     orphan = sorted(matrix_ids - d02_ids)
     missing = sorted(d02_ids - matrix_ids)

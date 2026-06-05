@@ -201,12 +201,14 @@ def _semantic_review_status(text: str) -> str | None:
 
     Returns the lowercased status (``pending``/``passed``/...) or None if absent.
     """
-    block = re.search(r"semanticReview:\s*\n((?:[ \t]+\S.*\n)+)", text)
+    # Trailing newline optional (F3): a file whose final line is `status: passed`
+    # with no terminating newline must still parse. Status class allows hyphens.
+    block = re.search(r"semanticReview:\s*\n((?:[ \t]+\S.*\n?)+)", text)
     if block:
-        sm = re.search(r"status:\s*['\"]?([A-Za-z_]+)", block.group(1))
+        sm = re.search(r"status:\s*['\"]?([A-Za-z_-]+)", block.group(1))
         if sm:
             return sm.group(1).lower()
-    inline = re.search(r"semanticReview:\s*\{[^}]*status:\s*['\"]?([A-Za-z_]+)", text)
+    inline = re.search(r"semanticReview:\s*\{[^}]*status:\s*['\"]?([A-Za-z_-]+)", text)
     return inline.group(1).lower() if inline else None
 
 

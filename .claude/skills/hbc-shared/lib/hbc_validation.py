@@ -80,23 +80,25 @@ def parse_table(content: str, *labels: str) -> list[list[str]]:
     if not m:
         return []
     rows: list[list[str]] = []
-    seen_separator = False
-    started = False
+    in_data = False  # True after a separator; reset by any non-pipe (prose/blank) line
     for line in section_body(content, m).splitlines():
         s = line.strip()
         if not s.startswith("|"):
-            if started:
-                break  # first table block ended — don't bleed into a later table
+            # A prose/blank line ends the current table block. The next pipe line
+            # starts a fresh block, so its header row is skipped again — this lets
+            # a section with MULTIPLE sub-tables (e.g. `### 4.1`/`### 4.2`, each with
+            # its own table) contribute ALL their data rows without leaking any
+            # sub-table's header row in as data.
+            in_data = False
             continue
-        started = True
         # strip one bounding pipe each side so rows with or without a trailing
         # pipe both split correctly (GFM allows omitting the trailing pipe).
         cells = [c.strip() for c in s.strip("|").split("|")]
         joined = "".join(cells)
         if joined and set(joined) <= {"-", " ", ":"}:
-            seen_separator = True
+            in_data = True  # separator → subsequent rows in this block are data
             continue
-        if not seen_separator:
+        if not in_data:
             # header row before the separator
             continue
         rows.append(cells)

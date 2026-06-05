@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
+        check_required_sections,
         find_section,
         parse_table,
         section_body,
@@ -66,7 +67,10 @@ def functional_req_ids(content: str) -> list[str]:
     ids: list[str] = []
     for cells in rows:
         for cell in cells:
-            m = REQ_ID_PATTERN.search(cell)
+            # Anchored match: the cell must BE a REQ id (the ID column), not merely
+            # contain one — so a prose reference like "See REQ-001" in another cell
+            # of an id-less row does not produce a ghost/duplicate id (F7).
+            m = REQ_ID_PATTERN.match(cell.strip())
             if m:
                 ids.append(m.group(1))
                 break  # one ID per row
@@ -147,60 +151,13 @@ def check_vague_terms(content: str, vague_terms: list[str]) -> list[dict]:
     return issues
 
 
-def _section_has_content(text: str) -> bool:
-    """Check whether section text has real content beyond scaffolding.
-
-    Scaffolding = blank lines, table separators, standalone table headers
-    (a header row followed by a separator with no data rows).
-    """
-    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    skip: set[int] = set()
-    for i, line in enumerate(non_blank):
-        if i + 1 < len(non_blank):
-            nxt = non_blank[i + 1]
-            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
-            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
-            if is_header and is_separator:
-                skip.add(i)
-                skip.add(i + 1)
-
-    for i, line in enumerate(non_blank):
-        if i in skip:
-            continue
-        if set(line) <= {"|", "-", " ", ":"}:
-            continue
-        return True
-
-    return False
-
-
 def check_sections(content: str) -> list[dict]:
-    """Verify required sections exist and are non-empty (English or configured label)."""
-    issues: list[dict] = []
+    """Required sections present + non-empty (shared lib; English or VN label).
 
-    for en_name, lang_name in REQUIRED_SECTIONS:
-        match = find_section(content, en_name, lang_name)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{en_name}' / '{lang_name}' not found",
-                "section": en_name,
-                "auto_fixable": False,
-            })
-            continue
-
-        body = section_body(content, match)
-        stripped = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
-        if not _section_has_content(stripped):
-            issues.append({
-                "type": "SECTION_EMPTY",
-                "message": f"Section '{en_name}' exists but has no content",
-                "section": en_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    F9: was a bespoke copy of the section/empty logic; now delegates to the shared
+    `check_required_sections` like every other validator (removes drift).
+    """
+    return check_required_sections(content, REQUIRED_SECTIONS)
 
 
 def check_nfr_measurable(content: str) -> list[dict]:

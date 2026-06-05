@@ -126,6 +126,19 @@ def test_prose_req_reference_not_counted_as_duplicate():
     assert result["req_count"] == 3
 
 
+def test_intra_table_prose_ref_not_counted():
+    # F7: an id-less row whose other cell references a REQ must NOT create a ghost id
+    doc = VALID_DOC.replace(
+        "| REQ-003 | Order | User can view orders | Medium | Admin | Order list displays all orders |",
+        "| REQ-003 | Order | User can view orders | Medium | Admin | Order list displays all orders |\n"
+        "|  | Order | Sub-requirement | Low | Admin | See REQ-001 for details |",
+    )
+    result, code = run_script(doc)
+    dup = [i for i in result["issues"] if i["type"] == "REQ_ID_DUPLICATE"]
+    assert dup == [], f"prose REQ ref in a cell wrongly counted: {dup}"
+    assert result["req_count"] == 3
+
+
 def test_duplicate_req_ids():
     doc = VALID_DOC.replace("REQ-003", "REQ-001")
     result, code = run_script(doc)

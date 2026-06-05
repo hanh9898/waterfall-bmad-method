@@ -9,3 +9,10 @@ Findings surfaced incidentally during review but out of scope for the current st
 
 ## E-1 follow-up (2026-06-04)
 - Root `templates/` dir chứa 31 file template JP nguyên bản BMad (D-00..D-31). KHÔNG được skill HBC nào tham chiếu (các skill dùng `assets/` riêng, đã de-JP). Cleanup/đổi tên 31 file này là tùy chọn, không ảnh hưởng chức năng — tách thành task riêng nếu muốn bộ template gốc cũng thuần Việt/Anh.
+
+## Deferred from: code review of HBC refactor (2026-06-04)
+- **F4** `hbc_validation.find_section` — khi 2 heading cùng cấp đều chứa nhãn, lấy cái đầu. Rủi ro thấp với template hiện tại (nhãn section duy nhất). Cân nhắc anchor chặt hơn nếu xảy ra va chạm thật.
+- **F5** `evaluate-gate-checklist._expand_matches` — thư mục match nhưng không có .md → FAIL với message "No files matching" khó hiểu. Thêm evidence rõ "dir tồn tại nhưng rỗng .md".
+- **F6** `parse_table` — hàng toàn dấu gạch giữa bảng bị coi là separator lần 2 (im lặng gộp rows sau). Thường đúng ý; document hành vi.
+- **F8** `validate-mermaid._render_check` — timeout 60s/block × N block → có thể treo lâu khi nhiều block + có mmdc. Thêm tổng-ngân-sách wall-clock.
+- **test-spec d02 prescan** — `validate-test-spec` quét REQ toàn file D-02 cho coverage% (pre-existing, không thuộc diff này). Cùng class prose-leak; cân nhắc scope theo bảng functional sau.
