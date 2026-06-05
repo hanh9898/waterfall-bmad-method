@@ -16,3 +16,7 @@ Findings surfaced incidentally during review but out of scope for the current st
 - **F6** `parse_table` — hàng toàn dấu gạch giữa bảng bị coi là separator lần 2 (im lặng gộp rows sau). Thường đúng ý; document hành vi.
 - **F8** `validate-mermaid._render_check` — timeout 60s/block × N block → có thể treo lâu khi nhiều block + có mmdc. Thêm tổng-ngân-sách wall-clock.
 - **test-spec d02 prescan** — `validate-test-spec` quét REQ toàn file D-02 cho coverage% (pre-existing, không thuộc diff này). Cùng class prose-leak; cân nhắc scope theo bảng functional sau.
+
+## Deferred from: code re-review of fixes (2026-06-05) — low-risk residual edges
+- **F1 residual** `parse_table` — nếu HAI bảng nằm SÁT nhau không có dòng prose/heading/blank ở giữa, header bảng thứ 2 lọt vào data. Không xảy ra với template (sub-table luôn cách nhau bởi `###` + dòng trống). Guarantee thực tế: "các block cách nhau bởi dòng non-pipe".
+- **F7 residual** `functional_req_ids` — `.match` neo đầu ô, nên ô bắt đầu bằng REQ-id rồi nối prose ("REQ-001 must precede") vẫn được tính. Đúng ý cho cột ID; chỉ sai nếu một ô KHÔNG-phải-ID lại mở đầu bằng REQ-id (hiếm).
