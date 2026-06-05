@@ -152,20 +152,26 @@ def _d02_req_ids(text: str) -> set[str]:
     """REQ ids DEFINED in D-02 — taken from the functional requirements table's ID
     column only, NOT prose references (mirrors the S-4 fix; F2). Falls back to a
     whole-file scan if the shared lib is unavailable."""
+    labels = ("Functional Requirements", "Yêu cầu chức năng")
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
-        from hbc_validation import parse_table  # noqa: E402
-        ids: set[str] = set()
-        for cells in parse_table(text, "Functional Requirements", "Yêu cầu chức năng"):
-            for cell in cells:
-                m = REQ_ID_RE.match(cell.strip())
-                if m:
-                    ids.add(m.group(0))
-                    break
-        if ids:
+        from hbc_validation import find_section, parse_table  # noqa: E402
+        if find_section(text, *labels):
+            # Section present → its table's ID column is authoritative, even when
+            # empty (a draft with no rows means "no REQ defined yet"). Do NOT fall
+            # back to a whole-file scan here, or prose refs leak back in (F2).
+            ids: set[str] = set()
+            for cells in parse_table(text, *labels):
+                for cell in cells:
+                    m = REQ_ID_RE.match(cell.strip())
+                    if m:
+                        ids.add(m.group(0))
+                        break
             return ids
     except Exception:
         pass
+    # Only reached when the functional section is absent (non-standard D-02) or
+    # the shared lib is unavailable — best-effort whole-file scan.
     return set(REQ_ID_RE.findall(text))
 
 

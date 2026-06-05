@@ -191,3 +191,26 @@ def test_d02_sync_ignores_prose_req_refs():
         assert sync["in_sync"] is True, sync          # REQ-999 (prose) not counted
         assert "REQ-999" not in sync["missing_from_matrix"]
         assert code == 0
+
+
+def test_d02_sync_empty_table_does_not_fall_back_to_prose():
+    # F2 (re-review): functional section present but table empty (draft) + prose REQ-999
+    # → REQ-999 must NOT be counted as defined (no whole-file fallback when section exists)
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|--------|----------|------------|----------|----------|-------------|----------|\n"
+            "| REQ-001 | | E | c | TC-1 | | |\n"
+        )
+        d02 = Path(tmp) / "D-02.md"
+        d02.write_text(
+            "## Giả định\nREQ-999 dự kiến làm sau.\n\n"
+            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n"  # header + separator, NO data rows
+        )
+        data, _ = run(str(matrix), ["--d02", str(d02)])
+        sync = data["d02_sync"]
+        assert "REQ-999" not in sync["missing_from_matrix"], sync
+        assert sync["missing_from_matrix"] == []         # nothing defined yet
+        assert "REQ-001" in sync["orphan_in_matrix"]     # matrix-only
