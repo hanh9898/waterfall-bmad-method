@@ -71,3 +71,34 @@ Findings surfaced incidentally during review but out of scope for the current st
 - **N5 (HIGH-edge/LOW-blind)** `check-readiness.py` — D-02 functional table RỖNG (header+separator, 0 data) + có downstream → `defined=∅` → `ready:true` vacuous, không `note`. (Engine facet có `note` cho ca vacuous; readiness thì không — bất đối xứng.) Fix: khi `len(defined)==0 && gated_any` → thêm `note` cảnh báo hoặc coi là not-ready.
 - **N6 (LOW)** `bmad-help.csv` — menu-code `[IR]` của `hbc-check-implementation-readiness` TRÙNG với `bmad-check-implementation-readiness` (cũng IR). Gõ `[IR]` → ambiguous. Fix: đổi code HBC (vd `[RD]`/`[IRH]`).
 - **Đồng thuận với review trước (không vá lại):** Gap1/Gap2 "P2-08/P2-11 type QUALITY → PENDING_LLM, không hard-block tất định" = A#3 (by-design; gate required nghĩa LLM PHẢI xử lý output script, không phải script auto-reject). Cân nhắc nâng P2-11/P2-08 thành item chạy-script-tất-định ở đợt sau nếu muốn chặn cứng.
+
+## DONE (2026-06-09): waterfall flow hardening — nhóm 3 (B/E/C) + bug A1/A2
+Theo quyết định: B=enforced-overridable, E=gate-driven auto-feed, C=chuỗi tuyến tính.
+- **B2** engine `evaluate-gate-checklist.py`: thêm `_is_entry_gate` + `entry_gate_failed` trong summary; entry-gate (prior-gate PASSED) KHÔNG bị lenient hạ → overall FAILED bất kể mode. SKILL step 4 cập nhật. +3 test.
+- **B1** task-breakdown (P3 entry→check P2 gate) & test-execution (P4 entry→check P3 gate): activation chạy gate headless, HALT nếu !PASSED, chỉ qua khi user override; headless→blocked.
+- **B3** P3-00b: re-run IR readiness ở P3 entry (chống stale "P2 PASSED").
+- **E** `on_complete = "invoke hbc-traceability update"` (auto-feed matrix khi gate PASSED) + item P2-13 (design_ref+test_ref) & P3-07 (code_ref) → matrix incremental, P4-06 chỉ còn confirm.
+- **C1** CSV: `api-spec.followed-by=hbc-create-test-plan` (hết dead-end); `test-plan.preceded-by=hbc-create-api-spec` (hết mis-parent) → chuỗi er→cs→(api)→test-plan→test-spec→IR→gate.
+- **A1** sửa tên skill sai trong gate checklist (hbc-task-breakdown, hbc-acceptance-check).
+- **A2** toàn bộ checklist path `_bmad-output/` → `{output_folder}/`; SKILL truyền `--var output_folder` + `--var gate_mode`.
+- Regression: gate 32, CSV-merge 27, broad .claude/skills 636 pass (1 fail pre-existing bmad-module-builder, không liên quan).
+
+### CHƯA làm (nhóm 1/2 — chưa được chọn):
+- A3 (3 validator còn JP: test-plan/test-execution/acceptance-check), D3 (wire check-fr/entity-coverage vào gate P1/P2 — script sẵn), F1 (port validate-test-spec sang iter_tc_blocks/tc_field), D1 (validate-test-execution --d27), D2 (validate-implementation).
+
+## DONE (2026-06-09): nhóm 1 quick-wins (A3 + D3 + F1)
+- **A3** Bỏ hardcode tiếng Nhật khỏi 3 validator (validate-test-plan: リスク管理/マイルストーン/リスク; validate-test-execution: 総テスト数/成功/失敗/カバレッジ/不具合トリアージ; validate-acceptance-check: 基準). Giữ EN canonical. 74 test pass.
+- **D3** Wire 2 script coverage SẴN CÓ vào gate: P1-06b (check-fr-coverage.py D-06↔PRD FR) + P2-03b (check-entity-coverage.py D-19↔PRD entity), QUALITY đòi passed:true → bắt PRD churn sau khi author.
+- **F1** Port `validate-test-spec.py` TC parsing sang shared helper: thêm `_tc_blocks_with_num` (strip_code_fences + `^#{3,6}[ \t]+TC-`, mirror iter_tc_blocks) + `tc_field` cho field-check → D-27 structural check KHÔNG còn lệch readiness/facet trên cùng file (nhận #### TC-, bỏ fenced example, empty REQ ID = missing). +3 test.
+- Regression: focused 83 pass; broad .claude/skills 639 pass (1 fail pre-existing bmad-module-builder, không liên quan).
+
+### Còn lại (nhóm 2): D1 (validate-test-execution --d27), D2 (validate-implementation reconcile DONE task↔code/test↔matrix).
+
+## DONE (2026-06-09): nhóm 2 — 2 seam CRITICAL downstream đóng
+- **D1** `validate-test-execution.py --d27`: reconcile TC chạy (report) vs TC đặc tả (D-27) qua lib `tc_ids` → TC_UNEXECUTED / TC_PHANTOM_RESULT. Wire gate P4-02 (thay LLM eyeball). +lib helper `tc_ids`. +4 test.
+- **D2** `validate-implementation.py` (mới, hbc-implement): DONE task thiếu test (DONE_TASK_NO_TEST) · matrix code_ref trỏ file không tồn tại (MISSING_CODE_FILE) · REQ designed+tested nhưng code_ref rỗng (REQ_NOT_IMPLEMENTED). Wire gate P3-02b + closeout SKILL hbc-implement. +7 test.
+- SKILL: hbc-implement closeout chạy validate-implementation + update matrix code_ref; hbc-test-execution validation thêm --d27.
+- Regression: focused 54 pass; broad .claude/skills 650 pass (1 fail pre-existing bmad-module-builder, không liên quan); 4 gate checklist parse+run OK qua engine.
+
+## TỔNG KẾT review-waterfall → fix (toàn bộ nhóm 1+2+3 DONE)
+Mọi finding HIGH/CRITICAL từ review 4-explorer đã đóng bằng code + test, trừ các mục pre-existing/contrived đã ghi defer (bmad-module-builder fail không liên quan; F2/F3/F4 convention drift LOW; story_id/gate_status dead columns; staleness content-hash).

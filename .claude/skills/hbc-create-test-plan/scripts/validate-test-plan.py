@@ -71,7 +71,7 @@ def check_entry_exit_criteria(content: str) -> list[dict]:
 def check_risk_table(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    risk_match = re.search(r"#+\s.*(?:リスク管理|Risk)", content, re.IGNORECASE)
+    risk_match = re.search(r"#+\s.*Risk", content, re.IGNORECASE)
     if not risk_match:
         return issues
 
@@ -80,7 +80,7 @@ def check_risk_table(content: str) -> list[dict]:
     risk_body = content[start : start + next_section.start()] if next_section else content[start:]
 
     risk_rows = re.findall(r"\|\s*[^|\-][^|]*\|[^|]*\|[^|]*\|[^|]*\|", risk_body)
-    header_count = sum(1 for r in risk_rows if "Risk" in r or "Likelihood" in r or "リスク" in r)
+    header_count = sum(1 for r in risk_rows if "Risk" in r or "Likelihood" in r)
     data_rows = len(risk_rows) - header_count
 
     if data_rows < 1:
@@ -98,7 +98,7 @@ def check_schedule(content: str) -> list[dict]:
 
     has_gantt = "gantt" in content.lower() and "mermaid" in content.lower()
     has_milestone_table = bool(
-        re.search(r"\|\s*(?:Milestone|マイルストーン)\s*\|", content, re.IGNORECASE)
+        re.search(r"\|\s*Milestone\s*\|", content, re.IGNORECASE)
     )
 
     if not has_gantt and not has_milestone_table:

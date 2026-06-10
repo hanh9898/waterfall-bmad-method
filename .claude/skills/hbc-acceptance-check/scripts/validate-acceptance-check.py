@@ -125,7 +125,7 @@ def check_criteria_checklist(content: str) -> list[dict]:
     header_count = sum(
         1
         for r in criteria_rows
-        if "Criterion" in r or "Status" in r or "基準" in r
+        if "Criterion" in r or "Status" in r
     )
     data_rows = len(criteria_rows) - header_count
 

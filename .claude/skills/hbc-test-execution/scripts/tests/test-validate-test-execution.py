@@ -193,3 +193,57 @@ class TestFullValidation:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data["valid"] is True
+
+
+# --- D1: reconcile executed TCs (report) vs specified TCs (D-27) ---
+
+_D27 = """\
+# D-27
+
+## Detailed Test Cases
+
+### TC-001: create user
+**REQ ID:** REQ-001
+
+### TC-002: logout
+**REQ ID:** REQ-002
+
+### TC-003: admin revoke
+**REQ ID:** REQ-003
+"""
+
+
+class TestD1Reconciliation:
+    def test_unexecuted_tc_flagged(self, tmp_path):
+        # D-27 specifies TC-001..003; report only mentions TC-001 → TC-002/003 unexecuted.
+        report = tmp_path / "report.md"
+        _write(str(report), MINIMAL_VALID + "\n\nResults: TC-001 passed.\n")
+        d27 = tmp_path / "D-27.md"
+        _write(str(d27), _D27)
+        result = validate(str(report), 80.0, d27_path=str(d27))
+        unexec = [i for i in result["issues"] if i["type"] == "TC_UNEXECUTED"]
+        assert {i["tc_id"] for i in unexec} == {"TC-002", "TC-003"}
+        assert result["valid"] is False
+
+    def test_phantom_result_flagged(self, tmp_path):
+        report = tmp_path / "report.md"
+        _write(str(report), MINIMAL_VALID + "\n\nResults: TC-001 TC-002 TC-003 TC-099\n")
+        d27 = tmp_path / "D-27.md"
+        _write(str(d27), _D27)
+        result = validate(str(report), 80.0, d27_path=str(d27))
+        phantom = [i for i in result["issues"] if i["type"] == "TC_PHANTOM_RESULT"]
+        assert {i["tc_id"] for i in phantom} == {"TC-099"}
+
+    def test_all_specified_executed_clean(self, tmp_path):
+        report = tmp_path / "report.md"
+        _write(str(report), MINIMAL_VALID + "\n\nResults: TC-001 TC-002 TC-003 all passed.\n")
+        d27 = tmp_path / "D-27.md"
+        _write(str(d27), _D27)
+        result = validate(str(report), 80.0, d27_path=str(d27))
+        assert not [i for i in result["issues"] if i["type"] in ("TC_UNEXECUTED", "TC_PHANTOM_RESULT")]
+
+    def test_no_d27_skips_reconciliation(self, tmp_path):
+        report = tmp_path / "report.md"
+        _write(str(report), MINIMAL_VALID)
+        result = validate(str(report), 80.0)  # no --d27
+        assert not [i for i in result["issues"] if i["type"].startswith("TC_")]

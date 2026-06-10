@@ -105,6 +105,17 @@ def iter_tc_blocks(text: str) -> list[str]:
     return _TC_HEADING_RE.split(strip_code_fences(text))[1:]
 
 
+def tc_ids(text: str) -> set[str]:
+    """TC ids DECLARED as ``### … TC-NNN`` headings (levels 3-6, fence-stripped) —
+    the authoritative test-case set of a D-27, mirroring iter_tc_blocks detection.
+    Use to reconcile specified TCs against what a downstream report actually ran."""
+    return {
+        f"TC-{m}"
+        for m in re.findall(r"^#{3,6}[ \t]+TC-(\d{3,})", strip_code_fences(text),
+                            re.MULTILINE | re.IGNORECASE)
+    }
+
+
 def tc_field(block: str, label: str) -> str | None:
     """Value of a ``**Label:**`` field inside a TC block, captured up to the next
     ``**…:**`` field, blank line, or end — so a value wrapped onto the next line is

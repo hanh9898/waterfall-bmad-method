@@ -225,3 +225,31 @@ class TestFullValidation:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data["valid"] is True
+
+
+# --- F1: TC detection now matches the shared iter_tc_blocks (fence-aware, levels 3-6) ---
+
+class TestF1SharedTcDetection:
+    def test_h4_tc_heading_detected(self):
+        # A `#### TC-` (4-hash) heading is now seen (was missed by `^### TC-`).
+        content = "## 3. Detail\n\n#### TC-001: a\n**REQ ID:** REQ-001\n**Severity:** High\n"
+        ids = check_tc_ids(content)
+        assert not [i for i in ids if i["type"] == "NO_TEST_CASES"]
+        fields = check_tc_fields(content)
+        assert not [i for i in fields if i["type"] == "TC_MISSING_REQ"]
+
+    def test_fenced_tc_example_not_counted(self):
+        # A `### TC-` inside a ``` fence is an example, not a real test case.
+        content = (
+            "## 3. Detail\n\n```\n### TC-999: example\n**REQ ID:** REQ-999\n```\n\n"
+            "### TC-001: real\n**REQ ID:** REQ-001\n**Severity:** High\n"
+        )
+        nums = sorted(n for n, _ in mod._tc_blocks_with_num(content))
+        assert nums == [1]  # TC-999 inside the fence is excluded
+
+    def test_empty_req_id_field_treated_as_missing(self):
+        # tc_field returns None for a bare empty **REQ ID:** → flagged missing,
+        # consistent with the readiness/facet engines.
+        content = "## 3. Detail\n\n### TC-001: a\n**REQ ID:**\n**Severity:** High\n"
+        fields = check_tc_fields(content)
+        assert [i for i in fields if i["type"] == "TC_MISSING_REQ"]
