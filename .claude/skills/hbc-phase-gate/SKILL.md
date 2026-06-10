@@ -32,7 +32,7 @@ If the script fails, resolve manually: `{skill-root}/customize.toml` → `{proje
 
 ### Load Context and Determine Phase
 
-Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}`, then load config from `{project-root}/_bmad/config.yaml` (root and `hbc` section) — resolve `{gate_mode}` (default: `strict`), `{coverage_threshold}` (default: `80`), `{project_name}`, `{communication_language}`, `{document_output_language}`. Execute `{workflow.activation_steps_append}`. Determine target phase:
+Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}`, then load config from `{project-root}/_bmad/config.yaml` (root and `hbc` section) — resolve `{gate_mode}` (default: `strict`), `{coverage_threshold}` (default: `80`), `{project_name}`, `{output_folder}` (resolved to an absolute path — passed to the evaluator so checklist `{output_folder}/...` patterns resolve), `{communication_language}`, `{document_output_language}`. Execute `{workflow.activation_steps_append}`. Determine target phase:
 - Explicit argument (e.g. "phase gate 2") → use that number.
 - Agent context → infer: BA→1, Architect/QA→2, Dev→3, Tester→4. **Confirm with user:** _"Inferred phase {N} ({phase_name}) from {agent} context. Proceed?"_ Only skip confirmation in headless mode.
 - Otherwise → ask user which phase to evaluate (1-4).
@@ -46,8 +46,10 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 3. **Evaluate deterministic items** via script, then judge QUALITY items:
 
    ```
-   python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var coverage_threshold={coverage_threshold} --var project_name={project_name}
+   python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var output_folder={output_folder} --var gate_mode={gate_mode} --var coverage_threshold={coverage_threshold} --var project_name={project_name}
    ```
+
+   `--var output_folder` is REQUIRED — checklist artifact patterns use `{output_folder}/...` so they resolve under any configured output folder (pass the resolved absolute path). `--var gate_mode` lets the script flag entry-gate failures (see step 4).
 
    The script evaluates `[FILE]`, `[CONTENT]`, and `[METRIC]` items deterministically and returns JSON with per-item status + evidence. `[QUALITY]` items return as `PENDING_LLM`. Script exit code 1 means required items failed deterministically — this is a partial signal, not the final gate verdict (QUALITY items still need evaluation). If the script fails entirely, evaluate manually following the same JSON schema: `{"summary": {...}, "results": [{"item_id", "status", "evidence", ...}]}` per item.
 
@@ -62,7 +64,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 4. **Determine overall status:**
    - **PASSED** — every `required=yes` item is PASS.
    - **FAILED** — any `required=yes` item is FAIL.
-   - If `{gate_mode}=lenient` and FAILED → downgrade to **WARNING**.
+   - If `{gate_mode}=lenient` and FAILED → downgrade to **WARNING**, **EXCEPT** when the failure includes an entry-gate item (a `required` CONTENT check that a PRIOR phase gate PASSED — the script reports these as `summary.entry_gate_failed > 0`). Entry-gate failures keep the gate **FAILED** even in lenient mode: a phase must never proceed on top of a failed predecessor gate (B2).
 
 5. **Write gate report and decision log:**
    - Write gate report to `{workflow.gate_output_path}/phase-{N}-gate.md` using `{workflow.gate_report_template}` in `{document_output_language}`. Include: timestamp, phase, overall status, item-by-item results with evidence, summary statistics. Also save the final evaluation JSON (with QUALITY items resolved) to `{workflow.gate_output_path}/phase-{N}-gate-results.json` — the delta script consumes this directly on re-evaluation.

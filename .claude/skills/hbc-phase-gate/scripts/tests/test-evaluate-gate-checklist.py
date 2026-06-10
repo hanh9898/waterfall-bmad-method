@@ -268,3 +268,64 @@ def test_review_status_hyphenated_not_truncated(tmp_path):
     res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
     assert res["status"] == "FAIL"
     assert res["review_status"][doc.name] == "not-applicable"
+
+
+# --- B2: entry-gate (prior gate PASSED) is non-negotiable even in lenient mode ---
+
+def test_is_entry_gate_detects_prior_gate_check():
+    entry = {"type": "CONTENT", "required": True,
+             "artifact_pattern": "{output_folder}/gates/phase-1-gate*"}
+    not_entry = {"type": "CONTENT", "required": True,
+                 "artifact_pattern": "{output_folder}/planning-artifacts/D-02*"}
+    optional = {"type": "CONTENT", "required": False,
+                "artifact_pattern": "{output_folder}/gates/phase-1-gate*"}
+    assert mod._is_entry_gate(entry) is True
+    assert mod._is_entry_gate(not_entry) is False
+    assert mod._is_entry_gate(optional) is False  # only required items block
+
+
+_ENTRY_GATE_CHECKLIST = """\
+# Phase 2 — Gate Checklist
+
+| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
+|---------|-------------|------|----------|------------------|----------|-----------------|
+| P2-00 | Phase 1 gate PASSED | CONTENT | yes | {output_folder}/gates/phase-1-gate* | Status:.*PASSED | |
+"""
+
+
+def _run_engine(checklist_path, project_root, *vars_):
+    import json
+    import subprocess
+    import sys
+    cmd = [sys.executable,
+           os.path.join(os.path.dirname(__file__), "..", "evaluate-gate-checklist.py"),
+           checklist_path, "--project-root", project_root]
+    for v in vars_:
+        cmd += ["--var", v]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    return json.loads(r.stdout), r.returncode
+
+
+def test_entry_gate_failure_not_downgraded_by_lenient(tmp_path):
+    # No phase-1 gate report exists → entry-gate item FAILs. Even in lenient mode
+    # the script must report overall FAILED + entry_gate_failed=1.
+    path = str(tmp_path / "phase-2-gate-checklist.md")
+    _write(path, _ENTRY_GATE_CHECKLIST)
+    data, code = _run_engine(path, str(tmp_path),
+                             f"output_folder={tmp_path}", "gate_mode=lenient")
+    assert data["summary"]["entry_gate_failed"] == 1
+    assert data["summary"]["overall_status"] == "FAILED"
+    assert code == 1
+
+
+def test_entry_gate_passes_when_prior_report_present(tmp_path):
+    gates = tmp_path / "gates"
+    gates.mkdir()
+    _write(str(gates / "phase-1-gate.md"), "# Phase 1\n\n**Status:** PASSED\n")
+    path = str(tmp_path / "phase-2-gate-checklist.md")
+    _write(path, _ENTRY_GATE_CHECKLIST)
+    data, code = _run_engine(path, str(tmp_path),
+                             f"output_folder={tmp_path}", "gate_mode=lenient")
+    assert data["summary"]["entry_gate_failed"] == 0
+    assert data["summary"]["overall_status"] == "PASSED"
+    assert code == 0

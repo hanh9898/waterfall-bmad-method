@@ -17,6 +17,17 @@ import sys
 from pathlib import Path
 
 
+def _is_entry_gate(item: dict) -> bool:
+    """True for an item that asserts a PRIOR phase gate PASSED — a required CONTENT
+    check over a gate report. Such items are never downgraded by lenient mode (B2):
+    a phase must not proceed on top of a failed predecessor gate."""
+    return bool(
+        item.get("type") == "CONTENT"
+        and item.get("required")
+        and "gates/phase-" in item.get("artifact_pattern", "").replace("\\", "/")
+    )
+
+
 def parse_checklist(checklist_path: str) -> list[dict]:
     """Parse markdown table rows into checklist items."""
     items = []
@@ -324,10 +335,19 @@ def main():
     required_failed = sum(
         1 for r in results if r["status"] == "FAIL" and r["required"]
     )
+    # Entry-gate items assert a PRIOR phase gate PASSED — they are non-negotiable
+    # and must NOT be downgraded to WARNING by lenient mode (B2). Identified
+    # structurally: a required CONTENT check whose artifact is a gate report.
+    entry_gate_failed = sum(
+        1 for item, r in zip(items, results)
+        if r["status"] == "FAIL" and r["required"] and _is_entry_gate(item)
+    )
     pending_llm = sum(1 for r in results if r["status"] == "PENDING_LLM")
     gate_mode = variables.get("gate_mode", "strict")
 
-    if pending_llm > 0:
+    if entry_gate_failed > 0:
+        overall_status = "FAILED"  # prior-gate failure blocks regardless of mode
+    elif pending_llm > 0:
         overall_status = "PENDING_LLM"
     elif required_failed > 0:
         overall_status = "FAILED" if gate_mode == "strict" else "WARNING"
@@ -342,6 +362,7 @@ def main():
         "skipped": sum(1 for r in results if r["status"] == "SKIP"),
         "pending_llm": pending_llm,
         "required_failed": required_failed,
+        "entry_gate_failed": entry_gate_failed,
         "gate_mode": gate_mode,
         "overall_status": overall_status,
     }

@@ -44,7 +44,8 @@ gate_output_path = "{output_folder}/gates"
 # Default: false (single-pass evaluation). Set true for high-stakes gate decisions.
 quality_parallel_review = false
 
-# Post-gate hook (PASSED only). Set to a skill invocation string
-# (e.g. "invoke hbc-traceability") to trigger automatically after a passing gate.
-# Failure handling is intentionally manual — gate failures require human triage.
-on_complete = ""
+# Post-gate hook (PASSED only). Triggers after a passing gate so the traceability
+# matrix is fed incrementally each phase (E) instead of being back-filled at Phase 4.
+# Override to "" in a team config to disable. Failure handling stays manual —
+# gate failures require human triage.
+on_complete = "invoke hbc-traceability update"
