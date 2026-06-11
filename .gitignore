@@ -4,3 +4,6 @@ __pycache__/
 
 # BMad personal config (per-user, not shared)
 _bmad/config.user.yaml
+
+# Agent isolation worktrees (transient, never commit)
+.claude/worktrees/
