@@ -1,6 +1,6 @@
 ---
 name: hbc-test-execution
-description: "Execute test suites and generate execution report. Use when user says 'test execution', 'テスト実行', 'chạy test', 'run tests', or agent menu [TE]."
+description: "Execute test suites and generate execution report. Use when user says 'test execution', 'chạy test', 'run tests', or agent menu [TE]."
 ---
 
 # Test Execution
@@ -30,10 +30,11 @@ Resolve customization, load persistent facts and config per standard BMad activa
 
 ## Stage 1: Prerequisites
 
-Verify test environment readiness:
+**Phase-entry gate (enforced, overridable).** This skill opens Phase 4. First verify the **Phase 3 gate PASSED** — run `hbc-phase-gate` for phase 3 headless (`-H`) and read `overall_status`. If not `PASSED`, **HALT** and report the failing items; proceed only on an explicit user override (record it in the execution report). In headless mode a non-PASSED Phase 3 gate returns `blocked`. Tests must run against implementation-complete, gated code — not a half-finished Phase 3.
+
+Then verify test environment readiness:
 - **Test runner** available (detect from `project-context.md` or `{workflow.test_command}`).
 - **D-27** exists — load test case inventory for result mapping.
-- **Phase 3 gate** passed — tests should run against implementation-complete code.
 - **Code** is at a known state (clean git working tree recommended).
 
 If D-27 not found, warn but allow execution (results won't map to TC-xxx IDs).
@@ -113,10 +114,12 @@ status: "PASS | FAIL | PARTIAL"
 |-----------|------|--------|-------------|
 ```
 
-Run validation:
+Run validation — pass `--d27` so executed TCs are reconciled against the specified set (D1):
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/test-execution-report.md"
+python3 {workflow.validation_script} "{workflow.output_dir}/test-execution-report.md" --d27 "<D-27 path>"
 ```
+
+A `TC_UNEXECUTED` issue means a test specified in D-27 has no result here — "all passed" must not hide a test that was never run. `TC_PHANTOM_RESULT` means a result references a TC not in D-27. Resolve both before finalizing.
 
 Finalize. Suggest next: _"Execution complete. {passed}/{total} passed ({coverage_pct}% coverage). Next: `hbc-acceptance-check` [AC]."_

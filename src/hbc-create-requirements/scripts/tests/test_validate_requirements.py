@@ -12,47 +12,47 @@ SCRIPT = str(Path(__file__).resolve().parent.parent / "validate-requirements.py"
 VALID_DOC = """\
 ---
 document_id: D-02
-title: "Test 要件定義書"
+title: "Test Đặc tả yêu cầu"
 version: "1.0"
 status: draft
 ---
 
-# Test 要件定義書
+# Test Đặc tả yêu cầu
 
-## 1. プロジェクト概要 (Project Overview)
+## 1. Tổng quan dự án
 
-### 1.1 目的 (Purpose)
+### 1.1 Mục đích
 
 System for managing orders.
 
-### 1.2 ステークホルダー (Stakeholders)
+### 1.2 Các bên liên quan
 
 | Name | Role | Responsibility |
 |------|------|---------------|
 | Alice | PM | Project management |
 
-### 1.3 スケジュール制約 (Timeline Constraints)
+### 1.3 Mốc thời gian
 
 Deadline: 2026-06-30
 
-## 2. スコープ (Scope)
+## 2. Phạm vi
 
-### 2.1 スコープ内 (In Scope)
+### 2.1 Hạng mục bao gồm
 
 - Order management
 - User authentication
 
-### 2.2 スコープ外 (Out of Scope)
+### 2.2 Hạng mục loại trừ
 
 - Payment processing
 
-## 3. ユーザーロール (User Roles)
+## 3. Vai trò người dùng
 
 | Role | Description | Key Requirements |
 |------|-------------|-----------------|
 | Admin | System administrator | Auth, Order |
 
-## 4. 機能要件 (Functional Requirements)
+## 4. Yêu cầu chức năng
 
 | REQ ID | Category | Requirement | Priority | User Role | Acceptance Criteria |
 |--------|----------|-------------|----------|-----------|-------------------|
@@ -60,43 +60,27 @@ Deadline: 2026-06-30
 | REQ-002 | Order | User can create order | High | Admin | Order created with valid data |
 | REQ-003 | Order | User can view orders | Medium | Admin | Order list displays all orders |
 
-## 5. 非機能要件 (Non-Functional Requirements)
+## 5. Yêu cầu phi chức năng
 
-### 5.1 性能 (Performance)
+### 5.1 Hiệu năng
 
 | NFR ID | Requirement | Measurable Criteria |
 |--------|-------------|-------------------|
 | NFR-001 | Response time | < 2 seconds for 95th percentile |
 
-### 5.2 セキュリティ (Security)
+### 5.2 Bảo mật
 
 | NFR ID | Requirement | Measurable Criteria |
 |--------|-------------|-------------------|
 | NFR-002 | Password hashing | bcrypt with cost factor 12 |
 
-### 5.3 可用性 (Availability)
+## 6. Ràng buộc và giả định
 
-| NFR ID | Requirement | Measurable Criteria |
-|--------|-------------|-------------------|
-| NFR-003 | Uptime | 99.9% monthly |
-
-### 5.4 ユーザビリティ (Usability)
-
-| NFR ID | Requirement | Measurable Criteria |
-|--------|-------------|-------------------|
-| NFR-004 | Accessibility | WCAG 2.1 AA compliance |
-
-## 6. 制約と前提条件 (Constraints and Assumptions)
-
-### 6.1 技術制約 (Technical Constraints)
+### 6.1 Công nghệ
 
 PostgreSQL 15, Python 3.12
 
-### 6.2 ビジネス制約 (Business Constraints)
-
-Budget: $50,000
-
-### 6.3 前提条件 (Assumptions)
+### 6.2 Giả định
 
 Cloud hosting available
 """
@@ -121,6 +105,37 @@ def test_valid_document():
     assert code == 0, f"Expected exit 0, got {code}: {result}"
     assert result["valid"] is True
     assert result["total_issues"] == 0
+    assert result["req_count"] == 3
+    # honest verdict (S-3) fields present and consistent
+    assert result["structure_ok"] is True
+    assert result["semantic_review"] == "n/a"
+    assert result["passed"] is True
+    assert "not_checked" in result and result["not_checked"]
+
+
+def test_prose_req_reference_not_counted_as_duplicate():
+    # REQ-001 referenced in prose (User Roles cell) must NOT trip duplicate (S-4)
+    doc = VALID_DOC.replace(
+        "| Admin | System administrator | Auth, Order |",
+        "| Admin | System administrator, see REQ-001 | Auth, Order |",
+    )
+    result, code = run_script(doc)
+    dup = [i for i in result["issues"] if i["type"] == "REQ_ID_DUPLICATE"]
+    assert dup == [], f"prose REQ reference wrongly flagged: {dup}"
+    assert result["valid"] is True
+    assert result["req_count"] == 3
+
+
+def test_intra_table_prose_ref_not_counted():
+    # F7: an id-less row whose other cell references a REQ must NOT create a ghost id
+    doc = VALID_DOC.replace(
+        "| REQ-003 | Order | User can view orders | Medium | Admin | Order list displays all orders |",
+        "| REQ-003 | Order | User can view orders | Medium | Admin | Order list displays all orders |\n"
+        "|  | Order | Sub-requirement | Low | Admin | See REQ-001 for details |",
+    )
+    result, code = run_script(doc)
+    dup = [i for i in result["issues"] if i["type"] == "REQ_ID_DUPLICATE"]
+    assert dup == [], f"prose REQ ref in a cell wrongly counted: {dup}"
     assert result["req_count"] == 3
 
 
@@ -160,13 +175,11 @@ def test_custom_vague_terms():
 
 
 def test_missing_section():
-    doc = VALID_DOC.replace("## 2. スコープ (Scope)", "## 2. Removed")
-    doc = doc.replace("### 2.1 スコープ内 (In Scope)", "### 2.1 Removed")
-    doc = doc.replace("### 2.2 スコープ外 (Out of Scope)", "### 2.2 Removed")
+    doc = VALID_DOC.replace("## 2. Phạm vi", "## 2. Removed")
     result, code = run_script(doc)
     missing_issues = [i for i in result["issues"] if i["type"] == "SECTION_MISSING"]
     sections = {i["section"] for i in missing_issues}
-    assert "スコープ" in sections
+    assert "Scope" in sections
 
 
 def test_empty_section():
@@ -178,7 +191,7 @@ def test_empty_section():
     empty_issues = [i for i in result["issues"] if i["type"] == "SECTION_EMPTY"]
     assert len(empty_issues) > 0
     sections = {i["section"] for i in empty_issues}
-    assert "ユーザーロール" in sections
+    assert "User Roles" in sections
 
 
 def test_nfr_missing_criteria():
@@ -216,6 +229,7 @@ def test_output_to_file():
         assert out_path.exists()
         data = json.loads(out_path.read_text(encoding="utf-8"))
         assert "valid" in data
+        assert "structure_ok" in data
 
 
 def test_no_req_ids():
@@ -228,6 +242,7 @@ def test_no_req_ids():
 if __name__ == "__main__":
     tests = [
         test_valid_document,
+        test_prose_req_reference_not_counted_as_duplicate,
         test_duplicate_req_ids,
         test_gap_in_req_ids,
         test_vague_terms_detected,

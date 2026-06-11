@@ -168,6 +168,22 @@ class TestEntityCoverage:
         assert len(uncovered) == 1
         assert uncovered[0]["entity"] == "Product"
 
+    def test_entity_in_prose_not_counted(self, tmp_path):
+        # S-4: an entity named only in a task DESCRIPTION (not design_ref) is NOT covered
+        d19_path = str(tmp_path / "d19.md")
+        d19 = D19_WITH_ENTITIES.replace(
+            "    User ||--o{ Order : places",
+            "    Payment {\n        int id PK\n    }\n    User ||--o{ Order : places",
+        )
+        _write(d19_path, d19)
+        tb = MINIMAL_VALID.replace(
+            "Implement Order API endpoints",
+            "Implement Order API endpoints incl Payment hook",
+        )
+        issues = check_entity_coverage(tb, d19_path)
+        uncovered = [i for i in issues if i["type"] == "ENTITY_NOT_COVERED"]
+        assert any(i["entity"] == "Payment" for i in uncovered), uncovered
+
     def test_no_d19_path(self):
         issues = check_entity_coverage(MINIMAL_VALID, None)
         assert len(issues) == 0
@@ -212,6 +228,10 @@ class TestFullValidation:
         assert result["valid"] is True
         assert result["total_tasks"] == 3
         assert result["total_issues"] == 0
+        # honest verdict (S-3)
+        assert result["structure_ok"] is True
+        assert result["semantic_review"] == "n/a"
+        assert result["passed"] is True
 
     def test_invalid_document(self, tmp_path):
         path = str(tmp_path / "tb.md")

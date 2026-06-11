@@ -116,7 +116,7 @@ class TestCheckSections:
         content = MINIMAL_VALID.replace("## Decision", "## Other")
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
-        assert any(i["section"] == "決定" for i in missing)
+        assert any(i["section"] == "Decision" for i in missing)
 
 
 class TestCheckDecision:

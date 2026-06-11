@@ -40,17 +40,17 @@ STOP_WORDS: frozenset[str] = frozenset(
 )
 
 EXPLICIT_ENTITY_RE = re.compile(
-    r"(?:Entity|Table|テーブル|エンティティ|Model)\s*[:：]\s*[`\"']?(\w+)[`\"']?",
+    r"(?:Entity|Table|Model)\s*[:：]\s*[`\"']?(\w+)[`\"']?",
     re.IGNORECASE,
 )
 
 DATA_OBJECT_RE = re.compile(
-    r"\b(\w+)\s+(?:entity|table|model|テーブル|エンティティ|モデル)\b",
+    r"\b(\w+)\s+(?:entity|table|model)\b",
     re.IGNORECASE,
 )
 
 D20_TABLE_HEADER_RE = re.compile(
-    r"^#{2,3}\s+(?:テーブル|Table)\s*[:：]?\s*[`\"']?(\w+)[`\"']?",
+    r"^#{2,3}\s+(?:Table)\s*[:：]?\s*[`\"']?(\w+)[`\"']?",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -63,7 +63,7 @@ ATTRIBUTE_RE = re.compile(
 )
 
 RELATIONSHIP_RE = re.compile(
-    r"(\w+)\s*(?:→|->|has many|has one|belongs to|references|一対多|多対多|一対一)\s*(\w+)",
+    r"(\w+)\s*(?:→|->|has many|has one|belongs to|references)\s*(\w+)",
     re.IGNORECASE,
 )
 

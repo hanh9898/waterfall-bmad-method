@@ -55,8 +55,8 @@ class TestExtractFromText:
         assert "Orders" in names
         assert all(e["method"] == "explicit_marker" for e in entities)
 
-    def test_japanese_entity_marker(self):
-        text = "テーブル: Products"
+    def test_explicit_table_marker(self):
+        text = "Table: Products"
         entities, _, _ = _extract_from_text(text, "test.md")
         assert any(e["entity_name"] == "Products" for e in entities)
 
@@ -66,7 +66,7 @@ class TestExtractFromText:
         assert any(e["entity_name"] == "Customer" for e in entities)
 
     def test_d20_table_header(self):
-        text = "## テーブル: Employees\n\nColumn definitions..."
+        text = "## Table: Employees\n\nColumn definitions..."
         entities, _, _ = _extract_from_text(text, "test.md")
         assert any(e["entity_name"] == "Employees" for e in entities)
 

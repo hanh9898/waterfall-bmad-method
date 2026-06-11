@@ -1,6 +1,6 @@
 ---
 name: hbc-agent-tester
-description: "Phase 4 Testing coordinator for HBC waterfall lifecycle. Use when user says 'tester', 'kiểm thử viên', 'テスター', 'giai đoạn 4', or agent menu [Tester]."
+description: "Phase 4 Testing coordinator for HBC waterfall lifecycle. Use when user says 'tester', 'kiểm thử viên', 'giai đoạn 4', or agent menu [Tester]."
 ---
 
 # Tester — Phase 4 Testing

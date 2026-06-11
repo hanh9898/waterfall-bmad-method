@@ -11,9 +11,11 @@ capabilities of hbc-traceability.
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
+REQ_ID_RE = re.compile(r"REQ-\d{3,}")
 COLUMNS = ["req_id", "story_id", "design_ref", "code_ref", "test_ref", "gate_status", "timestamp"]
 COVERAGE_COLUMNS = ["design_ref", "code_ref", "test_ref"]
 
@@ -146,6 +148,58 @@ def validate_matrix(rows: list[dict]) -> dict:
     }
 
 
+def _d02_req_ids(text: str) -> set[str]:
+    """REQ ids DEFINED in D-02 — taken from the functional requirements table's ID
+    column only, NOT prose references (mirrors the S-4 fix; F2). Falls back to a
+    whole-file scan if the shared lib is unavailable."""
+    labels = ("Functional Requirements", "Yêu cầu chức năng")
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+        from hbc_validation import find_section, parse_table  # noqa: E402
+        if find_section(text, *labels):
+            # Section present → its table's ID column is authoritative, even when
+            # empty (a draft with no rows means "no REQ defined yet"). Do NOT fall
+            # back to a whole-file scan here, or prose refs leak back in (F2).
+            ids: set[str] = set()
+            for cells in parse_table(text, *labels):
+                for cell in cells:
+                    m = REQ_ID_RE.match(cell.strip())
+                    if m:
+                        ids.add(m.group(0))
+                        break
+            return ids
+    except Exception:
+        pass
+    # Only reached when the functional section is absent (non-standard D-02) or
+    # the shared lib is unavailable — best-effort whole-file scan.
+    return set(REQ_ID_RE.findall(text))
+
+
+def sync_with_d02(rows: list[dict], d02_path: str) -> dict:
+    """Cross-check matrix REQ ids against D-02 (A-4).
+
+    Closes the gap where the traceability audit only checked the matrix
+    internally and never compared it to the authoritative requirement source.
+    `orphan_in_matrix` = traced but not defined in D-02; `missing_from_matrix`
+    = defined in D-02 but never traced.
+    """
+    try:
+        text = Path(d02_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return {"error": f"D-02 not readable: {d02_path}", "in_sync": False}
+    d02_ids = _d02_req_ids(text)
+    matrix_ids = {r["req_id"] for r in rows if r.get("req_id")}
+    orphan = sorted(matrix_ids - d02_ids)
+    missing = sorted(d02_ids - matrix_ids)
+    return {
+        "in_sync": not orphan and not missing,
+        "d02_req_count": len(d02_ids),
+        "matrix_req_count": len(matrix_ids),
+        "orphan_in_matrix": orphan,
+        "missing_from_matrix": missing,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate traceability coverage report from matrix."
@@ -165,6 +219,9 @@ def main():
     parser.add_argument(
         "--validate", action="store_true",
         help="Validate matrix structure (column count, duplicate/empty req_ids)",
+    )
+    parser.add_argument(
+        "--d02", help="Path to D-02 — cross-check matrix REQ ids vs D-02 (A-4)",
     )
     args = parser.parse_args()
 
@@ -186,6 +243,12 @@ def main():
     else:
         result = generate_report(rows)
 
+    d02_in_sync = True
+    if args.d02 and not args.detect_phase:
+        sync = sync_with_d02(rows, args.d02)
+        result["d02_sync"] = sync
+        d02_in_sync = sync.get("in_sync", False)
+
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
@@ -194,10 +257,10 @@ def main():
         print(text)
 
     if args.validate:
-        sys.exit(0 if result.get("valid") else 1)
+        sys.exit(0 if result.get("valid") and d02_in_sync else 1)
     if args.detect_phase:
         sys.exit(0)
-    sys.exit(1 if args.strict and result.get("gaps") else 0)
+    sys.exit(1 if (args.strict and (result.get("gaps") or not d02_in_sync)) else 0)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 ---
 name: hbc-implement
-description: "Implement code via TDD cycle per task. Use when user says 'implement', '実装', 'triển khai', 'coding', or agent menu [IM]."
+description: "Implement code via TDD cycle per task. Use when user says 'implement', 'triển khai', 'coding', or agent menu [IM]."
 ---
 
 # Implement
@@ -62,10 +62,21 @@ With green tests as safety net:
 
 ### Step 5: Update and Check
 
-- Update task status to DONE in `task-breakdown.md`.
+- Update task status to DONE in `task-breakdown.md` (a task is only DONE if it has an assigned test in `test_refs`).
+- Update the traceability matrix `code_ref` for the REQ this task implements (so the matrix stays living, not back-filled at Phase 4).
 - Check test coverage: `{workflow.coverage_command}`.
 - If coverage below `{workflow.coverage_threshold}`: suggest additional tests.
 - Return to agent menu or proceed to next task.
+
+### Closeout: reconcile implementation reality (D2)
+
+Before considering Phase 3 complete (and at the Phase 3 gate, item P3-02b), run:
+
+```
+python3 {skill-root}/scripts/validate-implementation.py --tasks <task-breakdown> --matrix <matrix> --project-root <root>
+```
+
+Must be clean — no `DONE_TASK_NO_TEST`, `MISSING_CODE_FILE`, or `REQ_NOT_IMPLEMENTED`. This catches tasks closed with no test, a `code_ref` pointing at a file that doesn't exist, or a REQ designed + tested but never implemented.
 
 ## Batch Mode
 

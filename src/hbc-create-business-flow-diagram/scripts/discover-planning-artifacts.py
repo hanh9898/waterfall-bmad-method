@@ -6,8 +6,7 @@
 """Stage 1 pre-pass: scan planning_artifacts and emit JSON inventory.
 
 Resolves PRD (whole-doc or sharded), UX, use-case (D-04/D-05), and research
-docs. Supports English- and Japanese-titled HBC files (`要件定義書*.md`,
-`企画書*.md`, `ユースケース*.md`, `画面*.md`). Verifies the configured
+docs. Supports English- and Vietnamese-titled HBC files. Verifies the configured
 business_flow_template exists. Optionally emits resume-state for Stage 1a
 when a workspace path is given.
 
@@ -26,15 +25,21 @@ import sys
 from pathlib import Path
 
 
-# English + Japanese PRD names — HBC templates use 要件定義書 / 企画書.
-PRD_GLOBS = ["*prd*.md", "*PRD*.md", "*要件定義書*.md", "*要件*.md", "*企画書*.md"]
-UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md", "*画面*.md"]
+# Requirement-source names. D-02 is HBC's canonical requirement doc (C-4: was
+# previously missed because only "PRD"-named files were recognised). English +
+# Vietnamese first; legacy Japanese names kept for backward compatibility only.
+PRD_GLOBS = [
+    "D-02*.md",
+    "*prd*.md", "*PRD*.md",
+    "*requirements*.md", "*requirement*.md",
+    "*yêu cầu*.md", "*yeu cau*.md",
+]
+UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md"]
 USE_CASE_GLOBS = [
     "*use-case*.md",
     "*use_case*.md",
     "D-04*.md",
     "D-05*.md",
-    "*ユースケース*.md",
 ]
 RESEARCH_GLOBS = ["research/*.md", "research/**/*.md"]
 
@@ -106,11 +111,11 @@ def _classify_prd(prd_path: Path) -> dict[str, object]:
     return entry
 
 
-AS_IS_RE = re.compile(r"AS-IS|現状|current\s+state", re.IGNORECASE)
+AS_IS_RE = re.compile(r"AS-IS|current\s+state", re.IGNORECASE)
 
 
 def _check_as_is(prd_entries: list[dict[str, object]]) -> dict[str, object]:
-    """Scan PRD files for AS-IS / 現状 / 'current state' markers."""
+    """Scan PRD files for AS-IS / 'current state' markers."""
     matches: list[dict[str, str]] = []
     for entry in prd_entries:
         p = Path(str(entry["path"]))
@@ -232,7 +237,7 @@ def main() -> int:
     parser.add_argument(
         "--check-as-is",
         action="store_true",
-        help="Scan PRD files for AS-IS / 現状 / 'current state' markers. Returns as_is object in output.",
+        help="Scan PRD files for AS-IS / 'current state' markers. Returns as_is object in output.",
     )
     parser.add_argument("-o", "--output", required=True, help="JSON output path")
     args = parser.parse_args()

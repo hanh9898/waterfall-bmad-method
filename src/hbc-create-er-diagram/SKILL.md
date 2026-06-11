@@ -7,7 +7,7 @@ description: "Generate D-19 Database Design Document with ER Diagram in Mermaid 
 
 ## Overview
 
-Produces a D-19 Database Design Document (データベース設計書) following HBLab document conventions — Mermaid `erDiagram` with entity definitions, relationships, and attribute specifications. Reads PRD / Architecture / UX artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a workspace folder under `{planning_artifacts}` containing the primary document plus a session decision log that carries identity across runs.
+Produces a D-19 Database Design Document following HBLab document conventions — Mermaid `erDiagram` with entity definitions, relationships, and attribute specifications. Reads PRD / Architecture / UX artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a workspace folder under `{planning_artifacts}` containing the primary document plus a session decision log that carries identity across runs.
 
 Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an input contract so automators can drive it deterministically — see [`references/headless-contract.md`](references/headless-contract.md) for the full flag set, defaults table, and JSON return contract. Stage 5 enumerates the canonical downstream consumers.
 

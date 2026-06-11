@@ -1,7 +1,7 @@
 <!-- {project_name}: filled by LLM from project context at generation time, not a workflow config variable. -->
 ---
 document_id: D-02
-title: "{project_name} 要件定義書"
+title: "{project_name} — Đặc tả yêu cầu"
 version: "1.0"
 status: draft
 stepsCompleted: []
@@ -9,80 +9,80 @@ lastStep: ""
 updated: ""
 ---
 
-# {project_name} 要件定義書 (Requirements Specification)
+# {project_name} — Đặc tả yêu cầu (Requirements Specification)
 
-## 1. プロジェクト概要 (Project Overview)
+## 1. Tổng quan dự án (Project Overview)
 
-### 1.1 目的 (Purpose)
+### 1.1 Mục đích (Purpose)
 
 <!-- Project purpose and background -->
 
-### 1.2 ステークホルダー (Stakeholders)
+### 1.2 Các bên liên quan (Stakeholders)
 
 | Name | Role | Responsibility |
 |------|------|---------------|
 
-### 1.3 スケジュール制約 (Timeline Constraints)
+### 1.3 Ràng buộc thời gian (Timeline Constraints)
 
 <!-- Key dates, deadlines, dependencies -->
 
-## 2. スコープ (Scope)
+## 2. Phạm vi (Scope)
 
-### 2.1 スコープ内 (In Scope)
+### 2.1 Trong phạm vi (In Scope)
 
 <!-- Explicit list of what IS included -->
 
-### 2.2 スコープ外 (Out of Scope)
+### 2.2 Ngoài phạm vi (Out of Scope)
 
 <!-- Explicit list of what is NOT included — as important as in-scope -->
 
-## 3. ユーザーロール (User Roles)
+## 3. Vai trò người dùng (User Roles)
 
 | Role | Description | Key Requirements |
 |------|-------------|-----------------|
 
-## 4. 機能要件 (Functional Requirements)
+## 4. Yêu cầu chức năng (Functional Requirements)
 
 | REQ ID | Category | Requirement | Priority | User Role | Acceptance Criteria |
 |--------|----------|-------------|----------|-----------|-------------------|
 
-## 5. 非機能要件 (Non-Functional Requirements)
+## 5. Yêu cầu phi chức năng (Non-Functional Requirements)
 
-### 5.1 性能 (Performance)
-
-| NFR ID | Requirement | Measurable Criteria |
-|--------|-------------|-------------------|
-
-### 5.2 セキュリティ (Security)
+### 5.1 Hiệu năng (Performance)
 
 | NFR ID | Requirement | Measurable Criteria |
 |--------|-------------|-------------------|
 
-### 5.3 可用性 (Availability)
+### 5.2 Bảo mật (Security)
 
 | NFR ID | Requirement | Measurable Criteria |
 |--------|-------------|-------------------|
 
-### 5.4 ユーザビリティ (Usability)
+### 5.3 Tính khả dụng (Availability)
 
 | NFR ID | Requirement | Measurable Criteria |
 |--------|-------------|-------------------|
 
-## 6. 制約と前提条件 (Constraints and Assumptions)
+### 5.4 Khả năng sử dụng (Usability)
 
-### 6.1 技術制約 (Technical Constraints)
+| NFR ID | Requirement | Measurable Criteria |
+|--------|-------------|-------------------|
+
+## 6. Ràng buộc và giả định (Constraints and Assumptions)
+
+### 6.1 Ràng buộc kỹ thuật (Technical Constraints)
 
 <!-- Technology stack, infrastructure limits, integration requirements -->
 
-### 6.2 ビジネス制約 (Business Constraints)
+### 6.2 Ràng buộc nghiệp vụ (Business Constraints)
 
 <!-- Budget, timeline, regulatory, organizational constraints -->
 
-### 6.3 前提条件 (Assumptions)
+### 6.3 Giả định (Assumptions)
 
 <!-- What is assumed true for this specification -->
 
-## 改訂履歴 (Revision History)
+## Lịch sử sửa đổi (Revision History)
 
 | Version | Date | Author | Scope of Change |
 |---------|------|--------|----------------|
