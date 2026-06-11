@@ -32,50 +32,50 @@ def _write(path: str, content: str = "") -> None:
 
 MINIMAL_VALID = """---
 document_id: D-12
-title: "Test コーディング規約"
+title: "Test"
 version: "1.0"
 framework: "django"
 ---
 
-# Test コーディング規約
+# Test
 
-## 1. 概要 (Overview)
+## 1. (Overview)
 
 This document defines coding standards for the Test project.
 
-## 2. 命名規約 (Naming Conventions)
+## 2. (Naming Conventions)
 
 Variables use snake_case. Classes use PascalCase.
 
-## 3. フォーマット (Formatting)
+## 3. (Formatting)
 
 Use 4 spaces for indentation. Max line length: 120.
 
-## 4. コメント (Comments)
+## 4. (Comments)
 
 Comments in English. Use docstrings for all public functions.
 
-## 5. インポート・モジュール (Imports & Modules)
+## 5. (Imports & Modules)
 
 Follow isort ordering: stdlib, third-party, local.
 
-## 6. エラーハンドリング (Error Handling)
+## 6. (Error Handling)
 
 Fail fast. Never silently swallow exceptions.
 
-## 7. セキュリティ (Security)
+## 7. (Security)
 
 Never hardcode secrets. Use environment variables.
 
-## 8. テスト (Testing)
+## 8. (Testing)
 
 Use pytest. Minimum 80% coverage.
 
-## 9. フレームワーク固有 (Framework-Specific)
+## 9. (Framework-Specific)
 
 Django: Follow PEP 8. Use class-based views for complex logic. Model field ordering: keys, required, optional.
 
-## 10. Git規約 (Git Conventions)
+## 10. Git(Git Conventions)
 
 Conventional commits: feat, fix, refactor, docs, test.
 
@@ -113,13 +113,13 @@ class TestCheckSections:
 
     def test_missing_section(self, tmp_path):
         content = MINIMAL_VALID.replace(
-            "## 7. セキュリティ (Security)\n\nNever hardcode secrets. Use environment variables.\n",
+            "## 7. (Security)\n\nNever hardcode secrets. Use environment variables.\n",
             "",
         )
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "セキュリティ"
+        assert missing[0]["section"] == "Security"
 
     def test_empty_section(self, tmp_path):
         content = MINIMAL_VALID.replace(
@@ -129,7 +129,7 @@ class TestCheckSections:
         issues = check_sections(content)
         empty = [i for i in issues if i["type"] == "SECTION_EMPTY"]
         assert len(empty) == 1
-        assert empty[0]["section"] == "セキュリティ"
+        assert empty[0]["section"] == "Security"
 
     def test_english_section_names_work(self):
         content = """

@@ -61,6 +61,25 @@ sequenceDiagram
         result = self._result()
         self.assertTrue(result["passed"])
         self.assertEqual(result["block_count"], 1)
+        # S-2: render_check is always reported (honest about whether rendering
+        # was actually verified vs only structural checks run).
+        self.assertIn("render_check", result)
+
+    def test_no_render_flag_reports_skipped(self) -> None:
+        body = """```mermaid
+sequenceDiagram
+    participant User as User
+    participant System as System
+    User->>System: Action
+    System-->>User: Result
+```
+"""
+        target = make_md(self.root, body)
+        proc = run_script(str(target), "--no-render", "-o", str(self.out))
+        self.assertEqual(proc.returncode, 0, f"stderr: {proc.stderr}")
+        result = self._result()
+        self.assertEqual(result["render_check"], "skipped: --no-render")
+        self.assertTrue(result["passed"])
 
     def test_quoted_alias_declarations_parsed(self) -> None:
         # Two valid Mermaid quoted forms — both must parse.

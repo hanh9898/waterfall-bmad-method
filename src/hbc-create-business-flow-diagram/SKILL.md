@@ -61,7 +61,7 @@ Greet `{user_name}` in `{communication_language}`. Execute each entry in `{workf
 - `planning_artifacts_unreadable` — `{planning_artifacts}` directory missing or unreadable.
 - `mermaid_validation_failed` — `validate-mermaid.py` returned issues not all `auto_fixable: true`.
 - `fr_coverage_gap` — `check-fr-coverage.py` reported uncovered or phantom FRs.
-- `migration_without_as_is` — `--mode=migration` requested but no AS-IS / 現状 / "current state" markers in any PRD source.
+- `migration_without_as_is` — `--mode=migration` requested but no AS-IS / "current state" markers in any PRD source.
 - `resolver_missing` — customization resolver failed and the hand-merge fallback could not complete.
 
 Add new reasons only by extending this list and the contract file together.
@@ -223,6 +223,8 @@ python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard>
 ```
 
 If either validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check.
+
+**Render check (S-2):** `validate-mermaid.py` now actually renders each block with the Mermaid CLI (`mmdc`) when available. Inspect `mermaid.json` → `render_check`: `"ok"` = every block renders; `"failed"` = a block has a `render_failed` issue (real Mermaid syntax error — fix it); `"skipped: mmdc not installed"` = rendering was **not verified** (structural checks only — do NOT treat a green result as "renders"; install `@mermaid-js/mermaid-cli` for the full check, or pass `--no-render` to silence intentionally).
 
 Pass each PRD path (or each shard from `artifacts.json` for sharded PRDs) as a separate `--prd` argument. If `fr.json` reports `vacuous: true` (zero identifiers in both PRD and D-06), surface a warning: "FR coverage check passed vacuously — PRD contains no FR-*/NFR-* identifiers. Consider whether your PRD uses a different naming convention." In headless mode, log the vacuous result to `.decision-log.md`.
 

@@ -1,13 +1,13 @@
 ---
 name: hbc-create-glossary
-description: "Generate D-03 Glossary with domain terms and definitions. Use when user says 'glossary', 'thuật ngữ', '用語集作成', or agent menu [GLO]."
+description: "Generate D-03 Glossary with domain terms and definitions. Use when user says 'glossary', 'thuật ngữ', or agent menu [GLO]."
 ---
 
 # Create Glossary
 
 ## Overview
 
-Generate D-03 用語集 (Glossary) — a living reference of domain terms, abbreviations, and project-specific definitions. Terms extracted from existing artifacts (D-02, project-context.md, interview notes) and user input. The glossary ensures consistent terminology across all downstream documents.
+Generate D-03 (Glossary) — a living reference of domain terms, abbreviations, and project-specific definitions. Terms extracted from existing artifacts (D-02, project-context.md, interview notes) and user input. The glossary ensures consistent terminology across all downstream documents.
 
 Four-stage workflow: Prerequisites → Discovery → Generation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation script.
 
@@ -91,11 +91,15 @@ When invoked with `validate` arg: run Stage 1b scan to locate existing D-03, the
 
 ## Update Mode
 
-When `state: update` from scan or `update` arg: read the scan JSON for the existing D-03 path and new candidates. Present diff — candidates not yet in the existing glossary. Merge non-duplicate terms; surface duplicates (same term, different definition) for user resolution. Auto-append a new row to 改訂履歴 with today's date and change summary. Then proceed to Stage 3 (Generation) for validation. Headless: auto-merge non-conflicting terms, return `blocked` with `reason: "duplicate_conflict"` when definitions clash.
+When `state: update` from scan or `update` arg: read the scan JSON for the existing D-03 path and new candidates. Present diff — candidates not yet in the existing glossary. Merge non-duplicate terms; surface duplicates (same term, different definition) for user resolution. Auto-append a new row to the "Lịch sử sửa đổi" (Revision History) table with today's date and change summary. Then proceed to Stage 3 (Generation) for validation. Headless: auto-merge non-conflicting terms, return `blocked` with `reason: "duplicate_conflict"` when definitions clash.
+
+## Stage 3b: Semantic Review (Lớp 2)
+
+Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm every definition is unambiguous and project-specific, no contradictions, and key D-02 domain concepts are represented. Record `semanticReview` frontmatter (A-3: `status` passed only when no open concerns, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 4: Save and Handoff
 
-Save document to `{workflow.glossary_output_path}` — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). On create: fill the blank date in the pre-seeded 改訂履歴 row. On update: revision row already appended in Update Mode. Audit decision-log entries against D-03: every logged decision reflected in the document or explicitly set aside. Append closing session to decision log.
+Save document to `{workflow.glossary_output_path}` — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). On create: fill the blank date in the pre-seeded "Lịch sử sửa đổi" (Revision History) row. On update: revision row already appended in Update Mode. Audit decision-log entries against D-03: every logged decision reflected in the document or explicitly set aside. Append closing session to decision log.
 
 Write `glossary-distillate.json` alongside D-03 — `{"terms": [{"term": "...", "definition": "...", "category": "..."}], "abbreviations": [{"abbr": "...", "full_name": "...", "definition": "..."}]}` for downstream skill consumption.
 

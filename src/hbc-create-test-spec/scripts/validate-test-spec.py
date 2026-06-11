@@ -14,67 +14,64 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        check_required_sections,
+        strip_code_fences,
+        tc_field,
+        verdict,
+    )
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("概要", "Overview"),
-    ("テストケース一覧", "Test Case Summary"),
-    ("テストケース詳細", "Detailed Test Cases"),
-    ("カバレッジマトリクス", "Coverage Matrix"),
+    ("Overview", "Tổng quan"),
+    ("Test Case Summary", "Danh sách test case"),
+    ("Detailed Test Cases", "Chi tiết test case"),
+    ("Coverage Matrix", "Ma trận bao phủ"),
 ]
 
 TC_ID_RE = re.compile(r"TC-(\d{3,})")
 REQ_ID_RE = re.compile(r"REQ-(\d{3,})")
+# Mirror the shared iter_tc_blocks detection (levels 3-6, fence-stripped) so this
+# validator agrees with the readiness + facet engines on which TCs exist (F1).
+_TC_HEADING_NUM_RE = re.compile(r"^#{3,6}[ \t]+TC-(\d{3,})", re.MULTILINE | re.IGNORECASE)
 
 
-def _section_has_content(text: str) -> bool:
-    non_blank = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    skip: set[int] = set()
-    for i, line in enumerate(non_blank):
-        if i + 1 < len(non_blank):
-            nxt = non_blank[i + 1]
-            is_separator = nxt.startswith("|") and set(nxt) <= {"|", "-", " ", ":"}
-            is_header = line.startswith("|") and not set(line) <= {"|", "-", " ", ":"}
-            if is_header and is_separator:
-                skip.add(i)
-                skip.add(i + 1)
-
-    for i, line in enumerate(non_blank):
-        if i in skip:
-            continue
-        if set(line) <= {"|", "-", " ", ":"}:
-            continue
-        if line.startswith("<!--") and line.endswith("-->"):
-            continue
-        return True
-
-    return False
+def _tc_blocks_with_num(content: str) -> list[tuple[int, str]]:
+    """(tc_num, body) per TC heading, fence-stripped and levels 3-6 — the same
+    detection the shared TC helpers use, so D-27 structural checks can't disagree
+    with the readiness/facet gates on the same file."""
+    cleaned = strip_code_fences(content)
+    matches = list(_TC_HEADING_NUM_RE.finditer(cleaned))
+    out: list[tuple[int, str]] = []
+    for i, m in enumerate(matches):
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned)
+        out.append((int(m.group(1)), cleaned[start:end]))
+    return out
 
 
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present (presence-only; English or VN label, shared lib)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=False)
 
 
 def check_tc_ids(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    heading_tc_re = re.compile(r"^###\s+TC-(\d{3,}):", re.MULTILINE)
-    heading_matches = heading_tc_re.findall(content)
+    cleaned = strip_code_fences(content)
+    heading_matches = [str(num) for num, _ in _tc_blocks_with_num(content)]
 
-    all_mentions = TC_ID_RE.findall(content)
+    all_mentions = TC_ID_RE.findall(cleaned)
     if not all_mentions:
         issues.append({
             "type": "NO_TEST_CASES",
@@ -151,15 +148,13 @@ def check_req_coverage(content: str, d02_path: str | None) -> list[dict]:
 def check_tc_fields(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    tc_headings = list(re.finditer(r"###\s+TC-(\d{3,}):", content))
+    for tc_num, tc_body in _tc_blocks_with_num(content):
+        tc_id = f"TC-{tc_num:03d}"
 
-    for i, match in enumerate(tc_headings):
-        tc_id = f"TC-{match.group(1)}"
-        start = match.end()
-        end = tc_headings[i + 1].start() if i + 1 < len(tc_headings) else len(content)
-        tc_body = content[start:end]
-
-        if not re.search(r"\*\*REQ ID:\*\*", tc_body):
+        # tc_field reads through wrapped values / HTML comments. A bare empty field
+        # (present marker, no value) is treated as missing too — consistent with the
+        # readiness/facet engines, which can't bind an empty REQ ID.
+        if not tc_field(tc_body, "REQ ID"):
             issues.append({
                 "type": "TC_MISSING_REQ",
                 "message": f"{tc_id}: missing REQ ID field",
@@ -167,7 +162,7 @@ def check_tc_fields(content: str) -> list[dict]:
                 "auto_fixable": False,
             })
 
-        if not re.search(r"\*\*Severity:\*\*", tc_body):
+        if not tc_field(tc_body, "Severity"):
             issues.append({
                 "type": "TC_MISSING_SEVERITY",
                 "message": f"{tc_id}: missing Severity field",
@@ -214,15 +209,23 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
     total_reqs = len(d02_req_ids) if d02_req_ids else 0
     coverage_pct = round(covered / total_reqs * 100) if total_reqs > 0 else 0
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "TC id uniqueness", "REQ coverage vs D-02", "required fields per TC"],
+        not_checked=["test-case adequacy / đủ-nghĩa (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "tc_count": len(tc_ids),
         "req_coverage_pct": coverage_pct,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

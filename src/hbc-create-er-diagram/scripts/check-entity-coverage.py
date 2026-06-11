@@ -11,7 +11,7 @@ output, return covered / uncovered / phantom sets.
   phantom    = entities in D-19 but not mentioned in PRD
 
 Entity extraction from PRD uses heuristics:
-  - Explicit entity markers: "Entity: X", "Table: X", "テーブル: X"
+  - Explicit entity markers: "Entity: X", "Table: X"
   - Data model sections with entity-like nouns
   - FR identifiers mentioning data objects
 
@@ -48,15 +48,15 @@ RELATIONSHIP_ENTITY_RE = re.compile(
 )
 
 # PRD entity extraction patterns.
-# Explicit markers: "Entity: Users", "Table: orders", "テーブル: 注文"
+# Explicit markers: "Entity: Users", "Table: orders"
 EXPLICIT_ENTITY_RE = re.compile(
-    r"(?:Entity|Table|テーブル|エンティティ|Model)\s*[:：]\s*[`\"']?(\w+)[`\"']?",
+    r"(?:Entity|Table|Model)\s*[:：]\s*[`\"']?(\w+)[`\"']?",
     re.IGNORECASE,
 )
 
 # Data object references in requirement text: "the User entity", "Orders table"
 DATA_OBJECT_RE = re.compile(
-    r"\b(\w+)\s+(?:entity|table|model|テーブル|エンティティ|モデル)\b",
+    r"\b(\w+)\s+(?:entity|table|model)\b",
     re.IGNORECASE,
 )
 

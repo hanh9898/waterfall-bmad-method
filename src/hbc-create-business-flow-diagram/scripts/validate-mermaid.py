@@ -33,7 +33,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -185,6 +188,41 @@ def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
     return issues
 
 
+def _render_check(blocks: list[str]) -> tuple[str, list[dict[str, object]]]:
+    """Render each Mermaid block with the real Mermaid CLI (mmdc).
+
+    Returns ``(status, issues)`` where status is ``"ok"`` (all blocks rendered),
+    ``"failed"`` (≥1 block rejected by Mermaid), or ``"skipped: mmdc not installed"``.
+
+    S-2/S-3: when mmdc is unavailable we DO NOT claim the diagram renders — we
+    report ``skipped`` so a green structural check is never read as "renders".
+    The previous regex-only validator gave exactly that false safety.
+    """
+    mmdc = shutil.which("mmdc")
+    if not mmdc:
+        return "skipped: mmdc not installed", []
+    issues: list[dict[str, object]] = []
+    with tempfile.TemporaryDirectory() as td:
+        for idx, block in enumerate(blocks):
+            src = Path(td) / f"block_{idx}.mmd"
+            out = Path(td) / f"block_{idx}.svg"
+            src.write_text(block, encoding="utf-8")
+            try:
+                proc = subprocess.run(
+                    [mmdc, "-i", str(src), "-o", str(out)],
+                    capture_output=True, text=True, timeout=60,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                issues.append({"block": idx, "kind": "render_error", "auto_fixable": False,
+                               "detail": f"mmdc could not run: {exc}"})
+                continue
+            if proc.returncode != 0:
+                detail = (proc.stderr or proc.stdout or "mmdc returned non-zero").strip()
+                issues.append({"block": idx, "kind": "render_failed", "auto_fixable": False,
+                               "detail": detail[:500]})
+    return ("failed" if issues else "ok"), issues
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("target", help="Path to the rendered D-06 markdown file")
@@ -192,6 +230,11 @@ def main() -> int:
         "--expected-actors",
         default="",
         help="Comma-separated names that must appear in at least one block",
+    )
+    parser.add_argument(
+        "--no-render",
+        action="store_true",
+        help="Skip the real Mermaid (mmdc) render check; structural checks only.",
     )
     parser.add_argument("-o", "--output", required=True, help="JSON output path")
     args = parser.parse_args()
@@ -240,10 +283,19 @@ def main() -> int:
                 }
             )
 
+    if not blocks:
+        render_status = "skipped: no blocks"
+    elif args.no_render:
+        render_status = "skipped: --no-render"
+    else:
+        render_status, render_issues = _render_check(blocks)
+        all_issues.extend(render_issues)
+
     result = {
         "passed": len(all_issues) == 0,
         "target": str(target),
         "block_count": len(blocks),
+        "render_check": render_status,
         "issues": all_issues,
         "auto_fixable_count": sum(1 for i in all_issues if i.get("auto_fixable")),
     }

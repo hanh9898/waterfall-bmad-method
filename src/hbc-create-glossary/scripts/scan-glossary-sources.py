@@ -16,8 +16,6 @@ import sys
 from pathlib import Path
 
 TERM_PATTERNS = [
-    (re.compile(r"「([^」]+)」"), "jp_quote"),
-    (re.compile(r"「([^」]+)」"), "jp_quote"),
     (re.compile(r"“([^”]+)”"), "vi_quote"),
     (re.compile(r'"([A-Z][A-Za-z]{2,}(?:\s[A-Z][A-Za-z]+)*)"'), "en_capitalized"),
     (re.compile(r"\*\*([^*]{2,})\*\*"), "md_bold"),

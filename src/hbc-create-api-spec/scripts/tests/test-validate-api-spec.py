@@ -32,25 +32,25 @@ def _write(path: str, content: str = "") -> None:
 
 MINIMAL_VALID = """---
 document_id: D-21
-title: "Test API仕様書"
+title: "Test API"
 version: "1.0"
 ---
 
-# Test API仕様書
+# Test API
 
-## 1. 概要 (Overview)
+## 1. (Overview)
 
 REST API for Test project.
 
-## 2. 認証・認可 (Authentication & Authorization)
+## 2. (Authentication & Authorization)
 
 JWT-based authentication with refresh tokens.
 
-## 3. 共通仕様 (Common Specifications)
+## 3. (Common Specifications)
 
 Content-Type: application/json. Standard envelope response format.
 
-## 4. エンドポイント一覧 (Endpoint List)
+## 4. (Endpoint List)
 
 | # | Method | Endpoint | Description | REQ ID |
 |---|--------|----------|-------------|--------|
@@ -58,14 +58,14 @@ Content-Type: application/json. Standard envelope response format.
 | 2 | POST | /api/v1/users | Create user | REQ-002 |
 | 3 | GET | /api/v1/users/:id | Get user detail | REQ-001 |
 
-## 5. エンドポイント詳細 (Endpoint Details)
+## 5. (Endpoint Details)
 
 ### 5.1 List Users
 
 **Method:** `GET`
 **URL:** `/api/v1/users`
 
-## 6. データモデル (Data Models)
+## 6. (Data Models)
 
 ### 6.1 User
 
@@ -84,13 +84,13 @@ class TestCheckSections:
 
     def test_missing_section(self):
         content = MINIMAL_VALID.replace(
-            "## 2. 認証・認可 (Authentication & Authorization)\n\nJWT-based authentication with refresh tokens.\n",
+            "## 2. (Authentication & Authorization)\n\nJWT-based authentication with refresh tokens.\n",
             "",
         )
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "認証"
+        assert missing[0]["section"] == "Authentication"
 
     def test_empty_section(self):
         content = MINIMAL_VALID.replace(

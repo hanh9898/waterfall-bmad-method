@@ -17,6 +17,17 @@ import sys
 from pathlib import Path
 
 
+def _is_entry_gate(item: dict) -> bool:
+    """True for an item that asserts a PRIOR phase gate PASSED — a required CONTENT
+    check over a gate report. Such items are never downgraded by lenient mode (B2):
+    a phase must not proceed on top of a failed predecessor gate."""
+    return bool(
+        item.get("type") == "CONTENT"
+        and item.get("required")
+        and "gates/phase-" in item.get("artifact_pattern", "").replace("\\", "/")
+    )
+
+
 def parse_checklist(checklist_path: str) -> list[dict]:
     """Parse markdown table rows into checklist items."""
     items = []
@@ -62,10 +73,28 @@ def resolve_pattern(pattern: str, project_root: str, variables: dict) -> str:
     return result
 
 
+def _expand_matches(resolved: str) -> list[str]:
+    """Glob a pattern, expanding any directory match to the markdown files inside.
+
+    C-4 dir-aware resolution: a pattern like `.../D-06-*` that matches a workspace
+    FOLDER resolves to the `.md` document(s) within it, not the directory itself —
+    so FILE checks find a real file and CONTENT checks read the document instead of
+    failing on a directory (the source of the confusing "1 file(s)" message).
+    """
+    out: list[str] = []
+    for m in glob.glob(resolved, recursive=True):
+        p = Path(m)
+        if p.is_dir():
+            out.extend(str(f) for f in sorted(p.rglob("*.md")))
+        else:
+            out.append(m)
+    return out
+
+
 def evaluate_file(pattern: str, project_root: str, variables: dict) -> dict:
     """Check if files matching glob pattern exist."""
     resolved = resolve_pattern(pattern, project_root, variables)
-    matches = glob.glob(resolved, recursive=True)
+    matches = _expand_matches(resolved)
     if matches:
         return {
             "status": "PASS",
@@ -96,7 +125,7 @@ def evaluate_content(
 
     for pat in patterns:
         pat_resolved = pat if Path(pat).is_absolute() else str(Path(project_root) / pat)
-        for fpath in glob.glob(pat_resolved, recursive=True):
+        for fpath in _expand_matches(pat_resolved):
             files_checked.append(fpath)
             try:
                 content = Path(fpath).read_text(encoding="utf-8")
@@ -178,9 +207,56 @@ def evaluate_metric(
     }
 
 
+def _semantic_review_status(text: str) -> str | None:
+    """Extract frontmatter ``semanticReview.status`` (block or inline YAML).
+
+    Returns the lowercased status (``pending``/``passed``/...) or None if absent.
+    """
+    # Trailing newline optional (F3): a file whose final line is `status: passed`
+    # with no terminating newline must still parse. Status class allows hyphens.
+    block = re.search(r"semanticReview:\s*\n((?:[ \t]+\S.*\n?)+)", text)
+    if block:
+        sm = re.search(r"status:\s*['\"]?([A-Za-z_-]+)", block.group(1))
+        if sm:
+            return sm.group(1).lower()
+    inline = re.search(r"semanticReview:\s*\{[^}]*status:\s*['\"]?([A-Za-z_-]+)", text)
+    return inline.group(1).lower() if inline else None
+
+
+def evaluate_review(pattern: str, project_root: str, variables: dict) -> dict:
+    """REVIEW item (#5): pass only when the target doc's frontmatter
+    ``semanticReview.status`` is ``passed`` — the deterministic teeth that make
+    the LLM semantic-review layer non-skippable. Missing/``pending`` → FAIL.
+    """
+    resolved = resolve_pattern(pattern, project_root, variables)
+    files = _expand_matches(resolved)
+    if not files:
+        return {"status": "FAIL", "evidence": f"No files matching {resolved}", "review_status": {}}
+    statuses: dict[str, str | None] = {}
+    for fpath in files:
+        try:
+            statuses[Path(fpath).name] = _semantic_review_status(
+                Path(fpath).read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeDecodeError):
+            statuses[Path(fpath).name] = None
+    not_passed = {n: s for n, s in statuses.items() if s != "passed"}
+    if not_passed:
+        return {
+            "status": "FAIL",
+            "evidence": f"semanticReview not passed (need 'passed'): {not_passed}",
+            "review_status": statuses,
+        }
+    return {
+        "status": "PASS",
+        "evidence": f"semanticReview passed in {len(statuses)} file(s)",
+        "review_status": statuses,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Evaluate FILE, CONTENT, and METRIC gate checklist items."
+        description="Evaluate FILE, CONTENT, METRIC, and REVIEW gate checklist items."
     )
     parser.add_argument("checklist", help="Path to phase gate checklist markdown file")
     parser.add_argument("--project-root", required=True, help="Project root directory")
@@ -245,6 +321,11 @@ def main():
             result["evidence"] = "Requires LLM judgment"
             result["criteria"] = item["criteria"]
             result["artifact_pattern"] = item["artifact_pattern"]
+        elif item["type"] == "REVIEW":
+            eval_result = evaluate_review(
+                item["artifact_pattern"], args.project_root, variables
+            )
+            result.update(eval_result)
         else:
             result["status"] = "SKIP"
             result["evidence"] = f"Unknown type: {item['type']}"
@@ -254,10 +335,19 @@ def main():
     required_failed = sum(
         1 for r in results if r["status"] == "FAIL" and r["required"]
     )
+    # Entry-gate items assert a PRIOR phase gate PASSED — they are non-negotiable
+    # and must NOT be downgraded to WARNING by lenient mode (B2). Identified
+    # structurally: a required CONTENT check whose artifact is a gate report.
+    entry_gate_failed = sum(
+        1 for item, r in zip(items, results)
+        if r["status"] == "FAIL" and r["required"] and _is_entry_gate(item)
+    )
     pending_llm = sum(1 for r in results if r["status"] == "PENDING_LLM")
     gate_mode = variables.get("gate_mode", "strict")
 
-    if pending_llm > 0:
+    if entry_gate_failed > 0:
+        overall_status = "FAILED"  # prior-gate failure blocks regardless of mode
+    elif pending_llm > 0:
         overall_status = "PENDING_LLM"
     elif required_failed > 0:
         overall_status = "FAILED" if gate_mode == "strict" else "WARNING"
@@ -272,6 +362,7 @@ def main():
         "skipped": sum(1 for r in results if r["status"] == "SKIP"),
         "pending_llm": pending_llm,
         "required_failed": required_failed,
+        "entry_gate_failed": entry_gate_failed,
         "gate_mode": gate_mode,
         "overall_status": overall_status,
     }

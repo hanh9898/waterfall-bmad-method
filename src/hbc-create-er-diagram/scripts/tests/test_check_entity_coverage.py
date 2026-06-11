@@ -82,7 +82,7 @@ def test_fuzzy_match_plurals():
 def test_empty_prd_warns():
     with tempfile.TemporaryDirectory() as tmpdir:
         prd = Path(tmpdir) / "prd.md"
-        prd.write_text("このPRDにはマーカーがありません。\n", encoding="utf-8")
+        prd.write_text("This PRD contains only narrative text.\n", encoding="utf-8")
         d19 = Path(tmpdir) / "d19.md"
         d19.write_text(
             "```mermaid\nerDiagram\n  Users {\n    int id PK\n  }\n```\n",
@@ -93,10 +93,10 @@ def test_empty_prd_warns():
         assert data["warn"] == "prd_entity_extraction_empty"
 
 
-def test_japanese_explicit_markers():
+def test_explicit_markers():
     with tempfile.TemporaryDirectory() as tmpdir:
         prd = Path(tmpdir) / "prd.md"
-        prd.write_text("テーブル: Orders\nエンティティ: Shipments\n", encoding="utf-8")
+        prd.write_text("Table: Orders\nEntity: Shipments\n", encoding="utf-8")
         d19 = Path(tmpdir) / "d19.md"
         d19.write_text(
             "```mermaid\nerDiagram\n  Orders {\n    int id PK\n  }\n  Shipments {\n    int id PK\n  }\n  Orders ||--o{ Shipments : ships\n```\n",
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         test_phantom_entity,
         test_fuzzy_match_plurals,
         test_empty_prd_warns,
-        test_japanese_explicit_markers,
+        test_explicit_markers,
         test_missing_d19,
     ]
     failed = 0

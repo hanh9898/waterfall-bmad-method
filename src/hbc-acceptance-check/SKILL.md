@@ -1,6 +1,6 @@
 ---
 name: hbc-acceptance-check
-description: "Final acceptance evaluation with ACCEPTED/REJECTED/DEFERRED/PENDING decisions. Use when user says 'acceptance', '受入確認', 'nghiệm thu', or agent menu [AC]."
+description: "Final acceptance evaluation with ACCEPTED/REJECTED/DEFERRED/PENDING decisions. Use when user says 'acceptance', 'nghiệm thu', or agent menu [AC]."
 ---
 
 # Acceptance Check

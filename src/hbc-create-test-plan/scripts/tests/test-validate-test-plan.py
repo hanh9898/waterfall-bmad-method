@@ -32,50 +32,50 @@ def _write(path: str, content: str = "") -> None:
 
 MINIMAL_VALID = """---
 document_id: D-26
-title: "Test テスト計画書"
+title: "Test"
 ---
 
-# Test テスト計画書
+# Test
 
-## 1. 概要 (Overview)
+## 1. (Overview)
 
 Test plan for the Test project.
 
-## 2. テスト範囲 (Test Scope)
+## 2. (Test Scope)
 
 All REQ-001 through REQ-010 requirements.
 
-## 3. テストレベル (Test Levels)
+## 3. (Test Levels)
 
 Unit, Integration, System, E2E.
 
-## 4. テストアプローチ (Test Approach)
+## 4. (Test Approach)
 
 TDD with regression suite.
 
-## 5. テスト環境 (Test Environment)
+## 5. (Test Environment)
 
 Docker-based test environment.
 
-## 6. 開始・終了基準 (Entry & Exit Criteria)
+## 6. (Entry & Exit Criteria)
 
-### 6.1 開始基準 (Entry Criteria)
+### 6.1 (Entry Criteria)
 
 All Phase 2 artifacts approved.
 
-### 6.2 終了基準 (Exit Criteria)
+### 6.2 (Exit Criteria)
 
 80% code coverage, all critical tests pass.
 
-## 7. スケジュール (Schedule)
+## 7. (Schedule)
 
-### 7.1 マイルストーン (Milestones)
+### 7.1 (Milestones)
 
 | Milestone | Target Date | Dependencies |
 |-----------|------------|--------------|
 | Unit tests complete | 2026-06-15 | Implementation done |
 
-### 7.2 ガントチャート (Gantt Chart)
+### 7.2 (Gantt Chart)
 
 ```mermaid
 gantt
@@ -85,17 +85,17 @@ gantt
     Write unit tests: 2026-06-01, 14d
 ```
 
-## 8. 体制・役割 (Team & Roles)
+## 8. (Team & Roles)
 
 QA lead: Test design and execution.
 
-## 9. リスク管理 (Risk Management)
+## 9. (Risk Management)
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | Test data unavailable | Medium | High | Prepare mock data early |
 
-## 10. 成果物 (Deliverables)
+## 10. (Deliverables)
 
 D-26 Test Plan, D-27 Test Specification, Test Execution Report.
 """
@@ -109,13 +109,13 @@ class TestCheckSections:
 
     def test_missing_section(self):
         content = MINIMAL_VALID.replace(
-            "## 9. リスク管理 (Risk Management)\n\n| Risk | Likelihood | Impact | Mitigation |\n|------|-----------|--------|------------|\n| Test data unavailable | Medium | High | Prepare mock data early |\n",
+            "## 9. (Risk Management)\n\n| Risk | Likelihood | Impact | Mitigation |\n|------|-----------|--------|------------|\n| Test data unavailable | Medium | High | Prepare mock data early |\n",
             "",
         )
         issues = check_sections(content)
         missing = [i for i in issues if i["type"] == "SECTION_MISSING"]
         assert len(missing) == 1
-        assert missing[0]["section"] == "リスク管理"
+        assert missing[0]["section"] == "Risk"
 
 
 class TestEntryExitCriteria:
@@ -124,13 +124,13 @@ class TestEntryExitCriteria:
         assert len(issues) == 0
 
     def test_missing_entry(self):
-        content = MINIMAL_VALID.replace("### 6.1 開始基準 (Entry Criteria)", "### 6.1 Something Else")
+        content = MINIMAL_VALID.replace("### 6.1 (Entry Criteria)", "### 6.1 Something Else")
         issues = check_entry_exit_criteria(content)
         entry_issues = [i for i in issues if i["type"] == "NO_ENTRY_CRITERIA"]
         assert len(entry_issues) == 1
 
     def test_missing_exit(self):
-        content = MINIMAL_VALID.replace("終了基準", "別項目").replace("Exit Criteria", "Other Criteria")
+        content = MINIMAL_VALID.replace("Exit Criteria", "Other Criteria")
         issues = check_entry_exit_criteria(content)
         exit_issues = [i for i in issues if i["type"] == "NO_EXIT_CRITERIA"]
         assert len(exit_issues) == 1

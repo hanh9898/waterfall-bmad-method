@@ -207,3 +207,125 @@ class TestEdgeCases:
         assert items[0]["required"] is True
         assert items[1]["required"] is True
         assert items[2]["required"] is False
+
+
+def test_dir_aware_glob_resolves_md_inside(tmp_path):
+    # C-4: a D-06 workspace FOLDER matched by the glob resolves to the .md inside,
+    # not the directory itself (fixes D-06 folder-vs-flat + "1 file(s)" confusion).
+    ws = tmp_path / "planning-artifacts" / "D-06-business-flow"
+    _write(str(ws / "D-06-business-flow-diagram.md"), "```mermaid\nsequenceDiagram\n  A->>B: hi\n```\n")
+    res_file = evaluate_file("planning-artifacts/D-06-*", str(tmp_path), {})
+    assert res_file["status"] == "PASS"
+    assert any(m.endswith(".md") for m in res_file["matched_files"])
+    res_content = evaluate_content("planning-artifacts/D-06-*", "mermaid", str(tmp_path), {})
+    assert res_content["status"] == "PASS"
+    assert res_content["match_count"] >= 1
+
+
+def test_review_status_passed(tmp_path):
+    # #5: REVIEW item passes only when semanticReview.status == passed
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: passed\n  reviewedBy: llm\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res
+
+
+def test_review_status_pending_fails(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: pending\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL", res
+
+
+def test_review_status_missing_fails(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\ntitle: x\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL", res
+
+
+def test_review_inline_yaml(tmp_path):
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview: {status: passed}\n---\n\n# D-27\n")
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res
+
+
+def test_review_status_no_trailing_newline(tmp_path):
+    # F3: file whose final line is `status: passed` with no trailing newline still parses
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    doc.write_text("---\nsemanticReview:\n  status: passed", encoding="utf-8")  # no \n at EOF
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "PASS", res
+
+
+def test_review_status_hyphenated_not_truncated(tmp_path):
+    # F3: a hyphenated status is not truncated to before the hyphen
+    doc = tmp_path / "planning-artifacts" / "D-27-test-spec.md"
+    _write(str(doc), "---\nsemanticReview:\n  status: not-applicable\n---\n")
+    # 'not-applicable' != 'passed' → FAIL, but must capture the FULL token (not 'not')
+    res = mod.evaluate_review("planning-artifacts/D-27*", str(tmp_path), {})
+    assert res["status"] == "FAIL"
+    assert res["review_status"][doc.name] == "not-applicable"
+
+
+# --- B2: entry-gate (prior gate PASSED) is non-negotiable even in lenient mode ---
+
+def test_is_entry_gate_detects_prior_gate_check():
+    entry = {"type": "CONTENT", "required": True,
+             "artifact_pattern": "{output_folder}/gates/phase-1-gate*"}
+    not_entry = {"type": "CONTENT", "required": True,
+                 "artifact_pattern": "{output_folder}/planning-artifacts/D-02*"}
+    optional = {"type": "CONTENT", "required": False,
+                "artifact_pattern": "{output_folder}/gates/phase-1-gate*"}
+    assert mod._is_entry_gate(entry) is True
+    assert mod._is_entry_gate(not_entry) is False
+    assert mod._is_entry_gate(optional) is False  # only required items block
+
+
+_ENTRY_GATE_CHECKLIST = """\
+# Phase 2 — Gate Checklist
+
+| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
+|---------|-------------|------|----------|------------------|----------|-----------------|
+| P2-00 | Phase 1 gate PASSED | CONTENT | yes | {output_folder}/gates/phase-1-gate* | Status:.*PASSED | |
+"""
+
+
+def _run_engine(checklist_path, project_root, *vars_):
+    import json
+    import subprocess
+    import sys
+    cmd = [sys.executable,
+           os.path.join(os.path.dirname(__file__), "..", "evaluate-gate-checklist.py"),
+           checklist_path, "--project-root", project_root]
+    for v in vars_:
+        cmd += ["--var", v]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    return json.loads(r.stdout), r.returncode
+
+
+def test_entry_gate_failure_not_downgraded_by_lenient(tmp_path):
+    # No phase-1 gate report exists → entry-gate item FAILs. Even in lenient mode
+    # the script must report overall FAILED + entry_gate_failed=1.
+    path = str(tmp_path / "phase-2-gate-checklist.md")
+    _write(path, _ENTRY_GATE_CHECKLIST)
+    data, code = _run_engine(path, str(tmp_path),
+                             f"output_folder={tmp_path}", "gate_mode=lenient")
+    assert data["summary"]["entry_gate_failed"] == 1
+    assert data["summary"]["overall_status"] == "FAILED"
+    assert code == 1
+
+
+def test_entry_gate_passes_when_prior_report_present(tmp_path):
+    gates = tmp_path / "gates"
+    gates.mkdir()
+    _write(str(gates / "phase-1-gate.md"), "# Phase 1\n\n**Status:** PASSED\n")
+    path = str(tmp_path / "phase-2-gate-checklist.md")
+    _write(path, _ENTRY_GATE_CHECKLIST)
+    data, code = _run_engine(path, str(tmp_path),
+                             f"output_folder={tmp_path}", "gate_mode=lenient")
+    assert data["summary"]["entry_gate_failed"] == 0
+    assert data["summary"]["overall_status"] == "PASSED"
+    assert code == 0

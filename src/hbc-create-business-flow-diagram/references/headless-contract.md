@@ -17,7 +17,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | `--review-lenses=skip\|advanced\|party` | `skip` | Force the Stage-3 / Stage-4 parallel-lens menu. `skip` = no review. `advanced` = invoke `bmad-advanced-elicitation` at both stages. `party` = invoke `bmad-party-mode`. |
 | `--scope-of-change=polish\|semantic\|auto` | `auto` | Update mode only. `polish` appends a note to the prior revision-history row without bumping. `semantic` appends a new row with a minor-version bump. `auto` (default) diffs `stage_2_actors` and `stage_2_flows` against the prior session's flush block — identical arrays → polish; any difference → semantic. |
 | `--update-flow=<flow-name>` | unset | Update mode only. Re-render only the named flow, leaving other Mermaid blocks untouched. Without this flag, Update mode re-renders every in-scope flow. |
-| `--allow-migration-without-as-is` | off | Acknowledge that `--mode=migration` was passed but no AS-IS / 現状 / "current state" markers exist in the PRD sources. Without this flag, the combination returns `blocked` with `reason: "migration_without_as_is"`. |
+| `--allow-migration-without-as-is` | off | Acknowledge that `--mode=migration` was passed but no AS-IS / "current state" markers exist in the PRD sources. Without this flag, the combination returns `blocked` with `reason: "migration_without_as_is"`. |
 
 ## Defaults table (when a flag is not provided)
 
@@ -25,7 +25,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 |---|---|---|
 | Source selection | every match in `discover-planning-artifacts.py` output | scripted, deterministic |
 | Resume vs Update vs Fresh | from `resume_state.recommended_intent` (Resume only when `stage-1` is in `stepsCompleted`; Fresh when `stepsCompleted` is empty even if primary exists — `fresh_reason: "crashed_no_progress"` is logged separately from `fresh_reason: "no_workspace"`) | from `.decision-log.md` + primary frontmatter |
-| Mode | greenfield | unless PRD body contains "AS-IS", "current state", or `現状` → migration |
+| Mode | greenfield | unless PRD body contains "AS-IS", "current state" → migration |
 | Scope | single | unless `discover-planning-artifacts.py` reports >1 sub-process candidate → multi |
 | Diagram type | `{workflow.diagram_type}` | configured default |
 | Parallel-lens menu (Stage 3 + Stage 4) | `skip` (no review) | unless `--review-lenses` overrides |
@@ -76,7 +76,7 @@ Defined `reason` values (closed set — automators may switch on these):
 | `planning_artifacts_unreadable` | `{planning_artifacts}` directory unreadable or absent. |
 | `mermaid_validation_failed` | `validate-mermaid.py` returned issues that were not all `auto_fixable: true`. |
 | `fr_coverage_gap` | `check-fr-coverage.py` reported `uncovered` or `phantom` FR ids. |
-| `migration_without_as_is` | `--mode=migration` requested but no PRD source contains AS-IS / 現状 / "current state" markers, and `--allow-migration-without-as-is` was not passed. |
+| `migration_without_as_is` | `--mode=migration` requested but no PRD source contains AS-IS / "current state" markers, and `--allow-migration-without-as-is` was not passed. |
 | `resolver_missing` | The customization resolver script failed AND the SKILL.md hand-merge fallback could not complete. |
 
 Add new reasons only by extending this table — automators rely on the closed-set guarantee.

@@ -40,18 +40,15 @@ def load_report_data(report_dir: Path) -> dict:
 
 def build_fix_prompt(skill_path: str, theme: dict) -> str:
     """Build a coherent fix prompt for an entire opportunity theme."""
-    name = theme.get('name') or theme.get('summary') or theme.get('title') or ''
-    desc = theme.get('description') or theme.get('detail') or ''
-    prompt = f"## Task: {name}\n"
+    prompt = f"## Task: {theme['name']}\n"
     prompt += f"Skill path: {skill_path}\n\n"
-    prompt += f"### Problem\n{desc}\n\n"
-    prompt += f"### Fix\n{theme.get('action', theme.get('fix', ''))}\n\n"
+    prompt += f"### Problem\n{theme['description']}\n\n"
+    prompt += f"### Fix\n{theme['action']}\n\n"
     if theme.get('findings'):
         prompt += "### Specific observations to address:\n\n"
         for i, f in enumerate(theme['findings'], 1):
             loc = f"{f['file']}:{f['line']}" if f.get('file') and f.get('line') else f.get('file', '')
-            f_title = f.get('title') or f.get('summary') or ''
-            prompt += f"{i}. **{f_title}**"
+            prompt += f"{i}. **{f['title']}**"
             if loc:
                 prompt += f" ({loc})"
             if f.get('detail'):
@@ -65,8 +62,7 @@ def build_broken_prompt(skill_path: str, items: list) -> str:
     prompt = f"## Task: Fix Critical Issues\nSkill path: {skill_path}\n\n"
     for i, item in enumerate(items, 1):
         loc = f"{item['file']}:{item['line']}" if item.get('file') and item.get('line') else item.get('file', '')
-        title = item.get('title') or item.get('summary') or ''
-        prompt += f"{i}. **[{item.get('severity','high').upper()}] {title}**\n"
+        prompt += f"{i}. **[{item.get('severity','high').upper()}] {item['title']}**\n"
         if loc:
             prompt += f"   File: {loc}\n"
         if item.get('detail'):
@@ -210,30 +206,26 @@ function normalize(d) {
       : Array.isArray(d.meta.scanners_run) ? d.meta.scanners_run.length
       : d.meta.scanner_count || 0;
   }
-  // Fix strengths: plain strings → objects; accept summary as title alias
+  // Fix strengths: plain strings → objects
   d.strengths = (d.strengths || []).map(s =>
-    typeof s === 'string' ? { title: s, detail: '' } : { title: s.title || s.summary || '', detail: s.detail || '' }
+    typeof s === 'string' ? { title: s, detail: '' } : { title: s.title || '', detail: s.detail || '' }
   );
-  // Fix opportunities: summary→name, title→name, findings_resolved→findings
+  // Fix opportunities: title→name, findings_resolved→findings
   (d.opportunities || []).forEach(o => {
-    o.name = o.name || o.summary || o.title || '';
-    o.description = o.description || o.detail || '';
+    o.name = o.name || o.title || '';
     o.finding_count = o.finding_count || (o.findings || o.findings_resolved || []).length;
     if (!o.findings && o.findings_resolved) o.findings = [];
     o.action = o.action || o.fix || '';
   });
-  // Fix broken: summary→title, description→detail, fix→action
+  // Fix broken: description→detail, fix→action
   (d.broken || []).forEach(b => {
-    b.title = b.title || b.summary || '';
     b.detail = b.detail || b.description || '';
     b.action = b.action || b.fix || '';
   });
-  // Fix recommendations: plain strings → objects, description→action
-  d.recommendations = (d.recommendations || []).map((r, i) => {
-    if (typeof r === 'string') return { action: r, rank: i + 1 };
+  // Fix recommendations: description→action
+  (d.recommendations || []).forEach((r, i) => {
     r.action = r.action || r.description || '';
     r.rank = r.rank || i + 1;
-    return r;
   });
   // Fix journeys: persona→archetype, friction→friction_points
   // Accept both `enhancement` (new) and `experience` (legacy) section keys

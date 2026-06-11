@@ -4,59 +4,58 @@
 # ///
 """Validate a D-03 Glossary document.
 
-Checks for duplicate terms, empty definitions, minimum term count,
-and structural integrity. Returns structured JSON with per-issue
-auto_fixable flag.
+Checks for duplicate terms, empty definitions, minimum term count, and required
+sections (English canonical + configured document language — NO hardcoded
+Japanese). Returns a structured JSON honest verdict
+(structure_ok / semantic_review / checked / not_checked).
+
+Shares table/section/verdict primitives with the HBC validation library.
 """
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        find_section,
+        parse_table,
+        verdict,
+    )
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). English is reported in issues;
+# either label satisfies the presence check. No Japanese.
 REQUIRED_SECTIONS = [
-    "用語一覧",
-    "略語一覧",
-    "改訂履歴",
+    ("Terms", "Thuật ngữ"),
+    ("Abbreviations", "Từ viết tắt"),
+    ("Revision History", "Lịch sử sửa đổi"),
 ]
 
+TERMS_LABELS = ("Terms", "Thuật ngữ")
+ABBREV_LABELS = ("Abbreviations", "Từ viết tắt")
 
-def parse_table_rows(content: str, section_name: str) -> list[dict]:
-    """Extract data rows from a markdown table under a section heading."""
-    pattern = re.compile(rf"#+\s.*{re.escape(section_name)}.*", re.IGNORECASE)
-    match = pattern.search(content)
-    if not match:
-        return []
 
-    start = match.end()
-    next_heading = re.search(r"\n##\s", content[start:])
-    section_body = content[start:start + next_heading.start()] if next_heading else content[start:]
-
-    rows: list[dict] = []
-    in_table = False
-
-    for line in section_body.splitlines():
-        stripped = line.strip()
-        if not stripped.startswith("|"):
+def _rows_to_entries(rows: list[list[str]]) -> list[dict]:
+    """Map raw table rows to {term, definition}, skipping rows with empty term."""
+    entries: list[dict] = []
+    for cells in rows:
+        if not cells or not cells[0]:
             continue
-
-        cells = [c.strip() for c in stripped.split("|")[1:-1]]
-        if len(cells) < 2:
-            continue
-
-        if set(cells[0]) <= {"-", " ", ":"}:
-            in_table = True
-            continue
-
-        if not in_table:
-            in_table = True
-            continue
-
-        if cells[0]:
-            rows.append({"term": cells[0], "definition": cells[1] if len(cells) > 1 else ""})
-
-    return rows
+        entries.append({
+            "term": cells[0],
+            "definition": cells[1] if len(cells) > 1 else "",
+        })
+    return entries
 
 
 def check_duplicates(terms_rows: list[dict], abbrev_rows: list[dict]) -> list[dict]:
@@ -105,28 +104,40 @@ def check_empty_definitions(terms_rows: list[dict], abbrev_rows: list[dict]) -> 
 
 
 def check_sections(content: str) -> list[dict]:
-    """Verify required sections exist."""
+    """Verify required sections exist (English or configured label)."""
     issues: list[dict] = []
 
-    for section in REQUIRED_SECTIONS:
-        pattern = re.compile(rf"#+\s.*{re.escape(section)}.*", re.IGNORECASE)
-        if not pattern.search(content):
+    for en_name, lang_name in REQUIRED_SECTIONS:
+        if not find_section(content, en_name, lang_name):
             issues.append({
                 "type": "SECTION_MISSING",
-                "message": f"Required section '{section}' not found",
-                "section": section,
+                "message": f"Required section '{en_name}' / '{lang_name}' not found",
+                "section": en_name,
                 "auto_fixable": False,
             })
 
     return issues
 
 
+CHECKED = [
+    "required sections present",
+    "duplicate terms across tables",
+    "empty definitions",
+    "minimum term count",
+]
+NOT_CHECKED = [
+    "definition quality / accuracy (LLM review)",
+    "domain term completeness (LLM review)",
+    "consistency with D-02 term usage (readiness gate)",
+]
+
+
 def validate(doc_path: str) -> dict:
-    """Run all validation checks and return structured result."""
+    """Run all structural validation checks and return the honest verdict."""
     content = Path(doc_path).read_text(encoding="utf-8")
 
-    terms_rows = parse_table_rows(content, "用語一覧")
-    abbrev_rows = parse_table_rows(content, "略語一覧")
+    terms_rows = _rows_to_entries(parse_table(content, *TERMS_LABELS))
+    abbrev_rows = _rows_to_entries(parse_table(content, *ABBREV_LABELS))
 
     all_issues: list[dict] = []
     all_issues.extend(check_sections(content))
@@ -144,8 +155,15 @@ def validate(doc_path: str) -> dict:
     auto_fixable = [i for i in all_issues if i.get("auto_fixable")]
     manual_fix = [i for i in all_issues if not i.get("auto_fixable")]
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=CHECKED,
+        not_checked=NOT_CHECKED,
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
@@ -153,7 +171,8 @@ def validate(doc_path: str) -> dict:
         "abbreviation_count": len(abbrev_rows),
         "total_entries": total_terms,
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():

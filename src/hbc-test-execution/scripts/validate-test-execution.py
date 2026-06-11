@@ -14,40 +14,45 @@ import re
 import sys
 from pathlib import Path
 
+# --- shared lib bootstrap (Đợt 0 / C-1) ---
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        check_required_sections,
+        strip_code_fences,
+        tc_ids,
+        verdict,
+    )
+except ModuleNotFoundError:
+    print(json.dumps({
+        "error": "Shared lib 'hbc_validation' not found.",
+        "suggestion": "Expected at <skills>/hbc-shared/lib/. Install the hbc-shared component alongside this skill.",
+    }, ensure_ascii=False))
+    sys.exit(2)
+
+# (English canonical, configured-language label). No hardcoded Japanese.
 REQUIRED_SECTIONS = [
-    ("テスト実行サマリー", "Test Execution Summary"),
-    ("失敗テスト詳細", "Failed Tests Detail"),
-    ("不具合トリアージ", "Defect Triage"),
+    ("Test Execution Summary", "Tóm tắt thực thi kiểm thử"),
+    ("Failed Tests Detail", "Chi tiết test thất bại"),
+    ("Defect Triage", "Phân loại lỗi"),
 ]
 
 VALID_CLASSIFICATIONS = {"code_bug", "test_bug", "missing_coverage", "environment", "spec_issue"}
 
 SUMMARY_METRICS_RE = re.compile(
-    r"\|\s*(?:Total Tests|総テスト数)\s*\|\s*(\d+)\s*\|", re.IGNORECASE
+    r"\|\s*Total Tests\s*\|\s*(\d+)\s*\|", re.IGNORECASE
 )
-PASSED_RE = re.compile(r"\|\s*(?:Passed|成功)\s*\|\s*(\d+)\s*\|", re.IGNORECASE)
-FAILED_RE = re.compile(r"\|\s*(?:Failed|失敗)\s*\|\s*(\d+)\s*\|", re.IGNORECASE)
+PASSED_RE = re.compile(r"\|\s*Passed\s*\|\s*(\d+)\s*\|", re.IGNORECASE)
+FAILED_RE = re.compile(r"\|\s*Failed\s*\|\s*(\d+)\s*\|", re.IGNORECASE)
 COVERAGE_RE = re.compile(
-    r"\|\s*(?:Coverage|カバレッジ)\s*\|\s*([\d.]+)%?\s*\|", re.IGNORECASE
+    r"\|\s*Coverage\s*\|\s*([\d.]+)%?\s*\|", re.IGNORECASE
 )
 
 
 def check_sections(content: str) -> list[dict]:
-    issues: list[dict] = []
-
-    for ja_name, en_name in REQUIRED_SECTIONS:
-        pattern_ja = re.compile(rf"#+\s.*{re.escape(ja_name)}.*", re.IGNORECASE)
-        pattern_en = re.compile(rf"#+\s.*{re.escape(en_name)}.*", re.IGNORECASE)
-        match = pattern_ja.search(content) or pattern_en.search(content)
-        if not match:
-            issues.append({
-                "type": "SECTION_MISSING",
-                "message": f"Required section '{ja_name}' / '{en_name}' not found",
-                "section": ja_name,
-                "auto_fixable": False,
-            })
-
-    return issues
+    """Required sections present (presence-only; English or VN label, shared lib)."""
+    return check_required_sections(content, REQUIRED_SECTIONS, empty_check=False)
 
 
 def check_summary(content: str) -> list[dict]:
@@ -134,7 +139,7 @@ def check_defect_triage(content: str) -> list[dict]:
         return issues
 
     triage_section = re.search(
-        r"#+\s.*(?:不具合トリアージ|Defect Triage)(.*?)(?=\n#|\Z)",
+        r"#+\s.*Defect Triage(.*?)(?=\n#|\Z)",
         content,
         re.DOTALL | re.IGNORECASE,
     )
@@ -159,7 +164,44 @@ def check_defect_triage(content: str) -> list[dict]:
     return issues
 
 
-def validate(doc_path: str, coverage_threshold: float = 80.0) -> dict:
+def check_tc_reconciliation(content: str, d27_path: str | None) -> list[dict]:
+    """Reconcile EXECUTED TCs (referenced in the report) against SPECIFIED TCs
+    (declared in D-27) — closes the Phase 3→4 seam where "all passed" can hide
+    spec'd tests that were never run (D1). Deterministic TC-id set diff."""
+    issues: list[dict] = []
+    if not d27_path:
+        return issues
+    try:
+        d27_content = Path(d27_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        issues.append({
+            "type": "D27_UNREADABLE",
+            "message": f"--d27 provided but not readable: {d27_path}",
+            "auto_fixable": False,
+        })
+        return issues
+
+    specified = tc_ids(d27_content)
+    executed = {f"TC-{m}" for m in re.findall(r"TC-(\d{3,})", strip_code_fences(content))}
+
+    for tc in sorted(specified - executed):
+        issues.append({
+            "type": "TC_UNEXECUTED",
+            "message": f"{tc} specified in D-27 but no result in the execution report",
+            "tc_id": tc,
+            "auto_fixable": False,
+        })
+    for tc in sorted(executed - specified):
+        issues.append({
+            "type": "TC_PHANTOM_RESULT",
+            "message": f"{tc} has a result but is not specified in D-27",
+            "tc_id": tc,
+            "auto_fixable": False,
+        })
+    return issues
+
+
+def validate(doc_path: str, coverage_threshold: float = 80.0, d27_path: str | None = None) -> dict:
     content = Path(doc_path).read_text(encoding="utf-8")
 
     all_issues: list[dict] = []
@@ -167,14 +209,22 @@ def validate(doc_path: str, coverage_threshold: float = 80.0) -> dict:
     all_issues.extend(check_summary(content))
     all_issues.extend(check_coverage(content, coverage_threshold))
     all_issues.extend(check_defect_triage(content))
+    all_issues.extend(check_tc_reconciliation(content, d27_path))
 
     total_match = SUMMARY_METRICS_RE.search(content)
     passed_match = PASSED_RE.search(content)
     failed_match = FAILED_RE.search(content)
     cov_match = COVERAGE_RE.search(content)
 
-    return {
-        "valid": len(all_issues) == 0,
+    structure_ok = len(all_issues) == 0
+    result = verdict(
+        structure_ok,
+        semantic_review=SEMANTIC_NA,
+        checked=["required sections", "summary metrics present/consistent", "defect triage", "coverage threshold", "executed TCs ↔ D-27 specified TCs (if --d27)"],
+        not_checked=["root-cause classification correctness (LLM review)", "acceptance decision (acceptance-check)", "whether a reported pass/fail is truthful (LLM review)"],
+    )
+    result.update({
+        "valid": structure_ok,
         "total_issues": len(all_issues),
         "summary": {
             "total": int(total_match.group(1)) if total_match else 0,
@@ -183,7 +233,8 @@ def validate(doc_path: str, coverage_threshold: float = 80.0) -> dict:
             "coverage_pct": float(cov_match.group(1)) if cov_match else 0.0,
         },
         "issues": all_issues,
-    }
+    })
+    return result
 
 
 def main():
@@ -195,6 +246,10 @@ def main():
         default=80.0,
         help="Coverage threshold (default: 80)",
     )
+    parser.add_argument(
+        "--d27",
+        help="Path to D-27 test spec — reconcile executed TCs against specified TCs (D1)",
+    )
     parser.add_argument("-o", "--output", help="Output file")
     args = parser.parse_args()
 
@@ -203,7 +258,7 @@ def main():
         print(json.dumps({"error": f"Not found: {args.document}"}))
         sys.exit(1)
 
-    result = validate(str(doc_path), args.threshold)
+    result = validate(str(doc_path), args.threshold, d27_path=args.d27)
     text = json.dumps(result, indent=2, ensure_ascii=False)
 
     if args.output:

@@ -65,15 +65,15 @@ class DiscoverTests(unittest.TestCase):
         self.assertTrue(data["template_exists"])
         self.assertNotIn("fatal", data)
 
-    def test_japanese_prd_globs_match_hbc_filenames(self) -> None:
-        (self.artifacts / "要件定義書.md").write_text("# PRD\n", encoding="utf-8")
-        (self.artifacts / "企画書.md").write_text("# Brief\n", encoding="utf-8")
+    def test_en_vi_prd_globs_match_hbc_filenames(self) -> None:
+        (self.artifacts / "requirements.md").write_text("# PRD\n", encoding="utf-8")
+        (self.artifacts / "yêu cầu nghiệp vụ.md").write_text("# PRD VI\n", encoding="utf-8")
         proc = run_script(str(self.artifacts), "--template-path", str(self.template), "-o", str(self.out))
         self.assertEqual(proc.returncode, 0)
         data = self._read_output()
         prd_paths = {Path(entry["path"]).name for entry in data["prd"]}
-        self.assertIn("要件定義書.md", prd_paths)
-        self.assertIn("企画書.md", prd_paths)
+        self.assertIn("requirements.md", prd_paths)
+        self.assertIn("yêu cầu nghiệp vụ.md", prd_paths)
 
     def test_sharded_prd_enumerates_every_shard(self) -> None:
         prd_dir = self.artifacts / "prd"

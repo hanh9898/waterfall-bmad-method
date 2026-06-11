@@ -1,6 +1,6 @@
 ---
 document_id: D-21
-title: "{project_name} API仕様書"
+title: "{project_name} — Đặc tả API"
 version: "1.0"
 api_style: "REST"
 status: draft
@@ -9,44 +9,44 @@ lastStep: ""
 updated: ""
 ---
 
-# {project_name} API仕様書 (API Specification)
+# {project_name} — Đặc tả API (API Specification)
 
-## 1. 概要 (Overview)
+## 1. Tổng quan (Overview)
 
-### 1.1 目的 (Purpose)
+### 1.1 Mục đích (Purpose)
 
 <!-- Purpose and scope of this API -->
 
-### 1.2 ベースURL (Base URL)
+### 1.2 Base URL
 
 | Environment | Base URL |
 |-------------|----------|
 
-### 1.3 バージョニング (Versioning)
+### 1.3 Phiên bản hóa (Versioning)
 
 <!-- API versioning strategy: path-based (/v1/), header-based, query param -->
 
-## 2. 認証・認可 (Authentication & Authorization)
+## 2. Xác thực & phân quyền (Authentication & Authorization)
 
-### 2.1 認証方式 (Authentication Method)
+### 2.1 Phương thức xác thực (Authentication Method)
 
 <!-- JWT, API Key, OAuth2, Session — describe the mechanism -->
 
-### 2.2 トークンライフサイクル (Token Lifecycle)
+### 2.2 Vòng đời token (Token Lifecycle)
 
 <!-- Issuance, refresh, expiration, revocation -->
 
-### 2.3 権限モデル (Permission Model)
+### 2.3 Mô hình phân quyền (Permission Model)
 
 <!-- Roles, scopes, permission matrix -->
 
-## 3. 共通仕様 (Common Specifications)
+## 3. Quy cách chung (Common Specifications)
 
-### 3.1 リクエストフォーマット (Request Format)
+### 3.1 Định dạng request (Request Format)
 
 <!-- Content-Type, charset, common headers -->
 
-### 3.2 レスポンスフォーマット (Response Format)
+### 3.2 Định dạng response (Response Format)
 
 <!-- Standard envelope structure -->
 
@@ -66,21 +66,21 @@ updated: ""
 }
 ```
 
-### 3.3 ページネーション (Pagination)
+### 3.3 Phân trang (Pagination)
 
 <!-- Pagination strategy: offset-based, cursor-based -->
 
-### 3.4 エラーコード (Error Codes)
+### 3.4 Mã lỗi (Error Codes)
 
 | HTTP Status | Error Code | Description |
 |-------------|-----------|-------------|
 
-## 4. エンドポイント一覧 (Endpoint List)
+## 4. Danh sách endpoint (Endpoint List)
 
 | # | Method | Endpoint | Description | REQ ID |
 |---|--------|----------|-------------|--------|
 
-## 5. エンドポイント詳細 (Endpoint Details)
+## 5. Chi tiết endpoint (Endpoint Details)
 
 <!-- Repeat this block for each endpoint -->
 
@@ -119,7 +119,7 @@ updated: ""
 
 <!-- Edge cases, business rules, rate limits -->
 
-## 6. データモデル (Data Models)
+## 6. Mô hình dữ liệu (Data Models)
 
 <!-- Shared schema definitions referenced across endpoints -->
 
@@ -128,14 +128,14 @@ updated: ""
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 
-## 7. レート制限 (Rate Limiting)
+## 7. Giới hạn tần suất (Rate Limiting)
 
 <!-- Rate limiting strategy, per-endpoint limits if applicable -->
 
 | Scope | Limit | Window |
 |-------|-------|--------|
 
-## 改訂履歴 (Revision History)
+## Lịch sử sửa đổi (Revision History)
 
 | Version | Date | Author | Scope of Change |
 |---------|------|--------|----------------|

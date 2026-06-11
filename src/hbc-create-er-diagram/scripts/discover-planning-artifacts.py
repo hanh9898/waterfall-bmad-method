@@ -25,25 +25,21 @@ import sys
 from pathlib import Path
 
 
-PRD_GLOBS = ["*prd*.md", "*PRD*.md", "*要件定義書*.md", "*要件*.md", "*企画書*.md"]
+PRD_GLOBS = ["*prd*.md", "*PRD*.md"]
 ARCH_GLOBS = [
     "*architecture*.md",
-    "*アーキテクチャ*.md",
     "D-09*.md",
-    "*基本設計*.md",
     "D-08*.md",
 ]
-UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md", "*画面*.md"]
+UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md"]
 USE_CASE_GLOBS = [
     "*use-case*.md",
     "*use_case*.md",
     "D-04*.md",
     "D-05*.md",
-    "*ユースケース*.md",
 ]
 TABLE_DEF_GLOBS = [
     "D-20*.md",
-    "*テーブル定義*.md",
     "*table-def*.md",
     "*table_def*.md",
 ]

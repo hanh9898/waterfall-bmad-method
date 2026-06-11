@@ -63,16 +63,6 @@ def test_discovers_project_context():
         assert result["candidate_count"] >= 1
 
 
-def test_extract_jp_quotes():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        (Path(tmpdir) / "D-02-test.md").write_text("「オーダー」を処理する\n", encoding="utf-8")
-        result = run_script(tmpdir)
-        terms = [c["term"] for c in result["raw_candidates"]]
-        assert "オーダー" in terms
-        methods = {c["method"] for c in result["raw_candidates"] if c["term"] == "オーダー"}
-        assert "jp_quote" in methods
-
-
 def test_extract_md_bold():
     with tempfile.TemporaryDirectory() as tmpdir:
         (Path(tmpdir) / "D-02-test.md").write_text("Use **Order Status** for tracking\n", encoding="utf-8")
@@ -131,7 +121,7 @@ def test_output_to_file():
 def test_explicit_sources():
     with tempfile.TemporaryDirectory() as tmpdir:
         custom = Path(tmpdir) / "custom-input.md"
-        custom.write_text("「カスタム用語」を使う\n**Custom Term** here\n", encoding="utf-8")
+        custom.write_text("Uses a **Custom Term** here\n", encoding="utf-8")
         (Path(tmpdir) / "D-02-ignored.md").write_text("**Should Not Appear**\n", encoding="utf-8")
         cmd = [sys.executable, SCRIPT, "--project-root", tmpdir, "--sources", "custom-input.md"]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -139,7 +129,7 @@ def test_explicit_sources():
         assert data["source_count"] == 1
         assert data["source_docs"][0]["name"] == "custom-input.md"
         terms = [c["term"] for c in data["raw_candidates"]]
-        assert "カスタム用語" in terms
+        assert "Custom Term" in terms
         assert "Should Not Appear" not in terms
 
 
@@ -163,7 +153,6 @@ if __name__ == "__main__":
         test_update_state,
         test_discovers_source_docs,
         test_discovers_project_context,
-        test_extract_jp_quotes,
         test_extract_md_bold,
         test_extract_md_italic,
         test_extract_abbreviations,

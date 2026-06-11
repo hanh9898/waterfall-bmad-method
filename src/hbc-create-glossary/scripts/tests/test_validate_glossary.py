@@ -12,34 +12,34 @@ SCRIPT = str(Path(__file__).resolve().parent.parent / "validate-glossary.py")
 VALID_DOC = """\
 ---
 document_id: D-03
-title: "Test 用語集"
+title: "Test Bảng từ vựng"
 version: "1.0"
 status: complete
 lastStep: complete
 ---
 
-# Test 用語集 (Glossary)
+# Test D-03 Bảng từ vựng
 
-## 用語一覧 (Terms)
+## Thuật ngữ
 
-| 用語 (Term) | 意味 (Definition) | カテゴリ (Category) |
-|-------------|-------------------|---------------------|
-| オーダー | 顧客からの注文。商品と数量を含む | ビジネス |
-| ステータス | オーダーの現在の状態（pending, confirmed, shipped） | ビジネス |
-| バリデーション | 入力データの整合性チェック | テクニカル |
+| Thuật ngữ | Định nghĩa | Phân loại |
+|-----------|------------|-----------|
+| Đơn hàng | Yêu cầu mua từ khách, gồm sản phẩm và số lượng | Nghiệp vụ |
+| Trạng thái | Tình trạng hiện tại của đơn (pending, confirmed, shipped) | Nghiệp vụ |
+| Kiểm tra hợp lệ | Kiểm tra tính toàn vẹn dữ liệu đầu vào | Kỹ thuật |
 
-## 略語一覧 (Abbreviations)
+## Từ viết tắt
 
-| 略語 (Abbreviation) | 正式名称 (Full Name) | 意味 (Definition) |
-|---------------------|---------------------|-------------------|
-| OMS | Order Management System | 注文管理システム |
-| SKU | Stock Keeping Unit | 在庫管理単位 |
+| Từ viết tắt | Tên đầy đủ | Định nghĩa |
+|-------------|-----------|------------|
+| OMS | Order Management System | Hệ thống quản lý đơn hàng |
+| SKU | Stock Keeping Unit | Đơn vị quản lý tồn kho |
 
-## 改訂履歴 (Revision History)
+## Lịch sử sửa đổi
 
-| バージョン (Version) | 日付 (Date) | 担当者 (Author) | 改訂内容 (Scope of Change) |
-|---------------------|-------------|-----------------|---------------------------|
-| 1.0 | 2026-05-27 | Test | 初版作成 |
+| Phiên bản | Ngày | Người thực hiện | Nội dung sửa đổi |
+|-----------|------|-----------------|------------------|
+| 1.0 | 2026-05-27 | Test | Bản đầu |
 """
 
 
@@ -64,12 +64,17 @@ def test_valid_document():
     assert result["term_count"] == 3
     assert result["abbreviation_count"] == 2
     assert result["total_entries"] == 5
+    # honest verdict (S-3) fields present
+    assert result["structure_ok"] is True
+    assert result["semantic_review"] == "n/a"
+    assert result["passed"] is True
+    assert "not_checked" in result and result["not_checked"]
 
 
 def test_duplicate_terms():
     doc = VALID_DOC.replace(
-        "| バリデーション | 入力データの整合性チェック | テクニカル |",
-        "| オーダー | 別の定義 | テクニカル |"
+        "| Kiểm tra hợp lệ | Kiểm tra tính toàn vẹn dữ liệu đầu vào | Kỹ thuật |",
+        "| Đơn hàng | Định nghĩa khác | Kỹ thuật |"
     )
     result, code = run_script(doc)
     assert code == 1
@@ -80,13 +85,13 @@ def test_duplicate_terms():
 
 def test_empty_definition():
     doc = VALID_DOC.replace(
-        "| ステータス | オーダーの現在の状態（pending, confirmed, shipped） | ビジネス |",
-        "| ステータス | | ビジネス |"
+        "| Trạng thái | Tình trạng hiện tại của đơn (pending, confirmed, shipped) | Nghiệp vụ |",
+        "| Trạng thái | | Nghiệp vụ |"
     )
     result, code = run_script(doc)
     empty = [i for i in result["issues"] if i["type"] == "EMPTY_DEFINITION"]
     assert len(empty) > 0
-    assert empty[0]["term"] == "ステータス"
+    assert empty[0]["term"] == "Trạng thái"
 
 
 def test_no_terms():
@@ -95,22 +100,22 @@ def test_no_terms():
 document_id: D-03
 ---
 
-# Test 用語集
+# Test D-03
 
-## 用語一覧 (Terms)
+## Thuật ngữ
 
-| 用語 (Term) | 意味 (Definition) | カテゴリ (Category) |
-|-------------|-------------------|---------------------|
+| Thuật ngữ | Định nghĩa | Phân loại |
+|-----------|------------|-----------|
 
-## 略語一覧 (Abbreviations)
+## Từ viết tắt
 
-| 略語 (Abbreviation) | 正式名称 (Full Name) | 意味 (Definition) |
-|---------------------|---------------------|-------------------|
+| Từ viết tắt | Tên đầy đủ | Định nghĩa |
+|-------------|-----------|------------|
 
-## 改訂履歴 (Revision History)
+## Lịch sử sửa đổi
 
-| Version | Date | Author | Scope |
-|---------|------|--------|-------|
+| Phiên bản | Ngày | Người thực hiện | Nội dung |
+|-----------|------|-----------------|----------|
 """
     result, code = run_script(doc)
     no_terms = [i for i in result["issues"] if i["type"] == "NO_TERMS"]
@@ -118,11 +123,18 @@ document_id: D-03
 
 
 def test_missing_section():
-    doc = VALID_DOC.replace("## 略語一覧 (Abbreviations)", "## Removed Section")
+    doc = VALID_DOC.replace("## Từ viết tắt", "## Removed Section")
     result, code = run_script(doc)
     missing = [i for i in result["issues"] if i["type"] == "SECTION_MISSING"]
     sections = {i["section"] for i in missing}
-    assert "略語一覧" in sections
+    assert "Abbreviations" in sections
+
+
+def test_section_recognized_in_vietnamese():
+    # Vietnamese headings must satisfy the section check (no Japanese needed)
+    result, code = run_script(VALID_DOC)
+    missing = [i for i in result["issues"] if i["type"] == "SECTION_MISSING"]
+    assert missing == [], f"Vietnamese sections not recognized: {missing}"
 
 
 def test_missing_document():
@@ -149,12 +161,13 @@ def test_output_to_file():
         assert out_path.exists()
         data = json.loads(out_path.read_text(encoding="utf-8"))
         assert "valid" in data
+        assert "structure_ok" in data
 
 
 def test_cross_table_duplicate():
     doc = VALID_DOC.replace(
-        "| OMS | Order Management System | 注文管理システム |",
-        "| オーダー | Order | 注文 |"
+        "| OMS | Order Management System | Hệ thống quản lý đơn hàng |",
+        "| Đơn hàng | Order | đơn |"
     )
     result, _ = run_script(doc)
     dup = [i for i in result["issues"] if i["type"] == "DUPLICATE_TERM"]
@@ -168,6 +181,7 @@ if __name__ == "__main__":
         test_empty_definition,
         test_no_terms,
         test_missing_section,
+        test_section_recognized_in_vietnamese,
         test_missing_document,
         test_output_to_file,
         test_cross_table_duplicate,

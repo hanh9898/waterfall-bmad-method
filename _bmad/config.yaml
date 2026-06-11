@@ -1,0 +1,10 @@
+document_output_language: Tiếng Việt có dấu
+output_folder: '{project-root}/_bmad-output'
+project_name: hblab-bmad-custom
+bmb:
+  name: BMad Builder
+  description: Standard Skill Compliant Factory for BMad Agents, Workflows and Modules
+  version: 1.0.0
+  default_selected: false
+  bmad_builder_output_folder: '{project-root}/src'
+  bmad_builder_reports: '{project-root}/_bmad-output/reports'

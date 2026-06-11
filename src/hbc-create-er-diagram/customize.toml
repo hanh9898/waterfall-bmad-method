@@ -21,7 +21,7 @@ persistent_facts = [
 # Template for the D-19 ER Diagram output document.
 # Default points to the shared HBLab D-* template set; override to use a
 # project-specific template with different structure.
-er_diagram_template = "assets/D-19_データベース設計書_template.md"
+er_diagram_template = "assets/D-19_database-design_template.md"
 
 # Decision log template initialized at Stage 1a.
 # Override for teams requiring custom log structure or language.

@@ -1,13 +1,13 @@
 ---
 name: hbc-create-requirements
-description: "Generate D-02 Requirements Specification with REQ-xxx IDs. Use when user says 'requirements', 'yêu cầu', '要件定義', or agent menu [REQ]."
+description: "Generate D-02 Requirements Specification with REQ-xxx IDs. Use when user says 'requirements', 'yêu cầu', or agent menu [REQ]."
 ---
 
 # Create Requirements
 
 ## Overview
 
-Generate D-02 要件定義書 (Requirements Specification) — structured requirements with unique REQ-xxx IDs, scope boundaries, user roles, functional and non-functional requirements. REQ IDs are the foundation of the entire traceability chain.
+Generate D-02 (Requirements Specification) — structured requirements with unique REQ-xxx IDs, scope boundaries, user roles, functional and non-functional requirements. REQ IDs are the foundation of the entire traceability chain.
 
 Five-stage workflow: Prerequisites → Discovery → Generation → Validation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation scripts.
 
@@ -100,9 +100,13 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 
 **Parallel-lens menu:** `[A]` Advanced (challenge vagueness, find gaps) / `[P]` Party Mode (multi-reviewer perspective) / `[C]` Continue.
 
+## Stage 4b: Semantic Review (Lớp 2)
+
+Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+
 ## Stage 5: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
 
 Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BF]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
