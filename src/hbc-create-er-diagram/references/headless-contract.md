@@ -20,7 +20,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-er-dia
 | Decision | Headless default | Heuristic |
 |---|---|---|
 | Source selection | every match in `discover-planning-artifacts.py` output | scripted, deterministic |
-| Resume vs Update vs Fresh | from `resume_state.recommended_intent` (Resume only when `stage-1` is in `stepsCompleted`; Fresh when `stepsCompleted` is empty even if primary exists — `fresh_reason: "crashed_no_progress"` is logged separately from `fresh_reason: "no_workspace"`) | from `.decision-log.md` + primary frontmatter |
+| Resume vs Update vs Fresh | from `resume_state.recommended_intent` (Resume only when `stage-1` is in `stepsCompleted`; Fresh when `stepsCompleted` is empty even if the primary exists — `fresh_reason: "crashed_no_progress"` is logged separately from `fresh_reason: "no_primary"`) | from `.decision-log.md` + primary frontmatter |
 | Scope | single-domain | unless `discover-planning-artifacts.py` reports >1 domain area candidate → multi-domain |
 | Normalization level | logical | default unless overridden |
 | Parallel-lens menu (Stage 3 + Stage 4) | `skip` (no review) | unless `--review-lenses` overrides |
@@ -28,7 +28,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-er-dia
 | Stage-3 update target | every in-scope entity | unless `--update-entity=<name>` narrows it |
 | Stage-4 auto-fix | apply only validator findings with `auto_fixable: true` | from `validate-mermaid-er.py` per-issue flag |
 
-Every auto-decision is appended to `{doc_workspace}/.decision-log.md`.
+Every auto-decision is appended to `{planning_artifacts}/.decision-log.md`.
 
 ## JSON return contract
 
@@ -39,14 +39,19 @@ On success:
 {
   "status": "complete",
   "skill": "{skill-name}",
-  "artifact": "{doc_workspace}/D-19-er-diagram.md",
-  "workspace": "{doc_workspace}",
-  "decision_log": "{doc_workspace}/.decision-log.md",
-  "review_lenses_run": []
+  "artifact": "{workflow.er_diagram_output_path}",
+  "decision_log": "{planning_artifacts}/.decision-log.md",
+  "review_lenses_run": [],
+  "semantic_review": {
+    "status": "passed",
+    "open_facets": []
+  }
 }
 ```
 
 `review_lenses_run` is a list of `"advanced"` / `"party"` strings recording which review lenses fired during the run (empty when `--review-lenses=skip`).
+
+`semantic_review` mirrors the Stage 4b `semanticReview` frontmatter: `status` is `"passed"` only when `open_facets` is empty, otherwise `"pending"` with the unowned facets listed (e.g. `["Account suspend/revoke lifecycle not modelled"]`). Stage 4b never blocks the headless run — an open-facet result still emits `status: "complete"` here and is enforced later by the Phase 2 gate REVIEW item.
 
 On block:
 ```json
@@ -54,7 +59,7 @@ On block:
   "status": "blocked",
   "skill": "{skill-name}",
   "reason": "<one of the values below>",
-  "decision_log": "{doc_workspace}/.decision-log.md",
+  "decision_log": "{planning_artifacts}/.decision-log.md",
   "review_lenses_run": []
 }
 ```

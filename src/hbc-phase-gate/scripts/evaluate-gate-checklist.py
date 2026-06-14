@@ -14,6 +14,11 @@ import glob
 import json
 import re
 import sys
+
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
 
@@ -64,12 +69,21 @@ def parse_checklist(checklist_path: str) -> list[dict]:
 
 
 def resolve_pattern(pattern: str, project_root: str, variables: dict) -> str:
-    """Substitute variables in artifact pattern."""
+    """Substitute variables in an artifact pattern, returning a forward-slash path.
+
+    Cross-platform: `glob` accepts `/` on both Windows and POSIX, so normalising
+    to forward slashes keeps behaviour (and test expectations) identical on each.
+    `Path.is_absolute()` is platform-dependent — a POSIX `/abs` path is NOT
+    absolute on Windows — so absoluteness is detected explicitly: a leading `/`
+    or a drive-letter prefix (`C:`) both count.
+    """
     result = pattern
     for key, value in variables.items():
         result = result.replace(f"{{{key}}}", value)
-    if not Path(result).is_absolute():
-        result = str(Path(project_root) / result)
+    result = result.replace("\\", "/")
+    is_absolute = result.startswith("/") or (len(result) >= 2 and result[1] == ":")
+    if not is_absolute:
+        result = project_root.replace("\\", "/").rstrip("/") + "/" + result
     return result
 
 
@@ -326,6 +340,11 @@ def main():
                 item["artifact_pattern"], args.project_root, variables
             )
             result.update(eval_result)
+            # On a REVIEW FAIL, surface the owning doc-authoring skill so the
+            # reviewer knows where to record the missing semantic-review status
+            # (parity with the FILE branch).
+            if eval_result["status"] == "FAIL" and item.get("skill_to_create"):
+                result["skill_to_create"] = item["skill_to_create"]
         else:
             result["status"] = "SKIP"
             result["evidence"] = f"Unknown type: {item['type']}"

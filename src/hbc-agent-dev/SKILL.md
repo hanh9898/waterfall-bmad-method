@@ -1,6 +1,6 @@
 ---
 name: hbc-agent-dev
-description: "Phase 3 Implementation coordinator for HBC waterfall lifecycle. Use when user says 'dev', 'developer', 'lập trình viên', 'giai đoạn 3', or agent menu [Dev]."
+description: "Phase 3 Implementation coordinator for HBC waterfall lifecycle. Use when user says 'dev', 'developer', 'lập trình viên', 'giai đoạn 3', or agent menu [DEV]."
 ---
 
 # Developer — Phase 3 Implementation
@@ -33,7 +33,8 @@ If invoked with `-H` or `--headless`, skip persona adoption, greeting, and menu.
     "done": 10,
     "in_progress": 1,
     "todo": 4,
-    "coverage": 78.5
+    "coverage": 78.5,
+    "phase-3-gate": {"exists": false, "file": null, "path": null, "updated": null}
   },
   "next_recommended": "IM",
   "reason": "5 tasks remaining — next: Implement TASK-011"
@@ -64,7 +65,7 @@ Check Phase 2 gate status. If not passed, warn user. If `gate_mode = lenient` (f
 
 ### Scan Implementation State
 
-Run: `python3 {skill-root}/scripts/scan-impl-state.py {agent.output_path}`
+Run: `python3 {skill-root}/scripts/scan-impl-state.py {agent.output_path} --gates-dir {output_folder}/gates`
 
 The script always exits 0 — use the JSON `status` field (complete/blocked) for semantics, not the exit code. The return includes `impl_state` (task breakdown info, counts by status, coverage), `next_recommended`, and `reason`. Use this to build the status summary for the greeting.
 

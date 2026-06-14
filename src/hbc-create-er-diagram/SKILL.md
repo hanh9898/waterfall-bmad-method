@@ -7,7 +7,7 @@ description: "Generate D-19 Database Design Document with ER Diagram in Mermaid 
 
 ## Overview
 
-Produces a D-19 Database Design Document following HBLab document conventions — Mermaid `erDiagram` with entity definitions, relationships, and attribute specifications. Reads PRD / Architecture / UX artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a workspace folder under `{planning_artifacts}` containing the primary document plus a session decision log that carries identity across runs.
+Produces a D-19 Database Design Document following HBLab document conventions — Mermaid `erDiagram` with entity definitions, relationships, and attribute specifications. Reads PRD / Architecture / UX artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a single D-19 file written directly into `{planning_artifacts}` (alongside the other D-* documents); the session decision log (`.decision-log.md`) and scan artifacts (`.scan/`) are shared peers in `{planning_artifacts}` that carry identity across runs.
 
 Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an input contract so automators can drive it deterministically — see [`references/headless-contract.md`](references/headless-contract.md) for the full flag set, defaults table, and JSON return contract. Stage 5 enumerates the canonical downstream consumers.
 
@@ -17,7 +17,7 @@ Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an 
 - `{skill-root}` resolves to this skill's installed directory (where `customize.toml` lives).
 - `{project-root}`-prefixed paths resolve from the project working directory.
 - `{skill-name}` resolves to the skill directory's basename.
-- Placeholders like `{skill-name}`, `{doc_workspace}`, `{user_name}` are substituted with their resolved values before any output is emitted to the user or written to disk.
+- Placeholders like `{skill-name}`, `{primary}`, `{user_name}` are substituted with their resolved values before any output is emitted to the user or written to disk.
 
 ## Language Rules
 
@@ -34,7 +34,7 @@ Execute `{workflow.activation_steps_prepend}` in order. Load `{workflow.persiste
 
 Load config from `{project-root}/_bmad/config.yaml` and `config.user.yaml` (root + `core` + `modules.bmm`). Fall back to `.toml` variants, then legacy `{project-root}/_bmad/bmm/config.yaml`. Resolve `{user_name}`, `{communication_language}`, `{document_output_language}`, `{planning_artifacts}`, `{project_knowledge}`, `{project_name}`.
 
-Greet `{user_name}` in `{communication_language}` with a one-sentence orientation: D-19 produces a database design document with Mermaid ER diagrams across five stages (prerequisites → discovery → generation → validation → handoff). Execute `{workflow.activation_steps_append}` in order.
+Greet `{user_name}` in `{communication_language}` with a one-sentence orientation: D-19 produces a database design document with Mermaid ER diagrams across five stages (prerequisites → discovery → generation → validation → handoff). D-19 opens Phase 2, so it expects the Phase 1 gate (`hbc-phase-gate` evaluate 1) to have passed. Execute `{workflow.activation_steps_append}` in order.
 
 ## Headless Mode
 
@@ -46,17 +46,17 @@ Greet `{user_name}` in `{communication_language}` with a one-sentence orientatio
 
 #### 1a. Bind workspace and detect resume state
 
-Bind `{doc_workspace} = {workflow.er_diagram_output_path}` (resolves to a single path). Create the workspace if absent.
+Bind `{primary} = {workflow.er_diagram_output_path}` — a single output FILE written directly into `{planning_artifacts}` (no per-document folder). The session decision log lives at `{planning_artifacts}/.decision-log.md` and scan artifacts at `{planning_artifacts}/.scan/` — both shared peers alongside the other D-* documents. Create `{planning_artifacts}` and `{planning_artifacts}/.scan/` if absent.
 
-Run the discover script with the workspace flag to get both source inventory and resume state in one JSON:
+Run the discover script, pointing `--primary` at the output file so it can read resume state from the document and its peer decision log in one JSON:
 
 ```
-python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.er_diagram_template} --workspace {doc_workspace} -o {doc_workspace}/.scan/artifacts.json
+python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.er_diagram_template} --primary {primary} -o {planning_artifacts}/.scan/artifacts.json
 ```
 
 Consume the JSON. If the script exits with a non-zero code or produces no output, proceed as if `artifacts_dir_exists: false` and `resume_state.recommended_intent: "Fresh"` — log the error and exit code to `.decision-log.md`. If `fatal: "template_missing"` → HALT (interactive) or return `blocked` with `reason: "template_missing"` (headless). Otherwise read `resume_state.recommended_intent` and `resume_state.fresh_reason`:
 
-- `Fresh` with `fresh_reason: "no_workspace"` — no primary at all. Initialize from template.
+- `Fresh` with `fresh_reason: "no_primary"` — no primary document at all. Initialize from template.
 - `Fresh` with `fresh_reason: "crashed_no_progress"` — primary exists but `stepsCompleted` is empty (prior run crashed before stage-1 write). Surface the crash explicitly in the menu and decision log so the audit trail does not lose the signal. Headless: log `fresh_reason` to `.decision-log.md`.
 - `Fresh` with `fresh_reason: "stale_artifact"` — primary has inconsistent step state (e.g. stage-2 completed but stage-1 missing). Surface the inconsistency explicitly and offer to reset or continue from the last consistent stage.
 - `Resume` — primary has at least `stage-1` in `stepsCompleted` and not yet `stage-5`. Show the user the prior session summary (`resume_state.last_session_summary`) and offer to continue from `primary_last_step`.
@@ -140,7 +140,7 @@ Initialize the primary document from `{workflow.er_diagram_template}`, translati
 Run the entity-candidate pre-pass on the chosen sources:
 
 ```
-python3 {skill-root}/scripts/extract-entity-candidates.py <source-paths...> -o {doc_workspace}/.scan/entity-candidates.json
+python3 {skill-root}/scripts/extract-entity-candidates.py <source-paths...> -o {planning_artifacts}/.scan/entity-candidates.json
 ```
 
 Use the candidate JSON as a starting point — confirm, merge, and fill gaps rather than free-reading raw sources. If the script returns `"warn": "entity_extraction_empty"`, note that mechanical extraction found nothing and proceed with full LLM extraction from sources.
@@ -205,9 +205,9 @@ Stage-3 lens-targets: stress-test entity completeness, relationship cardinality 
 Run the two deterministic validators (both may run concurrently — they are independent):
 
 ```
-python3 {skill-root}/scripts/validate-mermaid-er.py {doc_workspace}/D-19-er-diagram.md --expected-entities "<comma-separated stage-2 entities>" -o {doc_workspace}/.scan/mermaid-er.json
+python3 {skill-root}/scripts/validate-mermaid-er.py {primary} --expected-entities "<comma-separated stage-2 entities>" -o {planning_artifacts}/.scan/mermaid-er.json
 
-python3 {skill-root}/scripts/check-entity-coverage.py --prd <each-prd-path-or-shard> --d19 {doc_workspace}/D-19-er-diagram.md -o {doc_workspace}/.scan/entity-coverage.json
+python3 {skill-root}/scripts/check-entity-coverage.py --prd <each-prd-path-or-shard> --d19 {primary} -o {planning_artifacts}/.scan/entity-coverage.json
 ```
 
 Pass each PRD path (or each shard from `artifacts.json` for sharded PRDs) as a separate `--prd` argument. If the result contains `"warn": "prd_entity_extraction_empty"`, surface it: "PRD entity extraction found zero entities — coverage check may be incomplete; manual review recommended."
@@ -227,9 +227,15 @@ Update primary frontmatter `stepsCompleted` to include `stage-4` and `updated` t
 
 Then present the **Parallel-lens menu** (same as Stage 3). Stage-4 lens-targets: challenge edge cases (nullable FKs, soft deletes, polymorphic associations, temporal data) and check the artifact reads cleanly to a fresh reviewer.
 
+### 4b. Semantic Review (Lớp 2)
+
+Script validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per entity (read vs write/admin surface · entity lifecycle — `create` / `update` / `suspend` / `revoke` / `rotate` where the entity has one · relationship cardinality): an entity with a real lifecycle (account, key, subscription) whose state transitions have no representation (no status column, no state machine), or an admin-managed entity with no downstream owner, has an open facet — name it so downstream `hbc-create-api-spec` (D-21) and the test skills (D-26/D-27) know it must be designed and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 2 gate REVIEW item reads it.
+
+**Headless:** run the same rubric and write the frontmatter; if `openFacets` is non-empty, leave `status: pending`, log the open facets to `.decision-log.md`, and proceed (this layer does not block — the Phase 2 gate enforces it). Never fabricate coverage to force `passed`.
+
 ### 5. Save and Handoff
 
-Finalize `{doc_workspace}/D-19-er-diagram.md`. Set `stepsCompleted` to the full list (`stage-1..5`), `lastStep` to `complete`, and `updated` to today. Append a closing session block to `.decision-log.md` summarising:
+Finalize `{primary}`. Set `stepsCompleted` to the full list (`stage-1..5`), `lastStep` to `complete`, `updated` to today, and the `semanticReview` block from Stage 4b. Append a closing session block to `.decision-log.md` summarising:
 - Sources used, scope, normalization level
 - Scope-of-change classification (Update mode only)
 - Auto-fixes applied (headless)

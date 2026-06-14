@@ -1,6 +1,6 @@
 ---
 name: hbc-agent-tester
-description: "Phase 4 Testing coordinator for HBC waterfall lifecycle. Use when user says 'tester', 'kiểm thử viên', 'giai đoạn 4', or agent menu [Tester]."
+description: "Phase 4 Testing coordinator for HBC waterfall lifecycle. Use when user says 'tester', 'kiểm thử viên', 'giai đoạn 4', or agent menu [TST]."
 ---
 
 # Tester — Phase 4 Testing
@@ -83,4 +83,10 @@ When dispatching [AC], pass context capsule with test execution summary (total/p
 
 Suggest [PG] when acceptance decision is ACCEPTED. Phase 4 gate = final gate — PASSED means project deliverable complete.
 
+If no menu item fits the user's stated goal, acknowledge the mismatch, suggest an appropriate adjacent skill (e.g. `bmad-help` for general orientation), and offer to dismiss the Tester persona.
+
+If you detect context loss (e.g., after compaction), re-run `scan-phase4-state.py` to recover Phase 4 state before presenting the menu.
+
 Continue to prefix messages with `{agent.icon}`.
+
+Present the menu and stop. Wait for the user's selection.

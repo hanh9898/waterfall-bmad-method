@@ -18,7 +18,7 @@ def run_script(d19_content: str, expected_entities: str | None = None) -> dict:
         cmd = [sys.executable, SCRIPT, str(d19), "-o", out]
         if expected_entities:
             cmd.extend(["--expected-entities", expected_entities])
-        subprocess.run(cmd, capture_output=True, text=True)
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         return json.loads(Path(out).read_text(encoding="utf-8"))
 
 

@@ -90,7 +90,7 @@ Script checks: TC IDs unique and sequential, every REQ-xxx has ≥1 TC-xxx, no o
 
 ## Stage 4b: Semantic Review (Lớp 2)
 
-Structural validation (Stage 4) only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric: `{project-root}/.claude/skills/hbc-shared/lib/../references/semantic-review-rubric.md` (canonical: `.claude/skills/hbc-shared/references/semantic-review-rubric.md`).
+Structural validation (Stage 4) only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric: `.claude/skills/hbc-shared/references/semantic-review-rubric.md`.
 
 Apply the **facet-split discipline** to every REQ this D-27 covers: for each REQ, ask which facets apply (read/write · api/admin · lifecycle) and whether **each applicable facet** has a TC — not just "≥1 TC exists". This is the seam-catching step (e.g. a REQ whose admin/write facet was cut from REST must still be tested or explicitly out-of-scope).
 
@@ -118,6 +118,6 @@ Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete
 
 Write `test-spec-distillate.json` alongside D-27 — `{"tc_count": N, "coverage_pct": N, "req_tc_map": {"REQ-001": ["TC-001","TC-002"], ...}, "severity_dist": {"High": N, "Medium": N, "Low": N}}` for downstream consumption by Phase 3 agents.
 
-Suggest next steps: _"D-27 complete with {tc_count} test cases covering {coverage}% of requirements. Run Phase 2 gate (`hbc-phase-gate` [PG]) to validate design phase completeness."_
+Suggest next steps: _"D-27 complete with {tc_count} test cases covering {coverage}% of requirements. Next: run the inter-document readiness check (`hbc-check-implementation-readiness` [IR]) — the seam gate that reconciles D-02/D-21/D-26/D-27 + matrix — then run Phase 2 gate (`hbc-phase-gate` [PG]) to close the design phase."_
 
 Headless: return JSON per `references/headless-contract.md`.

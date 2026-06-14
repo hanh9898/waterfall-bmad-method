@@ -12,7 +12,7 @@ SCRIPT = str(Path(__file__).resolve().parent.parent / "trace-report.py")
 
 def run(matrix_path: str, extra_args: list[str] | None = None) -> tuple[dict, int]:
     cmd = [sys.executable, SCRIPT, "--matrix", matrix_path] + (extra_args or [])
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     data = json.loads(result.stdout) if result.stdout.strip() else {"error": result.stderr}
     return data, result.returncode
 

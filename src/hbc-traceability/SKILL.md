@@ -9,7 +9,7 @@ description: "Living traceability matrix for HBC waterfall lifecycle. Use when u
 
 Maintain a living traceability matrix that maps requirements through design, implementation, and testing. Updated incrementally after each phase — each invoke adds data, never removes. The matrix is the single source of truth for "which requirement is covered where."
 
-Seven-column matrix: `req_id`, `story_id`, `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Four capabilities: **Initialize**, **Update**, **Report**, **Audit**.
+Seven-column matrix: `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref`. Four capabilities: **Initialize**, **Update**, **Report**, **Audit**.
 
 **Args:** Capability name (`init`, `update`, `report`, `audit`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
 
@@ -60,7 +60,7 @@ Populate columns for the current phase. First check for `{project-root}/_bmad-ou
 
 Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, note which REQs have empty target columns (the diff baseline). Write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
-**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 (REQ IDs are already in the matrix from Initialize; TC IDs come from the script output above). D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`.
+**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 (REQ IDs are already in the matrix from Initialize; TC IDs come from the script output above). D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`. If the REQ traces to a BMM story, also populate `story_id` with that story ID; otherwise leave it empty.
 
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 

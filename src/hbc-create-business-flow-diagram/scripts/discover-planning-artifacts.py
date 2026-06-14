@@ -8,7 +8,8 @@
 Resolves PRD (whole-doc or sharded), UX, use-case (D-04/D-05), and research
 docs. Supports English- and Vietnamese-titled HBC files. Verifies the configured
 business_flow_template exists. Optionally emits resume-state for Stage 1a
-when a workspace path is given.
+when --primary (the output document path) is given, reading the peer
+.decision-log.md beside it.
 
 Exit codes:
   0  inventory produced, no fatal issues
@@ -22,6 +23,11 @@ import argparse
 import json
 import re
 import sys
+
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
 
@@ -140,13 +146,13 @@ def _read_first_match(path: Path, pattern: re.Pattern[str]) -> str | None:
     return match.group(1) if match else None
 
 
-def _extract_resume_state(workspace: Path) -> dict[str, object]:
-    """Read the primary + decision log inside an existing workspace and
-    summarise resume-relevant state for Stage 1a."""
-    primary = workspace / "D-06-business-flow-diagram.md"
-    log = workspace / ".decision-log.md"
+def _extract_resume_state(primary: Path) -> dict[str, object]:
+    """Read the primary document + its peer decision log and summarise
+    resume-relevant state for Stage 1a. `primary` is the single output FILE
+    in planning_artifacts; the decision log is its sibling .decision-log.md."""
+    log = primary.parent / ".decision-log.md"
     state: dict[str, object] = {
-        "workspace": str(workspace),
+        "primary": str(primary),
         "primary_exists": primary.exists(),
         "decision_log_exists": log.exists(),
         "primary_steps_completed": [],
@@ -200,13 +206,13 @@ def _extract_resume_state(workspace: Path) -> dict[str, object]:
                 state["mode_from_prior_session"] = mode_match.group(1).strip()
 
     # Derive a recommended resume intent + fresh_reason discriminator so
-    # the headless audit trail does not collapse "no prior workspace" with
-    # "prior workspace exists but stepsCompleted is empty (crashed)".
+    # the headless audit trail does not collapse "no prior document" with
+    # "prior document exists but stepsCompleted is empty (crashed)".
     steps = state["primary_steps_completed"]
     state["fresh_reason"] = None
     if not state["primary_exists"]:
         state["recommended_intent"] = "Fresh"
-        state["fresh_reason"] = "no_workspace"
+        state["fresh_reason"] = "no_primary"
     elif not steps:
         state["recommended_intent"] = "Fresh"
         state["fresh_reason"] = "crashed_no_progress"
@@ -230,9 +236,9 @@ def main() -> int:
         help="Resolved path to business_flow_template (Stage 1 will refuse to start if missing)",
     )
     parser.add_argument(
-        "--workspace",
+        "--primary",
         default=None,
-        help="Optional: path to {doc_workspace}. When provided, the script emits resume_state for Stage 1a.",
+        help="Optional: path to the single output document. When provided, the script emits resume_state for Stage 1a, reading the peer .decision-log.md beside it.",
     )
     parser.add_argument(
         "--check-as-is",
@@ -282,8 +288,8 @@ def main() -> int:
     if args.check_as_is and result["prd"]:
         result["as_is"] = _check_as_is(result["prd"])
 
-    if args.workspace:
-        result["resume_state"] = _extract_resume_state(Path(args.workspace))
+    if args.primary:
+        result["resume_state"] = _extract_resume_state(Path(args.primary))
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")

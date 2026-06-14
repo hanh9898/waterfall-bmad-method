@@ -7,7 +7,7 @@ description: "Generate D-06 Business Flow Diagram with Mermaid (AS-IS/TO-BE) fro
 
 ## Overview
 
-Produces a D-06 Business Flow Diagram following HBLab document conventions — Mermaid `sequenceDiagram` (default), `flowchart`, or `stateDiagram`, with AS-IS (current state) and TO-BE (target state) sections where applicable. Reads PRD / UX / research artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a workspace folder under `{planning_artifacts}` containing the primary document plus a session decision log that carries identity across runs.
+Produces a D-06 Business Flow Diagram following HBLab document conventions — Mermaid `sequenceDiagram` (default), `flowchart`, or `stateDiagram`, with AS-IS (current state) and TO-BE (target state) sections where applicable. Reads PRD / UX / research artifacts from `{planning_artifacts}` when available, falls back to interactive elicitation when none exist. Output is a single D-06 file written directly into `{planning_artifacts}` (alongside the other D-* documents); the session decision log (`.decision-log.md`) and scan artifacts (`.scan/`) are shared peers in `{planning_artifacts}` that carry identity across runs.
 
 Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an input contract so automators can drive it deterministically — see [`references/headless-contract.md`](references/headless-contract.md) for the full flag set, defaults table, and JSON return contract. Stage 5 enumerates the canonical downstream consumers.
 
@@ -17,7 +17,7 @@ Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an 
 - `{skill-root}` resolves to this skill's installed directory (where `customize.toml` lives).
 - `{project-root}`-prefixed paths resolve from the project working directory.
 - `{skill-name}` resolves to the skill directory's basename.
-- Placeholders like `{skill-name}`, `{doc_workspace}`, `{user_name}` are substituted with their resolved values before any output is emitted to the user or written to disk.
+- Placeholders like `{skill-name}`, `{primary}`, `{user_name}` are substituted with their resolved values before any output is emitted to the user or written to disk.
 
 ## Language Rules
 
@@ -84,24 +84,24 @@ Headless mapping: `--review-lenses=skip` → `[C]`, `advanced` → `[A]`, `party
 
 #### 1a. Bind workspace and detect resume state
 
-Bind `{doc_workspace} = {workflow.business_flow_output_path}` (resolves to a single path). Create the workspace if absent.
+Bind `{primary} = {workflow.business_flow_output_path}` — a single output FILE written directly into `{planning_artifacts}` (no per-document folder). The session decision log lives at `{planning_artifacts}/.decision-log.md` and scan artifacts at `{planning_artifacts}/.scan/` — both shared peers alongside the other D-* documents. Create `{planning_artifacts}` and `{planning_artifacts}/.scan/` if absent.
 
-Run the discover script with the workspace flag to get both source inventory and resume state in one JSON:
+Run the discover script, pointing `--primary` at the output file so it can read resume state from the document and its peer decision log in one JSON:
 
 ```
-python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --workspace {doc_workspace} --check-as-is -o {doc_workspace}/.scan/artifacts.json
+python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --primary {primary} --check-as-is -o {planning_artifacts}/.scan/artifacts.json
 ```
 
 If the discover script fails to execute (Python missing, crash), fall back to globbing `{planning_artifacts}` yourself and constructing a minimal inventory; note the fallback in `.decision-log.md`.
 
 Consume the JSON. If `fatal: "template_missing"` → HALT (interactive) or return `blocked` with `reason: "template_missing"` (headless). Otherwise read `resume_state.recommended_intent` and `resume_state.fresh_reason`:
 
-- `Fresh` with `fresh_reason: "no_workspace"` — no primary at all. Initialize from template.
+- `Fresh` with `fresh_reason: "no_primary"` — no primary document at all. Initialize from template.
 - `Fresh` with `fresh_reason: "crashed_no_progress"` — primary exists but `stepsCompleted` is empty (prior run crashed before stage-1 write). Surface the crash explicitly in the menu and decision log so the audit trail does not lose the signal. Headless: log `fresh_reason` to `.decision-log.md`.
 - `Resume` — primary has at least `stage-1` in `stepsCompleted` and not yet `stage-5`. Show the user the prior session summary (`resume_state.last_session_summary`) and offer to continue from `primary_last_step`.
 - `Update` — primary completed (`stage-5` in `stepsCompleted`). Treat as revisable artifact: read latest revision-history version. Stage 3 will gate the version bump on scope-of-change.
 
-Present this menu (interactive only). When `recommended_intent` is `Fresh` and `fresh_reason` is `no_workspace`, show only `[N] Start fresh` and `[X] Exit`. Otherwise show the full menu:
+Present this menu (interactive only). When `recommended_intent` is `Fresh` and `fresh_reason` is `no_primary`, show only `[N] Start fresh` and `[X] Exit`. Otherwise show the full menu:
 
 ```
 Recommended: {recommended_intent}{ if fresh_reason: " ({fresh_reason})" }
@@ -177,7 +177,7 @@ From the chosen sources or interactive elicitation, extract:
 - **Decision points** — conditional branches (for `flowchart` variant)
 - **Outcomes** — success and failure end states
 
-Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to `{doc_workspace}/addendum.md` without pausing the flow.
+Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to an `### Addendum` block in `{planning_artifacts}/.decision-log.md` without pausing the flow.
 
 **Zero-actor branch** — if the source contains no human or system actors (e.g. pure data-pipeline products triggered solely by cron or queue events), do not render a vacuous "System talks to itself" diagram. Promote the trigger (scheduled job, queue, webhook) to a first-class actor and explain the choice in the decision log. Interactive: confirm with the user. Headless: log and continue.
 
@@ -201,9 +201,9 @@ For each in-scope flow, render one Mermaid block per the resolved diagram type:
 
 **Revision history table — scope-of-change gate:**
 
-- **Create / Fresh** (`fresh_reason: "no_workspace"` or `"crashed_no_progress"`): today's date, version `1.0`, "Initial version" → `{user_name}`, translated to `{document_output_language}`.
+- **Create / Fresh** (`fresh_reason: "no_primary"` or `"crashed_no_progress"`): today's date, version `1.0`, "Initial version" → `{user_name}`, translated to `{document_output_language}`.
 - **Update** — *do not bump the minor version mechanically*. Determine scope-of-change first:
-  - **Auto-detect default:** run `python3 {skill-root}/scripts/diff-stage2-flush.py {doc_workspace}/D-06-business-flow-diagram.md {doc_workspace}/.decision-log.md -o {doc_workspace}/.scan/scope-diff.json`. The script returns `scope: "polish"|"semantic"`, `actors_changed`, `flows_changed`. Polish → append a note to the existing latest revision row. Semantic → append a new row, bumping minor: `1.2` → `1.3`.
+  - **Auto-detect default:** run `python3 {skill-root}/scripts/diff-stage2-flush.py {primary} {planning_artifacts}/.decision-log.md -o {planning_artifacts}/.scan/scope-diff.json`. The script returns `scope: "polish"|"semantic"`, `actors_changed`, `flows_changed`. Polish → append a note to the existing latest revision row. Semantic → append a new row, bumping minor: `1.2` → `1.3`.
   - **Manual override** (interactive): ask the user "polish (typo / wording / layout) or semantic (actors / flows / outcomes)?".
   - **Headless override:** `--scope-of-change=polish|semantic|auto` (default `auto`). Polish and semantic skip the diff; `auto` runs the script.
   - Either path: log the chosen scope and the rationale to `.decision-log.md`.
@@ -217,9 +217,9 @@ Then present the **Parallel-lens menu** (defined above). Stage-3 lens-targets: s
 Run the two deterministic validators in parallel (they are independent):
 
 ```
-python3 {skill-root}/scripts/validate-mermaid.py {doc_workspace}/D-06-business-flow-diagram.md --expected-actors "<comma-separated stage-2 actors>" -o {doc_workspace}/.scan/mermaid.json
+python3 {skill-root}/scripts/validate-mermaid.py {primary} --expected-actors "<comma-separated stage-2 actors>" -o {planning_artifacts}/.scan/mermaid.json
 
-python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {doc_workspace}/D-06-business-flow-diagram.md --pattern "{workflow.fr_id_pattern}" -o {doc_workspace}/.scan/fr.json
+python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {primary} --pattern "{workflow.fr_id_pattern}" -o {planning_artifacts}/.scan/fr.json
 ```
 
 If either validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check.
@@ -242,16 +242,22 @@ Update primary frontmatter `stepsCompleted` to include `stage-4` and `updated` t
 
 Then present the **Parallel-lens menu** (defined above). Stage-4 lens-targets: challenge edge cases (failure paths, race conditions, hostile inputs) and check the artifact reads cleanly to a fresh reviewer.
 
+### 4b. Semantic Review (Lớp 2)
+
+Script + render validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per flow (read vs write/state-change · the surface the flow runs on — UI / admin / back-office / API / batch · lifecycle transitions): a diagram that draws only the happy read path while D-02 implies a write, admin, or exception variant has an open facet — name it so downstream `hbc-create-er-diagram` (D-19) and the test skills (D-26/D-27) know it must be modelled and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 1 gate REVIEW item reads it.
+
+**Headless:** run the same rubric and write the frontmatter; if `openFacets` is non-empty, leave `status: pending`, log the open facets to `.decision-log.md`, and proceed (this layer does not block — the Phase 1 gate enforces it). Never fabricate coverage to force `passed`.
+
 ### 5. Save and Handoff
 
-Finalize `{doc_workspace}/D-06-business-flow-diagram.md`. Set `stepsCompleted` to the full list (`stage-1..5`), `lastStep` to `complete`, and `updated` to today. Append a closing session block to `.decision-log.md` summarising:
+Finalize `{primary}`. Set `stepsCompleted` to the full list (`stage-1..5`), `lastStep` to `complete`, `updated` to today, and the `semanticReview` block from Stage 4b. Append a closing session block to `.decision-log.md` summarising:
 - Sources used, mode, scope, diagram type
 - Scope-of-change classification (Update mode only)
 - Auto-fixes applied (headless)
 - Lenses run (`review_lenses_run`)
 - Handoff target — which downstream skill should consume this output
 
-Downstream consumers: `hbc-create-er-diagram`, `hbc-create-test-plan`.
+Workflow successor (next step): run the Phase 1 gate (`hbc-phase-gate` [PG]) — D-06 is the last Phase 1 artifact before the gate. Data consumers (later, in Phase 2): `hbc-create-er-diagram` (D-19) and `hbc-create-test-plan` (D-26) read this flow.
 
 If the flow will feed downstream LLM consumers, offer to invoke `bmad-distillator` against the primary to produce a token-efficient distillate. Skip with a note if distillator is unavailable; never inline a substitute.
 

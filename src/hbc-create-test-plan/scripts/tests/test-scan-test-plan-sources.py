@@ -23,7 +23,7 @@ def run_script(
         cmd.extend(["--output-dir", output_dir])
     if output_file is not None:
         cmd.extend(["-o", output_file])
-    return subprocess.run(cmd, capture_output=True, text=True)
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
 
 
 def run_and_parse(project_root: str, output_dir: str | None = None) -> dict:
@@ -291,6 +291,7 @@ class TestCLI:
             [sys.executable, SCRIPT],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         assert result.returncode != 0
 

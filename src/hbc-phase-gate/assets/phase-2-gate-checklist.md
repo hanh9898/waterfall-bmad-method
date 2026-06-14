@@ -7,6 +7,7 @@
 | P2-02 | D-19 contains ER diagram | CONTENT | yes | {output_folder}/planning-artifacts/D-19-* | erDiagram | hbc-create-er-diagram |
 | P2-03 | D-19 contains table definitions | CONTENT | yes | {output_folder}/planning-artifacts/D-19-* | \|[-:]+\|[-:]+\|[-:]+\| | hbc-create-er-diagram |
 | P2-03b | D-19 covers every PRD entity (D3) | QUALITY | yes | {output_folder}/planning-artifacts/D-19-* | Run `check-entity-coverage.py --prd <PRD> --d19 <D-19> -o <tmp>` (hbc-create-er-diagram) — `passed` must be true (no uncovered entities, no phantom tables). Re-runs the deterministic coverage check at the gate to catch PRD churn after D-19 was authored. | hbc-create-er-diagram |
+| P2-03c | D-19 semantic review completed (R-1/#5) | REVIEW | yes | {output_folder}/planning-artifacts/D-19-* | | hbc-create-er-diagram |
 | P2-04 | D-12 Coding Standards document exists | FILE | yes | {output_folder}/planning-artifacts/D-12-* | | hbc-create-coding-standards |
 | P2-05 | D-26 Test Plan document exists | FILE | yes | {output_folder}/planning-artifacts/D-26-* | | hbc-create-test-plan |
 | P2-06 | D-27 Test Specification document exists | FILE | yes | {output_folder}/planning-artifacts/D-27-* | | hbc-create-test-spec |

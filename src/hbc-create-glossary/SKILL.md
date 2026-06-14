@@ -30,7 +30,7 @@ Resolve customization, load persistent facts and config per standard BMad activa
 
 ## Stage 1: Prerequisites
 
-1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ER], business flows → `hbc-create-business-flow-diagram` [BF]. Headless: skip — intent is given by invocation.
+1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ER], business flows → `hbc-create-business-flow-diagram` [BFD]. Headless: skip — intent is given by invocation.
 
 1b. **Source scan.** Run pre-pass to discover project state:
 
@@ -103,6 +103,6 @@ Save document to `{workflow.glossary_output_path}` — update frontmatter (`step
 
 Write `glossary-distillate.json` alongside D-03 — `{"terms": [{"term": "...", "definition": "...", "category": "..."}], "abbreviations": [{"abbr": "...", "full_name": "...", "definition": "..."}]}` for downstream skill consumption.
 
-If `{workflow.on_complete}` is a non-empty string, run it as a shell command after saving. Then suggest next steps: _"D-03 complete ({term_count} terms). Recommended: create D-06 Business Flow (`hbc-create-business-flow-diagram` [BF]) if not done, then run Phase 1 gate (`hbc-phase-gate` [PG])."_
+If `{workflow.on_complete}` is a non-empty string, run it as a shell command after saving. Then suggest next steps: _"D-03 complete ({term_count} terms). Recommended: create D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]) if not done, then run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.

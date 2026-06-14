@@ -197,6 +197,30 @@ class TestCountTasks:
         assert result["done"] == 2
 
 
+class TestPhase3Gate:
+    def test_no_gate_reports_absent(self, tmp_path):
+        _write(str(tmp_path / "task-breakdown.md"), TASK_BREAKDOWN_MIXED)
+        result = scan(str(tmp_path))
+        gate = result["impl_state"]["phase-3-gate"]
+        assert gate == {"exists": False, "file": None, "path": None, "updated": None}
+
+    def test_gate_in_gates_dir_detected(self, tmp_path):
+        _write(str(tmp_path / "task-breakdown.md"), TASK_BREAKDOWN_MIXED)
+        gates = tmp_path / "gates"
+        _write(str(gates / "phase-3-gate.md"), "---\nupdated: 2026-06-02\n---\n**Status:** PASSED\n")
+        result = scan(str(tmp_path), gates_dir=str(gates))
+        gate = result["impl_state"]["phase-3-gate"]
+        assert gate["exists"] is True
+        assert gate["file"] == "phase-3-gate.md"
+        assert gate["updated"] == "2026-06-02"
+
+    def test_gate_falls_back_to_output_path(self, tmp_path):
+        _write(str(tmp_path / "task-breakdown.md"), TASK_BREAKDOWN_MIXED)
+        _write(str(tmp_path / "phase-3-gate-results.json"), "{}")
+        result = scan(str(tmp_path))  # no gates_dir → search output_path
+        assert result["impl_state"]["phase-3-gate"]["exists"] is True
+
+
 class TestOutputToFile:
     def test_writes_json_to_file(self, tmp_path):
         scan_dir = tmp_path / "artifacts"

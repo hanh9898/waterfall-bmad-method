@@ -12,7 +12,7 @@ SCRIPT = str(Path(__file__).resolve().parent.parent / "scan-glossary-sources.py"
 
 def run_script(project_root: str) -> dict:
     cmd = [sys.executable, SCRIPT, "--project-root", project_root]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(result.stdout)
 
 
@@ -112,7 +112,7 @@ def test_output_to_file():
     with tempfile.TemporaryDirectory() as tmpdir:
         out_path = Path(tmpdir) / "result.json"
         cmd = [sys.executable, SCRIPT, "--project-root", tmpdir, "-o", str(out_path)]
-        subprocess.run(cmd, capture_output=True, text=True)
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         assert out_path.exists()
         data = json.loads(out_path.read_text(encoding="utf-8"))
         assert "state" in data
@@ -124,7 +124,7 @@ def test_explicit_sources():
         custom.write_text("Uses a **Custom Term** here\n", encoding="utf-8")
         (Path(tmpdir) / "D-02-ignored.md").write_text("**Should Not Appear**\n", encoding="utf-8")
         cmd = [sys.executable, SCRIPT, "--project-root", tmpdir, "--sources", "custom-input.md"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         data = json.loads(result.stdout)
         assert data["source_count"] == 1
         assert data["source_docs"][0]["name"] == "custom-input.md"
@@ -139,7 +139,7 @@ def test_explicit_sources_skips_autodiscovery():
         src.write_text("**SpecificTerm** only\n", encoding="utf-8")
         (Path(tmpdir) / "project-context.md").write_text("**ContextTerm** here\n", encoding="utf-8")
         cmd = [sys.executable, SCRIPT, "--project-root", tmpdir, "--sources", "my-notes.md"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         data = json.loads(result.stdout)
         terms = [c["term"] for c in data["raw_candidates"]]
         assert "SpecificTerm" in terms

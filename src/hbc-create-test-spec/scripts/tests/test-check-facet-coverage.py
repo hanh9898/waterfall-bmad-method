@@ -54,7 +54,7 @@ def _w(body: str) -> str:
 
 
 def run(d27: str) -> tuple[dict, int]:
-    r = subprocess.run([sys.executable, SCRIPT, "--d27", d27], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, SCRIPT, "--d27", d27], capture_output=True, text=True, encoding="utf-8")
     return json.loads(r.stdout), r.returncode
 
 
@@ -92,7 +92,7 @@ def test_no_declared_facets_is_vacuously_covered():
 def test_d27_unreadable_exit_2():
     # GAP-5: missing/unreadable D-27 → JSON error + exit 2.
     r = subprocess.run([sys.executable, SCRIPT, "--d27", "/nope/D-27.md"],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 2
     data = json.loads(r.stdout)
     assert "error" in data
@@ -192,7 +192,7 @@ def test_union_d02_does_not_shadow_d27():
     d02 = Path(d) / "D-02.md"; d02.write_text(D02_PARTIAL_FACETS, encoding="utf-8")
     d27 = Path(d) / "D-27.md"; d27.write_text(D27_FOR_UNION, encoding="utf-8")
     r = subprocess.run([sys.executable, SCRIPT, "--d27", str(d27), "--d02", str(d02)],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8")
     data = json.loads(r.stdout)
     assert data["uncovered_facets"]["REQ-001"] == ["admin"]
     assert data["facet_covered"] is False
@@ -233,7 +233,7 @@ def test_union_d27_matrix_contributes_uncovered_facet():
     d02 = Path(d) / "D-02.md"; d02.write_text(D02_NO_FACET_COL, encoding="utf-8")
     d27 = Path(d) / "D-27.md"; d27.write_text(D27_MATRIX_UNIQUE_FACET, encoding="utf-8")
     r = subprocess.run([sys.executable, SCRIPT, "--d27", str(d27), "--d02", str(d02)],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8")
     data = json.loads(r.stdout)
     assert data["uncovered_facets"]["REQ-001"] == ["write"]
     assert r.returncode == 1

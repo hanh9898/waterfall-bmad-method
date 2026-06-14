@@ -24,7 +24,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | Decision | Headless default | Heuristic |
 |---|---|---|
 | Source selection | every match in `discover-planning-artifacts.py` output | scripted, deterministic |
-| Resume vs Update vs Fresh | from `resume_state.recommended_intent` (Resume only when `stage-1` is in `stepsCompleted`; Fresh when `stepsCompleted` is empty even if primary exists — `fresh_reason: "crashed_no_progress"` is logged separately from `fresh_reason: "no_workspace"`) | from `.decision-log.md` + primary frontmatter |
+| Resume vs Update vs Fresh | from `resume_state.recommended_intent` (Resume only when `stage-1` is in `stepsCompleted`; Fresh when `stepsCompleted` is empty even if the primary exists — `fresh_reason: "crashed_no_progress"` is logged separately from `fresh_reason: "no_primary"`) | from `.decision-log.md` + primary frontmatter |
 | Mode | greenfield | unless PRD body contains "AS-IS", "current state" → migration |
 | Scope | single | unless `discover-planning-artifacts.py` reports >1 sub-process candidate → multi |
 | Diagram type | `{workflow.diagram_type}` | configured default |
@@ -33,7 +33,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | Stage-3 update target | every in-scope flow | unless `--update-flow=<name>` narrows it |
 | Stage-4 auto-fix | apply only validator findings with `auto_fixable: true` | from `validate-mermaid.py` per-issue flag |
 
-Every auto-decision is appended to `{doc_workspace}/.decision-log.md`.
+Every auto-decision is appended to `{planning_artifacts}/.decision-log.md`.
 
 ## JSON return contract
 
@@ -44,17 +44,23 @@ On success:
 {
   "status": "complete",
   "skill": "{skill-name}",
-  "artifact": "{doc_workspace}/D-06-business-flow-diagram.md",
-  "decision_log": "{doc_workspace}/.decision-log.md",
+  "artifact": "{workflow.business_flow_output_path}",
+  "decision_log": "{planning_artifacts}/.decision-log.md",
   "validation": {
-    "mermaid": "{doc_workspace}/.scan/mermaid.json",
-    "fr": "{doc_workspace}/.scan/fr.json"
+    "mermaid": "{planning_artifacts}/.scan/mermaid.json",
+    "fr": "{planning_artifacts}/.scan/fr.json"
   },
-  "review_lenses_run": []
+  "review_lenses_run": [],
+  "semantic_review": {
+    "status": "passed",
+    "open_facets": []
+  }
 }
 ```
 
 `review_lenses_run` is a list of `"advanced"` / `"party"` strings recording which review lenses fired during the run (empty when `--review-lenses=skip`).
+
+`semantic_review` mirrors the Stage 4b `semanticReview` frontmatter: `status` is `"passed"` only when `open_facets` is empty, otherwise `"pending"` with the unowned facets listed (e.g. `["REQ-013 write/admin variant not drawn"]`). Stage 4b never blocks the headless run — an open-facet result still emits `status: "complete"` here and is enforced later by the Phase 1 gate REVIEW item.
 
 On block:
 ```json
@@ -62,7 +68,7 @@ On block:
   "status": "blocked",
   "skill": "{skill-name}",
   "reason": "<one of the values below>",
-  "decision_log": "{doc_workspace}/.decision-log.md",
+  "decision_log": "{planning_artifacts}/.decision-log.md",
   "review_lenses_run": []
 }
 ```

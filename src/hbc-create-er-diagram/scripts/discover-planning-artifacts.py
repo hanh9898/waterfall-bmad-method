@@ -8,7 +8,8 @@
 Resolves PRD (whole-doc or sharded), Architecture, UX, use-case, D-20
 table definitions, and research docs. Supports English- and Japanese-titled
 HBC files. Verifies the configured er_diagram_template exists. Optionally
-emits resume-state for Stage 1a when a workspace path is given.
+emits resume-state for Stage 1a when --primary (the output document path) is
+given, reading the peer .decision-log.md beside it.
 
 Exit codes:
   0  inventory produced, no fatal issues
@@ -22,6 +23,11 @@ import argparse
 import json
 import re
 import sys
+
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
 
@@ -110,13 +116,13 @@ def _classify_prd(prd_path: Path) -> dict[str, object]:
     return entry
 
 
-def _extract_resume_state(workspace: Path) -> dict[str, object]:
-    """Read the primary + decision log inside an existing workspace and
-    summarise resume-relevant state for Stage 1a."""
-    primary = workspace / "D-19-er-diagram.md"
-    log = workspace / ".decision-log.md"
+def _extract_resume_state(primary: Path) -> dict[str, object]:
+    """Read the primary document + its peer decision log and summarise
+    resume-relevant state for Stage 1a. `primary` is the single output FILE
+    in planning_artifacts; the decision log is its sibling .decision-log.md."""
+    log = primary.parent / ".decision-log.md"
     state: dict[str, object] = {
-        "workspace": str(workspace),
+        "primary": str(primary),
         "primary_exists": primary.exists(),
         "decision_log_exists": log.exists(),
         "primary_steps_completed": [],
@@ -161,7 +167,7 @@ def _extract_resume_state(workspace: Path) -> dict[str, object]:
     state["fresh_reason"] = None
     if not state["primary_exists"]:
         state["recommended_intent"] = "Fresh"
-        state["fresh_reason"] = "no_workspace"
+        state["fresh_reason"] = "no_primary"
     elif not steps:
         state["recommended_intent"] = "Fresh"
         state["fresh_reason"] = "crashed_no_progress"
@@ -186,9 +192,9 @@ def main() -> int:
         help="Resolved path to er_diagram_template (Stage 1 will refuse to start if missing)",
     )
     parser.add_argument(
-        "--workspace",
+        "--primary",
         default=None,
-        help="Optional: path to {doc_workspace}. When provided, the script emits resume_state for Stage 1a.",
+        help="Optional: path to the single output document. When provided, the script emits resume_state for Stage 1a, reading the peer .decision-log.md beside it.",
     )
     parser.add_argument("-o", "--output", required=True, help="JSON output path")
     args = parser.parse_args()
@@ -232,8 +238,8 @@ def main() -> int:
         result["table_definitions"] = [_make_entry(p) for p in _glob(artifacts, TABLE_DEF_GLOBS)]
         result["research"] = [_make_entry(p) for p in _glob(artifacts, RESEARCH_GLOBS)]
 
-    if args.workspace:
-        result["resume_state"] = _extract_resume_state(Path(args.workspace))
+    if args.primary:
+        result["resume_state"] = _extract_resume_state(Path(args.primary))
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")

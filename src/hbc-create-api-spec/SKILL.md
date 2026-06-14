@@ -109,6 +109,6 @@ Structural validation only proves cấu trúc. Before saving, run the **semantic
 
 Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-21. Append closing session.
 
-Suggest next steps: _"D-21 complete. All Phase 2 design artifacts are ready — run Phase 2 gate (`hbc-phase-gate` [PG]) to validate completeness."_
+Suggest next steps: _"D-21 complete. Next: create D-26 Test Plan (`hbc-create-test-plan` [TP]), then D-27 Test Spec (`hbc-create-test-spec` [TS]) and the readiness check (`hbc-check-implementation-readiness` [IR]). Run Phase 2 gate (`hbc-phase-gate` [PG]) only after the test-design artifacts and IR are complete."_
 
 Headless: return JSON per `references/headless-contract.md`.

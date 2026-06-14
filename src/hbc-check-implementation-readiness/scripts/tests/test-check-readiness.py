@@ -28,7 +28,7 @@ def _w(d: Path, name: str, body: str) -> str:
 
 
 def run(args: list[str]) -> tuple[dict, int]:
-    r = subprocess.run([sys.executable, SCRIPT, *args], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, SCRIPT, *args], capture_output=True, text=True, encoding="utf-8")
     return json.loads(r.stdout), r.returncode
 
 
@@ -171,7 +171,7 @@ def test_prose_req_in_d02_not_counted_as_defined():
 
 
 def test_d02_missing_file_exit_2():
-    r = subprocess.run([sys.executable, SCRIPT, "--d02", "/nope/D-02.md"], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, SCRIPT, "--d02", "/nope/D-02.md"], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 2
     assert "error" in json.loads(r.stdout)
 
