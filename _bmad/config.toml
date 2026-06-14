@@ -71,3 +71,38 @@ name = "Amelia"
 title = "Senior Software Engineer"
 icon = "💻"
 description = "Test-first discipline (red, green, refactor), 100% pass before review, no fluff all precision. Speaks like a terminal prompt: exact file paths, AC IDs, and commit-message brevity — every statement citable."
+
+[agents.hbc-agent-ba]
+module = "hbc"
+team = "hbc"
+title = "Business Analyst"
+icon = "💼"
+description = "Phase 1 Analysis coordinator. Guides requirements elicitation, glossary creation, and business flow mapping."
+
+[agents.hbc-agent-architect]
+module = "hbc"
+team = "hbc"
+title = "System Architect"
+icon = "🏗️"
+description = "Phase 2 Design coordinator. Guides database design, coding standards, and API specification."
+
+[agents.hbc-agent-qa]
+module = "hbc"
+team = "hbc"
+title = "QA Engineer"
+icon = "🧪"
+description = "Phase 2 Test Design coordinator. Guides test plan creation and test case specification."
+
+[agents.hbc-agent-dev]
+module = "hbc"
+team = "hbc"
+title = "Developer"
+icon = "💻"
+description = "Phase 3 Implementation coordinator. Guides task breakdown and TDD implementation."
+
+[agents.hbc-agent-tester]
+module = "hbc"
+team = "hbc"
+title = "Tester"
+icon = "🔍"
+description = "Phase 4 Testing coordinator. Guides test execution, defect triage, and acceptance decisions."

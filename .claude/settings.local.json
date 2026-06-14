@@ -58,7 +58,12 @@
       "Bash(/tmp/verify_asset_references.sh)",
       "Bash(/tmp/final_summary.sh)",
       "Bash(/bin/find /Users/hanhnt2/project/opms/hblab-bmad-custom/src -maxdepth 3 -type f -name \"*.md\" -o -name \"*.py\")",
-      "Bash(open \"src/hbc-create-test-plan/.analysis/2026-05-28T173133/quality-report.html\" \"src/hbc-create-test-spec/.analysis/2026-05-28T173353/quality-report.html\" \"src/hbc-agent-dev/.analysis/2026-05-28T173418/quality-report.html\")"
+      "Bash(open \"src/hbc-create-test-plan/.analysis/2026-05-28T173133/quality-report.html\" \"src/hbc-create-test-spec/.analysis/2026-05-28T173353/quality-report.html\" \"src/hbc-agent-dev/.analysis/2026-05-28T173418/quality-report.html\")",
+      "Bash(awk '{print $2}')",
+      "Bash(grep -iE '\\\\.bak$|\\\\.tmp$|\\\\.log$|\\\\.orig$|~$|pycache|pytest_cache|backup|/tmp/')",
+      "Bash(grep -rn \"doc_workspace\\\\|no_workspace\\\\|D-19-er-diagram\\\\|--workspace\\\\|er_diagram_output_path.*/\\\\\"$\" src/hbc-create-er-diagram --include=\"*.md\" --include=\"*.py\" --include=\"*.toml\")",
+      "Bash(echo \"--- exit $? ---\")",
+      "Bash(xargs grep -L \"encoding=\")"
     ]
   }
 }
