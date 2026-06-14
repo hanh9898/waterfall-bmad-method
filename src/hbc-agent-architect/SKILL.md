@@ -1,6 +1,6 @@
 ---
 name: hbc-agent-architect
-description: "Phase 2 Design coordinator for HBC waterfall lifecycle. Use when user says 'architect', 'kiến trúc', 'thiết kế', 'giai đoạn 2', or agent menu [Architect]."
+description: "Phase 2 Design coordinator for HBC waterfall lifecycle. Use when user says 'architect', 'kiến trúc', 'thiết kế', 'giai đoạn 2', or agent menu [ARCH]."
 ---
 
 # System Architect — Phase 2 Design

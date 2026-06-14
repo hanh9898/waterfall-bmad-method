@@ -9,7 +9,7 @@ description: "Generate D-12 Coding Standards adapted to project framework. Use w
 
 Generate D-12 (Coding Standards) — per-project coding conventions adapted to the project's framework, language, and team preferences. The resulting document is the reference standard for all implementation work in Phase 3.
 
-Four-stage workflow: Prerequisites + Discovery → Generation → Validation → Save. Supports resume state, headless mode. Requires Python 3.10+ for validation scripts.
+Four-stage workflow: Prerequisites + Discovery → Generation → Validation → Save, plus a Stage 3b Semantic Review (Lớp 2). Supports resume state, headless mode. Requires Python 3.10+ for validation scripts.
 
 **Args:** `create` (default), `update` (revise existing D-12), `validate` (check existing D-12). Optional: `--headless` / `-H`.
 

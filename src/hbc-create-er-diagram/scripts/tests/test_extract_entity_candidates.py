@@ -24,7 +24,7 @@ _walk_md = mod._walk_md
 
 def _run(sources: list[str], output: str) -> dict:
     cmd = [sys.executable, SCRIPT] + sources + ["-o", output]
-    subprocess.run(cmd, capture_output=True, text=True)
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(Path(output).read_text(encoding="utf-8"))
 
 

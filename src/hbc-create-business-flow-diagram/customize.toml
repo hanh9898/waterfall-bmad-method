@@ -32,12 +32,11 @@ decision_log_template = "{skill-root}/assets/decision-log-template.md"
 # not a contract. Allowed values: sequenceDiagram, flowchart, stateDiagram.
 diagram_type = "sequenceDiagram"
 
-# Single output workspace path. The workflow binds {doc_workspace} directly
-# to the resolved value at Stage 1 and writes the primary document plus the
-# session decision log there. Default uses {project_name} only so re-runs
-# resume the same workspace; add a {date} segment to opt into per-day
-# snapshots (e.g. ".../D-06-{project_name}-{date}/" with {date}=YYYY-MM-DD).
-business_flow_output_path = "{planning_artifacts}/D-06-{project_name}/"
+# Single output FILE for the D-06 document, written directly into
+# {planning_artifacts} alongside the other D-* documents (no per-document
+# folder). The session decision log (.decision-log.md) and scan artifacts
+# (.scan/) are shared peers in {planning_artifacts}, not nested under D-06.
+business_flow_output_path = "{planning_artifacts}/D-06-{project_name}-business-flow-diagram.md"
 
 # Regex pattern for functional requirement identifiers used by check-fr-coverage.py.
 # Override for projects using REQ-001, UC-01, US-001, etc.

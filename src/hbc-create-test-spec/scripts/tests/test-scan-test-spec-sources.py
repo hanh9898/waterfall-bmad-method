@@ -21,7 +21,7 @@ def run_script(
         cmd.extend(["--output-dir", output_dir])
     if output_file:
         cmd.extend(["-o", output_file])
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if output_file:
         return json.loads(Path(output_file).read_text(encoding="utf-8"))
     return json.loads(result.stdout)
@@ -165,7 +165,7 @@ class TestMissingProjectRoot:
     def test_always_exits_zero(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             cmd = [sys.executable, SCRIPT, "--project-root", tmpdir]
-            proc = subprocess.run(cmd, capture_output=True, text=True)
+            proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
             assert proc.returncode == 0
 
 
@@ -188,7 +188,7 @@ class TestOutputToFile:
                 "--project-root", tmpdir,
                 "-o", str(out_path),
             ]
-            proc = subprocess.run(cmd, capture_output=True, text=True)
+            proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
             # stdout should not contain JSON (output goes to file)
             assert proc.stdout.strip() == ""
 

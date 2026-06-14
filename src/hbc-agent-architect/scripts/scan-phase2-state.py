@@ -11,6 +11,11 @@ import os
 import re
 import sys
 
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 ARTIFACT_PATTERNS = {
     "D-19": "D-19*",
     "D-12": "D-12*",

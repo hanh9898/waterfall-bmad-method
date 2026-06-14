@@ -108,6 +108,6 @@ Structural validation only proves cấu trúc. Before saving, run the **semantic
 
 Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
 
-Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BF]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
+Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.

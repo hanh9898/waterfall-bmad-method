@@ -52,7 +52,7 @@ def run_script(doc_content: str, extra_args: list[str] | None = None) -> tuple[d
         if extra_args:
             cmd.extend(extra_args)
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         output = json.loads(result.stdout)
         return output, result.returncode
 
@@ -139,7 +139,7 @@ def test_section_recognized_in_vietnamese():
 
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     assert result.returncode == 1
     output = json.loads(result.stdout)
     assert "error" in output
@@ -156,7 +156,7 @@ def test_output_to_file():
             "--project-root", tmpdir,
             "-o", str(out_path),
         ]
-        subprocess.run(cmd, capture_output=True, text=True)
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
 
         assert out_path.exists()
         data = json.loads(out_path.read_text(encoding="utf-8"))

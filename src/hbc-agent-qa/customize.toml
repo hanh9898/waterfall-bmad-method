@@ -48,7 +48,7 @@ skill = "hbc-create-test-spec"
 
 [[agent.menu]]
 code = "PG"
-description = "Run Phase 2 gate validation — check test design completeness"
+description = "Run the shared Phase 2 gate — passes only when BOTH design (architect) and test design (D-26/D-27) are complete"
 skill = "hbc-phase-gate"
 
 [[agent.menu]]

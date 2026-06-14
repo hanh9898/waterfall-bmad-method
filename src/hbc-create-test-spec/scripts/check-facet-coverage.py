@@ -24,6 +24,11 @@ import argparse
 import json
 import re
 import sys
+
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))

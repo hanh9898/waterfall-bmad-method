@@ -245,6 +245,7 @@ class TestCliIntegration:
             [sys.executable, str(_SCRIPT_PATH), *extra_args],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
 
     def test_basic_merge_creates_target(self, tmp_path: Path) -> None:

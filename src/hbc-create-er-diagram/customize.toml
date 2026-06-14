@@ -27,10 +27,11 @@ er_diagram_template = "assets/D-19_database-design_template.md"
 # Override for teams requiring custom log structure or language.
 decision_log_template = "assets/decision-log-template.md"
 
-# Single output workspace path. The workflow binds {doc_workspace} directly
-# to the resolved value at Stage 1 and writes the primary document plus the
-# session decision log there.
-er_diagram_output_path = "{planning_artifacts}/D-19-{project_name}/"
+# Single output FILE for the D-19 document, written directly into
+# {planning_artifacts} alongside the other D-* documents (no per-document
+# folder). The session decision log (.decision-log.md) and scan artifacts
+# (.scan/) are shared peers in {planning_artifacts}, not nested under D-19.
+er_diagram_output_path = "{planning_artifacts}/D-19-{project_name}-database-design.md"
 
 # Controls distillate production at Stage 5.
 # "offer" (default): interactive asks, headless skips.

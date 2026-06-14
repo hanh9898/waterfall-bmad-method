@@ -109,13 +109,12 @@ class DiscoverTests(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertTrue(match["is_symlink"])
 
-    def test_resume_state_recommends_fresh_when_workspace_empty(self) -> None:
-        workspace = self.root / "workspace"
-        workspace.mkdir()
+    def test_resume_state_recommends_fresh_when_primary_absent(self) -> None:
+        primary = self.artifacts / "D-06-proj-business-flow-diagram.md"  # not created
         proc = run_script(
             str(self.artifacts),
             "--template-path", str(self.template),
-            "--workspace", str(workspace),
+            "--primary", str(primary),
             "-o", str(self.out),
         )
         self.assertEqual(proc.returncode, 0)
@@ -123,13 +122,11 @@ class DiscoverTests(unittest.TestCase):
         self.assertIn("resume_state", data)
         self.assertFalse(data["resume_state"]["primary_exists"])
         self.assertEqual(data["resume_state"]["recommended_intent"], "Fresh")
-        # N3: discriminate "no workspace" from "crashed workspace" in audit log
-        self.assertEqual(data["resume_state"]["fresh_reason"], "no_workspace")
+        # N3: discriminate "no primary" from "crashed primary" in audit log
+        self.assertEqual(data["resume_state"]["fresh_reason"], "no_primary")
 
     def test_resume_state_recommends_resume_when_stage_1_complete(self) -> None:
-        workspace = self.root / "workspace"
-        workspace.mkdir()
-        primary = workspace / "D-06-business-flow-diagram.md"
+        primary = self.artifacts / "D-06-proj-business-flow-diagram.md"
         primary.write_text(
             "---\nstepsCompleted: [stage-1, stage-2]\nlastStep: stage-2\nupdated: 2026-05-14\n---\n# Doc\n",
             encoding="utf-8",
@@ -137,7 +134,7 @@ class DiscoverTests(unittest.TestCase):
         proc = run_script(
             str(self.artifacts),
             "--template-path", str(self.template),
-            "--workspace", str(workspace),
+            "--primary", str(primary),
             "-o", str(self.out),
         )
         self.assertEqual(proc.returncode, 0)
@@ -146,9 +143,7 @@ class DiscoverTests(unittest.TestCase):
         self.assertEqual(data["resume_state"]["primary_steps_completed"], ["stage-1", "stage-2"])
 
     def test_resume_state_recommends_fresh_when_steps_empty_post_crash(self) -> None:
-        workspace = self.root / "workspace"
-        workspace.mkdir()
-        primary = workspace / "D-06-business-flow-diagram.md"
+        primary = self.artifacts / "D-06-proj-business-flow-diagram.md"
         primary.write_text(
             "---\nstepsCompleted: []\nlastStep: ''\nupdated: 2026-05-14\n---\n# Doc\n",
             encoding="utf-8",
@@ -156,7 +151,7 @@ class DiscoverTests(unittest.TestCase):
         proc = run_script(
             str(self.artifacts),
             "--template-path", str(self.template),
-            "--workspace", str(workspace),
+            "--primary", str(primary),
             "-o", str(self.out),
         )
         self.assertEqual(proc.returncode, 0)
@@ -168,9 +163,7 @@ class DiscoverTests(unittest.TestCase):
 
     def test_resume_intent_no_fresh_reason_when_update(self) -> None:
         # When the intent is Update, fresh_reason must be null (no carry-over).
-        workspace = self.root / "workspace"
-        workspace.mkdir()
-        primary = workspace / "D-06-business-flow-diagram.md"
+        primary = self.artifacts / "D-06-proj-business-flow-diagram.md"
         primary.write_text(
             "---\nstepsCompleted: [stage-1, stage-2, stage-3, stage-4, stage-5]\nlastStep: complete\nupdated: 2026-05-14\n---\n",
             encoding="utf-8",
@@ -178,7 +171,7 @@ class DiscoverTests(unittest.TestCase):
         proc = run_script(
             str(self.artifacts),
             "--template-path", str(self.template),
-            "--workspace", str(workspace),
+            "--primary", str(primary),
             "-o", str(self.out),
         )
         self.assertEqual(proc.returncode, 0)
@@ -189,19 +182,17 @@ class DiscoverTests(unittest.TestCase):
     def test_session_heading_regex_matches_vietnamese_log(self) -> None:
         # N5: Decision-log Session heading regex is date-anchored, so it
         # matches translated session blocks like "Phiên" or any other label.
-        workspace = self.root / "workspace"
-        workspace.mkdir()
-        log = workspace / ".decision-log.md"
+        log = self.artifacts / ".decision-log.md"
         log.write_text(
             "---\nskill: x\n---\n\n## 2026-05-14T10:23 — Phiên: Cập nhật\n\nFlow updated.\n",
             encoding="utf-8",
         )
-        primary = workspace / "D-06-business-flow-diagram.md"
+        primary = self.artifacts / "D-06-proj-business-flow-diagram.md"
         primary.write_text("---\nstepsCompleted: [stage-1]\n---\n", encoding="utf-8")
         proc = run_script(
             str(self.artifacts),
             "--template-path", str(self.template),
-            "--workspace", str(workspace),
+            "--primary", str(primary),
             "-o", str(self.out),
         )
         self.assertEqual(proc.returncode, 0)

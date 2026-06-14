@@ -21,6 +21,7 @@ def _run(primary_text: str, log_text: str, tmp_path: Path) -> dict:
         [sys.executable, SCRIPT, str(primary), str(log), "-o", str(out)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert result.returncode == 0, f"Script failed: {result.stderr}"
     return json.loads(out.read_text(encoding="utf-8"))
@@ -110,6 +111,7 @@ class DiffStage2FlushTests(unittest.TestCase):
             [sys.executable, SCRIPT, str(self.tmp / "nonexistent.md"), str(log), "-o", str(out)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 2)
         data = json.loads(out.read_text(encoding="utf-8"))

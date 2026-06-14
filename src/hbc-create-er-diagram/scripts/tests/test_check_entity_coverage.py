@@ -14,7 +14,7 @@ def run_script(prd_paths: list[str], d19_path: str, output_path: str) -> dict:
     cmd = [sys.executable, SCRIPT, "--d19", d19_path, "-o", output_path]
     for p in prd_paths:
         cmd.extend(["--prd", p])
-    subprocess.run(cmd, capture_output=True, text=True)
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(Path(output_path).read_text(encoding="utf-8"))
 
 

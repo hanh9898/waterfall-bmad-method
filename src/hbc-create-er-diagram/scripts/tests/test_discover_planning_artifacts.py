@@ -10,22 +10,22 @@ from pathlib import Path
 SCRIPT = str(Path(__file__).resolve().parent.parent / "discover-planning-artifacts.py")
 
 
-def run_script(artifacts_dir: str, template_path: str, workspace: str | None = None) -> dict:
+def run_script(artifacts_dir: str, template_path: str, primary: str | None = None) -> dict:
     cmd = [sys.executable, SCRIPT, artifacts_dir, "--template-path", template_path, "-o", "-"]
-    if workspace:
-        cmd.extend(["--workspace", workspace])
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    if primary:
+        cmd.extend(["--primary", primary])
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     for line in result.stdout.strip().split("\n"):
         if line.startswith("{"):
             return json.loads(line)
     return {}
 
 
-def run_script_full(artifacts_dir: str, template_path: str, output_path: str, workspace: str | None = None) -> dict:
+def run_script_full(artifacts_dir: str, template_path: str, output_path: str, primary: str | None = None) -> dict:
     cmd = [sys.executable, SCRIPT, artifacts_dir, "--template-path", template_path, "-o", output_path]
-    if workspace:
-        cmd.extend(["--workspace", workspace])
-    subprocess.run(cmd, capture_output=True, text=True)
+    if primary:
+        cmd.extend(["--primary", primary])
+    subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(Path(output_path).read_text(encoding="utf-8"))
 
 
@@ -82,23 +82,20 @@ def test_resume_state_fresh():
     with tempfile.TemporaryDirectory() as tmpdir:
         arts = Path(tmpdir) / "artifacts"
         arts.mkdir()
-        ws = Path(tmpdir) / "workspace"
-        ws.mkdir()
+        primary = arts / "D-19-proj-database-design.md"  # does not exist yet
         tpl = Path(tmpdir) / "template.md"
         tpl.write_text("# Template\n", encoding="utf-8")
         out = str(Path(tmpdir) / "out.json")
-        data = run_script_full(str(arts), str(tpl), out, workspace=str(ws))
+        data = run_script_full(str(arts), str(tpl), out, primary=str(primary))
         assert data["resume_state"]["recommended_intent"] == "Fresh"
-        assert data["resume_state"]["fresh_reason"] == "no_workspace"
+        assert data["resume_state"]["fresh_reason"] == "no_primary"
 
 
 def test_resume_state_update():
     with tempfile.TemporaryDirectory() as tmpdir:
         arts = Path(tmpdir) / "artifacts"
         arts.mkdir()
-        ws = Path(tmpdir) / "workspace"
-        ws.mkdir()
-        primary = ws / "D-19-er-diagram.md"
+        primary = arts / "D-19-proj-database-design.md"
         primary.write_text(
             '---\nstepsCompleted: ["stage-1", "stage-2", "stage-3", "stage-4", "stage-5"]\nlastStep: complete\nupdated: "2026-05-28"\n---\n# ER\n',
             encoding="utf-8",
@@ -106,7 +103,7 @@ def test_resume_state_update():
         tpl = Path(tmpdir) / "template.md"
         tpl.write_text("# Template\n", encoding="utf-8")
         out = str(Path(tmpdir) / "out.json")
-        data = run_script_full(str(arts), str(tpl), out, workspace=str(ws))
+        data = run_script_full(str(arts), str(tpl), out, primary=str(primary))
         assert data["resume_state"]["recommended_intent"] == "Update"
 
 
@@ -114,9 +111,7 @@ def test_resume_state_crashed():
     with tempfile.TemporaryDirectory() as tmpdir:
         arts = Path(tmpdir) / "artifacts"
         arts.mkdir()
-        ws = Path(tmpdir) / "workspace"
-        ws.mkdir()
-        primary = ws / "D-19-er-diagram.md"
+        primary = arts / "D-19-proj-database-design.md"
         primary.write_text(
             "---\nstepsCompleted: []\nlastStep: null\n---\n# ER\n",
             encoding="utf-8",
@@ -124,7 +119,7 @@ def test_resume_state_crashed():
         tpl = Path(tmpdir) / "template.md"
         tpl.write_text("# Template\n", encoding="utf-8")
         out = str(Path(tmpdir) / "out.json")
-        data = run_script_full(str(arts), str(tpl), out, workspace=str(ws))
+        data = run_script_full(str(arts), str(tpl), out, primary=str(primary))
         assert data["resume_state"]["recommended_intent"] == "Fresh"
         assert data["resume_state"]["fresh_reason"] == "crashed_no_progress"
 

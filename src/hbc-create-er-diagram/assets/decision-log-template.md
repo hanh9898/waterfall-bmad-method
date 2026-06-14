@@ -13,7 +13,7 @@ level: ""
 
 The decision log is canonical memory across sessions. Every meaningful runtime decision and its alternatives are recorded here; auto-fixes applied in headless mode are also logged here so they can be audited later.
 
-This file is a peer of the primary document inside `{doc_workspace}`. The skill appends a new session block on every activation; it never overwrites prior sessions.
+This file is a shared peer of the D-* documents in `{planning_artifacts}` (at `{planning_artifacts}/.decision-log.md`). The skill appends a new session block on every activation; it never overwrites prior sessions.
 
 ## yyyy-mm-ddThh:mm — Session: {intent: Create | Update | Validate}
 

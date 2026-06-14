@@ -7,7 +7,7 @@ description: "Final acceptance evaluation with ACCEPTED/REJECTED/DEFERRED/PENDIN
 
 ## Overview
 
-Final acceptance evaluation — review all lifecycle artifacts, test execution results, and traceability for sign-off. Produces a formal acceptance report with one of four decisions: ACCEPTED, REJECTED, DEFERRED, or PENDING. The `acceptance_owner` (from config) makes the decision; this workflow presents evidence.
+Final acceptance evaluation — review all lifecycle artifacts, test execution results, and traceability for sign-off. Produces a formal acceptance report with one of four decisions: ACCEPTED, REJECTED, DEFERRED, or PENDING. The `acceptance_owner` (from config) makes the decision; this workflow presents evidence. Acceptance runs *before* the Phase 4 gate — it gathers evidence and records the decision, then the formal Phase 4 gate (`hbc-phase-gate` [PG]) runs afterward to close the project. That is why the checklist verifies the Phase 1/2/3 gates, not Phase 4.
 
 Four-stage workflow: Prerequisites → Review → Decide → Report. Supports headless mode. Requires Python 3.10+ for validation scripts.
 
@@ -69,7 +69,7 @@ Record the acceptance decision:
 
 If `REJECTED`: specify which phase to return to based on defect type (Phase 1 for spec issues, Phase 2 for test gaps, Phase 3 for code bugs).
 
-The `acceptance_owner` (from `{workflow.acceptance_owner}` config) decides. In interactive mode, present evidence and ask for decision. In headless mode, auto-decide based on criteria (all PASS → ACCEPTED, any FAIL → REJECTED).
+The `acceptance_owner` (from `{workflow.acceptance_owner}` config) decides. In interactive mode, present evidence and ask for decision. In headless mode, auto-decide based on criteria: all PASS → ACCEPTED; any FAIL → REJECTED; missing/insufficient evidence (a criterion cannot be evaluated) → PENDING. **DEFERRED is interactive-only** — accepting known issues requires human judgment, so headless never emits it.
 
 ## Stage 4: Report
 

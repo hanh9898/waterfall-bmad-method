@@ -11,7 +11,13 @@ import os
 import re
 import sys
 
+# Windows stdout defaults to cp1252 and cannot encode non-ASCII (e.g. Vietnamese)
+# JSON emitted with ensure_ascii=False. Force UTF-8 for identical output on Win/macOS.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 TASK_BREAKDOWN_PATTERN = "task-breakdown*"
+PHASE_3_GATE_PATTERN = "phase-3-gate*"
 
 FRONTMATTER_DATE_RE = re.compile(
     r"^(?:last_touched|updated)\s*:\s*(.+)$", re.MULTILINE
@@ -106,7 +112,22 @@ def find_next_task(content: str) -> str | None:
     return None
 
 
-def scan(output_path: str) -> dict:
+def scan_gate(output_path: str, gates_dir: str | None = None) -> dict:
+    """Scan for the Phase 3 gate report (in gates_dir when given, else output_path)."""
+    search_dir = gates_dir if (gates_dir and os.path.isdir(gates_dir)) else output_path
+    matches = glob.glob(os.path.join(search_dir, PHASE_3_GATE_PATTERN))
+    if matches:
+        gpath = matches[0]
+        return {
+            "exists": True,
+            "file": os.path.basename(gpath),
+            "path": gpath,
+            "updated": read_frontmatter_date(gpath),
+        }
+    return {"exists": False, "file": None, "path": None, "updated": None}
+
+
+def scan(output_path: str, gates_dir: str | None = None) -> dict:
     tb_matches = glob.glob(os.path.join(output_path, TASK_BREAKDOWN_PATTERN))
 
     if tb_matches:
@@ -159,6 +180,7 @@ def scan(output_path: str) -> dict:
             "in_progress": counts["in_progress"],
             "todo": counts["todo"],
             "coverage": coverage,
+            "phase-3-gate": scan_gate(output_path, gates_dir),
         },
         "next_recommended": next_recommended,
         "reason": reason,
@@ -168,6 +190,7 @@ def scan(output_path: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scan implementation artifact state")
     parser.add_argument("output_path", help="Path to scan for implementation artifacts")
+    parser.add_argument("--gates-dir", help="Separate directory for gate reports")
     parser.add_argument(
         "-o", "--output", help="Write JSON to file instead of stdout"
     )
@@ -183,12 +206,13 @@ def main() -> None:
                 "in_progress": 0,
                 "todo": 0,
                 "coverage": None,
+                "phase-3-gate": {"exists": False, "file": None, "path": None, "updated": None},
             },
             "next_recommended": "TB",
             "reason": f"Output directory not found: {args.output_path}",
         }
     else:
-        result = scan(args.output_path)
+        result = scan(args.output_path, gates_dir=args.gates_dir)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
 

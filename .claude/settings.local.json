@@ -63,7 +63,8 @@
       "Bash(grep -iE '\\\\.bak$|\\\\.tmp$|\\\\.log$|\\\\.orig$|~$|pycache|pytest_cache|backup|/tmp/')",
       "Bash(grep -rn \"doc_workspace\\\\|no_workspace\\\\|D-19-er-diagram\\\\|--workspace\\\\|er_diagram_output_path.*/\\\\\"$\" src/hbc-create-er-diagram --include=\"*.md\" --include=\"*.py\" --include=\"*.toml\")",
       "Bash(echo \"--- exit $? ---\")",
-      "Bash(xargs grep -L \"encoding=\")"
+      "Bash(xargs grep -L \"encoding=\")",
+      "Bash(echo \"exit $?\")"
     ]
   }
 }

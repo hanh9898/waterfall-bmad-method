@@ -302,7 +302,7 @@ def _run_engine(checklist_path, project_root, *vars_):
            checklist_path, "--project-root", project_root]
     for v in vars_:
         cmd += ["--var", v]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(r.stdout), r.returncode
 
 
