@@ -32,3 +32,8 @@ framework = ""
 # Comment language preference for code examples in the generated D-12.
 # Options: "en", "ja", "vi". Default: follows document_output_language.
 comment_language = ""
+
+# hbc-sync integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-sync to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-sync/references/skill-integration.md
+auto_sync_after_update = false

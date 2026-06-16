@@ -32,3 +32,8 @@ validation_script = "scripts/validate-requirements.py"
 scan_script = "scripts/scan-sources.py"
 
 vague_terms = ["fast", "easy", "user-friendly", "simple", "good", "nice", "efficient", "appropriate", "adequate", "reasonable"]
+
+# hbc-sync integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-sync to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-sync/references/skill-integration.md
+auto_sync_after_update = false

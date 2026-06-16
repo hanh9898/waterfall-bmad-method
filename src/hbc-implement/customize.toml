@@ -22,3 +22,8 @@ coverage_command = ""
 
 # Minimum test coverage threshold.
 coverage_threshold = 80
+
+# hbc-sync integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-sync to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-sync/references/skill-integration.md
+auto_sync_after_update = false

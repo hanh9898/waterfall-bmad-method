@@ -1,0 +1,45 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-sync.
+# Team overrides:     {project-root}/_bmad/custom/hbc-sync.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-sync.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Dependency graph (DAG) definition. Override to add/remove document types or
+# change dependencies. Must remain acyclic (load-graph.py enforces).
+graph_path = "assets/dependency-graph.yaml"
+
+# Baseline manifest of document body hashes (change detection, BR-06).
+manifest_path = "{output_folder}/sync/.sync-manifest.json"
+
+# In-progress cascade state (resume point, BR-10).
+state_path = "{output_folder}/sync/.sync-state.json"
+
+# Decision log for cascade rationale (semantic decisions, conflicts).
+decision_log = "{output_folder}/sync/.sync-decisions.md"
+
+# Default trigger behavior when another skill finishes an update (REQ-005).
+#   "hybrid" — suggest running sync, user confirms (recommended default)
+#   "auto"   — auto-chain sync immediately after update
+#   "manual" — never auto-trigger; user invokes sync explicitly
+default_trigger_mode = "hybrid"
+
+# Source code root for the `code` node cascade (BR-08). Empty = prompt at runtime.
+source_code_path = ""
+
+# Scripts (override to swap implementations with the same CLI).
+load_graph_script = "scripts/load-graph.py"
+analyze_impact_script = "scripts/analyze-impact.py"
+sync_state_script = "scripts/sync-state.py"

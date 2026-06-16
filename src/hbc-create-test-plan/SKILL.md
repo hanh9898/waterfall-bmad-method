@@ -116,3 +116,11 @@ If `{workflow.on_complete}` is non-empty, run it after saving.
 Suggest next steps: _"D-26 complete. Recommended: create D-27 Test Specification (`hbc-create-test-spec` [TS]) for detailed test cases. After both, run Phase 2 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Sync Handoff (hbc-sync integration)
+
+Applies only in `update` mode. Full contract: `hbc-sync/references/skill-integration.md`.
+
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-sync` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly (it will cascade downstream). Default is false.

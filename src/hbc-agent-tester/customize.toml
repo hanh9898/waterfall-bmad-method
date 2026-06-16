@@ -47,3 +47,8 @@ skill = "hbc-phase-gate"
 code = "TR"
 description = "Update traceability matrix with test results and gate status"
 skill = "hbc-traceability"
+
+[[agent.menu]]
+code = "SYNC"
+description = "Cascade document synchronization — propagate a change to downstream docs/tests/code"
+skill = "hbc-sync"

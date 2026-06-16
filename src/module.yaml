@@ -46,5 +46,5 @@ post-install-notes: |
   Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
   Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
   Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check
-  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit)
+  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Document Sync
   Start with: [BA] Business Analyst or [REQ] Create Requirements

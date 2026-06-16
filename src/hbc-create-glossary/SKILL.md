@@ -106,3 +106,11 @@ Write `glossary-distillate.json` alongside D-03 — `{"terms": [{"term": "...", 
 If `{workflow.on_complete}` is a non-empty string, run it as a shell command after saving. Then suggest next steps: _"D-03 complete ({term_count} terms). Recommended: create D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]) if not done, then run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Sync Handoff (hbc-sync integration)
+
+Applies only in `update` mode. Full contract: `hbc-sync/references/skill-integration.md`.
+
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-sync` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly (it will cascade downstream). Default is false.

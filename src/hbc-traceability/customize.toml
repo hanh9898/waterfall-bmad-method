@@ -29,3 +29,6 @@ matrix_template = "assets/matrix-template.md"
 # Optional: source code root for Phase 3 code_ref mapping.
 # Leave empty to prompt user at runtime.
 source_code_path = ""
+
+# NOTE: hbc-traceability is a terminal cascade TARGET (BR-09), not a trigger
+# source — it intentionally has NO auto_sync_after_update flag.
