@@ -63,5 +63,5 @@ skill = "hbc-traceability"
 
 [[agent.menu]]
 code = "SYNC"
-description = "Cascade document synchronization — propagate a change to downstream docs/tests/code"
-skill = "hbc-sync"
+description = "Cascade document synchronization (traceability `impact` capability) — propagate a change to downstream docs/tests/code"
+skill = "hbc-traceability"

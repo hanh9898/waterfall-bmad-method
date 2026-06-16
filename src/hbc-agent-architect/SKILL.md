@@ -63,7 +63,7 @@ Load every entry in `{agent.persistent_facts}` as foundational context for the s
 ### Check Phase 1 Gate
 
 Before scanning Phase 2 artifacts, check if Phase 1 gate exists and passed:
-- Look for `{project-root}/_bmad-output/gates/phase-1-gate*.md`
+- Look for `{output_folder}/gates/phase-1-gate*.md`
 - If found, read frontmatter for `status`. If `PASSED` — proceed normally.
 - If not found or `FAILED` — warn the user: _"Phase 1 gate has not passed. Design work may be premature. Recommend completing Phase 1 with `hbc-agent-ba` first."_ If `gate_mode = lenient` in config, allow the user to continue with a warning.
 

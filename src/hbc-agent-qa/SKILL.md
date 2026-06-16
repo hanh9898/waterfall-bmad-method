@@ -62,7 +62,7 @@ Load every entry in `{agent.persistent_facts}` as foundational context. Load con
 ### Check Phase 1 Gate
 
 Before scanning test design artifacts, check if Phase 1 gate exists and passed:
-- Look for `{project-root}/_bmad-output/gates/phase-1-gate*.md`
+- Look for `{output_folder}/gates/phase-1-gate*.md`
 - If found and `PASSED` — proceed normally.
 - If not found or `FAILED` — warn the user. If `gate_mode = lenient`, allow continuation with warning.
 

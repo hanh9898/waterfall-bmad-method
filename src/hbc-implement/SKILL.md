@@ -86,10 +86,10 @@ When `all` arg: iterate through remaining TODO tasks in dependency order. Pause 
 
 When `coverage` arg: run coverage command and report results without implementing.
 
-## Sync Handoff (hbc-sync integration)
+## Sync Handoff (hbc-traceability impact integration)
 
-Applies when re-implementing due to an upstream change. Full contract: `hbc-sync/references/skill-integration.md`.
+Applies when re-implementing due to an upstream change. Full contract: `hbc-traceability/references/impact-capability.md`.
 
-- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop. (hbc-sync invokes this skill as the `code` cascade node per BR-08.)
-- **Hybrid trigger (default):** after a successful implementation change, suggest: _"Code đã cập nhật. Chạy `hbc-sync` để đồng bộ traceability matrix?"_
-- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly. Default is false.
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop. (hbc-traceability impact invokes this skill as the `code` cascade node per BR-08.)
+- **Hybrid trigger (default):** after a successful implementation change, suggest: _"Code đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ traceability matrix?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly. Default is false.

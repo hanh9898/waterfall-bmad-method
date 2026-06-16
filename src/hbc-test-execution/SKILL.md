@@ -117,7 +117,7 @@ status: "PASS | FAIL | PARTIAL"
 Run validation — pass `--d27` so executed TCs are reconciled against the specified set (D1):
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/test-execution-report.md" --d27 "<D-27 path>"
+python3 {workflow.validation_script} "{workflow.output_dir}/test-execution-report.md" --threshold {workflow.coverage_threshold} --d27 "<D-27 path>"
 ```
 
 A `TC_UNEXECUTED` issue means a test specified in D-27 has no result here — "all passed" must not hide a test that was never run. `TC_PHANTOM_RESULT` means a result references a TC not in D-27. Resolve both before finalizing.

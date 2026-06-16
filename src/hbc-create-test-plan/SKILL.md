@@ -117,10 +117,10 @@ Suggest next steps: _"D-26 complete. Recommended: create D-27 Test Specification
 
 Headless: return JSON per `references/headless-contract.md`.
 
-## Sync Handoff (hbc-sync integration)
+## Sync Handoff (hbc-traceability impact integration)
 
-Applies only in `update` mode. Full contract: `hbc-sync/references/skill-integration.md`.
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-sync` để đồng bộ các tài liệu/test/code phụ thuộc?"_
-- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly (it will cascade downstream). Default is false.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

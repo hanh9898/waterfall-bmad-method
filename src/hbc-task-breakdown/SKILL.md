@@ -7,7 +7,7 @@ description: "Break down design artifacts into granular TDD tasks. Use when user
 
 ## Overview
 
-Break down Phase 2 design artifacts into granular, implementable tasks ordered for TDD execution. Each task maps to one TDD cycle (RED → GREEN → REFACTOR) in `hbc-implement`, scoped to approximately 1-4 hours of work.
+Break down Phase 2 design artifacts into granular, implementable tasks ordered for TDD execution. Each task maps to one TDD cycle (RED → GREEN → REFACTOR) in `hbc-implement`, scoped to approximately ≤ `{workflow.max_hours_per_task}` hours of work.
 
 Five-stage workflow: Prerequisites → Analysis → Generation → Validation → Save. Supports headless mode. Requires Python 3.10+ for validation scripts.
 
@@ -84,7 +84,7 @@ Ensure:
 - Tasks ordered by dependency (no task depends on a later-listed task).
 - Every D-19 entity has at least one task.
 - Every TC-xxx from D-27 is assigned to at least one task.
-- Task granularity is appropriate (1-4 hours per task).
+- Task granularity is appropriate (≤ `{workflow.max_hours_per_task}` hours per task).
 
 ## Stage 4: Validation
 
@@ -105,10 +105,10 @@ Checks: all entities covered, all test cases assigned, no circular dependencies,
 
 Finalize document. Suggest next: _"Task breakdown complete with {n} tasks. Start implementation: `hbc-implement` [IM]."_
 
-## Sync Handoff (hbc-sync integration)
+## Sync Handoff (hbc-traceability impact integration)
 
-Applies only in `update` mode. Full contract: `hbc-sync/references/skill-integration.md`.
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Task breakdown đã cập nhật. Chạy `hbc-sync` để đồng bộ test/code phụ thuộc?"_
-- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly (it will cascade downstream). Default is false.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Task breakdown đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

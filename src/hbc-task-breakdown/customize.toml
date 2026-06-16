@@ -22,7 +22,7 @@ validation_script = "scripts/validate-task-breakdown.py"
 # Maximum hours per task (guidance for decomposition).
 max_hours_per_task = 4
 
-# hbc-sync integration (REQ-005, BR-13). When true, after a successful `update`
-# auto-invoke hbc-sync to cascade downstream. Default false (no behavior change).
-# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-sync/references/skill-integration.md
+# hbc-traceability impact integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-traceability impact to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-traceability/references/impact-capability.md
 auto_sync_after_update = false

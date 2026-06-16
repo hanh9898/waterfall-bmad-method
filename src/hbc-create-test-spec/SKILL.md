@@ -48,7 +48,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d27`, `d26_path`, `d0
 
 ## Stage 2: Discovery
 
-For each REQ-xxx, derive test scenarios covering positive, negative, boundary, and integration cases. Group by requirement category and present in batches for confirmation. For large sets, show progress: "Batch 2/4: REQ-011 → REQ-020". For large requirement sets (>20 REQs), offer to work in chunks of 5-10 requirements at a time.
+For each REQ-xxx, derive test scenarios covering positive, negative, boundary, and integration cases. Group by requirement category and present in batches of `{workflow.req_batch_size}` REQs for confirmation. For large sets, show progress: "Batch 2/4: REQ-011 → REQ-020". For large requirement sets (>20 REQs), offer to work in chunks of `{workflow.req_batch_size}` requirements at a time.
 
 At each batch boundary, soft-gate: _"Any additional cases for these requirements, or proceed to the next batch?"_ Capture any cross-cutting insights (concerns spanning other REQs, architecture issues) to decision log without interrupting the batch flow.
 
@@ -122,10 +122,10 @@ Suggest next steps: _"D-27 complete with {tc_count} test cases covering {coverag
 
 Headless: return JSON per `references/headless-contract.md`.
 
-## Sync Handoff (hbc-sync integration)
+## Sync Handoff (hbc-traceability impact integration)
 
-Applies only in `update` mode. Full contract: `hbc-sync/references/skill-integration.md`.
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-sync` để đồng bộ các tài liệu/test/code phụ thuộc?"_
-- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-sync` directly (it will cascade downstream). Default is false.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.
