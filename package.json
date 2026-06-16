@@ -4,6 +4,15 @@
   "description": "HBLAB custom variants of BMad Method workflows — INVEST stories, custom templates",
   "license": "UNLICENSED",
   "private": true,
+  "scripts": {
+    "check:links": "python _bmad/scripts/check_doc_links.py .",
+    "check:mermaid": "node _bmad/scripts/check_mermaid.mjs",
+    "check:docs": "npm run check:links && npm run check:mermaid"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "mermaid": "^11.15.0"
+  },
   "repository": {
     "type": "git",
     "url": ""
