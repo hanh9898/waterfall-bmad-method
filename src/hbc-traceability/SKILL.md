@@ -1,6 +1,6 @@
 ---
 name: hbc-traceability
-description: "Living traceability matrix for HBC waterfall lifecycle. Use when user says 'traceability', 'ma trận', 'truy vết', or agent menu [TR]."
+description: "Living traceability matrix + cascade document sync for the HBC waterfall lifecycle. Use when user says 'traceability', 'ma trận', 'truy vết', 'sync', 'đồng bộ tài liệu', 'cascade', 'lan truyền thay đổi', or agent menu [TR]/[SYNC]."
 ---
 
 # Traceability Matrix
@@ -9,9 +9,9 @@ description: "Living traceability matrix for HBC waterfall lifecycle. Use when u
 
 Maintain a living traceability matrix that maps requirements through design, implementation, and testing. Updated incrementally after each phase — each invoke adds data, never removes. The matrix is the single source of truth for "which requirement is covered where."
 
-Seven-column matrix: `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref`. Four capabilities: **Initialize**, **Update**, **Report**, **Audit**.
+Seven-column matrix: `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref`. Five capabilities: **Initialize**, **Update**, **Report**, **Audit**, **Impact** (cascade sync — đọc matrix + task-status + phase-gate + git để đề xuất lan truyền thay đổi; không tự sửa nội dung).
 
-**Args:** Capability name (`init`, `update`, `report`, `audit`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
+**Args:** Capability name (`init`, `update`, `report`, `audit`, `impact`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
 
 ## Conventions
 
@@ -28,13 +28,14 @@ When invoked with `--headless` or by another skill passing `headless=true`:
 1. Capability is **required** (no interactive prompt).
 2. Skip all user-facing output.
 3. Return JSON with `status` (`complete` or `blocked`), `capability`, `matrix_path`, `decision_log` (path to `.trace-decisions.md`, present when Update writes new entries), and summary stats. On `blocked`, include `reason`. Matrix file is still written/updated on disk.
+4. For `impact`: return `changed`, `affected` (each labeled apply/verify), `frozen` (→ new-task), `suggested` (skill + order), and after apply `reconciled`/`blocked`. Closed-set blocked reasons: `matrix_not_found`, `empty_changeset` (no-op), `untraced_change`, `skill_no_update_contract`, `skill_runtime_error`, `reconcile_unverified`. Full contract: `references/impact-capability.md`.
 
 ## On Activation
 
 Resolve customization, load persistent facts and config per standard BMad activation. Then determine capability:
 - Explicit argument (e.g. "traceability init") → use that capability.
 - Agent context → infer: BA after Phase 1 gate → `init`, Architect/Dev/Tester after gate → `update`.
-- Otherwise → ask user which capability (`init`, `update`, `report`, `audit`).
+- Otherwise → ask user which capability (`init`, `update`, `report`, `audit`, `impact`).
 
 When capability is inferred (not explicit), confirm with user: _"Inferred 'update' from Dev context. Proceed?"_ Skip confirmation in headless mode.
 
@@ -56,7 +57,7 @@ Create the traceability matrix from D-02 requirements.
 
 ## Update
 
-Populate columns for the current phase. First check for `{project-root}/_bmad-output/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
+Populate columns for the current phase. First check for `{output_folder}/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
 
 Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, note which REQs have empty target columns (the diff baseline). Write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
@@ -64,9 +65,9 @@ Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.ma
 
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
-**Phase 4 — gate_status + timestamp:** Read gate reports from `{project-root}/_bmad-output/gates/phase-*-gate.md`. Set `gate_status` per REQ. Set `timestamp` to current date.
+**Phase 4 — gate_status + timestamp:** Read gate reports from `{workflow.gate_reports_glob}`. Set `gate_status` per REQ. Set `timestamp` to current date.
 
-Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{project-root}/_bmad-output/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
+Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{output_folder}/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
 
 Report with diff: list which REQs received new mappings this session, and any mappings that changed (if re-running Update). Then: _"Updated {column}. Coverage: {X}/{Y} requirements now have {column} populated. Next: run `hbc-phase-gate` for the next gate check."_
 
@@ -105,3 +106,11 @@ Find gaps — requirements without coverage in any column.
    - Any column empty in earlier phase → **INFO** — expected, not yet at that phase.
 
 4. **Present audit** with severity-sorted gap list.
+
+## Impact (Cascade Document Sync)
+
+Khi một tài liệu đổi, đề xuất lan truyền thay đổi xuống mọi artifact bị ảnh hưởng — **chỉ ĐỌC + ĐỀ XUẤT** (mọi sửa đổi đi qua owning-skill ở `update` mode): trình bảng đề xuất rồi dừng, chỉ áp khi user hành động. Dựa trên chính matrix làm đồ thị tác động; thay cho skill sync độc lập trước đây.
+
+Lifecycle **DECLARE → IMPACT → FREEZE-CHECK → SUGGEST → (validate-plan) → APPLY → RECONCILE → ADVISORY (non-REQ)** — mỗi stage đọc nguồn-sự-thật rồi đề-xuất, có `scripts/impact.py` (detect/analyze/freeze/complete) làm phần xác định.
+
+Chi tiết vận hành mỗi stage (CLI + flag `{workflow.*}`, ưu tiên freeze, anti-loop, reconcile, advisory): `references/impact-capability.md`. Quy tắc biên: `references/edge-handling.md`.

@@ -45,3 +45,8 @@ fr_id_pattern = '\b(REQ-[0-9]+(?:\.[0-9]+)*)\b'
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".
 on_complete = ""
+
+# hbc-traceability impact integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-traceability impact to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-traceability/references/impact-capability.md
+auto_sync_after_update = false

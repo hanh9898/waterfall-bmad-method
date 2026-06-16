@@ -50,8 +50,9 @@ Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + fro
 
 Pre-populate from D-02 requirements and D-19 entities where available. Open with an invitation for the user to share API design decisions. Then identify:
 
+- **API style** — REST hoặc GraphQL. Mặc định auto-detect từ project-context.md; nếu `{workflow.api_style}` được set, dùng giá trị đó làm mặc định.
 - **Base configuration** — base URL, API version strategy (path vs header), content type.
-- **Authentication** — strategy (JWT, API key, OAuth2, session), token lifecycle, permission model.
+- **Authentication** — strategy (JWT, API key, OAuth2, session), token lifecycle, permission model. Dùng `{workflow.auth_strategy}` làm strategy mặc định khi đã cấu hình.
 - **Endpoints** — derive from D-02 functional requirements. Each endpoint gets: HTTP method, URL pattern, description, linked REQ-xxx IDs.
 - **Request/response schemas** — derive entity shapes from D-19. Define common patterns (pagination, error envelope, list vs detail).
 - **Error handling** — HTTP status codes, error response format, domain-specific error codes.
@@ -112,3 +113,11 @@ Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete
 Suggest next steps: _"D-21 complete. Next: create D-26 Test Plan (`hbc-create-test-plan` [TP]), then D-27 Test Spec (`hbc-create-test-spec` [TS]) and the readiness check (`hbc-check-implementation-readiness` [IR]). Run Phase 2 gate (`hbc-phase-gate` [PG]) only after the test-design artifacts and IR are complete."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Sync Handoff (hbc-traceability impact integration)
+
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
+
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

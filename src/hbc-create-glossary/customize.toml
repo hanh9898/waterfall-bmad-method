@@ -31,3 +31,8 @@ validation_script = "scripts/validate-glossary.py"
 
 # Shell command to run after D-03 is saved. Empty = no hook.
 on_complete = ""
+
+# hbc-traceability impact integration (REQ-005, BR-13). When true, after a successful `update`
+# auto-invoke hbc-traceability impact to cascade downstream. Default false (no behavior change).
+# Skills invoked WITH --invoked-by-sync must suppress this. See hbc-traceability/references/impact-capability.md
+auto_sync_after_update = false

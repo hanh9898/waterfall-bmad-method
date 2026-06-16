@@ -111,3 +111,11 @@ Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete
 Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Sync Handoff (hbc-traceability impact integration)
+
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
+
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

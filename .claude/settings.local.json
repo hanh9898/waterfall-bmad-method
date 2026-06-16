@@ -64,7 +64,9 @@
       "Bash(grep -rn \"doc_workspace\\\\|no_workspace\\\\|D-19-er-diagram\\\\|--workspace\\\\|er_diagram_output_path.*/\\\\\"$\" src/hbc-create-er-diagram --include=\"*.md\" --include=\"*.py\" --include=\"*.toml\")",
       "Bash(echo \"--- exit $? ---\")",
       "Bash(xargs grep -L \"encoding=\")",
-      "Bash(echo \"exit $?\")"
+      "Bash(echo \"exit $?\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(start \"\" \"src/hbc-sync/.analysis/2026-06-16-1539/skill-analysis-report.html\")"
     ]
   }
 }

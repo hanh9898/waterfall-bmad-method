@@ -8,3 +8,7 @@ _bmad/config.user.yaml
 
 # Agent isolation worktrees (transient, never commit)
 .claude/worktrees/
+
+# Skill analysis output + builder memlog (ephemeral, per-run)
+src/**/.analysis/
+src/**/.memlog.md

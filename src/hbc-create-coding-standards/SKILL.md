@@ -41,12 +41,12 @@ Returns JSON with `state` (fresh/resume/update), `existing_d12` (path + frontmat
    - **Resume** — partial D-12 found (`lastStep` < `complete`). Show summary, offer resume or restart.
    - **Update** — complete D-12 exists. Show what to update, load as baseline.
 
-1b. **Framework detection.** Read `project-context.md` (loaded via persistent_facts) to detect the primary framework and language. If not detectable, ask the user. Common stacks: Odoo (Python), Django (Python), Next.js (TypeScript), React (TypeScript/JavaScript), Laravel (PHP), Spring Boot (Java).
+1b. **Framework detection.** If `{workflow.framework}` is set, use it as the framework override (skip auto-detection). Otherwise read `project-context.md` (loaded via persistent_facts) to detect the primary framework and language. If still not detectable, ask the user. Common stacks: Odoo (Python), Django (Python), Next.js (TypeScript), React (TypeScript/JavaScript), Laravel (PHP), Spring Boot (Java).
 
 1c. **Team preferences.** Ask the user about preferences not derivable from framework conventions — these vary per team even within the same framework:
 - Indentation style (tabs/spaces, width)
 - Naming convention overrides (if deviating from framework default)
-- Comment language (Japanese, Vietnamese, English)
+- Comment language (Japanese, Vietnamese, English) — default to `{workflow.comment_language}` if set, else `{document_output_language}`
 - Error handling philosophy (fail-fast vs defensive)
 - Import ordering preferences
 - Any existing linting config (.eslintrc, .flake8, ruff.toml, etc.) to align with
@@ -61,7 +61,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 
 - Every section is populated with framework-specific conventions, not generic platitudes.
 - Naming conventions match the framework's idiomatic style (e.g., `snake_case` for Python/Odoo, `camelCase` for JavaScript/TypeScript).
-- Code examples use the project's actual framework syntax, not abstract pseudocode.
+- Code examples use the project's actual framework syntax, not abstract pseudocode. Inline comments in code examples use `{workflow.comment_language}` if set, else `{document_output_language}`.
 - Error handling section reflects the framework's patterns (e.g., try/except chains in Python, error boundaries in React).
 - Security section addresses framework-specific risks (e.g., `@api.model` access control in Odoo, CSRF in Django, XSS in React).
 
@@ -107,3 +107,11 @@ Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete
 Suggest next steps: _"D-12 complete. Recommended: create D-21 API Spec (`hbc-create-api-spec` [API]) if project exposes APIs, or proceed to Phase 2 gate (`hbc-phase-gate` [PG]) if all design artifacts are ready."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Sync Handoff (hbc-traceability impact integration)
+
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
+
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
+- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.
