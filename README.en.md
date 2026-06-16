@@ -2,7 +2,35 @@
 
 > 🌐 [Tiếng Việt](README.md) (default) · **English**
 
-An expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) implementing a **waterfall + TDD** development lifecycle. **5 coordinator agents** guide you through **4 phases**, producing **D-xx deliverables** with **phase gates** for quality control and full **requirements-to-test traceability**.
+A **waterfall + TDD** workflow for HBLAB: guides you through 4 quality-gated phases and traces every requirement down to its tests.
+
+## Table of contents
+
+- [What HBC solves for you](#what-hbc-solves-for-you)
+- [🚀 Quick Start](#-quick-start)
+- [🗺️ Mental model: the 4 phases](#-mental-model-the-4-phases)
+- [📦 Requirements & Installation](#-requirements--installation)
+- [📚 Documentation](#-documentation)
+- [🧰 Skills overview](#-skills-overview)
+- [⚙️ Configuration](#-configuration)
+- [📄 License](#-license)
+
+---
+
+## What HBC solves for you
+
+On contractual projects with formal acceptance, three familiar pains:
+
+- **Vague requirements** → you only discover the misunderstanding after building it.
+- **Tests that miss requirements** → bugs slip through; no way to know coverage is complete.
+- **Hard to prove "we did everything"** at handover or audit.
+
+**HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) implementing a **waterfall + TDD** lifecycle: **5 coordinator agents** guide you through **4 phases**, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
+
+- **For:** teams working waterfall + TDD — BA, Architect, QA, Developer, Tester.
+- **Where you type commands:** inside your **AI coding agent** (Claude Code, Cursor…), **not** a plain terminal.
+
+> 📖 New to "deliverable / phase gate / traceability"? → [Concept Glossary](docs/en/reference/concept-glossary.md).
 
 ---
 
@@ -10,13 +38,23 @@ An expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METH
 
 > 💡 **You don't need to memorize any skill.** Just type `bmad-help` anytime — it inspects your project state and suggests the next step.
 
-New users follow these **3 steps**:
+After installing, **inside your AI coding agent** (e.g. Claude Code) opened at the project root, new users follow **3 steps**:
 
 1. **Open the Phase 1 coordinator** → type `BA` (or `hbc-agent-ba`).
 2. **Create the Requirements Specification (D-02)** → type `REQ`. This is the required deliverable that grounds every later phase.
 3. **Run the Phase Gate** before moving on → type `PG 1` (always with the phase number, 1–4). Only a "pass" lets you advance.
 
-Then repeat the loop: open the phase's agent → run its required skills → run `PG <phase>`. Work through all 4 phases and you're done. *(The tutorial also inserts `TRI` after step 2 to turn on traceability — see below.)*
+What you'll see (**illustrative** — exact wording may differ):
+
+```text
+> BA
+Business Analyst — Phase 1 Analysis coordinator. You can: REQ, GLO, BFD…
+> REQ
+… (the agent interviews you about a requirement) …
+✓ Created _bmad-output/planning-artifacts/D-02-requirements.md  (REQ-001, REQ-002…)
+```
+
+Then repeat the loop: open the phase's agent → run its required skills → run `PG <phase>`. Work through all 4 phases and you're done. *(The tutorial also inserts `TRI` after step 2 to turn on traceability.)*
 
 📘 **First time?** Start with the [10-minute Quickstart](docs/en/tutorials/quickstart.md) — install, verify, and create your first D-02.
 
