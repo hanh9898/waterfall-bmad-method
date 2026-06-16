@@ -3,7 +3,7 @@
 ## Build System
 - **Type**: npm (metadata only) + Python 3.10+ (scripts)
 - **Configuration**: `package.json` (module metadata), `src/module.yaml` (BMad module manifest), per-skill `customize.toml`
-- **Install**: `npx bmad-method install --custom-source <git>` → skills cài vào `.claude/skills/hbc-*/`
+- **Install**: `npx bmad-method install` (tương tác — an toàn) hoặc non-interactive kèm `--modules` để không gỡ module khác: `npx bmad-method install --directory . --modules bmm,bmb --custom-source <git> --tools claude-code --yes` → skills cài vào `.claude/skills/hbc-*/`
 
 ## Skill Directory Structure (canonical)
 ```

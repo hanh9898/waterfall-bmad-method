@@ -23,10 +23,16 @@ python src/hbc-sync/scripts/load-graph.py --graph src/hbc-sync/assets/dependency
 - **Expected**: JSON với `"validation": {"valid": true, "is_dag": true}` và `topological_order` 11 node.
 
 ### 3. Install Skill (via BMad)
+
+Cách an toàn — installer tương tác (giữ nguyên các module đang cài, vd `core`/`bmm`):
 ```bash
-npx bmad-method install --custom-source <git-url>
+npx bmad-method install
 ```
-Skill cài vào `.claude/skills/hbc-sync/`.
+Non-interactive **phải** liệt kê `--modules` để không gỡ module khác (chạy `--custom-source` đơn lẻ sẽ chỉ giữ `core` + module custom):
+```bash
+npx bmad-method install --directory . --modules bmm,bmb --custom-source <git-url> --tools claude-code --yes
+```
+Skill cài vào `.claude/skills/hbc-*/`.
 
 ## Build Artifacts
 - `src/hbc-sync/SKILL.md`, `customize.toml`

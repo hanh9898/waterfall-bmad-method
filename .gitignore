@@ -6,6 +6,9 @@ __pycache__/
 # BMad personal config (per-user, not shared)
 _bmad/config.user.yaml
 
+# Claude Code personal/local settings (per-user, not shared)
+.claude/settings.local.json
+
 # Agent isolation worktrees (transient, never commit)
 .claude/worktrees/
 
