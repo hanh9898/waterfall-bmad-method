@@ -2,7 +2,35 @@
 
 > 🌐 **Tiếng Việt** (mặc định) · [English](README.en.md)
 
-Module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình phát triển **waterfall + TDD**. **5 agent điều phối** dẫn dắt bạn qua **4 phase**, sinh ra các **deliverable D-xx** với **phase gate** kiểm soát chất lượng và **traceability** đầy đủ từ yêu cầu đến test.
+Quy trình **waterfall + TDD** cho HBLAB: dẫn bạn qua 4 giai đoạn có kiểm soát chất lượng, truy vết mọi yêu cầu tới tận test.
+
+## Mục lục
+
+- [HBC giải quyết gì cho bạn?](#hbc-giải-quyết-gì-cho-bạn)
+- [🚀 Bắt đầu nhanh](#-bắt-đầu-nhanh)
+- [🗺️ Mô hình tư duy: 4 phase](#-mô-hình-tư-duy-4-phase)
+- [📦 Yêu cầu & Cài đặt](#-yêu-cầu--cài-đặt)
+- [📚 Tài liệu](#-tài-liệu)
+- [🧰 Tổng quan skill](#-tổng-quan-skill)
+- [⚙️ Cấu hình](#-cấu-hình)
+- [📄 Giấy phép](#-giấy-phép)
+
+---
+
+## HBC giải quyết gì cho bạn?
+
+Khi làm dự án có hợp đồng và nghiệm thu, ba nỗi đau quen thuộc:
+
+- **Yêu cầu mơ hồ** → làm xong mới phát hiện hiểu sai, sửa lại tốn kém.
+- **Test sót so với yêu cầu** → bug lọt, không biết đã phủ đủ chưa.
+- **Khó chứng minh "đã làm đủ"** khi bàn giao hoặc audit.
+
+**HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **waterfall + TDD**: **5 agent điều phối** dẫn bạn qua **4 phase**, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
+
+- **Dành cho:** team làm theo waterfall + TDD — BA, Architect, QA, Developer, Tester.
+- **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
+
+> 📖 Lần đầu nghe "deliverable / phase gate / traceability"? → [Glossary khái niệm](docs/vi/reference/concept-glossary.md).
 
 ---
 
@@ -10,13 +38,23 @@ Module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHO
 
 > 💡 **Không cần thuộc lòng skill nào.** Cứ gõ `bmad-help` bất cứ lúc nào, nó sẽ xem trạng thái dự án và gợi ý bước tiếp theo.
 
-Người mới làm theo **3 bước** sau:
+Sau khi cài đặt, **trong AI coding agent** (vd Claude Code) mở tại thư mục dự án, người mới làm theo **3 bước**:
 
 1. **Mở agent điều phối Phase 1** → gõ `BA` (hoặc `hbc-agent-ba`).
 2. **Tạo bản đặc tả yêu cầu (D-02)** → gõ `REQ`. Đây là deliverable bắt buộc, làm nền cho mọi phase sau.
 3. **Chạy Phase Gate** trước khi sang phase kế → gõ `PG 1` (luôn kèm số phase 1–4). Gate "pass" mới đi tiếp.
 
-Sau đó cứ lặp lại: mở agent của phase → chạy skill bắt buộc → chạy `PG <số phase>`. Đi hết 4 phase là xong. *(Tutorial còn chèn `TRI` sau bước 2 để bật traceability — xem bên dưới.)*
+Ví dụ những gì bạn thấy (**minh họa** — câu chữ thực tế có thể khác):
+
+```text
+> BA
+Business Analyst — điều phối Phase 1 Analysis. Bạn có thể: REQ, GLO, BFD…
+> REQ
+… (agent phỏng vấn yêu cầu của bạn) …
+✓ Đã tạo _bmad-output/planning-artifacts/D-02-requirements.md  (REQ-001, REQ-002…)
+```
+
+Sau đó cứ lặp lại: mở agent của phase → chạy skill bắt buộc → chạy `PG <số phase>`. Đi hết 4 phase là xong. *(Tutorial còn chèn `TRI` sau bước 2 để bật traceability.)*
 
 📘 **Lần đầu dùng?** Bắt đầu từ [Khởi động nhanh 10 phút](docs/vi/tutorials/quickstart.md) — cài đặt, xác nhận chạy, và tạo D-02 đầu tiên.
 
