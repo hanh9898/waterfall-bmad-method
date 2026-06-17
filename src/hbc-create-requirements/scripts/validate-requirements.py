@@ -155,7 +155,7 @@ def check_ears(content: str) -> list[dict]:
         if rid and "shall" not in " ".join(cells).lower():
             issues.append({
                 "type": "EARS_ADVISORY",
-                "message": f"{rid}: chưa theo EARS (thiếu 'SHALL'). Gợi ý: 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'.",
+                "message": f"{rid}: not in EARS form (missing 'SHALL'). Suggestion: 'WHEN <condition> THE SYSTEM SHALL <behavior>'.",
                 "auto_fixable": False,
                 "advisory": True,
                 "req_id": rid,
@@ -164,11 +164,44 @@ def check_ears(content: str) -> list[dict]:
 
 
 def check_vague_terms(content: str, vague_terms: list[str]) -> list[dict]:
-    """Flag vague terms in requirement descriptions."""
+    """Flag vague terms in requirement descriptions.
+
+    Skips the YAML frontmatter and fenced code blocks: a vague word in
+    ``title: "A simple test"`` or inside a code example is not a requirement defect
+    and would otherwise produce a blocking false-fail. Line numbers are kept
+    accurate by masking those line ranges in place rather than removing them.
+    """
     issues: list[dict] = []
     lines = content.splitlines()
 
+    in_frontmatter = False
+    in_fence = False
+    fence_char: str | None = None
+
     for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        # YAML frontmatter delimited by `---` at the very top of the file.
+        if line_num == 1 and stripped == "---":
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            continue
+
+        # Fenced code blocks (``` or ~~~) — content inside is not requirement text.
+        fence = re.match(r"^[ \t]*(`{3,}|~{3,})", line)
+        if not in_fence:
+            if fence:
+                in_fence = True
+                fence_char = fence.group(1)[0]
+                continue
+        else:
+            if fence and fence.group(1)[0] == fence_char:
+                in_fence = False
+            continue
+
         lower_line = line.lower()
         for term in vague_terms:
             if re.search(rf"\b{re.escape(term)}\b", lower_line):

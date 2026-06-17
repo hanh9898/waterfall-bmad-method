@@ -22,7 +22,13 @@ from pathlib import Path
 # --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
-    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        check_required_sections,
+        find_section,
+        parse_table,
+        verdict,
+    )
 except ModuleNotFoundError:
     print(json.dumps({
         "error": "Shared lib 'hbc_validation' not found.",
@@ -76,19 +82,14 @@ def check_entry_exit_criteria(content: str) -> list[dict]:
 def check_risk_table(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    risk_match = re.search(r"#+\s.*Risk", content, re.IGNORECASE)
-    if not risk_match:
+    # Section presence is handled by check_sections (REQUIRED_SECTIONS). Here we
+    # only assert the risk table has data rows. parse_table is language-aware
+    # (English heading OR configured-language alias) and returns DATA rows only
+    # (header + separator excluded), so a header-only table reports zero rows.
+    if not find_section(content, "Risk", "Quản lý rủi ro"):
         return issues
 
-    start = risk_match.end()
-    next_section = re.search(r"\n##\s", content[start:])
-    risk_body = content[start : start + next_section.start()] if next_section else content[start:]
-
-    risk_rows = re.findall(r"\|\s*[^|\-][^|]*\|[^|]*\|[^|]*\|[^|]*\|", risk_body)
-    header_count = sum(1 for r in risk_rows if "Risk" in r or "Likelihood" in r)
-    data_rows = len(risk_rows) - header_count
-
-    if data_rows < 1:
+    if len(parse_table(content, "Risk", "Quản lý rủi ro")) < 1:
         issues.append({
             "type": "EMPTY_RISK_TABLE",
             "message": "Risk table has no data rows — identify at least 1 testing risk",
@@ -102,9 +103,10 @@ def check_schedule(content: str) -> list[dict]:
     issues: list[dict] = []
 
     has_gantt = "gantt" in content.lower() and "mermaid" in content.lower()
-    has_milestone_table = bool(
-        re.search(r"\|\s*Milestone\s*\|", content, re.IGNORECASE)
-    )
+    # Milestone table lives under the Schedule section (e.g. "### 7.1 Milestones").
+    # parse_table is language-aware and returns its data rows, so a VN milestone
+    # table ("Cột mốc …") counts the same as an English one.
+    has_milestone_table = len(parse_table(content, "Schedule", "Lịch trình")) >= 1
 
     if not has_gantt and not has_milestone_table:
         issues.append({

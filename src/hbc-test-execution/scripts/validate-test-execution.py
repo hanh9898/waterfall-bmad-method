@@ -25,6 +25,8 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        find_section,
+        section_body,
         strip_code_fences,
         tc_ids,
         verdict,
@@ -143,12 +145,11 @@ def check_defect_triage(content: str) -> list[dict]:
     if failed_count == 0:
         return issues
 
-    triage_section = re.search(
-        r"#+\s.*Defect Triage(.*?)(?=\n#|\Z)",
-        content,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if not triage_section:
+    # Language-aware: match the section by English heading OR its configured-language
+    # alias ("Phân loại lỗi"), then take its body — a raw English-only regex would
+    # miss the triage section of a Vietnamese report and falsely flag NO_TRIAGE.
+    triage_match = find_section(content, "Defect Triage", "Phân loại lỗi")
+    if not triage_match:
         issues.append({
             "type": "NO_TRIAGE_FOR_FAILURES",
             "message": f"{failed_count} tests failed but no Defect Triage section found",
@@ -156,7 +157,7 @@ def check_defect_triage(content: str) -> list[dict]:
         })
         return issues
 
-    triage_body = triage_section.group(1)
+    triage_body = section_body(content, triage_match)
     defect_rows = re.findall(r"\|\s*DEF-\d+\s*\|", triage_body)
 
     if len(defect_rows) < failed_count:

@@ -205,6 +205,22 @@ def test_nfr_missing_criteria():
     assert nfr_issues[0]["nfr_id"] == "NFR-001"
 
 
+def test_vague_terms_skip_frontmatter_and_code_fence():
+    # Bug A5: check_vague_terms scanned the whole file, so a vague word in the YAML
+    # frontmatter title or inside a fenced code example produced a blocking
+    # false-fail. Those regions must be skipped; only requirement text is scanned.
+    doc = VALID_DOC.replace(
+        'title: "Test Đặc tả yêu cầu"',
+        'title: "A simple and easy system"',
+    ).replace(
+        "System for managing orders.",
+        "System for managing orders.\n\n```python\n# an easy, simple example\nx = 1\n```",
+    )
+    result, code = run_script(doc)
+    vague_issues = [i for i in result["issues"] if i["type"] == "VAGUE_TERM"]
+    assert vague_issues == [], f"frontmatter/code-fence vague terms must be ignored: {vague_issues}"
+
+
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -247,6 +263,7 @@ if __name__ == "__main__":
         test_gap_in_req_ids,
         test_vague_terms_detected,
         test_custom_vague_terms,
+        test_vague_terms_skip_frontmatter_and_code_fence,
         test_missing_section,
         test_empty_section,
         test_nfr_missing_criteria,

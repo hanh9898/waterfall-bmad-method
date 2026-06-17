@@ -172,6 +172,41 @@ class TestCheckCriteriaChecklist:
         assert any(i["type"] == "EMPTY_CHECKLIST" for i in issues)
 
 
+# Vietnamese checklist section ("Danh sách tiêu chí nghiệm thu").
+CHECKLIST_VN_EMPTY = """# Báo cáo nghiệm thu
+
+## Danh sách tiêu chí nghiệm thu
+
+| Tiêu chí | Trạng thái | Bằng chứng |
+|----------|------------|------------|
+
+## Tóm tắt truy vết
+"""
+
+CHECKLIST_VN_FILLED = """# Báo cáo nghiệm thu
+
+## Danh sách tiêu chí nghiệm thu
+
+| Tiêu chí | Trạng thái | Bằng chứng |
+|----------|------------|------------|
+| Mọi yêu cầu được truy vết | PASS | matrix.md — 100% |
+
+## Tóm tắt truy vết
+"""
+
+
+class TestCriteriaChecklistVietnamese:
+    def test_empty_vn_checklist_flagged(self):
+        # Bug A4: header-only VN checklist passed because the English-only header
+        # detection ("Criterion"/"Status") counted the VN header row as data.
+        issues = check_criteria_checklist(CHECKLIST_VN_EMPTY)
+        assert any(i["type"] == "EMPTY_CHECKLIST" for i in issues)
+
+    def test_filled_vn_checklist_ok(self):
+        issues = check_criteria_checklist(CHECKLIST_VN_FILLED)
+        assert issues == []
+
+
 class TestCheckTraceabilitySummary:
     def test_has_summary(self):
         issues = check_traceability_summary(MINIMAL_VALID)

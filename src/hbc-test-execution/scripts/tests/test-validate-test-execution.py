@@ -91,6 +91,49 @@ status: "FAIL"
 """
 
 
+# Vietnamese-language triage section ("Phân loại lỗi") with failures fully triaged.
+# Metric labels stay English (pytest-style convention FAILED_RE relies on).
+FAILURES_VN_TRIAGE = """# Báo cáo thực thi kiểm thử
+
+## Test Execution Summary
+
+| Metric | Value |
+|--------|-------|
+| Total Tests | 50 |
+| Passed | 48 |
+| Failed | 2 |
+| Coverage | 82% |
+
+## Chi tiết test thất bại
+
+| test_id | test_case_ref | error | classification |
+|---------|---------------|-------|----------------|
+| test_a | TC-001 | AssertionError | code_bug |
+| test_b | TC-004 | ConnectionError | environment |
+
+## Phân loại lỗi
+
+| defect_id | type | action | assigned_to |
+|-----------|------|--------|-------------|
+| DEF-001 | code_bug | Return to Phase 3 | Dev |
+| DEF-002 | environment | Fix environment | DevOps |
+"""
+
+
+class TestDefectTriageVietnamese:
+    def test_vn_triage_section_recognized(self):
+        # Bug A3: English-only "Defect Triage" regex missed "Phân loại lỗi" → a
+        # fully-triaged VN report was falsely flagged NO_TRIAGE_FOR_FAILURES.
+        issues = check_defect_triage(FAILURES_VN_TRIAGE)
+        assert [i for i in issues if i["type"] == "NO_TRIAGE_FOR_FAILURES"] == []
+        assert [i for i in issues if i["type"] == "INCOMPLETE_TRIAGE"] == []
+
+    def test_vn_missing_triage_still_flagged(self):
+        content = FAILURES_VN_TRIAGE.replace("## Phân loại lỗi", "## Mục khác")
+        issues = check_defect_triage(content)
+        assert [i for i in issues if i["type"] == "NO_TRIAGE_FOR_FAILURES"]
+
+
 class TestCheckSections:
     def test_all_present(self):
         issues = check_sections(MINIMAL_VALID)
