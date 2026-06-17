@@ -29,6 +29,7 @@ HBC delivers **incrementally, per-feature** (incremental per-feature delivery): 
 | Code | Skill | Description | Deliverable | Scope |
 | --- | --- | --- | --- | --- |
 | `PI` | `hbc-project-init` | Mandatory, runs first. Brownfield: document the code (`bmad-document-project` + `project-context.md`) then derive the shared deliverables; greenfield: derive from the PRD/choices. Creates the shared deliverables: D-12 Coding Standards, D-03 Glossary, and baseline D-19 ERD / D-21 API | D-12, D-03, baseline D-19/D-21 | shared |
+| `MIG` | `hbc-migrate` | Takes a **HBC v1 (flat layout)** project up to v2 (per-feature + shared): moves files, re-prefixes REQ/TC, rebuilds the 8-column matrix. `MIG plan` = dry-run preview → `MIG apply feature=<slug>`. See [Migrate from v1 to v2](../how-to/migrate-from-v1.md) | v2 layout + 8-column matrix | v1→v2 migration, run once |
 
 Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 

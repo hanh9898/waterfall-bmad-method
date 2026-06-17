@@ -1,0 +1,36 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-migrate.
+# Team overrides:     {project-root}/_bmad/custom/hbc-migrate.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-migrate.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Migration engine. Deterministic move / re-prefix / matrix-rebuild / backup live here.
+# Override to use a custom engine with the same CLI (dry-run default, --apply, --feature,
+# --reprefix, --json, --timestamp, --force).
+migrate_script = "{project-root}/_bmad/scripts/migrate-to-feature-layout.py"
+
+# Output root migrated IN PLACE (no `feature` namespacing — engine rewrites _bmad-output).
+out_dir = "{output_folder}"
+
+# Targets the engine produces under {output_folder}.
+shared_dir = "{output_folder}/shared"
+features_dir = "{output_folder}/features"
+
+# Backup location written before any move (timestamped subdir).
+archive_dir = "{output_folder}/.archive"
+
+# Post-migrate verification (Stage 5). Override to point at custom validators / trace tooling.
+trace_script = "{project-root}/_bmad/scripts/trace-report.py"

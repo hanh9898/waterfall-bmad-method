@@ -31,6 +31,7 @@ For those already running it who need to do a task.
 - [Manage Traceability](how-to/manage-traceability.md)
 - [Use Headless Mode](how-to/use-headless-mode.md)
 - [Customize Configuration](how-to/customize-config.md)
+- [Migrate from HBC v1 to v2](how-to/migrate-from-v1.md)
 
 ## 📖 Reference — quick lookup
 

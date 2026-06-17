@@ -43,6 +43,7 @@ post-install-notes: |
   Required: BMM module must be installed first.
   Mô hình: giao tăng dần THEO TỪNG TÍNH NĂNG (per-feature). Artifact ở _bmad-output/features/<feature>/; deliverable dùng chung ở _bmad-output/shared/.
   Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
+  Di chuyển từ HBC v1 (layout phẳng)? Chạy [MIG] Migrate v1→v2 trước Phase 0 (dry-run→apply).
   Phase 0 (một lần): [PI] Project Init — tạo shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
   Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow
   Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
