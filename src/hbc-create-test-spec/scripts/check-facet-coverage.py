@@ -65,6 +65,19 @@ def _split_facets(s: str) -> set[str]:
     return {f.strip().lower() for f in re.split(r"[,;/|]", s) if f.strip()}
 
 
+# Unfilled-placeholder facet markers. A TC (or matrix row) left as "TODO" must
+# fail LOUDLY — otherwise a "TODO" on BOTH the required and covered side cancels
+# out and the REQ reports full facet coverage. "n/a" is intentionally NOT here
+# (it can be a deliberate "no facets apply" marker).
+_PLACEHOLDER_FACETS = {"todo", "tbd", "tba", "xxx", "???", "..."}
+
+
+def _is_placeholder_facets(raw: str) -> bool:
+    """True when a Facets value is purely an unfilled placeholder, not real tokens."""
+    toks = _split_facets(raw)
+    return bool(toks) and toks <= _PLACEHOLDER_FACETS
+
+
 def table_with_header(content: str, *labels: str) -> tuple[list[str], list[list[str]]]:
     """First markdown table under a section → (header cells, data rows).
 
@@ -221,6 +234,38 @@ def malformed_tc_count(d27_text: str) -> int:
     return n
 
 
+def placeholder_facets(d27_text: str, d02_text: str | None = None) -> list[dict]:
+    """REQ/TC entries whose Facets value is an unfilled placeholder (TODO/TBD/…).
+
+    These must fail loudly: a "TODO" required facet and a "TODO" covered facet
+    would otherwise cancel and report full coverage (the template warns that a TC
+    left as "TODO" must fail the M-1 check).
+    """
+    found: list[dict] = []
+    for block in iter_tc_blocks(d27_text):
+        fac = tc_field(block, "Facets")
+        if fac and _is_placeholder_facets(fac):
+            req = (tc_field(block, "REQ ID") or "?").strip()
+            found.append({"source": "TC Facets", "req": req, "value": fac.strip()})
+
+    sources = []
+    if d02_text:
+        sources.append(table_with_header(d02_text, "Functional Requirements", "Yêu cầu chức năng"))
+    sources.append(table_with_header(d27_text, "Coverage Matrix", "Ma trận bao phủ"))
+    for header, rows in sources:
+        if not header:
+            continue
+        ci_fac = _col_index(header, "facet")
+        ci_req = _req_col(header, rows, exclude=ci_fac)
+        if ci_fac is None:
+            continue
+        for r in rows:
+            if ci_fac < len(r) and _is_placeholder_facets(r[ci_fac]):
+                req = (r[ci_req].strip() if (ci_req is not None and ci_req < len(r)) else "?")
+                found.append({"source": "Coverage Matrix", "req": req, "value": r[ci_fac].strip()})
+    return found
+
+
 def check(d27_text: str, d02_text: str | None = None) -> dict:
     required = required_facets(d27_text, d02_text)
     covered = covered_facets(d27_text)
@@ -231,7 +276,8 @@ def check(d27_text: str, d02_text: str | None = None) -> dict:
         if missing:
             uncovered[req] = missing
 
-    structure_ok = not uncovered
+    placeholders = placeholder_facets(d27_text, d02_text)
+    structure_ok = not uncovered and not placeholders
     v = verdict(
         structure_ok,
         semantic_review=SEMANTIC_NA,
@@ -243,10 +289,13 @@ def check(d27_text: str, d02_text: str | None = None) -> dict:
         "uncovered_facets": uncovered,
         "facet_covered": structure_ok,
     })
+    if placeholders:
+        # Loud failure (not a silent cancel): facets left as TODO/TBD/…
+        v["placeholder_facets"] = placeholders
     # Transparency (#2): a green with zero declared facets measured NOTHING. We do
     # not flip the verdict — single-facet REQs legitimately declare none — but the
     # P2-08 reviewer must see that the metric was vacuous and confirm completeness.
-    if not required:
+    if not required and not placeholders:
         v["note"] = ("No REQ declares required facets; facet_covered is vacuous "
                      "(nothing measured). Confirm via LLM review whether facets should be declared.")
     malformed = malformed_tc_count(d27_text)
