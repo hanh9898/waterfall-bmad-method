@@ -31,7 +31,10 @@ decision_log_template = "assets/decision-log-template.md"
 # {planning_artifacts} alongside the other D-* documents (no per-document
 # folder). The session decision log (.decision-log.md) and scan artifacts
 # (.scan/) are shared peers in {planning_artifacts}, not nested under D-19.
-er_diagram_output_path = "{planning_artifacts}/D-19-{project_name}-database-design.md"
+# D-19 DUAL scope: baseline SHARED (Phase 0) + override per-feature (path-existence precedence).
+# Mặc định ghi baseline shared; truyền feature=<slug> để tạo/đọc bản override per-feature.
+er_diagram_output_path = "{output_folder}/shared/erd/D-19-database-design.md"
+er_diagram_feature_path = "{output_folder}/features/{feature}/planning-artifacts/D-19-{feature}-database-design.md"
 
 # Controls distillate production at Stage 5.
 # "offer" (default): interactive asks, headless skips.

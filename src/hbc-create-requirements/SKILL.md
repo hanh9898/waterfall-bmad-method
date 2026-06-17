@@ -11,7 +11,7 @@ Generate D-02 (Requirements Specification) — structured requirements with uniq
 
 Five-stage workflow: Prerequisites → Discovery → Generation → Validation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation scripts.
 
-**Args:** `create` (default), `update` (revise existing D-02), `validate` (check existing D-02). Optional: `--headless` / `-H`.
+**Args:** `create` (default), `update` (revise existing D-02), `validate` (check existing D-02); **`feature=<slug>`** (đơn vị increment — bắt buộc ở headless; interactive lấy active feature trong phiên hoặc hỏi). Optional: `--headless` / `-H`.
 
 ## Conventions
 
@@ -27,6 +27,8 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 ## On Activation
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
+
+**Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi user. Headless: bắt buộc, thiếu → `blocked` (`feature_required`). Validate slug `^[a-z0-9][a-z0-9-]*$`. D-02 của feature lưu tại `{workflow.output_dir}/D-02-{feature}.md` (output_dir đã namespace theo feature).
 
 ## Stage 1: Prerequisites
 
@@ -54,7 +56,7 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 - **Project background** — purpose, stakeholders, timeline constraints.
 - **Scope** — explicit in-scope and out-of-scope boundaries. Out-of-scope is as important as in-scope.
 - **User roles** — actors who interact with the system. Each gets a name and description.
-- **Functional requirements** — each gets a unique `REQ-xxx` ID (sequential from REQ-001). Must be specific and testable.
+- **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (tuần tự trong feature; vd `REQ-{feature}-001`), viết theo **EARS** (keyword tiếng Anh + nội dung tiếng Việt: `WHEN … THE SYSTEM SHALL …`). Yêu cầu dùng chung nhiều feature → `REQ-SHARED-NNN` (định nghĩa ở D-02 shared, chỉ **tham chiếu** ở đây). Must be specific and testable.
 - **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria.
 - **Constraints and assumptions** — technical, business, legal constraints.
 
@@ -64,8 +66,8 @@ At each area boundary, soft-gate: _"Anything else on [area], or move to [next]?"
 
 ## Stage 3: Generation
 
-Populate `{workflow.template_path}` with discovered content. Write to `{workflow.output_dir}/D-02-{project_name}.md`. Ensure:
-- Every functional requirement has a unique sequential REQ-xxx ID.
+Populate `{workflow.template_path}` with discovered content. Write to `{workflow.output_dir}/D-02-{feature}.md`. Ensure:
+- Every functional requirement has a unique `REQ-<FEAT>-NNN` ID (tuần tự trong feature) viết theo EARS; tham chiếu `REQ-SHARED-NNN` cho yêu cầu dùng chung.
 - Scope section explicitly lists out-of-scope items.
 - Non-functional requirements have measurable criteria (not "fast" but "< 2s response time").
 - Cross-reference user roles with requirements that mention them.
@@ -83,7 +85,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 Run deterministic validator, then LLM judgment checks:
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/D-02-{project_name}.md" --project-root {project-root} --vague-terms "{workflow.vague_terms}"
+python3 {workflow.validation_script} "{workflow.output_dir}/D-02-{feature}.md" --project-root {project-root} --vague-terms "{workflow.vague_terms}"
 ```
 
 Script checks: REQ IDs unique and sequential, no vague terms (configurable word list), all required sections present, no empty sections. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable (Python not installed), fall back to LLM-only validation and note the limitation in the decision log.

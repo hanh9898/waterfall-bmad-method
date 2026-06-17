@@ -11,7 +11,7 @@ Implement code via TDD cycle (RED → GREEN → REFACTOR) per task from the task
 
 Per-task workflow: Load → RED (write test) → GREEN (implement) → REFACTOR → Update status. Supports batch mode (all tasks) and headless mode. The most interactive workflow — Dev agent pairs with the user throughout.
 
-**Args:** `task <TASK-xxx>` (single task), `all` (batch remaining), `coverage` (check only). Optional: `--headless` / `-H`.
+**Args:** `task <TASK-xxx>` (single task), `all` (batch remaining), `coverage` (check only); **`feature=<slug>`** (bắt buộc ở headless; interactive lấy active feature trong phiên). Optional: `--headless` / `-H`.
 
 ## Conventions
 
@@ -28,6 +28,8 @@ When `--headless`: batch-implement all TODO tasks sequentially per `references/h
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+**Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi. Headless bắt buộc (thiếu → `blocked` `feature_required`). Mọi path (`{workflow.task_breakdown_path}`, `{workflow.tdd_evidence_dir}`) đã namespace theo `{feature}`.
+
 Load `task-breakdown.md` from `{workflow.task_breakdown_path}`. Show task status summary: X TODO, Y IN_PROGRESS, Z DONE. If no task specified, suggest the next TODO task.
 
 ## Per-Task TDD Cycle
@@ -42,6 +44,7 @@ Based on D-27 test cases for this task:
 - Write test file(s) following D-12 test organization conventions.
 - Tests must be specific and match D-27 expected results.
 - Run the tests — they should FAIL (RED). If they pass, the test is wrong or the functionality already exists.
+- **Lưu RED-evidence (cưỡng chế quy trình):** ghi lần chạy test FAIL vào `{workflow.tdd_evidence_dir}/<TASK-xxx>.md` (lệnh chạy + output chứa dòng `FAIL`). **HALT — KHÔNG sang GREEN/viết code khi chưa có RED-evidence cho task này.** *(Lưu ý: evidence tự khai — đây là kỷ luật test-first, không phải bằng chứng mật mã chống ngụy tạo.)*
 
 Present test code to user for review before proceeding.
 
@@ -73,10 +76,10 @@ With green tests as safety net:
 Before considering Phase 3 complete (and at the Phase 3 gate, item P3-02b), run:
 
 ```
-python3 {skill-root}/scripts/validate-implementation.py --tasks <task-breakdown> --matrix <matrix> --project-root <root>
+python3 {skill-root}/scripts/validate-implementation.py --tasks <task-breakdown> --matrix <matrix> --tdd-evidence-dir {workflow.tdd_evidence_dir} --project-root <root>
 ```
 
-Must be clean — no `DONE_TASK_NO_TEST`, `MISSING_CODE_FILE`, or `REQ_NOT_IMPLEMENTED`. This catches tasks closed with no test, a `code_ref` pointing at a file that doesn't exist, or a REQ designed + tested but never implemented.
+Must be clean — no `DONE_TASK_NO_TEST`, `NO_RED_EVIDENCE`, `RED_EVIDENCE_NO_FAIL`, `MISSING_CODE_FILE`, or `REQ_NOT_IMPLEMENTED`. This catches tasks closed with no test, a `code_ref` pointing at a file that doesn't exist, or a REQ designed + tested but never implemented.
 
 ## Batch Mode
 

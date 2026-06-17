@@ -124,6 +124,35 @@ def test_gap_details_structure():
         assert "test_ref" not in gap["missing_columns"]
 
 
+def test_rollup_dedupes_shared_rows():
+    # MEDIUM-9: a shared row (feature=shared) appears in EVERY feature matrix.
+    # Roll-up must count it once (not once per feature) and keep it out of each
+    # feature's own coverage denominator.
+    M = ("| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+         "|---|---|---|---|---|---|---|---|\n")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        a = root / "features" / "auth" / "traceability"
+        b = root / "features" / "report" / "traceability"
+        a.mkdir(parents=True); b.mkdir(parents=True)
+        (a / "matrix.md").write_text(
+            M + "| auth | REQ-AUTH-001 | | D-19 | code | TC-001 | PASS | t |\n"
+              + "| shared | REQ-SHARED-001 | | D-12 | code | TC-900 | PASS | t |\n", encoding="utf-8")
+        (b / "matrix.md").write_text(
+            M + "| report | REQ-REPORT-001 | | D-19 | | | | t |\n"
+              + "| shared | REQ-SHARED-001 | | D-12 | code | TC-900 | PASS | t |\n", encoding="utf-8")
+        cmd = [sys.executable, SCRIPT, "--rollup", str(root / "features" / "**" / "traceability" / "matrix.md")]
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(r.stdout)
+        assert data["matrices_found"] == 2
+        assert data["shared"]["total"] == 1          # REQ-SHARED-001 counted ONCE
+        assert data["grand_total"] == 3              # auth(1) + report(1) + shared(1), not 4
+        assert data["grand_fully_traced"] == 2       # auth + shared traced; report not
+        feats = {f["feature"]: f for f in data["features"]}
+        assert feats["auth"]["total"] == 1           # shared excluded from feature denominator
+        assert feats["report"]["total"] == 1
+
+
 if __name__ == "__main__":
     test_full_matrix()
     test_matrix_with_gaps()
@@ -132,6 +161,7 @@ if __name__ == "__main__":
     test_missing_matrix_file()
     test_output_to_file()
     test_gap_details_structure()
+    test_rollup_dedupes_shared_rows()
     print("All trace-report tests passed.")
 
 

@@ -28,6 +28,8 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+
 Before structured discovery, invite the user to share testing priorities, known edge cases, and domain-specific test concerns. Absorb this context before proceeding.
 
 ## Stage 1: Prerequisites

@@ -60,7 +60,12 @@ except ModuleNotFoundError:
     }, ensure_ascii=False))
     sys.exit(2)
 
-REQ_ID_RE = re.compile(r"REQ-\d{3,}")
+# Namespace-aware (v2): matches both legacy `REQ-001` and per-feature
+# `REQ-<FEAT>-NNN` (e.g. REQ-AUTH-001) + shared `REQ-SHARED-NNN`. Mirrors the
+# id grammar used by validate-requirements.py and trace-report.py. A bare
+# `REQ-\d{3,}` here silently matched ZERO feature-namespaced ids → every gap
+# reported green (the false-green seam bug).
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 FUNCTIONAL_LABELS = ("Functional Requirements", "Yêu cầu chức năng")
 
 

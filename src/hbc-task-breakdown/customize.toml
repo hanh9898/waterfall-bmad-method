@@ -13,8 +13,8 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Output directory for the task breakdown.
-output_dir = "{implementation_artifacts}"
+# Task breakdown per-feature ({feature} resolved at runtime).
+output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 
 # Validation script.
 validation_script = "scripts/validate-task-breakdown.py"

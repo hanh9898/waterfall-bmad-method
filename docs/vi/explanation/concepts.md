@@ -4,28 +4,101 @@
 >
 > 💡 **Explanation** — tài liệu này giải thích *vì sao* HBC được thiết kế như vậy. Không phải các bước làm (xem [Tutorial](../tutorials/getting-started-hbc.md)), mà là tư duy đằng sau.
 
-HBC dựng trên 4 khái niệm. Hiểu được 4 cái này là bạn hiểu cả phương pháp.
+HBC là module mở rộng cho BMad Method. Cách giao hàng của nó là **giao tăng dần theo từng tính năng (incremental per-feature delivery)**: mỗi tính năng đi qua 4 phase có cổng + lõi TDD rồi *ship độc lập*, không cần chờ các tính năng khác.
+
+Để hiểu cả phương pháp, bạn cần nắm các khái niệm sau: **Tính năng & Phạm vi**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD với bằng chứng RED**, và **Traceability + Cascade Sync**.
+
+> 🧭 **Một ý xuyên suốt:** *máy lo cấu trúc · người/LLM lo ngữ nghĩa.* Kiểm tra cứng (đường dẫn, định dạng, ID) do máy lo một cách tất định; còn chất lượng nội dung (rõ ràng, đầy đủ, nhất quán) do người hoặc LLM đánh giá. Mọi khái niệm bên dưới đều bám theo lằn ranh này.
 
 ---
 
-## 1. Phase — chia công việc thành 4 chặng có thứ tự
+## 1. Tính năng & Phạm vi — đơn vị giao hàng, và "ai dùng chung cái gì"
 
-HBC theo mô hình **waterfall**: công việc đi tuần tự qua 4 phase, mỗi phase hoàn thành rồi mới sang phase sau.
+HBC **không** chạy toàn dự án một lượt rồi mới giao. Nó giao **tăng dần theo từng tính năng (feature)**: `auth`, `billing`, `report`… mỗi tính năng là một đơn vị đi hết 4 phase rồi ship — độc lập với nhau.
+
+Nhưng không phải thứ gì cũng thuộc riêng một tính năng. Một số sản phẩm (deliverable) là **dùng chung (shared)** cho cả dự án. Vì thế mỗi deliverable có một **phạm vi (scope)**:
+
+| Phạm vi | Deliverable | Đặt ở đâu |
+| --- | --- | --- |
+| **Per-feature** (riêng tính năng) | D-02, D-06, D-26, D-27 | `_bmad-output/features/<feature>/planning-artifacts/` |
+| **Shared** (dùng chung) | D-03 (glossary), D-12 (coding-standards) | `_bmad-output/shared/glossary/`, `…/coding-standards/` |
+| **Dual** (lưỡng tính) | D-19 (erd), D-21 (api) | baseline ở `shared/erd\|api/` + bản ghi đè tùy chọn ở `features/<feature>/planning-artifacts/` |
+
+**Vì sao tách phạm vi?** Glossary và Coding Standards mà mỗi tính năng tự định nghĩa lại thì sẽ mâu thuẫn nhau — nên chúng *dùng chung*, viết một lần cho cả dự án. Ngược lại, đặc tả yêu cầu (D-02) hay test (D-27) thì gắn chặt với từng tính năng — nên chúng *per-feature*.
+
+**Dual = quy tắc ưu tiên theo sự tồn tại đường dẫn (path-existence precedence).** ERD (D-19) và API (D-21) có một **baseline dùng chung** cho cả dự án, nhưng một tính năng có thể cần **ghi đè cục bộ**. Quy tắc rất đơn giản:
+
+```mermaid
+flowchart LR
+    A["Cần ERD/API cho feature X"] --> B{"Tồn tại bản ghi đè<br/>features/X/planning-artifacts/ ?"}
+    B -->|Có| C["Dùng bản ghi đè<br/>(per-feature thắng)"]
+    B -->|Không| D["Dùng baseline<br/>shared/erd|api/"]
+```
+
+> 🔎 **Phép loại suy:** baseline dùng chung như *bản đồ thành phố*; bản ghi đè per-feature như *bản đồ phóng to một quận*. Có bản phóng to thì dùng bản phóng to; không thì dùng bản đồ chung. Không cần cờ cấu hình — chỉ cần "file có tồn tại hay không".
+
+---
+
+## 2. Phase 0 — Project Init: dựng phần dùng chung *một lần* trước đã
+
+Vì phần dùng chung (shared) phục vụ *mọi* tính năng, sẽ vô lý nếu để tính năng đầu tiên tự đẻ ra chúng. Nên HBC có **Phase 0 — Project Init** (`PI`, skill `hbc-project-init`), chạy **một lần cho cả dự án** *trước khi* bắt tay tính năng nào.
+
+Phase 0 tạo các deliverable **dùng chung**:
+
+- **D-12 Coding Standards** — chuẩn code chung.
+- **D-03 Glossary** — từ điển thuật ngữ chung.
+- **baseline D-19 ERD** và **baseline D-21 API** — bản nền dùng chung.
+
+**Vì sao một lần, ở đầu?** Để mọi tính năng về sau đứng trên cùng một nền: cùng chuẩn code, cùng cách gọi tên, cùng sơ đồ DB nền. Phase 0 **idempotent** (chạy lại sẽ bỏ qua thứ đã có) và **không cần** tham số `feature` — vì nó vốn dĩ thuộc về cả dự án.
+
+> 🔎 **Phép loại suy:** như đổ móng và kéo điện nước cho cả khu đất *trước khi* xây từng căn nhà. Làm một lần, mọi căn cùng hưởng.
+
+---
+
+## 3. Phase — chia mỗi tính năng thành 4 chặng có thứ tự
+
+Với *mỗi* tính năng, HBC chạy **tuần tự, có cổng** qua 4 phase: mỗi phase hoàn thành (qua Phase Gate) rồi mới sang phase sau.
 
 | Phase | Trả lời câu hỏi | Sản phẩm chính |
 | --- | --- | --- |
 | 1 · Analysis | *Cần làm cái gì?* | Yêu cầu (D-02) |
-| 2 · Design | *Làm bằng cách nào?* | Thiết kế DB, kế hoạch test |
+| 2 · Design + Test Design | *Làm bằng cách nào? Test ra sao?* | Thiết kế DB/API, kế hoạch test (D-26), test design (D-27) |
 | 3 · Implementation | *Viết code thế nào?* | Code (theo TDD) |
 | 4 · Testing | *Đã đúng chưa?* | Báo cáo nghiệm thu |
 
-**Vì sao tuần tự?** Mỗi phase đứng trên vai phase trước. Bạn không thể thiết kế DB nếu chưa rõ yêu cầu; không thể viết code đúng nếu chưa có thiết kế. Đi đúng thứ tự giúp tránh làm lại tốn kém vì hiểu sai từ đầu.
+Đây là *bộ xương* kiểu **waterfall** — nhưng đó chỉ là **cách kỷ luật bên trong một tính năng** (design-first, chốt từng mốc), *không phải* mô hình giao hàng của HBC. Mô hình giao hàng của HBC là **giao tăng dần theo từng tính năng**: nhiều "thác nước nhỏ" chạy song song theo nhịp riêng, chứ không phải một thác lớn cho cả dự án (xem [HBC có thực sự là waterfall thuần?](why-incremental-tdd.md#hbc-có-thực-sự-là-waterfall-thuần-không)).
 
-> 🔎 **Phép loại suy:** như xây nhà — khảo sát nhu cầu → bản vẽ → xây → nghiệm thu. Không ai đổ móng khi chưa có bản vẽ.
+**Vì sao tuần tự bên trong tính năng?** Mỗi phase đứng trên vai phase trước. Bạn không thể thiết kế DB nếu chưa rõ yêu cầu; không thể viết code đúng nếu chưa có thiết kế. Đi đúng thứ tự giúp tránh làm lại tốn kém vì hiểu sai từ đầu.
+
+> 🔎 **Phép loại suy:** như xây *một căn nhà* — khảo sát nhu cầu → bản vẽ → xây → nghiệm thu. Không ai đổ móng khi chưa có bản vẽ. Nhưng cả khu phố thì xây dần từng căn, không chờ căn cuối mới giao căn đầu.
 
 ---
 
-## 2. Deliverable D-xx — sản phẩm bàn giao được đánh mã
+## 4. Phase Gate — chốt kiểm soát giữa các phase
+
+**Phase Gate** (`PG`) là một "trạm kiểm soát" ở ranh giới mỗi phase. Vì giờ làm theo từng tính năng, mỗi gate **mang theo `feature=`** để biết đang chốt tính năng nào. Trước khi sang phase sau, Gate kiểm tra phase hiện tại đã đủ chất lượng chưa, gồm hai lớp:
+
+```mermaid
+flowchart LR
+    A["Kết thúc phase<br/>(feature=X)"] --> B[Kiểm tra tự động<br/>deterministic]
+    B --> C[Đánh giá bằng LLM<br/>chất lượng nội dung]
+    C --> D{Kết quả}
+    D -->|pass ✅| E[Sang phase sau]
+    D -->|fail ❌| F[Sửa theo gợi ý<br/>→ chạy lại PG]
+```
+
+- **Lớp tự động (máy lo cấu trúc):** kiểm tra cứng — deliverable bắt buộc có tồn tại không, định dạng/đường dẫn đúng không.
+- **Lớp LLM (người/LLM lo ngữ nghĩa):** đánh giá mềm — nội dung có rõ ràng, đầy đủ, nhất quán không.
+
+**Vì sao cần Gate?** Để lỗi không trôi sang phase sau. Một yêu cầu mơ hồ lọt qua Phase 1 sẽ thành thiết kế sai ở Phase 2, code sai ở Phase 3 — càng về sau sửa càng đắt. Gate chặn lỗi tại nguồn.
+
+> 📌 Deliverable bắt buộc để qua gate: **D-02, D-12, D-19, D-26, D-27**. Tùy chọn: D-03, D-06, D-21.
+
+> 🔎 **Phép loại suy:** như cửa kiểm tra an ninh sân bay — không qua được thì không lên máy bay. Gate "fail" không phải để phạt bạn, mà để bảo vệ phase sau.
+
+---
+
+## 5. Deliverable D-xx — sản phẩm bàn giao được đánh mã
 
 Mỗi phase tạo ra một hoặc nhiều **deliverable** — tài liệu/sản phẩm cụ thể, đặt tên theo mã **D-xx** (D-02, D-19, D-27…).
 
@@ -35,74 +108,119 @@ Mỗi phase tạo ra một hoặc nhiều **deliverable** — tài liệu/sản 
 - Phase Gate kiểm tra được "deliverable bắt buộc đã có chưa".
 - Traceability nối các deliverable lại với nhau.
 
+Ngoài mã D-xx, mỗi deliverable còn có một **phạm vi** (per-feature · shared · dual — xem [mục 1](#1-tính-năng--phạm-vi--đơn-vị-giao-hàng-và-ai-dùng-chung-cái-gì)) quyết định nó nằm ở `features/<feature>/…` hay `shared/…`.
+
+**Namespace ID yêu cầu.** Yêu cầu được đánh mã theo từng tính năng: **`REQ-<FEAT>-NNN`** (ví dụ `REQ-AUTH-001`), cộng thêm **`REQ-SHARED-NNN`** cho yêu cầu dùng chung. Nhờ namespace, `REQ-AUTH-001` và `REQ-BILLING-001` không đụng nhau. (Mã cũ `REQ-NNN` vẫn đọc được để tương thích.) Test case đánh số **`TC-NNN`**, tuần tự *trong D-27 của từng tính năng*.
+
 > 📌 Có deliverable **bắt buộc** (⭐) và **tùy chọn**. Bắt buộc là điều kiện để qua Gate; tùy chọn làm khi tính năng cần. Xem danh sách đầy đủ ở [Bảng deliverable](../reference/deliverables-glossary.md).
 
 ---
 
-## 3. Phase Gate — chốt kiểm soát giữa các phase
+## 6. Readiness (IR) — cổng "đường may" cuối Phase 2
 
-**Phase Gate** (`PG`) là một "trạm kiểm soát" ở ranh giới mỗi phase. Trước khi sang phase sau, Gate kiểm tra phase hiện tại đã đủ chất lượng chưa, gồm hai lớp:
+Giữa thiết kế (Phase 2) và viết code (Phase 3) có một **đường may (seam)** dễ rách: yêu cầu, thiết kế và test có thể đã *lệch* nhau lúc nào không hay. **Readiness check** (`IR`, skill `hbc-check-implementation-readiness`) là cổng đối soát đặt đúng tại đường may đó, *trước khi* bước vào Phase 3.
 
-```mermaid
-flowchart LR
-    A[Kết thúc phase] --> B[Kiểm tra tự động<br/>deterministic]
-    B --> C[Đánh giá bằng LLM<br/>chất lượng nội dung]
-    C --> D{Kết quả}
-    D -->|pass ✅| E[Sang phase sau]
-    D -->|fail ❌| F[Sửa theo gợi ý<br/>→ chạy lại PG]
-```
-
-- **Lớp tự động:** kiểm tra cứng — deliverable bắt buộc có tồn tại không, định dạng đúng không.
-- **Lớp LLM:** đánh giá mềm — nội dung có rõ ràng, đầy đủ, nhất quán không.
-
-**Vì sao cần Gate?** Để lỗi không trôi sang phase sau. Một yêu cầu mơ hồ lọt qua Phase 1 sẽ thành thiết kế sai ở Phase 2, code sai ở Phase 3 — càng về sau sửa càng đắt. Gate chặn lỗi tại nguồn.
-
-> 🔎 **Phép loại suy:** như cửa kiểm tra an ninh sân bay — không qua được thì không lên máy bay. Gate "fail" không phải để phạt bạn, mà để bảo vệ phase sau.
-
----
-
-## 4. Traceability — sợi chỉ nối yêu cầu đến test
-
-**Traceability** (truy vết) là một **ma trận** trả lời câu hỏi: *"Mỗi yêu cầu đã được thiết kế, code và test chưa?"*
-
-Mỗi yêu cầu có một **REQ ID** (REQ-001…). Ma trận traceability nối REQ ID đó tới mọi thứ phát sinh từ nó:
+`IR` đối soát **D-02** (yêu cầu) với **D-21** (API), **D-26** (kế hoạch test), **D-27** (test design) và **ma trận traceability**:
 
 ```mermaid
 flowchart LR
-    REQ["REQ-001<br/>(yêu cầu)"] --> DES["Thiết kế<br/>(D-19, D-21)"]
-    DES --> CODE["Code<br/>(module/hàm)"]
-    CODE --> TEST["Test case<br/>(D-27)"]
+    R["D-02<br/>Yêu cầu"] --- I{"IR<br/>Readiness"}
+    A["D-21 API"] --- I
+    P["D-26 Test Plan"] --- I
+    T["D-27 Test Design"] --- I
+    M["Traceability matrix"] --- I
+    I -->|"khớp ✅"| G["Sẵn sàng vào Phase 3"]
+    I -->|"lệch ❌"| F["Trả về sửa cho khớp"]
 ```
 
-**Vì sao quan trọng?** Nó trả lời được hai câu hỏi mà dự án nào cũng sợ:
+**Vì sao cần `IR`?** Để bắt sớm những lệch pha kiểu: có yêu cầu mà không có test phủ, có endpoint API mà không có test, hay ma trận thiếu dòng. Nếu để lọt qua đường may này, Phase 3 sẽ code dựa trên một bộ tài liệu không nhất quán.
 
-1. *"Có yêu cầu nào bị bỏ quên không?"* → REQ nào thiếu code/test sẽ lộ ra ngay (gap).
-2. *"Code/test này phục vụ yêu cầu nào?"* → truy ngược được, không có code "mồ côi".
-
-Vòng đời traceability: `TRI` (khởi tạo từ REQ ID) → `TRU` (cập nhật cuối mỗi phase) → `TRA` (audit gap cuối dự án). `TRR` cho báo cáo coverage bất cứ lúc nào.
-
-> 🔎 **Phép loại suy:** như danh sách hành lý khi đi du lịch — đánh dấu từng món đã xếp vào vali. Cuối cùng nhìn danh sách là biết còn thiếu gì.
+> 🔎 **Phép loại suy:** như kiểm tra mép vải khớp nhau *trước khi* đặt mũi may. Khâu xong rồi mới phát hiện lệch thì phải tháo ra làm lại.
 
 ---
 
-## Bốn khái niệm ăn khớp với nhau thế nào
+## 7. TDD với bằng chứng RED — viết test trước, có dấu vết
+
+Phase 3 (`IM`) viết code theo vòng **RED → GREEN → REFACTOR**: viết một test *thất bại* trước (RED), rồi viết code tối thiểu cho test *đậu* (GREEN), rồi dọn dẹp (REFACTOR).
+
+HBC dùng **enforcement mềm (soft enforcement)**: trước khi viết code, cần **ghi lại bằng chứng RED (RED evidence)** — dấu vết cho thấy test đã từng đỏ. Gate Phase 3 sẽ kiểm tra có bằng chứng RED hay không.
+
+```mermaid
+flowchart LR
+    RED["RED<br/>viết test → chạy → đỏ<br/>(ghi bằng chứng)"] --> GREEN["GREEN<br/>viết code tối thiểu → test xanh"]
+    GREEN --> REF["REFACTOR<br/>dọn dẹp, test vẫn xanh"]
+```
+
+**"Mềm" nghĩa là gì?** Bằng chứng RED là **tự khai (self-attested)**, không phải bằng chứng mật mã. HBC tin người làm, nhưng *yêu cầu để lại dấu vết*. Tinh thần là **"test-first với bằng chứng RED"**, chứ không chỉ là "có tồn tại test".
+
+**Vì sao test trước?** Viết test sau khi code xong dễ biến thành "test cho vừa khít code" — đo lại chính cái mình vừa viết. Viết test trước buộc bạn phát biểu *kỳ vọng* trước, và bước RED chứng minh test thật sự có khả năng *bắt lỗi*.
+
+> 🔎 **Phép loại suy:** như đặt bẫy chuột rồi thử xem bẫy có sập không (RED) *trước khi* tin rằng nó hoạt động. Một cái bẫy chưa từng sập thì không đáng tin.
+
+---
+
+## 8. Traceability — sợi chỉ nối yêu cầu đến test, và Cascade Sync
+
+**Traceability** (truy vết) là một **ma trận** trả lời câu hỏi: *"Mỗi yêu cầu đã được thiết kế, code và test chưa?"* Ở HBC v2, ma trận có **8 cột**:
+
+`feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp`
+
+Độ phủ (coverage) được tính từ ba cột `design_ref` / `code_ref` / `test_ref` — một REQ thiếu bất kỳ cột nào là một *gap*.
+
+```mermaid
+flowchart LR
+    REQ["REQ-AUTH-001<br/>(yêu cầu)"] --> DES["design_ref<br/>(D-19, D-21)"]
+    DES --> CODE["code_ref<br/>(module/hàm)"]
+    CODE --> TEST["test_ref<br/>(D-27 · TC-NNN)"]
+```
+
+Ma trận được giữ **theo từng tính năng**; `TRR` có thể **gộp chéo nhiều tính năng (rollup)** để báo cáo toàn dự án (dòng shared chỉ đếm một lần). Vòng đời: `TRI` (khởi tạo từ REQ ID) → `TRU` (cập nhật cuối mỗi phase) → `TRA` (audit gap cuối cùng); `TRR` cho báo cáo coverage bất cứ lúc nào.
+
+**Cascade Sync (`SYNC`) — khi một tài liệu đổi.** Các deliverable không độc lập: đổi D-02 có thể kéo theo phải sửa thiết kế, test, code. **Cascade Sync** là phân tích *tác động lan truyền*: khi một tài liệu nguồn thay đổi, `SYNC` dò ma trận traceability để **đề xuất** các cập nhật cần làm ở những deliverable/test/code hạ nguồn.
+
+```mermaid
+flowchart LR
+    CH["D-02 thay đổi"] --> S{"SYNC<br/>dò traceability"}
+    S --> D1["Thiết kế bị ảnh hưởng?"]
+    S --> D2["Test bị ảnh hưởng?"]
+    S --> D3["Code bị ảnh hưởng?"]
+```
+
+> 📌 `SYNC` **đề xuất**, không tự ý sửa — vẫn theo "máy lo cấu trúc · người/LLM lo ngữ nghĩa": máy chỉ ra *cái gì có thể bị ảnh hưởng*, người quyết định *sửa thế nào*.
+
+**Vì sao quan trọng?** Traceability trả lời hai câu hỏi mà dự án nào cũng sợ: *"Có yêu cầu nào bị bỏ quên không?"* (gap lộ ra ngay) và *"Code/test này phục vụ yêu cầu nào?"* (truy ngược được, không có code "mồ côi"). Cascade Sync trả lời câu thứ ba: *"Đổi chỗ này thì còn gì phải sửa theo?"*
+
+> 🔎 **Phép loại suy:** ma trận như *danh sách hành lý* — đánh dấu từng món đã xếp; cuối cùng nhìn là biết còn thiếu gì. Cascade Sync như *báo thay đổi lịch bay* — đổi một chuyến, hệ thống nhắc bạn những đặt chỗ liên quan cần xếp lại.
+
+---
+
+## Các khái niệm ăn khớp với nhau thế nào
 
 ```mermaid
 flowchart TD
-    P["Phase (4 chặng tuần tự)"] --> D["Deliverable D-xx<br/>(sản phẩm mỗi phase)"]
-    D --> G["Phase Gate<br/>(kiểm tra deliverable trước khi đi tiếp)"]
-    D --> T["Traceability<br/>(nối deliverable về REQ ID)"]
-    G --> P
+    P0["Phase 0 · Project Init (PI)<br/>shared D-12/D-03 + baseline D-19/D-21"] --> FEAT["Mỗi tính năng (feature)"]
+    FEAT --> P["Phase 1→4 (tuần tự, có cổng)"]
+    P --> D["Deliverable D-xx<br/>(scope: per-feature · shared · dual)"]
+    D --> G["Phase Gate (PG, feature=)<br/>kiểm tra trước khi đi tiếp"]
+    D --> IR["Readiness (IR)<br/>đối soát đường may P2→P3"]
+    P --> TDD["TDD + bằng chứng RED (Phase 3)"]
+    D --> T["Traceability (8 cột) + Cascade Sync"]
+    G --> SHIP["Ship tính năng độc lập"]
 ```
 
-- **Phase** chia hành trình thành chặng.
-- **Deliverable** là sản phẩm cụ thể của mỗi chặng.
-- **Gate** đảm bảo chặng hiện tại đạt chuẩn trước khi đi tiếp.
-- **Traceability** xâu chuỗi mọi deliverable lại để không bỏ sót yêu cầu nào.
+- **Tính năng & Phạm vi** quyết định đơn vị giao hàng và ai dùng chung cái gì.
+- **Phase 0** dựng phần dùng chung một lần trước.
+- **Phase** chia mỗi tính năng thành chặng; **Gate** chốt từng chặng; **IR** canh đường may giữa thiết kế và code.
+- **Deliverable** là sản phẩm cụ thể, có mã và phạm vi.
+- **TDD + bằng chứng RED** giữ kỷ luật test-first ở Phase 3.
+- **Traceability + Cascade Sync** xâu chuỗi mọi thứ để không bỏ sót, và lan truyền thay đổi.
+
+> 💬 Không chắc bước tiếp theo? Hỏi `bmad-help` — trợ lý "làm gì tiếp" luôn sẵn sàng.
 
 ## Đọc tiếp
 
-- 📘 Muốn thấy 4 khái niệm này vận hành: [Bắt đầu với HBC](../tutorials/getting-started-hbc.md).
+- 📘 Muốn thấy các khái niệm này vận hành: [Bắt đầu với HBC](../tutorials/getting-started-hbc.md).
 - 🗺️ Toàn cảnh skill & deliverable: [Bản đồ quy trình](../tutorials/workflow-map.md).
+- 🤔 Vì sao giao tăng dần + TDD: [Giao tăng dần & TDD](why-incremental-tdd.md).
 - 🔧 Thực hành cụ thể: [Chạy Phase Gate](../how-to/run-a-phase-gate.md) · [Quản lý Traceability](../how-to/manage-traceability.md).
-- 📖 Tra nhanh một thuật ngữ: [Glossary khái niệm](../reference/concept-glossary.md).
+- 📖 Tra nhanh một thuật ngữ: [Glossary khái niệm](../reference/concept-glossary.md) · [Bảng deliverable](../reference/deliverables-glossary.md).

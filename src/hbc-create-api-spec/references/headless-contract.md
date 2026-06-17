@@ -7,6 +7,7 @@
 | `--sources` | No | Comma-separated file paths to source documents (D-02, D-19, OpenAPI files) |
 | `--mode` | No | `create` (default), `update`, or `validate` |
 | `--skip` | No | If present, mark D-21 as intentionally skipped (project has no API) |
+| `feature` | No | `feature=<slug>` (optional): when set, output resolves to the per-feature override `_bmad-output/features/<feature>/planning-artifacts/`; when absent, the shared baseline `_bmad-output/shared/api/` — path-existence precedence |
 
 Example: `hbc-create-api-spec --headless --sources "D-02-reqs.md,D-19-db.md" --mode create`
 
@@ -15,7 +16,7 @@ Example: `hbc-create-api-spec --headless --sources "D-02-reqs.md,D-19-db.md" --m
 ```json
 {
   "status": "complete | blocked | skipped",
-  "output_path": "/path/to/D-21-project-name-api-spec.md",
+  "output_path": "_bmad-output/shared/api/D-21-project-name-api-spec.md (shared baseline) | _bmad-output/features/<feature>/planning-artifacts/D-21-project-name-api-spec.md (per-feature override)",
   "decision_log": "/path/to/.decision-log.md",
   "validation": {
     "valid": true,

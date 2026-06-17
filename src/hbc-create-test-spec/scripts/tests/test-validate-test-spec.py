@@ -253,3 +253,15 @@ class TestF1SharedTcDetection:
         content = "## 3. Detail\n\n### TC-001: a\n**REQ ID:**\n**Severity:** High\n"
         fields = check_tc_fields(content)
         assert [i for i in fields if i["type"] == "TC_MISSING_REQ"]
+
+
+def test_namespaced_req_coverage(tmp_path):
+    # v2 regression: namespaced REQ-<FEAT>-NNN coverage + orphan detection must
+    # match the FULL id. A digits-only `REQ-(\d{3,})` skipped them → false-clean.
+    d27 = "## 3. Detail\n\n### TC-001: a\n**REQ ID:** REQ-AUTH-001\n**Severity:** High\n"
+    d02 = str(tmp_path / "D-02.md")
+    _write(d02, "REQ-AUTH-001 Login\n")
+    assert [i for i in check_req_coverage(d27, d02) if i["type"] == "REQ_NO_COVERAGE"] == []
+    _write(d02, "REQ-AUTH-001 Login\nREQ-AUTH-009 Extra\n")
+    unc = [i for i in check_req_coverage(d27, d02) if i["type"] == "REQ_NO_COVERAGE"]
+    assert len(unc) == 1 and unc[0]["req_id"] == "REQ-AUTH-009"

@@ -69,9 +69,46 @@ def check_done_tasks(tasks_text: str) -> list[dict]:
     return issues
 
 
-def _matrix_rows(matrix_text: str) -> list[list[str]]:
-    """Data rows of the traceability matrix
-    (req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp)."""
+_REQ_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+
+
+def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
+    """TDD soft (cụm 1=C / 3): mỗi task DONE phải có RED-evidence — file
+    <evidence_dir>/<TASK>.md ghi lần chạy test FAIL trước khi viết code.
+    Lưu ý: evidence do agent tự khai (self-attested), KHÔNG phải bằng chứng mật mã."""
+    issues: list[dict] = []
+    d = Path(evidence_dir)
+    for m in _TASK_ROW_RE.finditer(tasks_text):
+        task_id, _desc, _design, _test, _prio, status, _deps = (g.strip() for g in m.groups())
+        if status.lower() != "done":
+            continue
+        f = d / f"{task_id}.md"
+        if not f.exists():
+            issues.append({
+                "type": "NO_RED_EVIDENCE",
+                "message": f"{task_id} is DONE but has no RED-evidence ({f})",
+                "task_id": task_id,
+                "auto_fixable": False,
+            })
+            continue
+        try:
+            body = f.read_text(encoding="utf-8", errors="replace").lower()
+        except OSError:
+            body = ""
+        if "fail" not in body:
+            issues.append({
+                "type": "RED_EVIDENCE_NO_FAIL",
+                "message": f"{task_id}: RED-evidence không thấy dấu hiệu test FAIL (RED)",
+                "task_id": task_id,
+                "auto_fixable": False,
+            })
+    return issues
+
+
+def _matrix_table(matrix_text: str) -> tuple[dict, list[list[str]]]:
+    """Parse matrix → (header_map name→index, data rows). Header-name based, nên
+    chịu được cả matrix 7 cột (legacy) lẫn 8 cột (có cột `feature` mới)."""
+    header: dict = {}
     rows: list[list[str]] = []
     for line in matrix_text.splitlines():
         s = line.strip()
@@ -81,19 +118,32 @@ def _matrix_rows(matrix_text: str) -> list[list[str]]:
         joined = "".join(cells)
         if joined and set(joined) <= {"-", " ", ":"}:
             continue  # separator
-        if not re.match(r"REQ-\d{3,}", cells[0]):
-            continue  # header / non-data row — only REQ-keyed rows count
-        rows.append(cells)
-    return rows
+        low = [c.lower() for c in cells]
+        if not header:
+            if "req_id" in low:
+                header = {name: i for i, name in enumerate(low)}
+            continue
+        idx = header.get("req_id", 0)
+        if idx < len(cells) and _REQ_RE.match(cells[idx]):
+            rows.append(cells)
+    return header, rows
+
+
+def _col(cells: list[str], header: dict, name: str) -> str:
+    i = header.get(name, -1)
+    return cells[i].strip() if 0 <= i < len(cells) else ""
 
 
 def check_matrix(matrix_text: str, project_root: str) -> list[dict]:
     issues: list[dict] = []
-    for cells in _matrix_rows(matrix_text):
-        req_id = cells[0]
-        design_ref = cells[2] if len(cells) > 2 else ""
-        code_ref = cells[3] if len(cells) > 3 else ""
-        test_ref = cells[4] if len(cells) > 4 else ""
+    header, rows = _matrix_table(matrix_text)
+    if not header:
+        return issues
+    for cells in rows:
+        req_id = _col(cells, header, "req_id")
+        design_ref = _col(cells, header, "design_ref")
+        code_ref = _col(cells, header, "code_ref")
+        test_ref = _col(cells, header, "test_ref")
 
         # code_ref tokens that look like file paths must exist on disk.
         if not _blank(code_ref):
@@ -123,11 +173,15 @@ def check_matrix(matrix_text: str, project_root: str) -> list[dict]:
     return issues
 
 
-def validate(tasks_path: str, matrix_path: str | None = None, project_root: str = ".") -> dict:
+def validate(tasks_path: str, matrix_path: str | None = None, project_root: str = ".",
+             tdd_evidence_dir: str | None = None) -> dict:
     issues: list[dict] = []
     tasks_text = Path(tasks_path).read_text(encoding="utf-8")
     issues.extend(check_done_tasks(tasks_text))
     checked = ["DONE tasks have an assigned test (test_refs)"]
+    if tdd_evidence_dir:
+        issues.extend(check_red_evidence(tasks_text, tdd_evidence_dir))
+        checked += ["DONE tasks have RED-evidence (self-attested failing test)"]
     if matrix_path:
         matrix_text = Path(matrix_path).read_text(encoding="utf-8")
         issues.extend(check_matrix(matrix_text, project_root))
@@ -138,7 +192,10 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         structure_ok,
         semantic_review=SEMANTIC_NA,
         checked=checked,
-        not_checked=["whether the code actually fulfils the task (LLM review / acceptance)"],
+        not_checked=[
+            "whether the code actually fulfils the task (LLM review / acceptance)",
+            "RED-evidence là self-attested — không có bằng chứng git/thời gian chống ngụy tạo (cụm 1=C)",
+        ],
     )
     v.update({"valid": structure_ok, "total_issues": len(issues), "issues": issues})
     return v
@@ -148,12 +205,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Validate Phase 3 implementation reality (D2).")
     ap.add_argument("--tasks", required=True, help="Path to task-breakdown.md")
     ap.add_argument("--matrix", help="Path to traceability matrix")
+    ap.add_argument("--tdd-evidence-dir", help="Dir of RED-evidence files (<TASK>.md) — Phase 3 TDD check")
     ap.add_argument("--project-root", default=".", help="Root for resolving code_ref paths")
     ap.add_argument("-o", "--output", help="Output JSON path (default: stdout)")
     args = ap.parse_args()
 
     try:
-        result = validate(args.tasks, args.matrix, args.project_root)
+        result = validate(args.tasks, args.matrix, args.project_root, args.tdd_evidence_dir)
     except (OSError, UnicodeDecodeError) as exc:
         print(json.dumps({"error": f"not readable: {exc}", "valid": False}, ensure_ascii=False))
         return 2

@@ -28,15 +28,17 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+
 ## Stage 1: Prerequisites
 
-**Phase-entry gate (enforced, overridable).** This skill opens Phase 3. Before doing anything, verify the **Phase 2 gate PASSED** — run `hbc-phase-gate` for phase 2 headless (`-H`) and read `overall_status`. If it is not `PASSED` (FAILED / WARNING / never run), **HALT** and tell the user Phase 2 is not closed, citing the failing items. Proceed only if the user explicitly overrides (e.g. "override gate" / "proceed anyway") — record that an override was used in the task-breakdown intro. In headless mode, a non-PASSED Phase 2 gate returns `blocked` (no override). This is the runtime teeth behind the waterfall ordering — do not silently build tasks on an unclosed design phase.
+**Phase-entry gate (enforced, overridable).** This skill opens Phase 3. Before doing anything, verify the **Phase 2 gate PASSED for the active feature** — run `hbc-phase-gate` for phase 2 headless (`-H`) **with `feature={feature}`** and read `overall_status`. If it is not `PASSED` (FAILED / WARNING / never run), **HALT** and tell the user Phase 2 is not closed for this feature, citing the failing items. Proceed only if the user explicitly overrides (e.g. "override gate" / "proceed anyway") — record that an override was used in the task-breakdown intro. In headless mode, a non-PASSED Phase 2 gate returns `blocked` (no override). This is the runtime teeth behind the gated phase ordering — do not silently build tasks on an unclosed design phase.
 
-Load all Phase 2 design artifacts as input:
-- **D-19** (database design) — entities to implement.
-- **D-27** (test specification) — test cases to assign to tasks.
-- **D-12** (coding standards) — apply during implementation.
-- **D-21** (API spec, optional) — endpoints to implement.
+Load all Phase 2 design artifacts as input, resolving each by its scope:
+- **D-27** (test specification) — test cases to assign to tasks. **Per-feature**: `{d27_path} = {output_folder}/features/{feature}/planning-artifacts/D-27-*.md`.
+- **D-19** (database design) — entities to implement. **DUAL** (path-existence precedence): prefer the per-feature override `{output_folder}/features/{feature}/planning-artifacts/D-19-{feature}-*.md` if it exists, else the shared baseline `{output_folder}/shared/erd/D-19-*.md`. Bind the resolved path as `{d19_path}`.
+- **D-12** (coding standards) — apply during implementation. **Shared**: `{output_folder}/shared/coding-standards/D-12-*.md`.
+- **D-21** (API spec, optional) — endpoints to implement. **DUAL** (same precedence as D-19): per-feature override `{output_folder}/features/{feature}/planning-artifacts/D-21-{feature}-*.md` else shared baseline `{output_folder}/shared/api/D-21-*.md`.
 
 Check if `task-breakdown.md` already exists. If so, offer to regenerate (destructive) or update (additive).
 

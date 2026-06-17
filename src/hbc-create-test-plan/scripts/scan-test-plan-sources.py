@@ -58,6 +58,22 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
     return fields
 
 
+def _first_match(search_dir: Path, prefix: str) -> Path | None:
+    """First file matching prefix in search_dir (flat first, then recursive).
+
+    output_dir is either the explicit per-feature dir (flat) or the
+    _bmad-output tree (nested per-feature dirs); recursive fallback finds
+    deliverables under features/<feature>/... in v2.
+    """
+    for path in sorted(search_dir.glob(f"{prefix}*")):
+        if path.is_file():
+            return path
+    for path in sorted(search_dir.rglob(f"{prefix}*")):
+        if path.is_file():
+            return path
+    return None
+
+
 def find_existing_d26(root: Path, output_dir: Path) -> dict[str, str] | None:
     """Search for existing D-26 test plan documents."""
     search_dirs: list[Path] = []
@@ -69,14 +85,21 @@ def find_existing_d26(root: Path, output_dir: Path) -> dict[str, str] | None:
     for search_dir in search_dirs:
         if not search_dir.exists():
             continue
-        for path in search_dir.glob("D-26*"):
-            if path.is_file():
-                fm = parse_frontmatter(path)
-                return {
-                    "path": str(path.relative_to(root)),
-                    "lastStep": fm.get("lastStep", ""),
-                    "version": fm.get("version", ""),
-                }
+        # Only recurse inside the controlled output_dir subtree; keep the root
+        # scan flat to avoid matching unrelated files deep in the project.
+        path = _first_match(search_dir, "D-26") if search_dir == output_dir else None
+        if path is None:
+            for p in sorted(search_dir.glob("D-26*")):
+                if p.is_file():
+                    path = p
+                    break
+        if path is not None:
+            fm = parse_frontmatter(path)
+            return {
+                "path": str(path.relative_to(root)),
+                "lastStep": fm.get("lastStep", ""),
+                "version": fm.get("version", ""),
+            }
     return None
 
 
@@ -91,16 +114,21 @@ def find_source_doc(root: Path, output_dir: Path, prefix: str) -> str | None:
     for search_dir in search_dirs:
         if not search_dir.exists():
             continue
-        for path in search_dir.glob(f"{prefix}*"):
-            if path.is_file():
-                return str(path.relative_to(root))
+        if search_dir == output_dir:
+            path = _first_match(search_dir, prefix)
+        else:
+            path = next((p for p in sorted(search_dir.glob(f"{prefix}*")) if p.is_file()), None)
+        if path is not None:
+            return str(path.relative_to(root))
     return None
 
 
 def find_project_context(root: Path) -> str | None:
     """Find project-context.md anywhere in the project."""
     for ctx in root.rglob("project-context.md"):
-        return str(ctx.relative_to(root))
+        # as_posix() → forward slashes on every platform, so the emitted JSON path
+        # is identical on Windows and macOS (HBC determinism goal).
+        return ctx.relative_to(root).as_posix()
     return None
 
 
@@ -187,7 +215,13 @@ def determine_state(existing_d26: dict[str, str] | None) -> str:
 def scan_sources(project_root: str, output_dir: str | None = None) -> dict:
     """Scan project for test plan sources and existing D-26."""
     root = Path(project_root)
-    out_dir = Path(output_dir) if output_dir else root / "_bmad-output" / "planning-artifacts"
+    # In v2 the deliverable is per-feature (the SKILL passes --output-dir
+    # {output_folder}/features/{feature}/planning-artifacts explicitly). When no
+    # --output-dir is given the script is only used for cross-feature source
+    # DISCOVERY, so the default detection root is the whole _bmad-output tree
+    # (find_existing_d26 / find_source_doc walk it via glob), NOT the old flat
+    # _bmad-output/planning-artifacts path which no longer exists in v2.
+    out_dir = Path(output_dir) if output_dir else root / "_bmad-output"
 
     existing_d26 = find_existing_d26(root, out_dir)
     state = determine_state(existing_d26)
@@ -220,7 +254,7 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         default=None,
-        help="Output directory for D-26 (default: {project-root}/_bmad-output/planning-artifacts)",
+        help="Per-feature output dir for D-26 (default: scan the {project-root}/_bmad-output tree for discovery)",
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()

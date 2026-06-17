@@ -28,6 +28,8 @@ Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an 
 
 ## On Activation
 
+> **Scope DUAL + feature (B):** mặc định ghi/đọc baseline `shared/erd/` (`{workflow.er_diagram_output_path}`); truyền `feature=<slug>` → tạo/đọc bản **override per-feature** (`{workflow.er_diagram_feature_path}`, path-existence precedence).
+
 Resolve the `{workflow.*}` block: run `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow`. If missing, hand-merge `{skill-root}/customize.toml` → `{project-root}/_bmad/custom/{skill-name}.toml` → `{project-root}/_bmad/custom/{skill-name}.user.toml` (scalars override, arrays append, arrays-of-tables keyed by `code`/`id` replace matching entries). Keep the resolved block in memory for the entire session.
 
 Execute `{workflow.activation_steps_prepend}` in order. Load `{workflow.persistent_facts}` (entries prefixed `file:` are paths/globs; others are verbatim facts).
@@ -44,14 +46,22 @@ Greet `{user_name}` in `{communication_language}` with a one-sentence orientatio
 
 ### 1. Prerequisites and Scope
 
-#### 1a. Bind workspace and detect resume state
+#### 1a. Resolve DUAL scope, bind workspace, detect resume state
 
-Bind `{primary} = {workflow.er_diagram_output_path}` — a single output FILE written directly into `{planning_artifacts}` (no per-document folder). The session decision log lives at `{planning_artifacts}/.decision-log.md` and scan artifacts at `{planning_artifacts}/.scan/` — both shared peers alongside the other D-* documents. Create `{planning_artifacts}` and `{planning_artifacts}/.scan/` if absent.
+**Scope resolution (DUAL — path-existence precedence).** D-19 has two possible homes: a project-wide **shared baseline** (`{workflow.er_diagram_output_path}`, under `shared/erd/`) and a **per-feature override** (`{workflow.er_diagram_feature_path}`, under `features/{feature}/planning-artifacts/`). Resolve the active scope before binding anything:
+
+1. Resolve `{feature}`: a `feature=<slug>` arg wins; else an active-feature value carried in the session; else — **interactive**: ask whether this D-19 is the shared baseline or a per-feature override (and for which feature); **headless**: if no feature is resolvable, default to the shared baseline (do NOT block — D-19 baseline is legitimately shared).
+2. Bind the active output FILE `{primary}` and its workspace dir `{ws}`:
+   - **Per-feature override** (feature resolved): `{primary} = {workflow.er_diagram_feature_path}` (substitute `{feature}`); `{ws} = {output_folder}/features/{feature}/planning-artifacts`.
+   - **Shared baseline** (no feature): `{primary} = {workflow.er_diagram_output_path}`; `{ws} = {output_folder}/shared/erd`.
+3. **Path-existence precedence** (resume/read): if a per-feature override already exists for the active feature, it takes precedence over the shared baseline for resume/update detection; a downstream reader resolves D-19 by checking the per-feature path first, then falling back to the shared baseline.
+
+`{primary}` is a single output FILE (no per-document folder). The session decision log lives at `{ws}/.decision-log.md` and scan artifacts at `{ws}/.scan/` — both peers of `{primary}`. Create `{ws}` and `{ws}/.scan/` if absent. Throughout the rest of this workflow, the decision-log / `.scan` / output references resolve against `{ws}` for the active scope; PRD / Architecture **source** discovery still scans the project-level `{planning_artifacts}`.
 
 Run the discover script, pointing `--primary` at the output file so it can read resume state from the document and its peer decision log in one JSON:
 
 ```
-python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.er_diagram_template} --primary {primary} -o {planning_artifacts}/.scan/artifacts.json
+python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.er_diagram_template} --primary {primary} -o {ws}/.scan/artifacts.json
 ```
 
 Consume the JSON. If the script exits with a non-zero code or produces no output, proceed as if `artifacts_dir_exists: false` and `resume_state.recommended_intent: "Fresh"` — log the error and exit code to `.decision-log.md`. If `fatal: "template_missing"` → HALT (interactive) or return `blocked` with `reason: "template_missing"` (headless). Otherwise read `resume_state.recommended_intent` and `resume_state.fresh_reason`:
@@ -140,7 +150,7 @@ Initialize the primary document from `{workflow.er_diagram_template}`, translati
 Run the entity-candidate pre-pass on the chosen sources:
 
 ```
-python3 {skill-root}/scripts/extract-entity-candidates.py <source-paths...> -o {planning_artifacts}/.scan/entity-candidates.json
+python3 {skill-root}/scripts/extract-entity-candidates.py <source-paths...> -o {ws}/.scan/entity-candidates.json
 ```
 
 Use the candidate JSON as a starting point — confirm, merge, and fill gaps rather than free-reading raw sources. If the script returns `"warn": "entity_extraction_empty"`, note that mechanical extraction found nothing and proceed with full LLM extraction from sources.
@@ -205,9 +215,9 @@ Stage-3 lens-targets: stress-test entity completeness, relationship cardinality 
 Run the two deterministic validators (both may run concurrently — they are independent):
 
 ```
-python3 {skill-root}/scripts/validate-mermaid-er.py {primary} --expected-entities "<comma-separated stage-2 entities>" -o {planning_artifacts}/.scan/mermaid-er.json
+python3 {skill-root}/scripts/validate-mermaid-er.py {primary} --expected-entities "<comma-separated stage-2 entities>" -o {ws}/.scan/mermaid-er.json
 
-python3 {skill-root}/scripts/check-entity-coverage.py --prd <each-prd-path-or-shard> --d19 {primary} -o {planning_artifacts}/.scan/entity-coverage.json
+python3 {skill-root}/scripts/check-entity-coverage.py --prd <each-prd-path-or-shard> --d19 {primary} -o {ws}/.scan/entity-coverage.json
 ```
 
 Pass each PRD path (or each shard from `artifacts.json` for sharded PRDs) as a separate `--prd` argument. If the result contains `"warn": "prd_entity_extraction_empty"`, surface it: "PRD entity extraction found zero entities — coverage check may be incomplete; manual review recommended."

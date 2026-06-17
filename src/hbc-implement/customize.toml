@@ -13,8 +13,12 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Path to the task breakdown file.
-task_breakdown_path = "{implementation_artifacts}/task-breakdown.md"
+# Path to the task breakdown file — PER-FEATURE ({feature} resolved at runtime).
+task_breakdown_path = "{output_folder}/features/{feature}/implementation-artifacts/task-breakdown.md"
+
+# RED-evidence dir (TDD soft): IM lưu log test FAIL mỗi task vào <dir>/<TASK>.md
+# trước khi viết code. Phase 3 gate đòi mỗi task DONE có RED-evidence.
+tdd_evidence_dir = "{output_folder}/features/{feature}/implementation-artifacts/tdd-evidence"
 
 # Coverage command (auto-detected from project-context.md if empty).
 # Examples: "pytest --cov=src --cov-report=term-missing", "jest --coverage"

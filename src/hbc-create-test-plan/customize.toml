@@ -23,8 +23,8 @@ scan_script = "scripts/scan-test-plan-sources.py"
 # D-26 template path.
 template_path = "assets/D-26_test-plan_template.md"
 
-# Output path for the generated D-26 document.
-output_dir = "{planning_artifacts}"
+# D-26 per-feature ({feature} resolved at runtime).
+output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script.
 validation_script = "scripts/validate-test-plan.py"

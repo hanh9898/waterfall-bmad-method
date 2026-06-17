@@ -32,15 +32,19 @@ decision_log_template = "{skill-root}/assets/decision-log-template.md"
 # not a contract. Allowed values: sequenceDiagram, flowchart, stateDiagram.
 diagram_type = "sequenceDiagram"
 
-# Single output FILE for the D-06 document, written directly into
-# {planning_artifacts} alongside the other D-* documents (no per-document
-# folder). The session decision log (.decision-log.md) and scan artifacts
-# (.scan/) are shared peers in {planning_artifacts}, not nested under D-06.
-business_flow_output_path = "{planning_artifacts}/D-06-{project_name}-business-flow-diagram.md"
+# Single output FILE for the D-06 document (per-feature). D-06 is a per-feature
+# deliverable: it lives in the feature's own planning-artifacts dir, NOT the flat
+# project-level {planning_artifacts}. The session decision log (.decision-log.md)
+# and scan artifacts (.scan/) are peers in that SAME per-feature dir (i.e. the
+# directory of business_flow_output_path), not under the flat planning_artifacts.
+business_flow_output_path = "{output_folder}/features/{feature}/planning-artifacts/D-06-{feature}-business-flow-diagram.md"
 
 # Regex pattern for functional requirement identifiers used by check-fr-coverage.py.
-# Override for projects using REQ-001, UC-01, US-001, etc.
-fr_id_pattern = '\b(REQ-[0-9]+(?:\.[0-9]+)*)\b'
+# Namespace-aware (v2): matches per-feature `REQ-<FEAT>-NNN` (e.g. REQ-AUTH-001) and
+# shared `REQ-SHARED-NNN` as well as legacy `REQ-001` / dotted `REQ-1.2`. A
+# namespace-blind `REQ-[0-9]+` silently skipped every REQ-<FEAT>-NNN id.
+# Override for projects using UC-01, US-001, etc.
+fr_id_pattern = '\b(REQ-(?:[A-Z0-9]+-)?[0-9]+(?:\.[0-9]+)*)\b'
 
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".

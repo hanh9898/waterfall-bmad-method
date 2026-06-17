@@ -28,6 +28,8 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Scope: SHARED** — deliverable này dùng chung toàn dự án (tạo ở Phase 0 qua `hbc-project-init`), **không** nhận `feature`; ghi vào `shared/`.
+
 ## Stage 1: Prerequisites + Discovery
 
 1a. **Source scan.** Check `{workflow.output_dir}` for existing D-12 artifacts:

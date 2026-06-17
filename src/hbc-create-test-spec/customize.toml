@@ -23,8 +23,8 @@ scan_script = "scripts/scan-test-spec-sources.py"
 # D-27 template path.
 template_path = "assets/D-27_test-spec_template.md"
 
-# Output path for the generated D-27 document.
-output_dir = "{planning_artifacts}"
+# D-27 per-feature ({feature} resolved at runtime).
+output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script.
 validation_script = "scripts/validate-test-spec.py"

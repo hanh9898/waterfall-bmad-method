@@ -2,13 +2,13 @@
 
 > 🌐 [Tiếng Việt](README.md) (default) · **English**
 
-A **waterfall + TDD** workflow for HBLAB: guides you through 4 quality-gated phases and traces every requirement down to its tests.
+An **incremental, per-feature** development workflow for HBLAB: run **Phase 0 — Project Init** once to create the shared deliverables, then **each feature** runs all 4 quality-gated stages + TDD (test-first, with RED evidence), tracing requirements down to their tests.
 
 ## Table of contents
 
 - [What HBC solves for you](#what-hbc-solves-for-you)
 - [🚀 Quick Start](#-quick-start)
-- [🗺️ Mental model: the 4 phases](#-mental-model-the-4-phases)
+- [🗺️ Mental model: Phase 0 + the 4 phases](#-mental-model-phase-0--the-4-phases)
 - [📦 Requirements & Installation](#-requirements--installation)
 - [📚 Documentation](#-documentation)
 - [🧰 Skills overview](#-skills-overview)
@@ -25,10 +25,12 @@ On contractual projects with formal acceptance, three familiar pains:
 - **Tests that miss requirements** → bugs slip through; no way to know coverage is complete.
 - **Hard to prove "we did everything"** at handover or audit.
 
-**HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) implementing a **waterfall + TDD** lifecycle: **5 coordinator agents** guide you through **4 phases**, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
+**HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) applying an **incremental + TDD** process **per feature**: run **Phase 0 (`PI`)** once to create the **shared deliverables**, then **5 coordinator agents** guide each feature through **4 phases**, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
 
-- **For:** teams working waterfall + TDD — BA, Architect, QA, Developer, Tester.
+- **For:** teams working incrementally with TDD — BA, Architect, QA, Developer, Tester.
 - **Where you type commands:** inside your **AI coding agent** (Claude Code, Cursor…), **not** a plain terminal.
+
+> ℹ️ *This project delivers **incrementally, feature by feature**: each feature runs all 4 gated stages + TDD, then ships. "Waterfall" is a **delivery model**, not HBC's architecture — here it only refers to the discipline **within a single feature** (design first, sign off each milestone). Details: [Is HBC really pure waterfall?](docs/en/explanation/why-incremental-tdd.md#is-hbc-really-pure-waterfall)*
 
 > 📖 New to "deliverable / phase gate / traceability"? → [Concept Glossary](docs/en/reference/concept-glossary.md).
 
@@ -40,9 +42,11 @@ On contractual projects with formal acceptance, three familiar pains:
 
 After installing, **inside your AI coding agent** (e.g. Claude Code) opened at the project root, new users follow **3 steps**:
 
+> 🅿️ **Step 0 (optional, run ONCE project-wide):** type `PI` (`hbc-project-init`) to create the **shared** deliverables: D-12 Coding Standards, D-03 Glossary, and baseline D-19 ERD / D-21 API. Idempotent — it skips what already exists and takes **no** `feature` arg. Do this before starting your first feature.
+
 1. **Open the Phase 1 coordinator** → type `BA` (or `hbc-agent-ba`).
-2. **Create the Requirements Specification (D-02)** → type `REQ`. This is the required deliverable that grounds every later phase.
-3. **Run the Phase Gate** before moving on → type `PG 1` (always with the phase number, 1–4). Only a "pass" lets you advance.
+2. **Create the Requirements Specification (D-02)** → type `REQ`. This is the required **per-feature** deliverable that grounds every later phase; IDs are namespaced as `REQ-<FEAT>-NNN` (e.g. `REQ-AUTH-001`).
+3. **Run the Phase Gate** before moving on → type `PG 1` (always with the phase number, 1–4, plus `feature=<slug>`). Only a "pass" lets you advance.
 
 What you'll see (**illustrative** — exact wording may differ):
 
@@ -51,34 +55,44 @@ What you'll see (**illustrative** — exact wording may differ):
 Business Analyst — Phase 1 Analysis coordinator. You can: REQ, GLO, BFD…
 > REQ
 … (the agent interviews you about a requirement) …
-✓ Created _bmad-output/planning-artifacts/D-02-requirements.md  (REQ-001, REQ-002…)
+✓ Created _bmad-output/features/auth/planning-artifacts/D-02-requirements.md  (REQ-AUTH-001, REQ-AUTH-002…)
 ```
 
-Then repeat the loop: open the phase's agent → run its required skills → run `PG <phase>`. Work through all 4 phases and you're done. *(The tutorial also inserts `TRI` after step 2 to turn on traceability.)*
+Then repeat the loop: open the phase's agent → run its required skills → run `PG <phase> feature=<slug>`. Work through all 4 phases and that feature **ships independently**. *(The tutorial also inserts `TRI` after step 2 to turn on traceability.)*
+
+> 🗂️ **Output layout:** each feature lives under `_bmad-output/features/<feature>/…`; shared deliverables live under `_bmad-output/shared/…`.
 
 📘 **First time?** Start with the [10-minute Quickstart](docs/en/tutorials/quickstart.md) — install, verify, and create your first D-02.
 
 ---
 
-## 🗺️ Mental model: the 4 phases
+## 🗺️ Mental model: Phase 0 + the 4 phases
 
-HBC moves **sequentially** through 4 phases. Each produces a required deliverable and must pass a **Phase Gate** (`PG`) before the next phase begins.
+Run **Phase 0 — Project Init (`PI`)** **once** project-wide to create the shared deliverables; then **each feature** moves **sequentially** through 4 phases. Each produces a required deliverable and must pass a **Phase Gate** (`PG`) before the next phase begins.
 
 ```mermaid
 flowchart LR
-    P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
-    P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan"]
-    P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD)"]
-    P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
+    P0["Phase 0 · Project Init<br/>👤 PI<br/>shared D-12 · D-03 · baseline D-19 · D-21"]
 
-    P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
+    subgraph FEAT["Repeat per feature"]
+        direction LR
+        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
+        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR"]
+        P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD · RED→GREEN)"]
+        P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
+        P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
+    end
 
-    TR["🔗 Traceability (cross-cutting)<br/>TRI → TRU → TRA"]
+    P0 --> P1
+
+    TR["🔗 Traceability (cross-cutting)<br/>TRI → TRU → TRA · SYNC"]
     TR -.->|tracks| P1 & P2 & P3 & P4
 ```
 
-- **Phase Gate (`PG`)** — a control checkpoint at each phase boundary (deterministic checks + LLM evaluation).
-- **Traceability (`TRI` → `TRU` → `TRA`)** — a matrix ensuring every requirement (REQ ID) has matching design, code, and tests.
+- **Phase 0 (`PI`)** — runs once, creates the shared deliverables (D-12, D-03) + baselines (D-19, D-21); idempotent, no `feature` arg.
+- **Phase Gate (`PG`)** — a control checkpoint at each phase boundary (deterministic checks + LLM evaluation); carries `feature=`.
+- **Readiness check (`IR`)** — the Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + the matrix before implementation.
+- **Traceability (`TRI` → `TRU` → `TRA`)** — a matrix ensuring every requirement (REQ ID) has matching design, code, and tests. **`SYNC`** proposes cascade updates when a source doc changes.
 
 👉 To understand Phase / Gate / Deliverable / Traceability in depth: [Core Concepts](docs/en/explanation/concepts.md).
 
@@ -133,16 +147,17 @@ Docs follow the [Divio](https://docs.divio.com/documentation-system/) model — 
 
 ## 🧰 Skills overview
 
-HBC ships **5 coordinator agents** plus workflow skills per phase. Each workflow skill supports **Create / Update / Validate** modes; most support `--headless` / `-H`.
+HBC ships **5 coordinator agents** plus workflow skills per phase. Each workflow skill supports **Create / Update / Validate** modes; most support `--headless` / `-H`. The **Scope** column tells you whether a deliverable is **shared** (project-wide), **per-feature** (one per feature), or **dual** (shared baseline + optional per-feature override).
 
-| Phase | Agent | Key skills (deliverable) |
-| --- | --- | --- |
-| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) |
-| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) |
-| 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) |
-| 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) |
-| 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) |
-| Cross-cutting | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) |
+| Phase | Agent | Key skills (deliverable) | Scope |
+| --- | --- | --- | --- |
+| 0 · Project Init | — | `PI` (shared D-12/D-03 + baseline D-19/D-21) | shared (run once) |
+| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) | D-02/D-06 per-feature · D-03 shared |
+| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) | D-12 shared · D-19/D-21 dual |
+| 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) · `IR` (Readiness) | per-feature |
+| 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) | per-feature |
+| 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) | per-feature |
+| Cross-cutting | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) · `SYNC` (Cascade Sync) | per-feature (`PG`/`TR*`) · cross-cutting (`SYNC`) |
 
 📖 Full list with descriptions: [Skills Catalog](docs/en/reference/skills-catalog.md).
 

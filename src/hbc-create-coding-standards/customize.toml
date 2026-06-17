@@ -20,8 +20,8 @@ persistent_facts = [
 # D-12 template path. Override to use a custom template with different sections.
 template_path = "assets/D-12_coding-standards_template.md"
 
-# Output path for the generated D-12 document.
-output_dir = "{planning_artifacts}"
+# D-12 Coding Standards là SHARED (toàn dự án), tạo ở Phase 0.
+output_dir = "{output_folder}/shared/coding-standards"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-coding-standards.py"

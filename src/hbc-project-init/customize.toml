@@ -1,0 +1,21 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-project-init.
+# Team overrides:     {project-root}/_bmad/custom/hbc-project-init.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-project-init.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Root for shared (project-global) deliverables created in Phase 0.
+shared_dir = "{output_folder}/shared"

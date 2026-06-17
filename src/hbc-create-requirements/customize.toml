@@ -20,8 +20,8 @@ persistent_facts = [
 # D-02 template path. Override to use a custom template with different sections.
 template_path = "assets/D-02_requirements_template.md"
 
-# Output path for the generated D-02 document.
-output_dir = "{planning_artifacts}"
+# Output path for the generated D-02 document — PER-FEATURE ({feature} resolved at runtime).
+output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-requirements.py"

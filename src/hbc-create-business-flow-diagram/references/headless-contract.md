@@ -9,6 +9,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | Flag | Default | Effect |
 |---|---|---|
 | `-H` / `--headless` | off | Skip every interactive prompt; resolve decisions via the defaults table below; emit JSON return contract on completion or block. |
+| `feature=<slug>` | unset | Required in headless: the active feature slug. Per-feature output paths resolve under `_bmad-output/features/<feature>/...`. Missing → return `blocked` with `reason: "feature_required"`. |
 | `--prd-path=<path>` | unset | Use this exact PRD location, skip discovery glob. Repeatable for sharded PRDs or multiple sources. |
 | `--mode=greenfield\|migration` | inferred | Force mode; skip mode confirmation. |
 | `--scope=single\|multi` | inferred | Force scope; skip scope confirmation. |
@@ -84,5 +85,6 @@ Defined `reason` values (closed set — automators may switch on these):
 | `fr_coverage_gap` | `check-fr-coverage.py` reported `uncovered` or `phantom` FR ids. |
 | `migration_without_as_is` | `--mode=migration` requested but no PRD source contains AS-IS / "current state" markers, and `--allow-migration-without-as-is` was not passed. |
 | `resolver_missing` | The customization resolver script failed AND the SKILL.md hand-merge fallback could not complete. |
+| `feature_required` | Headless invocation with no resolvable feature. |
 
 Add new reasons only by extending this table — automators rely on the closed-set guarantee.

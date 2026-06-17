@@ -44,7 +44,10 @@ ENDPOINT_TABLE_RE = re.compile(
     r"\|\s*\d+\s*\|\s*(\w+)\s*\|\s*([^\|]+)\|\s*([^\|]+)\|\s*([^\|]*)\|"
 )
 
-REQ_ID_RE = re.compile(r"REQ-(\d{3,})")
+# Namespace-aware (v2): full-match (non-capturing) so findall returns whole ids
+# like REQ-AUTH-001 / REQ-SHARED-002 / legacy REQ-001. A capturing `REQ-(\d{3,})`
+# returned only the digits and silently skipped every REQ-<FEAT>-NNN id.
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 
 HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 
@@ -116,11 +119,11 @@ def check_req_traceability(content: str, d02_path: str | None) -> list[dict]:
     d21_req_ids = set(REQ_ID_RE.findall(content))
 
     orphans = d21_req_ids - d02_req_ids
-    for req_num in sorted(orphans):
+    for req_id in sorted(orphans):
         issues.append({
             "type": "ORPHAN_REQ",
-            "message": f"REQ-{req_num} referenced in D-21 but not found in D-02",
-            "req_id": f"REQ-{req_num}",
+            "message": f"{req_id} referenced in D-21 but not found in D-02",
+            "req_id": req_id,
             "auto_fixable": False,
         })
 

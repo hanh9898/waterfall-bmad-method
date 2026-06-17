@@ -70,30 +70,61 @@ def extract_candidates(path: Path) -> list[dict]:
     return list(seen.values())
 
 
-def scan_sources(project_root: str, explicit_sources: list[str] | None = None) -> dict:
-    """Scan project for glossary sources and existing D-03."""
+def scan_sources(
+    project_root: str,
+    explicit_sources: list[str] | None = None,
+    output_folder: str = "_bmad-output",
+) -> dict:
+    """Scan project for glossary sources and existing D-03.
+
+    D-03 is a SHARED deliverable written to {output_folder}/shared/glossary/.
+    Resolve the existing-D-03 target there (with a back-compat fallback to the
+    old flat location and project root). Source docs (D-02 etc.) may be
+    per-feature or project-level, so the whole _bmad-output tree (plus root) is
+    searched for them.
+    """
     root = Path(project_root)
-    hbc_output = root / "_bmad-output"
+    out_root = Path(output_folder) if Path(output_folder).is_absolute() else root / output_folder
+    shared_glossary = out_root / "shared" / "glossary"
 
     existing_d03: dict | None = None
     source_docs: list[dict] = []
     all_candidates: list[dict] = []
 
-    search_dirs = [hbc_output / "planning-artifacts"] if hbc_output.exists() else []
-    search_dirs.append(root)
-
-    for search_dir in search_dirs:
+    # Detect existing D-03 in the SHARED glossary dir first; keep back-compat
+    # fallbacks to the old flat planning-artifacts path and the project root.
+    d03_search_dirs = [
+        shared_glossary,
+        out_root / "planning-artifacts",
+        root,
+    ]
+    for search_dir in d03_search_dirs:
         if not search_dir.exists():
             continue
-        for path in search_dir.glob("D-03*"):
+        for path in sorted(search_dir.glob("D-03*")):
             if path.is_file():
                 fm = parse_frontmatter(path)
+                rel = (
+                    str(path.relative_to(root))
+                    if path.is_relative_to(root)
+                    else str(path)
+                )
                 existing_d03 = {
-                    "path": str(path.relative_to(root)),
+                    "path": rel,
                     "lastStep": fm.get("lastStep", ""),
                     "version": fm.get("version", ""),
                 }
                 break
+        if existing_d03:
+            break
+
+    # Source docs may live anywhere under _bmad-output (per-feature or
+    # project-level) or at the project root — walk the whole tree.
+    if out_root.exists():
+        search_dirs = sorted({p.parent for p in out_root.rglob("*") if p.is_file()})
+    else:
+        search_dirs = []
+    search_dirs.append(root)
 
     if explicit_sources:
         for src in explicit_sources:
@@ -103,13 +134,17 @@ def scan_sources(project_root: str, explicit_sources: list[str] | None = None) -
                 source_docs.append({"path": rel, "name": path.name})
                 all_candidates.extend(extract_candidates(path))
     else:
+        seen_src: set[str] = set()
         for search_dir in search_dirs:
             if not search_dir.exists():
                 continue
             for pattern in ["D-02*", "D-01*"]:
-                for path in search_dir.glob(pattern):
+                for path in sorted(search_dir.glob(pattern)):
                     if path.is_file():
                         rel = str(path.relative_to(root))
+                        if rel in seen_src:
+                            continue
+                        seen_src.add(rel)
                         source_docs.append({"path": rel, "name": path.name})
                         all_candidates.extend(extract_candidates(path))
 
@@ -152,11 +187,20 @@ def main():
     parser.add_argument(
         "--sources", help="Comma-separated source file paths (skips auto-discovery)"
     )
+    parser.add_argument(
+        "--output-folder",
+        default="_bmad-output",
+        help="HBC output folder (default: _bmad-output); D-03 resolves under {output-folder}/shared/glossary",
+    )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
 
     sources = [s.strip() for s in args.sources.split(",") if s.strip()] if args.sources else None
-    result = scan_sources(args.project_root, explicit_sources=sources)
+    result = scan_sources(
+        args.project_root,
+        explicit_sources=sources,
+        output_folder=args.output_folder,
+    )
 
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

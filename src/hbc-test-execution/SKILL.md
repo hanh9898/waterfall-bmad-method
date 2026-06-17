@@ -28,6 +28,8 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+
 ## Stage 1: Prerequisites
 
 **Phase-entry gate (enforced, overridable).** This skill opens Phase 4. First verify the **Phase 3 gate PASSED** — run `hbc-phase-gate` for phase 3 headless (`-H`) and read `overall_status`. If not `PASSED`, **HALT** and report the failing items; proceed only on an explicit user override (record it in the execution report). In headless mode a non-PASSED Phase 3 gate returns `blocked`. Tests must run against implementation-complete, gated code — not a half-finished Phase 3.

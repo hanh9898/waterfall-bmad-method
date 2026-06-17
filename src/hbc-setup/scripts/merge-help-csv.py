@@ -23,7 +23,12 @@ import sys
 from io import StringIO
 from pathlib import Path
 
-# CSV header for module-help.csv
+# CSV header for module-help.csv — last-resort fallback only (used at line ~171
+# solely when BOTH target and source carry no header row). The source CSV always
+# ships a header, so this is rarely hit; it MUST nonetheless match the canonical
+# schema used by the source module-help.csv and the module validator
+# (validate-module.py CSV_HEADER): the ordering columns are `preceded-by` /
+# `followed-by`, NOT `after` / `before`.
 HEADER = [
     "module",
     "skill",
@@ -33,8 +38,8 @@ HEADER = [
     "action",
     "args",
     "phase",
-    "after",
-    "before",
+    "preceded-by",
+    "followed-by",
     "required",
     "output-location",
     "outputs",
