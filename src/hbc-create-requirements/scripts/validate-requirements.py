@@ -30,9 +30,7 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
-        find_section,
         parse_table,
-        section_body,
         verdict,
     )
 except ModuleNotFoundError:
@@ -60,6 +58,9 @@ DEFAULT_VAGUE_TERMS = [
 
 # group1 = namespace (feature/SHARED, e.g. AUTH); group2 = number. Legacy REQ-NNN → ns "".
 REQ_ID_PATTERN = re.compile(r"REQ-(?:([A-Z0-9]+)-)?(\d{3,})")
+
+# Namespace-aware NFR id (full-match a single cell): NFR-001 / NFR-AUTH-001 / NFR-SHARED-001.
+NFR_ID_RE = re.compile(r"NFR-(?:[A-Z0-9]+-)?\d{3,}")
 
 
 def functional_req_rows(content: str) -> list[list[str]]:
@@ -226,17 +227,22 @@ def check_sections(content: str) -> list[dict]:
 
 
 def check_nfr_measurable(content: str) -> list[dict]:
-    """Check non-functional requirements have measurable criteria."""
+    """Check non-functional requirements have measurable criteria.
+
+    Parses the NFR section's table(s) via the shared parse_table (language-aware,
+    header/separator excluded, multi-sub-table aware) instead of a bespoke
+    3-column regex. The measurable criteria is the LAST column, so the check holds
+    regardless of how many columns the table has; the NFR id is matched with a
+    namespace-aware pattern so NFR-AUTH-001 / NFR-SHARED-001 are not skipped.
+    """
     issues: list[dict] = []
 
-    nfr_match = find_section(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
-    if not nfr_match:
-        return issues
-
-    nfr_body = section_body(content, nfr_match)
-    nfr_rows = re.findall(r"\|\s*(NFR-\d+)\s*\|([^|]*)\|([^|]*)\|", nfr_body)
-    for nfr_id, _, criteria in nfr_rows:
-        criteria_clean = criteria.strip()
+    rows = parse_table(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
+    for cells in rows:
+        nfr_id = next((c.strip() for c in cells if NFR_ID_RE.fullmatch(c.strip())), None)
+        if not nfr_id:
+            continue
+        criteria_clean = cells[-1].strip()
         if not criteria_clean or criteria_clean == "-":
             issues.append({
                 "type": "NFR_NO_CRITERIA",
