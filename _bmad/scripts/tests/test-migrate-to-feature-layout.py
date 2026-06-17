@@ -60,6 +60,8 @@ def make_v1(root: Path) -> Path:
     (pa / "D-12-coding-standards.md").write_text("# Coding Standards\n", encoding="utf-8")
     (pa / "D-03-glossary.md").write_text("# Glossary\n", encoding="utf-8")
     (pa / "D-19-erd.md").write_text("# ERD\n", encoding="utf-8")
+    (pa / "D-06-business-flow.md").write_text(
+        "# Business Flow\nFlow covers REQ-001 (login) then REQ-002 (logout).\n", encoding="utf-8")
     impl = out / "implementation-artifacts"
     impl.mkdir(parents=True)
     (impl / "task-breakdown.md").write_text("# Tasks\n", encoding="utf-8")
@@ -209,10 +211,22 @@ def test_multi_feature_warning():
         print("ok: multi_feature_suspected warning, still proceeds")
 
 
+def test_d06_reprefixed():
+    # D-06 business-flow may reference REQ ids in its flows → must be re-prefixed too.
+    with tempfile.TemporaryDirectory() as d:
+        out = make_v1(Path(d))
+        run(out, "--feature", "auth", "--reprefix", "--apply", "--force")
+        d06 = (out / "features" / "auth" / "planning-artifacts" / "D-06-business-flow.md").read_text(encoding="utf-8")
+        assert "REQ-AUTH-001" in d06 and "REQ-AUTH-002" in d06, d06
+        assert "REQ-001" not in d06, "bare REQ-001 in D-06 should be re-prefixed"
+        print("ok: D-06 business-flow REQ re-prefixed")
+
+
 def main():
     test_dryrun_plan_json()
     test_shared_vs_perfeature_routing()
     test_req_reprefix_tc_untouched()
+    test_d06_reprefixed()
     test_matrix_rebuild_8col()
     test_idempotent_already_v2()
     test_backup_created()
