@@ -9,8 +9,8 @@
     {
       "name": "hblab-bmad-custom",
       "source": "./",
-      "description": "HBLAB custom BMad workflows for incremental + TDD lifecycle — 5 agents, 14 workflows, phase gates, and requirements traceability",
-      "version": "1.0.0",
+      "description": "HBLAB custom BMad workflows for incremental + TDD lifecycle — 5 agents, 16 workflows, Phase 0 project-init, phase gates, and requirements traceability",
+      "version": "2.0.0",
       "author": { "name": "HBLAB" },
       "skills": [
         "./src/hbc-setup",
@@ -20,6 +20,7 @@
         "./src/hbc-agent-qa",
         "./src/hbc-agent-dev",
         "./src/hbc-agent-tester",
+        "./src/hbc-project-init",
         "./src/hbc-create-requirements",
         "./src/hbc-create-glossary",
         "./src/hbc-create-business-flow-diagram",
