@@ -31,6 +31,7 @@ Dành cho người đã chạy được, cần làm một tác vụ.
 - [Quản lý Traceability](how-to/manage-traceability.md)
 - [Dùng chế độ Headless](how-to/use-headless-mode.md)
 - [Tùy chỉnh cấu hình](how-to/customize-config.md)
+- [Migrate từ HBC v1 lên v2](how-to/migrate-from-v1.md)
 
 ## 📖 Reference — tra cứu nhanh
 

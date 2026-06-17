@@ -48,6 +48,8 @@ Quét trạng thái nền của dự án:
 
 Trình bảng "đã có / còn thiếu". Nếu `status` arg → dừng ở đây.
 
+**Phát hiện layout LEGACY (v1).** Cũng quét dấu hiệu output HBC v1 (layout phẳng): tồn tại `_bmad-output/planning-artifacts/D-*`, hoặc `_bmad-output/traceability/matrix*` mà KHÔNG có thư mục `_bmad-output/features/`. Nếu phát hiện → **khuyến nghị chạy `hbc-migrate` ([MIG]) TRƯỚC** khi tạo bất kỳ shared deliverable nào: migrate sẽ di chuyển các artifact phẳng sang `shared/` + `features/<feature>/` và re-prefix REQ/TC. Tạo shared ngay bây giờ sẽ gây **trùng lặp** (double-creation) với những gì migrate sắp dựng. Báo cảnh báo này rồi dừng (để user chạy [MIG] xong mới quay lại PI cho phần shared còn thiếu).
+
 ### Stage 2: Hiểu dự án (brownfield-aware)
 
 Xác định loại dự án rồi đảm bảo có đủ **context** để seed shared deliverables — thay vì tạo từ con số 0:
