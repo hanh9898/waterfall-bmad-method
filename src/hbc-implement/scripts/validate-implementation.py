@@ -151,8 +151,13 @@ def check_matrix(matrix_text: str, project_root: str) -> list[dict]:
                 tok = tok.strip().strip("`")
                 if not tok or _blank(tok):
                     continue
-                if "/" in tok or re.search(r"\.\w+$", tok):  # looks like a path
-                    p = Path(tok) if Path(tok).is_absolute() else Path(project_root) / tok
+                # Normalize a Windows separator and strip a trailing :line(:col)
+                # reference, so `src\login.py:42` resolves to src/login.py (the
+                # raw token is still reported in the message for fidelity).
+                norm = tok.replace("\\", "/")
+                norm = re.sub(r":\d+(?::\d+)?$", "", norm)
+                if "/" in norm or re.search(r"\.\w+$", norm):  # looks like a path
+                    p = Path(norm) if Path(norm).is_absolute() else Path(project_root) / norm
                     if not p.exists():
                         issues.append({
                             "type": "MISSING_CODE_FILE",
@@ -177,6 +182,16 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
              tdd_evidence_dir: str | None = None) -> dict:
     issues: list[dict] = []
     tasks_text = Path(tasks_path).read_text(encoding="utf-8")
+    # Guard: a --tasks file with no parseable task row would otherwise validate as
+    # "complete" with nothing examined (every per-row check is a no-op). Surface it
+    # loudly, mirroring validate-task-breakdown's NO_TASKS.
+    if not _TASK_ROW_RE.search(tasks_text):
+        issues.append({
+            "type": "UNPARSEABLE_TASKS",
+            "message": "No task rows parsed from --tasks (empty or malformed table). "
+                       "Expected: | task_id | description | design_ref | test_refs | priority | status | dependencies |",
+            "auto_fixable": False,
+        })
     issues.extend(check_done_tasks(tasks_text))
     checked = ["DONE tasks have an assigned test (test_refs)"]
     if tdd_evidence_dir:
