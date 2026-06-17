@@ -106,7 +106,15 @@ The agent interviews you about the feature. For `auth` you might answer somethin
 
 Result: a **D-02 Requirements Specification** file in `_bmad-output/features/auth/planning-artifacts/`, with requirements numbered `REQ-AUTH-001`, `REQ-AUTH-002`… EARS keyword syntax stays English (`WHEN … THE SYSTEM SHALL …`); prose follows `{document_output_language}`.
 
-> 📌 **D-02 (REQ) is the mandatory Phase 1 deliverable** — it's the foundation for every later phase. **D-06 (BFD) is a per-feature** Phase 1 deliverable, produced as needed. Note: **the D-03 glossary comes from Phase 0** (shared), not a Phase 1 step — later the `GLO` skill only *updates* the existing D-03.
+> 📌 **D-02 (REQ) and D-06 (BFD) are both REQUIRED per-feature Phase 1 deliverables** — you can't pass `PG 1` without either one. D-02 is the foundation for every later phase; D-06 describes the business flow and every REQ must map to a flow. Note: **the D-03 glossary comes from Phase 0** (shared), not a Phase 1 step — later the `GLO` skill only *updates* the existing D-03.
+
+### Step 1.2b — Create the Business Flow Diagram (D-06 / BFD)
+
+```
+BFD
+```
+
+`BFD` (`hbc-create-business-flow-diagram`) produces **D-06 Business Flow Diagram** in `_bmad-output/features/auth/planning-artifacts/`, with **Mermaid AS-IS / TO-BE** diagrams for the `auth` flow (e.g. user enters credentials → verify → issue a session / lock the account after 5 failures). **D-06 is required to pass Phase 1** — `PG 1` checks that D-06 exists, has valid Mermaid, and that **every REQ maps to a flow**. Prose follows `{document_output_language}`.
 
 ### Step 1.3 — Initialize Traceability
 
@@ -128,9 +136,9 @@ Before moving to Design, check Phase 1 is complete — **always include the phas
 PG 1 feature=auth
 ```
 
-The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass** or **fail** with reasons, written to `features/auth/gates/`. If **fail**, fix per the suggestions and re-run. Only a **pass** lets you continue.
+The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass** or **fail** with reasons, written to `features/auth/gates/`. To **pass**, `PG 1` requires: **D-02** with REQ IDs, **D-06 (BFD)** present + valid Mermaid + every REQ mapped to a flow, and an initialized traceability matrix. If **fail**, fix per the suggestions and re-run. Only a **pass** lets you continue.
 
-✅ **Phase 1 done:** you have D-02 and an initialized traceability matrix for `auth`.
+✅ **Phase 1 done:** you have D-02, D-06 (BFD), and an initialized traceability matrix for `auth`.
 
 ---
 
@@ -263,7 +271,7 @@ PG 4 feature=auth
 ```mermaid
 flowchart LR
     PI["Phase 0 · PI<br/>shared D-12/D-03<br/>baseline D-19/D-21"] --> P1
-    P1["Phase 1<br/>D-02 Requirements"] -->|PG 1| P2["Phase 2<br/>Design · Test · IR"]
+    P1["Phase 1<br/>D-02 Requirements + D-06 BFD"] -->|PG 1| P2["Phase 2<br/>Design · Test · IR"]
     P2 -->|PG 2| P3["Phase 3<br/>Code TDD + RED"] -->|PG 3| P4["Phase 4<br/>Acceptance · ship auth"]
     P4 -->|PG 4| DONE([Ship the auth feature])
     TR["TRI → TRU each phase → TRA"] -.->|traces| P1 & P2 & P3 & P4
@@ -286,6 +294,7 @@ You ran **Phase 0** once, then took the `auth` feature through all 4 phases with
 | Initialize the project (once, shared) | `PI` |
 | Open each phase's agent | `BA` · `ARCH` · `QA` · `DEV` · `TST` |
 | Create requirements (D-02) | `REQ` |
+| Create the business flow diagram (D-06, required in Phase 1) | `BFD` |
 | Readiness check (Phase 2) | `IR` |
 | TDD implementation (RED first) | `IM all` (or `IM task TASK-001`) |
 | Run tests / acceptance | `TE all` · `AC review` |

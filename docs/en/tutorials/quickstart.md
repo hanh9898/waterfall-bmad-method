@@ -173,6 +173,8 @@ The agent asks for the feature name and interviews you about a requirement. Answ
 > ℹ️ **Output layout:** each feature has its own folder under `_bmad-output/features/<feature>/` (with `planning-artifacts`, `implementation-artifacts`, `gates`, `traceability`); shared deliverables live in `_bmad-output/shared/`. The old flat `_bmad-output/planning-artifacts/` folder is gone.
 
 > 🎉 **You've finished the Quickstart!** You just: installed HBC → initialized the project (`PI`) → verified it → created D-02 for your first feature. This is a **stopping point** — you now know the basics of using HBC.
+>
+> ℹ️ **A note on `PG 1`:** D-02 alone won't pass the Phase 1 gate. Passing `PG 1` also needs **D-03 (from Phase 0, shared)** and **D-06 (BFD — the business flow diagram, per-feature, required)**. The full Phase 1 flow is in [Get Started with HBC](getting-started-hbc.md).
 
 ## Next steps
 

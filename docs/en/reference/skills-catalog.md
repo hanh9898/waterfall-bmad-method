@@ -38,7 +38,7 @@ Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 | --- | --- | --- | --- | --- | :---: |
 | `REQ` | `hbc-create-requirements` | Generate a requirements spec with REQ-<FEAT>-NNN IDs and scope boundaries | D-02 | per-feature | ✅ |
 | `GLO` | `hbc-create-glossary` | Maintains the **shared D-03** (originated in Phase 0) — unified domain terminology from project docs & requirements | D-03 | shared | — |
-| `BFD` | `hbc-create-business-flow-diagram` | AS-IS/TO-BE business flow diagrams (Mermaid) from the PRD | D-06 | per-feature | — |
+| `BFD` | `hbc-create-business-flow-diagram` | AS-IS/TO-BE business flow diagrams (Mermaid) from the PRD | D-06 | per-feature | ✅ |
 
 Per-feature output: `_bmad-output/features/<feature>/planning-artifacts/`. Shared output: `_bmad-output/shared/glossary/`.
 

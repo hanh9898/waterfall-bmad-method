@@ -23,7 +23,7 @@ HBC ships **incrementally, per feature (incremental per-feature)**: each feature
 | --- | --- | --- | --- | :---: | --- | --- |
 | **D-02** | Requirements Specification | 1 · Analysis | `REQ` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-03** | Glossary | 1 · Analysis | `GLO` | — | shared | `shared/glossary/` |
-| **D-06** | Business Flow Diagram (AS-IS/TO-BE) | 1 · Analysis | `BFD` | — | per-feature | `features/<feature>/planning-artifacts/` |
+| **D-06** | Business Flow Diagram (AS-IS/TO-BE) | 1 · Analysis | `BFD` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-12** | Coding Standards | 2 · Design | `CS` | ✅ | shared | `shared/coding-standards/` |
 | **D-19** | Database Design / ER Diagram | 2 · Design | `ERD` | ✅ | dual | `shared/erd/` (+ per-feature override) |
 | **D-21** | API Specification | 2 · Design | `API` | — | dual | `shared/api/` (+ per-feature override) |
@@ -40,8 +40,8 @@ Requirements with **REQ IDs** and scope boundaries. IDs follow **`REQ-<FEAT>-NNN
 ### D-03 — Glossary
 Unified domain terminology, compiled from project documents and requirements. Optional. Scope: shared → `shared/glossary/`, **produced in Phase 0 (`PI`)**; `GLO` maintains it thereafter.
 
-### D-06 — Business Flow Diagram
-AS-IS / TO-BE business flow diagrams in Mermaid, built from the PRD and planning artifacts. Optional. Scope: per-feature → `features/<feature>/planning-artifacts/`.
+### D-06 — Business Flow Diagram ✅
+AS-IS / TO-BE business flow diagrams in Mermaid, built from the PRD and planning artifacts. Required — a condition for passing Phase Gate 1. Scope: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-12 — Coding Standards ✅
 Per-project coding standards — naming, formatting, error handling — adapted to the framework in use. Scope: shared → `shared/coding-standards/`, **produced in Phase 0 (`PI`)**; `CS` maintains it thereafter.

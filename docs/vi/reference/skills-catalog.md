@@ -38,7 +38,7 @@ Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 | --- | --- | --- | --- | --- | :---: |
 | `REQ` | `hbc-create-requirements` | Sinh đặc tả yêu cầu với REQ-<FEAT>-NNN ID và ranh giới phạm vi | D-02 | per-feature | ✅ |
 | `GLO` | `hbc-create-glossary` | Duy trì **D-03 dùng chung** (đã khởi tạo ở Phase 0) — thuật ngữ miền thống nhất từ tài liệu dự án & yêu cầu | D-03 | shared | — |
-| `BFD` | `hbc-create-business-flow-diagram` | Sơ đồ luồng nghiệp vụ AS-IS/TO-BE (Mermaid) từ PRD | D-06 | per-feature | — |
+| `BFD` | `hbc-create-business-flow-diagram` | Sơ đồ luồng nghiệp vụ AS-IS/TO-BE (Mermaid) từ PRD | D-06 | per-feature | ✅ |
 
 Output per-feature: `_bmad-output/features/<feature>/planning-artifacts/`. Output shared: `_bmad-output/shared/glossary/`.
 

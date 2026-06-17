@@ -23,7 +23,7 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 | --- | --- | --- | --- | :---: | --- | --- |
 | **D-02** | Requirements Specification | 1 · Analysis | `REQ` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-03** | Glossary | 1 · Analysis | `GLO` | — | shared | `shared/glossary/` |
-| **D-06** | Business Flow Diagram (AS-IS/TO-BE) | 1 · Analysis | `BFD` | — | per-feature | `features/<feature>/planning-artifacts/` |
+| **D-06** | Business Flow Diagram (AS-IS/TO-BE) | 1 · Analysis | `BFD` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-12** | Coding Standards | 2 · Design | `CS` | ✅ | shared | `shared/coding-standards/` |
 | **D-19** | Database Design / ER Diagram | 2 · Design | `ERD` | ✅ | dual | `shared/erd/` (+ ghi đè per-feature) |
 | **D-21** | API Specification | 2 · Design | `API` | — | dual | `shared/api/` (+ ghi đè per-feature) |
@@ -40,8 +40,8 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 ### D-03 — Glossary
 Thuật ngữ miền nghiệp vụ thống nhất, tổng hợp từ tài liệu dự án và yêu cầu. Tùy chọn. Phạm vi: shared → `shared/glossary/`, **sinh ở Phase 0 (`PI`)**; `GLO` duy trì về sau.
 
-### D-06 — Business Flow Diagram
-Sơ đồ luồng nghiệp vụ AS-IS / TO-BE bằng Mermaid, dựng từ PRD và planning artifacts. Tùy chọn. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
+### D-06 — Business Flow Diagram ✅
+Sơ đồ luồng nghiệp vụ AS-IS / TO-BE bằng Mermaid, dựng từ PRD và planning artifacts. Bắt buộc — là điều kiện qua Phase Gate 1. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-12 — Coding Standards ✅
 Quy chuẩn code theo từng dự án — đặt tên, format, xử lý lỗi — điều chỉnh theo framework đang dùng. Phạm vi: shared → `shared/coding-standards/`, **sinh ở Phase 0 (`PI`)**; `CS` duy trì về sau.

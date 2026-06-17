@@ -121,7 +121,7 @@ Five coordinator agents: `BA` (P1), `ARCH` (P2 Design), `QA` (P2 Test Design),
 
 New since the first doc pass: **`PI`**, **`IR`** (hbc-check-implementation-readiness — the
 Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + matrix), and **`SYNC`**. Required
-for gates: D-02, D-12, D-19, D-26, D-27. Optional: D-03, D-06, D-21.
+for gates: D-02, D-03, D-06, D-12, D-19, D-26, D-27 (D-03 comes from Phase 0). Optional: D-21.
 
 ### 2.6 Headless
 
