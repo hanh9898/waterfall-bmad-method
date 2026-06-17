@@ -7,7 +7,7 @@ name = ""
 title = "Developer"
 
 icon = "💻"
-output_path = "{implementation_artifacts}"
+output_path = "{output_folder}/features/{feature}/implementation-artifacts"
 # gate_mode — read from project-level config ({project-root}/_bmad/config.yaml). Not per-skill.
 headless_default = false
 

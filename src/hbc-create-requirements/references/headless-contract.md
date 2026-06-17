@@ -7,6 +7,7 @@
 | `--sources` | Yes | Comma-separated file paths to source documents |
 | `--mode` | No | `create` (default), `update`, or `validate` |
 | `--vague-terms` | No | Comma-separated custom vague terms (overrides config) |
+| `feature` | Yes (headless) | `feature=<slug>` — the active feature slug; per-feature output paths resolve under `_bmad-output/features/<feature>/...` |
 
 Example: `hbc-create-requirements --headless --sources "brief.md,interviews.md" --mode create`
 
@@ -40,3 +41,4 @@ Example: `hbc-create-requirements --headless --sources "brief.md,interviews.md" 
 - `"validation_manual_fix"` — validation found issues requiring human judgment.
 - `"empty_discovery"` — source documents contain insufficient information to extract requirements.
 - `"mode_conflict"` — existing complete D-02 found but `--mode create` specified. Pass `--mode update` to revise or remove existing D-02 first.
+- `"feature_required"` — headless invocation with no resolvable feature.

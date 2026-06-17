@@ -49,11 +49,29 @@ def read_frontmatter_date(filepath: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
-def scan(output_path: str, gates_dir: str | None = None) -> dict:
+def _resolve_dir(key: str, output_path: str, gates_dir: str | None, shared_glossary_dir: str | None) -> str:
+    """Route each Phase-1 deliverable to its correct scope.
+
+    - gate report  -> gates_dir (per-feature gates) when provided
+    - D-03 glossary -> shared_glossary_dir (SHARED) when provided
+    - D-02/D-06     -> output_path (per-feature planning-artifacts)
+    """
+    if "gate" in key and gates_dir and os.path.isdir(gates_dir):
+        return gates_dir
+    if key == "D-03" and shared_glossary_dir and os.path.isdir(shared_glossary_dir):
+        return shared_glossary_dir
+    return output_path
+
+
+def scan(
+    output_path: str,
+    gates_dir: str | None = None,
+    shared_glossary_dir: str | None = None,
+) -> dict:
     phase1_state = {}
 
     for key, pattern in ARTIFACT_PATTERNS.items():
-        search_dir = gates_dir if ("gate" in key and gates_dir and os.path.isdir(gates_dir)) else output_path
+        search_dir = _resolve_dir(key, output_path, gates_dir, shared_glossary_dir)
         matches = glob.glob(os.path.join(search_dir, pattern))
         if matches:
             filepath = matches[0]
@@ -91,12 +109,31 @@ def scan(output_path: str, gates_dir: str | None = None) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Scan Phase 1 artifact state")
-    parser.add_argument("output_path", help="Path to scan for Phase 1 artifacts")
+    parser.add_argument(
+        "output_path",
+        help="Per-feature planning-artifacts dir (D-02/D-06 live here)",
+    )
     parser.add_argument(
         "-o", "--output", help="Write JSON to file instead of stdout"
     )
-    parser.add_argument("--gates-dir", help="Separate directory for gate reports")
+    parser.add_argument("--gates-dir", help="Separate directory for gate reports (per-feature gates)")
+    parser.add_argument(
+        "--output-folder",
+        help="HBC output folder (e.g. _bmad-output); used to resolve SHARED D-03 under {output-folder}/shared/glossary",
+    )
+    parser.add_argument(
+        "--feature",
+        help="Feature slug (accepted for symmetry; per-feature deliverables are passed via output_path)",
+    )
     args = parser.parse_args()
+
+    # D-03 glossary is SHARED, not per-feature: resolve it under
+    # {output-folder}/shared/glossary so it isn't reported missing.
+    shared_glossary_dir = (
+        os.path.join(args.output_folder, "shared", "glossary")
+        if args.output_folder
+        else None
+    )
 
     if not os.path.isdir(args.output_path):
         result = {
@@ -109,7 +146,11 @@ def main():
             "reason": f"Output directory not found: {args.output_path}",
         }
     else:
-        result = scan(args.output_path, gates_dir=args.gates_dir)
+        result = scan(
+            args.output_path,
+            gates_dir=args.gates_dir,
+            shared_glossary_dir=shared_glossary_dir,
+        )
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
 

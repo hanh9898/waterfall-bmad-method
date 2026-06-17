@@ -6,6 +6,7 @@
 |-----|----------|-------------|
 | `--suite` | No | Test suite to execute: `all` (default), `unit`, `integration`, `e2e` |
 | `--report-only` | No | Generate report from existing results without executing |
+| `feature` | Yes (headless) | `feature=<slug>` — the active feature slug; per-feature output paths resolve under `_bmad-output/features/<feature>/...` |
 
 ## Return Schema
 
@@ -28,7 +29,7 @@
       "action": "Return to Phase 3"
     }
   ],
-  "report_path": "_bmad-output/implementation-artifacts/test-execution-report.md",
+  "report_path": "_bmad-output/features/<feature>/implementation-artifacts/test-execution-report.md",
   "reason": "string (only when status != PASS)"
 }
 ```
@@ -44,3 +45,4 @@
 - `"no_test_runner"` — Test command not found or not configured.
 - `"no_tests_found"` — No test files detected.
 - `"environment_error"` — Test environment not ready.
+- `"feature_required"` — headless invocation with no resolvable feature.

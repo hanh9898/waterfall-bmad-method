@@ -7,7 +7,7 @@ name = ""
 title = "Tester"
 
 icon = "🔍"
-output_path = "{implementation_artifacts}"
+output_path = "{output_folder}/features/{feature}/implementation-artifacts"
 headless_default = false
 
 activation_steps_prepend = []

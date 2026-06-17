@@ -28,6 +28,8 @@ Supports `-H` / `--headless` for non-interactive generation. Stage 1 honours an 
 
 ## On Activation
 
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow (D-06 ghi per-feature).
+
 ### Step 1: Resolve the Workflow Block
 
 Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow`
@@ -63,6 +65,7 @@ Greet `{user_name}` in `{communication_language}`. Execute each entry in `{workf
 - `fr_coverage_gap` — `check-fr-coverage.py` reported uncovered or phantom FRs.
 - `migration_without_as_is` — `--mode=migration` requested but no AS-IS / "current state" markers in any PRD source.
 - `resolver_missing` — customization resolver failed and the hand-merge fallback could not complete.
+- `feature_required` — headless invocation with no resolvable feature.
 
 Add new reasons only by extending this list and the contract file together.
 
@@ -84,15 +87,15 @@ Headless mapping: `--review-lenses=skip` → `[C]`, `advanced` → `[A]`, `party
 
 #### 1a. Bind workspace and detect resume state
 
-Bind `{primary} = {workflow.business_flow_output_path}` — a single output FILE written directly into `{planning_artifacts}` (no per-document folder). The session decision log lives at `{planning_artifacts}/.decision-log.md` and scan artifacts at `{planning_artifacts}/.scan/` — both shared peers alongside the other D-* documents. Create `{planning_artifacts}` and `{planning_artifacts}/.scan/` if absent.
+Bind `{primary} = {workflow.business_flow_output_path}` — a single output FILE. D-06 is **per-feature**: `{primary}` resolves under the active feature's own dir (`{output_folder}/features/{feature}/planning-artifacts/`), NOT the flat project-level `{planning_artifacts}`. Resolve `{feature}` first (arg `feature=<slug>` → active feature in session → ask; headless: required, missing → blocked `feature_required`). Let `{ws}` = the directory of `{primary}` (the feature's planning-artifacts dir). The session decision log lives at `{ws}/.decision-log.md` and scan artifacts at `{ws}/.scan/` — both peers of `{primary}`. Create `{ws}` and `{ws}/.scan/` if absent. Throughout this workflow, decision-log / `.scan` references resolve against `{ws}`; PRD / source **discovery** still scans the project-level `{planning_artifacts}`.
 
 Run the discover script, pointing `--primary` at the output file so it can read resume state from the document and its peer decision log in one JSON:
 
 ```
-python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --primary {primary} --check-as-is -o {planning_artifacts}/.scan/artifacts.json
+python3 {skill-root}/scripts/discover-planning-artifacts.py {planning_artifacts} --template-path {workflow.business_flow_template} --primary {primary} --check-as-is -o {ws}/.scan/artifacts.json
 ```
 
-If the discover script fails to execute (Python missing, crash), fall back to globbing `{planning_artifacts}` yourself and constructing a minimal inventory; note the fallback in `.decision-log.md`.
+If the discover script fails to execute (Python missing, crash), fall back to globbing `{planning_artifacts}` yourself and constructing a minimal inventory; note the fallback in `{ws}/.decision-log.md`.
 
 Consume the JSON. If `fatal: "template_missing"` → HALT (interactive) or return `blocked` with `reason: "template_missing"` (headless). Otherwise read `resume_state.recommended_intent` and `resume_state.fresh_reason`:
 
@@ -177,7 +180,7 @@ From the chosen sources or interactive elicitation, extract:
 - **Decision points** — conditional branches (for `flowchart` variant)
 - **Outcomes** — success and failure end states
 
-Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to an `### Addendum` block in `{planning_artifacts}/.decision-log.md` without pausing the flow.
+Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to an `### Addendum` block in `{ws}/.decision-log.md` without pausing the flow.
 
 **Zero-actor branch** — if the source contains no human or system actors (e.g. pure data-pipeline products triggered solely by cron or queue events), do not render a vacuous "System talks to itself" diagram. Promote the trigger (scheduled job, queue, webhook) to a first-class actor and explain the choice in the decision log. Interactive: confirm with the user. Headless: log and continue.
 
@@ -203,7 +206,7 @@ For each in-scope flow, render one Mermaid block per the resolved diagram type:
 
 - **Create / Fresh** (`fresh_reason: "no_primary"` or `"crashed_no_progress"`): today's date, version `1.0`, "Initial version" → `{user_name}`, translated to `{document_output_language}`.
 - **Update** — *do not bump the minor version mechanically*. Determine scope-of-change first:
-  - **Auto-detect default:** run `python3 {skill-root}/scripts/diff-stage2-flush.py {primary} {planning_artifacts}/.decision-log.md -o {planning_artifacts}/.scan/scope-diff.json`. The script returns `scope: "polish"|"semantic"`, `actors_changed`, `flows_changed`. Polish → append a note to the existing latest revision row. Semantic → append a new row, bumping minor: `1.2` → `1.3`.
+  - **Auto-detect default:** run `python3 {skill-root}/scripts/diff-stage2-flush.py {primary} {ws}/.decision-log.md -o {ws}/.scan/scope-diff.json`. The script returns `scope: "polish"|"semantic"`, `actors_changed`, `flows_changed`. Polish → append a note to the existing latest revision row. Semantic → append a new row, bumping minor: `1.2` → `1.3`.
   - **Manual override** (interactive): ask the user "polish (typo / wording / layout) or semantic (actors / flows / outcomes)?".
   - **Headless override:** `--scope-of-change=polish|semantic|auto` (default `auto`). Polish and semantic skip the diff; `auto` runs the script.
   - Either path: log the chosen scope and the rationale to `.decision-log.md`.
@@ -217,9 +220,9 @@ Then present the **Parallel-lens menu** (defined above). Stage-3 lens-targets: s
 Run the two deterministic validators in parallel (they are independent):
 
 ```
-python3 {skill-root}/scripts/validate-mermaid.py {primary} --expected-actors "<comma-separated stage-2 actors>" -o {planning_artifacts}/.scan/mermaid.json
+python3 {skill-root}/scripts/validate-mermaid.py {primary} --expected-actors "<comma-separated stage-2 actors>" -o {ws}/.scan/mermaid.json
 
-python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {primary} --pattern "{workflow.fr_id_pattern}" -o {planning_artifacts}/.scan/fr.json
+python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {primary} --pattern "{workflow.fr_id_pattern}" -o {ws}/.scan/fr.json
 ```
 
 If either validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check.

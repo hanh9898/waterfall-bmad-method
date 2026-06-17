@@ -45,7 +45,11 @@ REQUIRED_SECTIONS = [
 ]
 
 TC_ID_RE = re.compile(r"TC-(\d{3,})")
-REQ_ID_RE = re.compile(r"REQ-(\d{3,})")
+# Namespace-aware (v2): full-match (non-capturing) so findall returns whole ids
+# (REQ-AUTH-001 / REQ-SHARED-002 / legacy REQ-001). A capturing `REQ-(\d{3,})`
+# returned only the digits and silently skipped every REQ-<FEAT>-NNN. TC ids stay
+# numeric-only — they are per-feature within each D-27, not namespaced.
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 # Mirror the shared iter_tc_blocks detection (levels 3-6, fence-stripped) so this
 # validator agrees with the readiness + facet engines on which TCs exist (F1).
 _TC_HEADING_NUM_RE = re.compile(r"^#{3,6}[ \t]+TC-(\d{3,})", re.MULTILINE | re.IGNORECASE)
@@ -130,20 +134,20 @@ def check_req_coverage(content: str, d02_path: str | None) -> list[dict]:
     d27_req_ids = set(REQ_ID_RE.findall(content))
 
     uncovered = d02_req_ids - d27_req_ids
-    for req_num in sorted(uncovered):
+    for req_id in sorted(uncovered):
         issues.append({
             "type": "REQ_NO_COVERAGE",
-            "message": f"REQ-{req_num} from D-02 has no test case in D-27",
-            "req_id": f"REQ-{req_num}",
+            "message": f"{req_id} from D-02 has no test case in D-27",
+            "req_id": req_id,
             "auto_fixable": False,
         })
 
     orphans = d27_req_ids - d02_req_ids
-    for req_num in sorted(orphans):
+    for req_id in sorted(orphans):
         issues.append({
             "type": "ORPHAN_REQ_REF",
-            "message": f"REQ-{req_num} referenced in D-27 but not found in D-02",
-            "req_id": f"REQ-{req_num}",
+            "message": f"{req_id} referenced in D-27 but not found in D-02",
+            "req_id": req_id,
             "auto_fixable": False,
         })
 

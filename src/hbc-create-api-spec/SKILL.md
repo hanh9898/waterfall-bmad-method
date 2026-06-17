@@ -28,12 +28,24 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Scope DUAL + feature (B):** mặc định ghi/đọc baseline `shared/`; truyền `feature=<slug>` để tạo/đọc bản **override per-feature** (path-existence precedence). Resolved in Stage 1·0 below.
+
 ## Stage 1: Prerequisites
+
+**1·0. Resolve DUAL scope (path-existence precedence).** D-21 has two possible homes: the project-wide **shared baseline** (`{workflow.output_dir}`, under `shared/api/`) and a **per-feature override** (`{workflow.api_feature_dir}`, under `features/{feature}/planning-artifacts/`). Before any scan or write, bind the active directory `{api_dir}` and the active output file `{d21_file}`:
+
+1. Resolve `{feature}`: a `feature=<slug>` arg wins; else an active-feature value carried in the session; else — **interactive**: ask whether this D-21 is the shared baseline or a per-feature override (and for which feature); **headless**: if no feature is resolvable, default to the shared baseline (D-21 baseline is legitimately shared — do NOT block).
+2. Bind:
+   - **Per-feature override** (feature resolved): `{api_dir} = {workflow.api_feature_dir}` (substitute `{feature}`); `{d21_file} = {api_dir}/D-21-{feature}-api-spec.md`.
+   - **Shared baseline** (no feature): `{api_dir} = {workflow.output_dir}`; `{d21_file} = {api_dir}/D-21-{project_name}-api-spec.md`.
+3. **Path-existence precedence** (resume/read): if a per-feature override already exists for the active feature, it takes precedence for resume/update; a downstream reader resolves D-21 by checking the per-feature path first, then the shared baseline.
+
+Use `{api_dir}` and `{d21_file}` (not the raw `{workflow.output_dir}`) for every scan / write / validate reference below.
 
 1a. **Source scan.** Run pre-pass to discover project state and sources:
 
 ```
-python3 scripts/scan-api-sources.py --project-root {project-root} --output-dir {workflow.output_dir}
+python3 scripts/scan-api-sources.py --project-root {project-root} --output-dir {api_dir}
 ```
 
 Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + frontmatter), `d02_path`, `d19_path`, `framework`, and `needs_api` (boolean heuristic). Use this to route:
@@ -64,7 +76,7 @@ At each area boundary, soft-gate: _"Anything else on [area], or move to [next]?"
 
 ## Stage 3: Generation
 
-Populate `{workflow.template_path}` with discovered content. Write to `{workflow.output_dir}/D-21-{project_name}-api-spec.md`. Ensure:
+Populate `{workflow.template_path}` with discovered content. Write to `{d21_file}` (resolved in Stage 1·0). Ensure:
 
 - Every endpoint references at least one REQ-xxx ID from D-02.
 - Request/response schemas are consistent with D-19 entity definitions.
@@ -85,7 +97,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 Run deterministic validator, then LLM judgment checks:
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/D-21-{project_name}-api-spec.md" --d02 "{d02_path}" --d19 "{d19_path}"
+python3 {workflow.validation_script} "{d21_file}" --d02 "{d02_path}" --d19 "{d19_path}"
 ```
 
 Script checks: all endpoints have required fields (method, URL, description), endpoint IDs are unique, REQ-xxx references exist in D-02, response entity names match D-19 entities. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable, fall back to LLM-only validation and note the limitation in the decision log.

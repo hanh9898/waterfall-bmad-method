@@ -21,7 +21,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-REQ_ID_RE = re.compile(r"REQ-\d{3,}")
+# Namespace-aware (v2): matches REQ-<FEAT>-NNN / REQ-SHARED-NNN + legacy REQ-NNN.
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 TC_COUNT_RE = re.compile(r"tc_count:\s*['\"]?(\d+)['\"]?")
 
 
@@ -89,16 +90,22 @@ def scan_sources(project_root: str, output_dir: str | None = None) -> dict:
     if output_dir:
         out_dir = Path(output_dir) if Path(output_dir).is_absolute() else root / output_dir
     else:
-        out_dir = root / "_bmad-output" / "planning-artifacts"
+        # v2: the deliverable is per-feature (the SKILL passes --output-dir
+        # {output_folder}/features/{feature}/planning-artifacts explicitly).
+        # When no --output-dir is given the script is only used for
+        # cross-feature source DISCOVERY, so default detection to the whole
+        # _bmad-output tree rather than the old flat planning-artifacts path.
+        out_dir = root / "_bmad-output"
 
     search_dirs: list[Path] = []
     if out_dir.exists():
         search_dirs.append(out_dir)
-    # Also search the broader _bmad-output tree
+    # Also walk the broader _bmad-output tree (per-feature + shared subdirs are
+    # nested, so collect every subdirectory, not just immediate children).
     hbc_output = root / "_bmad-output"
     if hbc_output.exists():
-        for sub in sorted(hbc_output.iterdir()):
-            if sub.is_dir() and sub != out_dir:
+        for sub in sorted(p for p in hbc_output.rglob("*") if p.is_dir()):
+            if sub not in search_dirs:
                 search_dirs.append(sub)
     search_dirs.append(root)
 
@@ -171,7 +178,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        help="Output directory for D-27 (default: {project-root}/_bmad-output/planning-artifacts)",
+        help="Per-feature output dir for D-27 (default: scan the {project-root}/_bmad-output tree for discovery)",
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()

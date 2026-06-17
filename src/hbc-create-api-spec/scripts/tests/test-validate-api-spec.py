@@ -204,3 +204,15 @@ class TestFullValidation:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data["valid"] is True
+
+
+def test_namespaced_req_traceability(tmp_path):
+    # v2 regression: namespaced REQ-<FEAT>-NNN must be matched and reported with
+    # the FULL id. A digits-only `REQ-(\d{3,})` skipped them → false-clean.
+    d21 = "## Endpoint list\n\n| 1 | GET | /x | get | REQ-AUTH-001 |\n"
+    d02 = str(tmp_path / "D-02.md")
+    _write(d02, "# Requirements\n\nREQ-AUTH-001 Login\n")
+    assert [i for i in check_req_traceability(d21, d02) if i["type"] == "ORPHAN_REQ"] == []
+    _write(d02, "# Requirements\n\nREQ-AUTH-002 Other\n")
+    orphans = [i for i in check_req_traceability(d21, d02) if i["type"] == "ORPHAN_REQ"]
+    assert len(orphans) == 1 and orphans[0]["req_id"] == "REQ-AUTH-001"

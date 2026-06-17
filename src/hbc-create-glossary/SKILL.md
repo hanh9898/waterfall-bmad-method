@@ -28,6 +28,8 @@ When `--headless`: all stages run non-interactively. Source documents are requir
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`. If `{workflow.glossary_output_path}` exists with `lastStep` not `complete`, surface it with its `updated` timestamp and offer to resume before proceeding to Stage 1.
 
+> **Scope: SHARED** — deliverable này dùng chung toàn dự án (tạo ở Phase 0 qua `hbc-project-init`), **không** nhận `feature`; ghi vào `shared/`.
+
 ## Stage 1: Prerequisites
 
 1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ER], business flows → `hbc-create-business-flow-diagram` [BFD]. Headless: skip — intent is given by invocation.

@@ -61,13 +61,22 @@ Adopt the Tester identity from the Overview, layered with `{agent.role}`, `{agen
 
 Check if Phase 3 gate exists and passed. If not — warn user. If `gate_mode = lenient`, allow continuation.
 
-### Scan Testing State
+### Establish Active Feature (B)
 
-Run: `python3 {skill-root}/scripts/scan-phase4-state.py {agent.output_path} --gates-dir {output_folder}/gates`
+HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
+- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
+- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
+- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+
+### Scan Testing State
+> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+
+
+Run: `python3 {skill-root}/scripts/scan-phase4-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates`
 
 The script always exits 0. Returns `testing_state`, `next_recommended`, and `reason`.
 
-**If the script is unavailable**, check `{agent.output_path}` manually for `test-execution-report*`, `acceptance-report*`. Check `{output_folder}/gates` for `phase-4-gate*`.
+**If the script is unavailable**, check `{agent.output_path}` manually for `test-execution-report*`, `acceptance-report*`. Check `{output_folder}/features/{feature}/gates` for `phase-4-gate*`.
 
 ### Greet and Present
 
@@ -79,7 +88,7 @@ Render `{agent.menu}` with recommended next action.
 
 Standard menu dispatch. Recommended flow: TE → AC → PG → TR.
 
-When dispatching [AC], pass context capsule with test execution summary (total/passed/failed/coverage).
+When dispatching [TE] or [AC], restate the resolved active feature and pass `feature={feature}` (Phase-4 deliverables are per-feature). When dispatching [AC], pass context capsule with test execution summary (total/passed/failed/coverage).
 
 Suggest [PG] when acceptance decision is ACCEPTED. Phase 4 gate = final gate — PASSED means project deliverable complete.
 

@@ -20,8 +20,9 @@ persistent_facts = [
 # D-21 template path. Override to use a custom template with different sections.
 template_path = "assets/D-21_api-spec_template.md"
 
-# Output path for the generated D-21 document.
-output_dir = "{planning_artifacts}"
+# D-21 DUAL scope: baseline SHARED (Phase 0) + override per-feature (path-existence precedence).
+output_dir = "{output_folder}/shared/api"
+api_feature_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-api-spec.py"

@@ -18,9 +18,12 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Path to the living traceability matrix.
+# Path to the living traceability matrix — PER-FEATURE ({feature} resolved at runtime).
 # To override: set this key in {project-root}/_bmad/custom/hbc-traceability.toml
-matrix_path = "{output_folder}/traceability/matrix.md"
+matrix_path = "{output_folder}/features/{feature}/traceability/matrix.md"
+
+# Cross-feature coverage roll-up report (TRR đọc mọi matrix per-feature → tổng hợp).
+rollup_path = "{output_folder}/traceability/coverage-rollup.md"
 
 # Template used when initializing a new matrix.
 # Override to add custom columns (e.g. priority, module) or change header format.
@@ -35,11 +38,11 @@ source_code_path = ""
 
 # === Impact capability (cascade sync) ===
 
-# Task breakdown file — freeze-check reads task `status` (TODO/IN_PROGRESS/DONE).
-task_breakdown_path = "{output_folder}/implementation-artifacts/task-breakdown.md"
+# Task breakdown file (PER-FEATURE) — freeze-check reads task `status` (TODO/IN_PROGRESS/DONE).
+task_breakdown_path = "{output_folder}/features/{feature}/implementation-artifacts/task-breakdown.md"
 
-# Phase-gate reports — freeze-check reads PASSED/FAILED per phase.
-gate_reports_glob = "{output_folder}/gates/phase-*-gate.md"
+# Phase-gate reports (PER-FEATURE) — freeze-check reads PASSED/FAILED per phase.
+gate_reports_glob = "{output_folder}/features/{feature}/gates/phase-*-gate.md"
 
 # Git baseline for change detection (override at runtime with --since <ref>).
 impact_git_baseline = "HEAD"

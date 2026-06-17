@@ -1,10 +1,10 @@
 code: hbc
 name: "HBLAB BMad Custom"
 header: "Custom BMad Method workflow variants by HBLAB"
-subheader: "Incremental + TDD lifecycle with D-xx document generation, phase gates, and traceability"
-description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB. 5 agents + 15 workflows across 4 phases. Expansion module — requires BMM."
+subheader: "Incremental + TDD lifecycle (per-feature / staged delivery) with D-xx generation, phase gates, and traceability"
+description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB, applied per-feature (staged delivery). Phase 0 project-init for shared deliverables, then 4 gated phases per feature with TDD. 5 agents + 16 workflows. Expansion module — requires BMM."
 default_selected: false
-module_version: 1.0.0
+module_version: 2.0.0
 
 agents:
   - code: hbc-agent-ba
@@ -41,8 +41,10 @@ agents:
 post-install-notes: |
   HBLAB BMad Custom module installed successfully!
   Required: BMM module must be installed first.
+  Mô hình: giao tăng dần THEO TỪNG TÍNH NĂNG (per-feature). Artifact ở _bmad-output/features/<feature>/; deliverable dùng chung ở _bmad-output/shared/.
   Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
-  Phase 1 Analysis: [REQ] Requirements → [GLO] Glossary → [BFD] Business Flow
+  Phase 0 (một lần): [PI] Project Init — tạo shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
+  Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow
   Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
   Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
   Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check

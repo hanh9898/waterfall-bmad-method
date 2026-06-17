@@ -16,7 +16,7 @@ title = "Business Analyst"
 #   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
 
 icon = "💼"
-output_path = "{planning_artifacts}"
+output_path = "{output_folder}/features/{feature}/planning-artifacts"
 headless_default = false
 
 # Steps to run before the standard activation (persona, config, greet).

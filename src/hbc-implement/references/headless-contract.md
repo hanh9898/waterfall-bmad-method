@@ -7,6 +7,7 @@
 | `--task` | No | Specific task ID to implement (e.g., `TASK-001`) |
 | `--all` | No | Implement all remaining TODO tasks |
 | `--coverage` | No | Check coverage only, no implementation |
+| `feature` | Yes (headless) | `feature=<slug>` — the active feature slug; per-feature output paths resolve under `_bmad-output/features/<feature>/...` |
 
 ## Return Schema
 
@@ -25,3 +26,4 @@
 - `"no_task_breakdown"` — task-breakdown.md not found.
 - `"tests_failing"` — implementation cannot pass tests.
 - `"coverage_below_threshold"` — coverage below configured minimum.
+- `"feature_required"` — headless invocation with no resolvable feature.

@@ -1,7 +1,8 @@
 <!-- {project_name}: filled by LLM from project context at generation time, not a workflow config variable. -->
 ---
 document_id: D-02
-title: "{project_name} — Đặc tả yêu cầu"
+feature: "{feature}"
+title: "{project_name} — Đặc tả yêu cầu — feature: {feature}"
 version: "1.0"
 status: draft
 stepsCompleted: []
@@ -43,8 +44,18 @@ updated: ""
 
 ## 4. Yêu cầu chức năng (Functional Requirements)
 
-| REQ ID | Category | Requirement | Priority | User Role | Acceptance Criteria |
-|--------|----------|-------------|----------|-----------|-------------------|
+<!--
+  REQ ID: `REQ-<FEAT>-NNN` (vd REQ-{feature}-001), tuần tự trong feature này.
+  Yêu cầu dùng chung nhiều feature: định nghĩa ở D-02 shared với `REQ-SHARED-NNN`,
+  rồi tham chiếu (không định nghĩa lại) ở cột Acceptance/User Role.
+  Cột Requirement viết theo EARS — keyword tiếng Anh, nội dung tiếng Việt:
+    "WHEN <điều kiện> THE SYSTEM SHALL <hành vi>"
+    "THE SYSTEM SHALL <hành vi>" (ubiquitous)
+    "WHILE <trạng thái> ... / IF <bất thường> THEN THE SYSTEM SHALL ..."
+-->
+
+| REQ ID | Category | Requirement (EARS) | Priority | User Role | Acceptance Criteria |
+|--------|----------|--------------------|----------|-----------|-------------------|
 
 ## 5. Yêu cầu phi chức năng (Non-Functional Requirements)
 

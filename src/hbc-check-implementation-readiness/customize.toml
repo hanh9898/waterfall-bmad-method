@@ -1,0 +1,35 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-check-implementation-readiness.
+# Team overrides:     {project-root}/_bmad/custom/hbc-check-implementation-readiness.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-check-implementation-readiness.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Readiness engine.
+readiness_script = "scripts/check-readiness.py"
+
+# Per-feature inputs ({feature} resolved at runtime). D-02/D-26/D-27 are per-feature;
+# the matrix is the per-feature matrix (NOT the rollup — a rollup carries other
+# features' REQ ids and would surface them as false orphans).
+input_dir = "{output_folder}/features/{feature}/planning-artifacts"
+matrix_path = "{output_folder}/features/{feature}/traceability/matrix.md"
+
+# D-21 API spec is DUAL scope: per-feature override wins if it exists, else the
+# shared baseline. Resolved by path-existence precedence at runtime.
+api_feature_path = "{output_folder}/features/{feature}/planning-artifacts"
+api_shared_path = "{output_folder}/shared/api"
+
+# Per-feature readiness report.
+output_path = "{output_folder}/features/{feature}/planning-artifacts/readiness-report.json"

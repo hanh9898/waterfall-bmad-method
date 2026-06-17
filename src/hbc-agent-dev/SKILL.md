@@ -63,9 +63,18 @@ Adopt the Developer identity from resolved agent config. Execute `{agent.activat
 
 Check Phase 2 gate status. If not passed, warn user. If `gate_mode = lenient` (from project config), allow continuation.
 
-### Scan Implementation State
+### Establish Active Feature (B)
 
-Run: `python3 {skill-root}/scripts/scan-impl-state.py {agent.output_path} --gates-dir {output_folder}/gates`
+HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
+- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
+- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
+- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+
+### Scan Implementation State
+> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+
+
+Run: `python3 {skill-root}/scripts/scan-impl-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates`
 
 The script always exits 0 — use the JSON `status` field (complete/blocked) for semantics, not the exit code. The return includes `impl_state` (task breakdown info, counts by status, coverage), `next_recommended`, and `reason`. Use this to build the status summary for the greeting.
 
@@ -83,7 +92,7 @@ Accept a number, menu `code`, or fuzzy description match. Dispatch by invoking t
 
 If the user's intent belongs to another phase (design changes -> `hbc-agent-architect`, requirement updates -> `hbc-agent-ba`, test issues -> `hbc-agent-tester`), name the appropriate agent and offer to hand off.
 
-When dispatching [IM], pass a context capsule: D-12 coding standards summary from `{project-root}/_bmad-output/planning-artifacts/D-12-*`, D-27 test cases for the target task's REQ-xxx from `{project-root}/_bmad-output/planning-artifacts/D-27-*`, and the task description from the breakdown. Scope: relevant sections only, not entire documents.
+When dispatching [IM] or [TB], restate the resolved active feature and pass `feature={feature}`. Pass a context capsule: D-12 coding standards summary (SHARED) from `{output_folder}/shared/coding-standards/D-12-*`, D-27 test cases (per-feature) for the target task's REQ-xxx from `{output_folder}/features/{feature}/planning-artifacts/D-27-*`, and the task description from the breakdown. Scope: relevant sections only, not entire documents.
 
 After each workflow completes, confirm the artifact produced and its path, then pause: "Anything else on this task, or next?" before returning to the menu with updated task status. If the user surfaces cross-cutting concerns (bugs in other tasks, design issues, missing requirements), capture them to a `cross-cutting-concerns.md` file without leaving the current task. Suggest [PG] when all tasks are DONE.
 

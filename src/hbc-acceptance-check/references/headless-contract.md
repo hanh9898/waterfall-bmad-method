@@ -6,6 +6,7 @@
 |-----|----------|-------------|
 | `--review` | No | Full acceptance review (default) |
 | `--status` | No | Check current decision without re-review |
+| `feature` | Yes (headless) | `feature=<slug>` — the active feature slug; per-feature output paths resolve under `_bmad-output/features/<feature>/...` |
 
 ## Return Schema
 
@@ -26,7 +27,7 @@
     "tested": 15,
     "coverage_pct": 100
   },
-  "report_path": "_bmad-output/implementation-artifacts/acceptance-report.md",
+  "report_path": "_bmad-output/features/<feature>/implementation-artifacts/acceptance-report.md",
   "reason": "string"
 }
 ```
@@ -36,3 +37,4 @@
 - `"no_test_execution_report"` — Test execution report not found.
 - `"phase_gate_failed"` — One or more phase gates not passed.
 - `"insufficient_evidence"` — Cannot determine acceptance criteria.
+- `"feature_required"` — headless invocation with no resolvable feature.

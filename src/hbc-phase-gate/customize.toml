@@ -33,8 +33,8 @@ phase_4_checklist = "assets/phase-4-gate-checklist.md"
 # Override to customize layout or add org-specific sections (e.g. sign-off block).
 gate_report_template = "assets/gate-report-template.md"
 
-# Output path for gate reports.
-gate_output_path = "{output_folder}/gates"
+# Output path for gate reports — PER-FEATURE ({feature} resolved at runtime).
+gate_output_path = "{output_folder}/features/{feature}/gates"
 
 # gate_mode (strict/lenient) is intentionally NOT here — it's project-level
 # policy sourced from _bmad/config.yaml [hbc] section, not a per-skill override.

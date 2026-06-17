@@ -2,10 +2,10 @@
 title: Kế hoạch nâng cấp HBC — Incremental per-feature + TDD (test-coupled)
 module: HBLAB BMad Custom (hbc)
 type: module-upgrade-plan
-status: ready-to-build
+status: implemented
 created: 2026-06-17
 updated: 2026-06-17
-revision: 3 (đã đóng 6 điểm để ngỏ a–f)
+revision: 4 (đã build Bước 0–7 trên nhánh feat/hbc-incremental-tdd)
 ---
 
 # Kế hoạch nâng cấp HBC: Incremental per-feature + kỷ luật TDD
@@ -104,6 +104,17 @@ revision: 3 (đã đóng 6 điểm để ngỏ a–f)
 4. **EARS**: REQ không-EARS → validator **cảnh báo** (không chặn).
 5. **Cross-ref**: feature tham chiếu `REQ-SHARED-NNN` → matrix/gate tính đúng.
 6. `validate-module` (VM) pass; `npm run check:docs` xanh; **regenerate** không gây drift `src/` ↔ `_bmad/hbc/`.
+
+## Implementation notes & known follow-ups (sau build Bước 0–7)
+
+**Đã kiểm chứng (script chạy thật):**
+- Matrix per-feature + rollup; REQ namespace per-feature + EARS advisory; RED-evidence gate; dry-run 2 feature (auth/report) — feature 2 không đè/chặn feature 1.
+
+**Known follow-ups (cần bạn quyết / làm khi deploy):**
+1. **VM 1 finding `hbc-shared`** — `validate-module` báo skill thư viện `hbc-shared` thiếu CSV entry. Đây là **hệ quả commit `d224eee`** (gỡ ngoại lệ library-skill) bạn đã chốt, KHÔNG do upgrade. Quyết: (a) khôi phục ngoại lệ library-skill, hoặc (b) thêm marker/CSV-entry non-invocable cho hbc-shared.
+2. **Regenerate bản cài** — `_bmad/hbc/module-help.csv` + `_bmad/_config/bmad-help.csv` có format khác src (cột `after/before` vs `preceded-by/followed-by`); regenerate qua `npx bmad-method install --action quick-update` khi deploy (không chạy trong phiên build này để khỏi xáo trộn working tree).
+3. **Agent scan-path per-feature** — `scan-phase*-state.py` của agent vẫn quét path project-level; lõi dispatch (truyền `feature=`) đã đúng, scan-status chỉ là tinh chỉnh UX.
+4. **Migration** — `_bmad/scripts/migrate-to-feature-layout.py` ship cho consumer; repo này không chạy (chưa có D-02 thật).
 
 ## Đã đóng finding adversarial (truy vết)
 

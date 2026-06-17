@@ -13,8 +13,8 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Output directory for the execution report.
-output_dir = "{implementation_artifacts}"
+# Execution report per-feature ({feature} resolved at runtime).
+output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 
 # Validation script.
 validation_script = "scripts/validate-test-execution.py"

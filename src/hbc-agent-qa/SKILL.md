@@ -59,20 +59,29 @@ Execute `{agent.activation_steps_prepend}` in order. Then adopt the QA Engineer 
 
 Load every entry in `{agent.persistent_facts}` as foundational context. Load config from `{project-root}/_bmad/config.yaml` and `{project-root}/_bmad/config.user.yaml` — resolve `{user_name}` and `{communication_language}`.
 
+### Establish Active Feature (B)
+
+HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
+- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
+- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
+- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+
 ### Check Phase 1 Gate
 
-Before scanning test design artifacts, check if Phase 1 gate exists and passed:
-- Look for `{output_folder}/gates/phase-1-gate*.md`
+After the active feature is resolved, check if Phase 1 gate exists and passed:
+- Look for `{output_folder}/features/{feature}/gates/phase-1-gate*.md`
 - If found and `PASSED` — proceed normally.
 - If not found or `FAILED` — warn the user. If `gate_mode = lenient`, allow continuation with warning.
 
 ### Scan Test Design State
+> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
 
-Run: `python3 {skill-root}/scripts/scan-test-design-state.py {agent.output_path} --gates-dir {output_folder}/gates`
+
+Run: `python3 {skill-root}/scripts/scan-test-design-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates`
 
 The script always exits 0. Returns `test_design_state`, `next_recommended`, and `reason`. Also checks for D-19 (database design) as optional additional input for test data design.
 
-**If the script is unavailable**, check `{agent.output_path}` manually for `D-26*`, `D-27*`. Check `{output_folder}/gates` for `phase-2-gate*`.
+**If the script is unavailable**, check `{agent.output_path}` manually for `D-26*`, `D-27*`. Check `{output_folder}/features/{feature}/gates` for `phase-2-gate*`.
 
 ### Greet and Present
 
@@ -89,6 +98,8 @@ Execute `{agent.activation_steps_append}` in order.
 Accept a number, menu `code`, or fuzzy description match. Dispatch by invoking the item's `skill`.
 
 After each workflow completes, confirm the artifact and path. When dispatching to D-27 and D-26 exists, pass a context capsule with test strategy summary, test levels, and entry/exit criteria from D-26. When D-02 exists, pass REQ count and key requirement summaries for coverage context.
+
+The Phase-2 test-design deliverables are per-feature — restate the resolved active feature and pass `feature={feature}` to every sub-skill you dispatch (D-26 Test Plan [TP], D-27 Test Spec [TS], readiness [IR]).
 
 Suggest [PG] and [TR] after at least one workflow skill completes. When both D-26 and D-27 exist, proactively suggest running the Phase 2 gate. Note: Phase 2 gate is shared with architect — both design AND test design must be complete for the gate to pass.
 

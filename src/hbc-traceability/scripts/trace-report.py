@@ -10,6 +10,7 @@ capabilities of hbc-traceability.
 """
 
 import argparse
+import glob
 import json
 import re
 import sys
@@ -20,18 +21,27 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-REQ_ID_RE = re.compile(r"REQ-\d{3,}")
-COLUMNS = ["req_id", "story_id", "design_ref", "code_ref", "test_ref", "gate_status", "timestamp"]
+# Feature-namespaced REQ ids (REQ-<FEAT>-NNN / REQ-SHARED-NNN); tolerant of legacy REQ-NNN.
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+COLUMNS = ["feature", "req_id", "story_id", "design_ref", "code_ref", "test_ref", "gate_status", "timestamp"]
 COVERAGE_COLUMNS = ["design_ref", "code_ref", "test_ref"]
 
 
 def parse_matrix(matrix_path: str) -> list[dict]:
-    """Parse markdown table rows into matrix entries."""
+    """Parse markdown table rows into matrix entries.
+
+    Header-aware: the column order is taken from the detected header row, so the
+    skill parses both the v2 8-column matrix (leading `feature` column) and a
+    legacy 7-column matrix (no `feature`) correctly. Without this, a fixed
+    positional map against the 8-column COLUMNS would shift every cell by one in a
+    legacy matrix (feature←req_id, design_ref←story_id, …) and miscount coverage.
+    """
     text = Path(matrix_path).read_text(encoding="utf-8")
     lines = text.strip().splitlines()
 
     rows: list[dict] = []
     in_table = False
+    col_order: list[str] = COLUMNS  # fallback if no header row is seen
 
     for line in lines:
         stripped = line.strip()
@@ -48,13 +58,18 @@ def parse_matrix(matrix_path: str) -> list[dict]:
             continue
 
         if not in_table:
-            if cells[0].lower() == "req_id":
+            if cells[0].lower() in ("feature", "req_id"):
                 in_table = True
+                # Capture the actual header so data rows map by name, not position.
+                col_order = [c.strip().lower() for c in cells]
             continue
 
-        row: dict = {}
-        for i, col in enumerate(COLUMNS):
-            row[col] = cells[i].strip() if i < len(cells) and cells[i].strip() else ""
+        row: dict = {col: "" for col in COLUMNS}
+        for i, cell in enumerate(cells):
+            if i < len(col_order):
+                key = col_order[i]
+                if key in COLUMNS:
+                    row[key] = cell.strip()
         rows.append(row)
 
     return rows
@@ -205,12 +220,94 @@ def sync_with_d02(rows: list[dict], d02_path: str) -> dict:
     }
 
 
+def _is_shared(row: dict) -> bool:
+    """A shared-scope matrix row (feature column == 'shared', case-insensitive).
+    Shared REQs (REQ-SHARED-NNN) are referenced in EVERY feature's matrix, so they
+    must be counted once at roll-up — not once per feature — and kept out of each
+    feature's own coverage denominator so they neither inflate nor dilute it."""
+    return row.get("feature", "").strip().lower() == "shared"
+
+
+def rollup(pattern: str, out_path: str | None) -> dict:
+    """Aggregate coverage across per-feature matrices (TRR cross-feature roll-up).
+
+    Per-feature totals count that feature's OWN rows only (shared rows excluded).
+    Shared rows are deduped by req_id across all matrices and reported in their own
+    bucket; a shared REQ counts as fully traced only if it is fully traced in every
+    matrix that references it. Grand totals = sum(feature-specific) + unique shared,
+    so a shared REQ is never double-counted across features.
+    """
+    paths = sorted(glob.glob(pattern, recursive=True))
+    features: list[dict] = []
+    g_total = g_traced = 0
+    shared_seen: dict[str, bool] = {}  # req_id -> fully traced wherever it appears
+    for p in paths:
+        rows = parse_matrix(p)
+        feat_rows = [r for r in rows if not _is_shared(r)]
+        rep = generate_report(feat_rows)
+        parts = Path(p).parts
+        feat = parts[parts.index("features") + 1] if "features" in parts else Path(p).stem
+        features.append({
+            "feature": feat,
+            "total": rep["total_requirements"],
+            "fully_traced": rep["fully_traced"],
+            "pct": rep["fully_traced_pct"],
+        })
+        g_total += rep["total_requirements"]
+        g_traced += rep["fully_traced"]
+        for r in rows:
+            if not _is_shared(r):
+                continue
+            rid = r.get("req_id", "")
+            if not rid:
+                continue
+            traced = all(r.get(col) for col in COVERAGE_COLUMNS)
+            shared_seen[rid] = (shared_seen[rid] and traced) if rid in shared_seen else traced
+
+    shared_total = len(shared_seen)
+    shared_traced = sum(1 for v in shared_seen.values() if v)
+    shared_pct = round(shared_traced / shared_total * 100, 1) if shared_total else 0.0
+    grand_total = g_total + shared_total
+    grand_traced = g_traced + shared_traced
+    g_pct = round(grand_traced / grand_total * 100, 1) if grand_total else 0.0
+    result = {
+        "features": features,
+        "shared": {"total": shared_total, "fully_traced": shared_traced, "pct": shared_pct},
+        "grand_total": grand_total,
+        "grand_fully_traced": grand_traced,
+        "grand_pct": g_pct,
+        "matrices_found": len(paths),
+    }
+    if out_path:
+        lines = [
+            "# Traceability Coverage Roll-up",
+            "",
+            "| feature | total | fully traced | % |",
+            "|---|---|---|---|",
+        ]
+        for f in features:
+            lines.append(f"| {f['feature']} | {f['total']} | {f['fully_traced']} | {f['pct']} |")
+        if shared_total:
+            lines.append(f"| _shared_ | {shared_total} | {shared_traced} | {shared_pct} |")
+        lines.append(f"| **TOTAL** | **{grand_total}** | **{grand_traced}** | **{g_pct}** |")
+        op = Path(out_path)
+        op.parent.mkdir(parents=True, exist_ok=True)
+        op.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate traceability coverage report from matrix."
     )
     parser.add_argument(
-        "--matrix", required=True, help="Path to traceability matrix markdown"
+        "--matrix", help="Path to traceability matrix markdown (per-feature)"
+    )
+    parser.add_argument(
+        "--rollup", help="Glob of per-feature matrices to aggregate cross-feature",
+    )
+    parser.add_argument(
+        "--out", help="Output markdown path for the --rollup report",
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     parser.add_argument(
@@ -229,6 +326,15 @@ def main():
         "--d02", help="Path to D-02 — cross-check matrix REQ ids vs D-02 (A-4)",
     )
     args = parser.parse_args()
+
+    if args.rollup:
+        result = rollup(args.rollup, args.out)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        sys.exit(0)
+
+    if not args.matrix:
+        print(json.dumps({"error": "Either --matrix or --rollup is required"}, ensure_ascii=False))
+        sys.exit(2)
 
     matrix_path = Path(args.matrix)
     if not matrix_path.exists():

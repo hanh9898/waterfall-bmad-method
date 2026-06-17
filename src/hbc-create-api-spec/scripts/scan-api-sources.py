@@ -102,8 +102,14 @@ def detect_needs_api(project_root: str, framework: str | None) -> bool | None:
 
 
 def find_artifact(output_dir: str, prefix: str) -> str | None:
-    plan_dir = output_dir.replace("/design", "/plan")
-    for search_dir in [output_dir, plan_dir]:
+    # Also probe the sibling "plan" dir when given a "design" dir. Use a
+    # separator-agnostic swap: a literal "/design"→"/plan" replace silently no-ops
+    # on Windows (paths use "\\design"), so D-02/D-19 in the plan dir went unfound.
+    search_dirs = [output_dir]
+    norm = os.path.normpath(output_dir)
+    if os.path.basename(norm) == "design":
+        search_dirs.append(os.path.join(os.path.dirname(norm), "plan"))
+    for search_dir in search_dirs:
         matches = glob.glob(os.path.join(search_dir, f"{prefix}*"))
         if matches:
             return matches[0]

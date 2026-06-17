@@ -7,6 +7,7 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-er-dia
 | Flag | Default | Effect |
 |---|---|---|
 | `-H` / `--headless` | off | Skip every interactive prompt; resolve decisions via the defaults table below; emit JSON return contract on completion or block. |
+| `feature=<slug>` | unset (optional) | When set, output resolves to the per-feature override `_bmad-output/features/<feature>/planning-artifacts/`; when absent, the shared baseline `_bmad-output/shared/erd/` — path-existence precedence. |
 | `--prd-path=<path>` | unset | Use this exact PRD location, skip discovery glob. Repeatable for sharded PRDs or multiple sources. |
 | `--scope=single-domain\|multi-domain` | inferred | Force scope; skip scope confirmation. |
 | `--level=conceptual\|logical\|physical` | `logical` | Force normalization level. |
@@ -48,6 +49,8 @@ On success:
   }
 }
 ```
+
+`artifact` resolves by dual scope: the shared baseline `_bmad-output/shared/erd/D-19-*.md` by default, or the per-feature override `_bmad-output/features/<feature>/planning-artifacts/D-19-*.md` when `feature=<slug>` is set (path-existence precedence).
 
 `review_lenses_run` is a list of `"advanced"` / `"party"` strings recording which review lenses fired during the run (empty when `--review-lenses=skip`).
 

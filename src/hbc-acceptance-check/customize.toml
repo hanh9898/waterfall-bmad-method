@@ -13,8 +13,8 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Output directory for the acceptance report.
-output_dir = "{implementation_artifacts}"
+# Acceptance report per-feature ({feature} resolved at runtime) — ship 1 feature độc lập.
+output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 
 # Validation script.
 validation_script = "scripts/validate-acceptance-check.py"
@@ -27,7 +27,7 @@ acceptance_owner = "PM"
 coverage_threshold = 80
 
 # Input paths from other skills (override if team changes output dirs).
-input_test_report = "{implementation_artifacts}/test-execution-report.md"
-input_traceability = "{output_folder}/traceability/matrix.md"
-input_gates = "{output_folder}/gates"
-input_requirements = "{planning_artifacts}"
+input_test_report = "{output_folder}/features/{feature}/implementation-artifacts/test-execution-report.md"
+input_traceability = "{output_folder}/features/{feature}/traceability/matrix.md"
+input_gates = "{output_folder}/features/{feature}/gates"
+input_requirements = "{output_folder}/features/{feature}/planning-artifacts"

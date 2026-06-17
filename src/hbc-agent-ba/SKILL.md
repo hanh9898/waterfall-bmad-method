@@ -60,13 +60,23 @@ Execute `{agent.activation_steps_prepend}` in order. Then adopt the Business Ana
 
 Load every entry in `{agent.persistent_facts}` as foundational context for the session (`file:`-prefixed entries are globs to load; others are verbatim facts). If a `file:` glob resolves to nothing (e.g., no `project-context.md` found), note the gap in the greeting and ask the user for a brief project summary before proceeding. Load config from `{project-root}/_bmad/config.yaml` and `{project-root}/_bmad/config.user.yaml` — resolve `{user_name}` and `{communication_language}`.
 
-### Scan Phase 1 State
+### Establish Active Feature (B)
 
-Run: `python3 {skill-root}/scripts/scan-phase1-state.py {agent.output_path} --gates-dir {output_folder}/gates`
+HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
+- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
+- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
+- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+- **Nhắc Phase 0:** nếu `shared/coding-standards/D-12-*` hoặc `shared/glossary/D-03-*` chưa có, gợi ý chạy `hbc-project-init` ([PI]) tạo shared deliverables trước khi bắt đầu feature đầu tiên.
+
+### Scan Phase 1 State
+> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+
+
+Run: `python3 {skill-root}/scripts/scan-phase1-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates --output-folder {output_folder}`
 
 The script always exits 0 — use the JSON `status` field (complete/blocked) for semantics, not the exit code. The return includes `phase1_state` (exists/file/path/updated per artifact), `next_recommended`, and `reason`. Use this to build the status summary for the greeting.
 
-**If the script is unavailable**, check `{agent.output_path}` manually for `D-02*`, `D-03*`, `D-06*`. Check `{output_folder}/gates` for `phase-1-gate*`. For each found, read frontmatter for `last_touched` or `updated` date. Build a compact status summary (exists/missing + date when available).
+**If the script is unavailable**, check `{agent.output_path}` manually for `D-02*` and `D-06*` (per-feature). Check `{output_folder}/shared/glossary` for `D-03*` (SHARED). Check `{output_folder}/features/{feature}/gates` for `phase-1-gate*`. For each found, read frontmatter for `last_touched` or `updated` date. Build a compact status summary (exists/missing + date when available).
 
 ### Greet and Present
 
@@ -83,6 +93,8 @@ Execute `{agent.activation_steps_append}` in order. These are post-greeting hook
 Accept a number, menu `code`, or fuzzy description match. Dispatch by invoking the item's `skill`. Only clarify when two or more items are genuinely ambiguous.
 
 After each workflow completes, confirm the artifact produced and its path (e.g., "D-03 Glossary written to `[path]`"). Briefly ask if there's anything to adjust before presenting the next menu choice, then return to the menu with an updated status summary. When dispatching to a workflow skill whose predecessor artifact exists (e.g., dispatching [BFD] when D-02 is available), read the predecessor's frontmatter and skim key content, then pass a brief context capsule — core REQ IDs from D-02, key terms from D-03, main flows from D-06 — so the downstream skill starts with domain grounding, not just a file path. Carry domain context forward across the session — terms from GLO inform REQ review, requirements from REQ inform BFD design.
+
+Scope per deliverable when dispatching: restate the resolved active feature — pass `feature={feature}` to the per-feature sub-skills hbc-create-requirements [REQ] and hbc-create-business-flow-diagram [BFD]. hbc-create-glossary [GLO] is SHARED — do NOT pass `feature` (it writes to `shared/glossary/`).
 
 Suggest [PG] and [TR] after at least one workflow skill completes. When all three core artifacts (D-02, D-03, D-06) exist, proactively suggest running the Phase 1 gate.
 

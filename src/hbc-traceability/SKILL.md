@@ -7,11 +7,11 @@ description: "Living traceability matrix + cascade document sync for the HBC inc
 
 ## Overview
 
-Maintain a living traceability matrix that maps requirements through design, implementation, and testing. Updated incrementally after each phase — each invoke adds data, never removes. The matrix is the single source of truth for "which requirement is covered where."
+Maintain a living traceability matrix **per feature** that maps requirements through design, implementation, and testing. Updated incrementally after each phase — each invoke adds data, never removes. Each feature has its own matrix at `{workflow.matrix_path}` (`{feature}` resolved at runtime); a cross-feature **roll-up** at `{workflow.rollup_path}` aggregates them. The matrix is the single source of truth for "which requirement is covered where."
 
-Seven-column matrix: `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref`. Five capabilities: **Initialize**, **Update**, **Report**, **Audit**, **Impact** (cascade sync — đọc matrix + task-status + phase-gate + git để đề xuất lan truyền thay đổi; không tự sửa nội dung).
+Eight-column matrix: `feature` (nhóm chính — file matrix là per-feature; dòng của REQ dùng chung ghi `feature = shared`), `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref` — **theo từng feature**. Five capabilities: **Initialize**, **Update**, **Report** (gồm roll-up cross-feature), **Audit**, **Impact** (cascade sync — đọc matrix + task-status + phase-gate + git để đề xuất lan truyền thay đổi; không tự sửa nội dung).
 
-**Args:** Capability name (`init`, `update`, `report`, `audit`, `impact`), or inferred from current phase context. Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
+**Args:** Capability name (`init`, `update`, `report`, `audit`, `impact`); **`feature=<slug>`** (bắt buộc ở headless; interactive thì lấy active feature trong phiên hoặc hỏi). Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for deterministic scripts.
 
 ## Conventions
 
@@ -32,7 +32,11 @@ When invoked with `--headless` or by another skill passing `headless=true`:
 
 ## On Activation
 
-Resolve customization, load persistent facts and config per standard BMad activation. Then determine capability:
+Resolve customization, load persistent facts and config per standard BMad activation.
+
+**Resolve active feature (B):** dùng arg `feature=<slug>` nếu có; nếu không, lấy active feature mà agent điều phối đang giữ trong phiên; nếu vẫn không có → hỏi user. Ở **headless**, `feature=<slug>` là **bắt buộc** — thiếu thì trả `blocked` với `reason=feature_required`. Validate slug `^[a-z0-9][a-z0-9-]*$`. Dùng nó để resolve mọi `{feature}` trong path bên dưới.
+
+Then determine capability:
 - Explicit argument (e.g. "traceability init") → use that capability.
 - Agent context → infer: BA after Phase 1 gate → `init`, Architect/Dev/Tester after gate → `update`.
 - Otherwise → ask user which capability (`init`, `update`, `report`, `audit`, `impact`).
@@ -46,28 +50,28 @@ Create the traceability matrix from D-02 requirements.
 1. **Extract REQ IDs** deterministically:
 
    ```
-   python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-02-* --pattern "REQ-\d{3,}" --project-root {project-root}
+   python3 scripts/extract-trace-ids.py --source {output_folder}/features/{feature}/planning-artifacts/D-02-* --pattern "REQ-[A-Z0-9]+-\d{3,}" --project-root {project-root}
    ```
 
-   Returns JSON array of discovered IDs. If script returns `NO_FILES`, suggest running `hbc-create-requirements` to generate D-02 first.
+   Returns JSON array of discovered IDs (gồm `REQ-<FEAT>-*` của feature và `REQ-SHARED-*` được feature tham chiếu). If script returns `NO_FILES`, suggest running `hbc-create-requirements` (feature={feature}) to generate D-02 first.
 
-2. **Create matrix** at `{workflow.matrix_path}` using `{workflow.matrix_template}`. Populate one row per REQ ID with `req_id` and `timestamp` filled, all other columns empty.
+2. **Create matrix** at `{workflow.matrix_path}` using `{workflow.matrix_template}`. Populate one row per REQ ID with `feature` (= active feature; hoặc `shared` cho `REQ-SHARED-*`), `req_id`, và `timestamp` filled, all other columns empty.
 
-3. **Report:** _"Initialized matrix with {count} requirements from D-02. Next: run Phase 1 gate, then update after Phase 2."_
+3. **Report:** _"Initialized matrix for feature '{feature}' with {count} requirements. Next: run Phase 1 gate, then update after Phase 2."_
 
 ## Update
 
-Populate columns for the current phase. First check for `{output_folder}/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
+Populate columns for the current phase. First check for `{output_folder}/features/{feature}/traceability/.trace-state.json` — if present, an update was interrupted. Surface: _"A Phase {N} update was interrupted. Restarting — previously written mappings are preserved, this run fills remaining empty cells."_ In headless mode, restart silently.
 
 Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, note which REQs have empty target columns (the diff baseline). Write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
-**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {project-root}/_bmad-output/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 (REQ IDs are already in the matrix from Initialize; TC IDs come from the script output above). D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`. If the REQ traces to a BMM story, also populate `story_id` with that story ID; otherwise leave it empty.
+**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {output_folder}/features/{feature}/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 theo **path-existence precedence (b)**: nếu `{output_folder}/features/{feature}/planning-artifacts/D-19-*` tồn tại thì dùng, không thì fallback `{output_folder}/shared/erd/D-19-*`. D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`. If the REQ traces to a BMM story, also populate `story_id` with that story ID; otherwise leave it empty.
 
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
 **Phase 4 — gate_status + timestamp:** Read gate reports from `{workflow.gate_reports_glob}`. Set `gate_status` per REQ. Set `timestamp` to current date.
 
-Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{output_folder}/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
+Write updated matrix. For each non-obvious mapping made by LLM judgment, append a line to `{output_folder}/features/{feature}/traceability/.trace-decisions.md`: `{timestamp} | {req_id} → {target_ref} | {one-line rationale}`. Create the file with a heading if it doesn't exist. In headless mode, log all mappings with confidence levels.
 
 Report with diff: list which REQs received new mappings this session, and any mappings that changed (if re-running Update). Then: _"Updated {column}. Coverage: {X}/{Y} requirements now have {column} populated. Next: run `hbc-phase-gate` for the next gate check."_
 
@@ -88,6 +92,14 @@ Generate coverage summary from current matrix state.
    - Per-column coverage: design_ref {X}/{total}, code_ref {Y}/{total}, test_ref {Z}/{total}
    - Fully traced (all columns): {W}/{total} ({percentage}%)
    - If gaps exist, list the first 10 gap REQ IDs.
+
+3. **Roll-up cross-feature (TRR):** tổng hợp coverage mọi feature:
+
+   ```
+   python3 scripts/trace-report.py --rollup "{output_folder}/features/*/traceability/matrix.md" --out {workflow.rollup_path}
+   ```
+
+   Ghi `{workflow.rollup_path}`: mỗi feature một dòng (total / fully-traced / %) + tổng toàn dự án. Cho thấy "feature nào xong, feature nào dở" mà không trộn lẫn.
 
 ## Audit
 

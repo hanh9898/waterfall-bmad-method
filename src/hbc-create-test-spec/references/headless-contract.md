@@ -6,6 +6,7 @@
 |-----|----------|-------------|
 | `--sources` | No | Comma-separated file paths to source documents (D-26, D-02, D-19, D-06) |
 | `--mode` | No | `create` (default), `update`, or `validate` |
+| `feature` | Yes (headless) | `feature=<slug>` — the active feature slug; per-feature output paths resolve under `_bmad-output/features/<feature>/...` |
 
 Example: `hbc-create-test-spec --headless --sources "D-26-plan.md,D-02-reqs.md" --mode create`
 
@@ -35,3 +36,4 @@ Example: `hbc-create-test-spec --headless --sources "D-26-plan.md,D-02-reqs.md" 
 - `"validation_manual_fix"` — validation found issues requiring human judgment.
 - `"zero_coverage"` — some REQ-xxx IDs have no test cases.
 - `"mode_conflict"` — existing complete D-27 found but `--mode create` specified.
+- `"feature_required"` — headless invocation with no resolvable feature.

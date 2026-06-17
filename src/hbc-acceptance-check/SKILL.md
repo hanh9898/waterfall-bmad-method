@@ -28,6 +28,8 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+
 ## Stage 1: Prerequisites
 
 Load all evidence for the acceptance review:

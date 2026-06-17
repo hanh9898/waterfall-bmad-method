@@ -48,7 +48,8 @@ except ModuleNotFoundError:
     }, ensure_ascii=False))
     sys.exit(2)
 
-REQ_ID_RE = re.compile(r"REQ-\d{3,}")
+# Namespace-aware (v2): matches REQ-<FEAT>-NNN / REQ-SHARED-NNN + legacy REQ-NNN.
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 

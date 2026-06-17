@@ -58,43 +58,46 @@ DEFAULT_VAGUE_TERMS = [
     "nice", "efficient", "appropriate", "adequate", "reasonable",
 ]
 
-REQ_ID_PATTERN = re.compile(r"REQ-(\d{3,})")
+# group1 = namespace (feature/SHARED, e.g. AUTH); group2 = number. Legacy REQ-NNN → ns "".
+REQ_ID_PATTERN = re.compile(r"REQ-(?:([A-Z0-9]+)-)?(\d{3,})")
 
 
-def functional_req_ids(content: str) -> list[str]:
-    """REQ ID numbers defined in the functional requirements table.
+def functional_req_rows(content: str) -> list[list[str]]:
+    """Rows (cell-lists) of the functional requirements table."""
+    return parse_table(content, "Functional Requirements", "Yêu cầu chức năng")
 
-    Takes the first REQ-xxx found in each table row (the row's own ID column,
-    wherever it sits — tolerates a leading "No." column). Prose references
-    outside the table are never seen, so they cannot inflate counts (S-4).
+
+def functional_req_ids(content: str) -> list[tuple[str, int]]:
+    """(namespace, number) for each REQ id in the functional table's ID column.
+
+    namespace = feature/SHARED prefix (e.g. 'AUTH'); '' for legacy REQ-NNN.
+    Anchored match on the ID cell (prose refs elsewhere ignored — S-4/F7).
     """
-    rows = parse_table(content, "Functional Requirements", "Yêu cầu chức năng")
-    ids: list[str] = []
-    for cells in rows:
+    out: list[tuple[str, int]] = []
+    for cells in functional_req_rows(content):
         for cell in cells:
-            # Anchored match: the cell must BE a REQ id (the ID column), not merely
-            # contain one — so a prose reference like "See REQ-001" in another cell
-            # of an id-less row does not produce a ghost/duplicate id (F7).
             m = REQ_ID_PATTERN.match(cell.strip())
             if m:
-                ids.append(m.group(1))
+                out.append((m.group(1) or "", int(m.group(2))))
                 break  # one ID per row
-    return ids
+    return out
+
+
+def _fmt(ns: str, num: int) -> str:
+    return f"REQ-{ns + '-' if ns else ''}{num:03d}"
 
 
 def check_req_ids(content: str) -> list[dict]:
-    """Validate REQ IDs are unique and sequential.
+    """Validate REQ IDs: unique + sequential WITHIN each namespace (feature/SHARED).
 
-    Definitions are taken ONLY from the functional requirements table — a
-    REQ-xxx mentioned in prose (User Roles, Assumptions, Acceptance Criteria,
-    etc.) is a reference, not a definition, and must not trigger duplicate/order
-    issues (S-4).
+    Gaps BETWEEN namespaces are fine (different features). Within a namespace,
+    numbers must be unique and gap-free (1..max). Definitions taken ONLY from the
+    functional table (prose refs are references, not definitions — S-4).
     """
     issues: list[dict] = []
+    entries = functional_req_ids(content)
 
-    matches = functional_req_ids(content)
-
-    if not matches:
+    if not entries:
         issues.append({
             "type": "REQ_ID_MISSING",
             "message": "No REQ-xxx IDs found in the functional requirements table",
@@ -102,37 +105,61 @@ def check_req_ids(content: str) -> list[dict]:
         })
         return issues
 
-    ids = [int(m) for m in matches]
-    seen: dict[int, int] = {}
-    for i, req_num in enumerate(ids, 1):
-        if req_num in seen:
+    by_ns: dict[str, list[int]] = {}
+    for ns, num in entries:
+        by_ns.setdefault(ns, []).append(num)
+
+    for ns, nums in by_ns.items():
+        seen: dict[int, int] = {}
+        for i, n in enumerate(nums, 1):
+            if n in seen:
+                issues.append({
+                    "type": "REQ_ID_DUPLICATE",
+                    "message": f"{_fmt(ns, n)} appears at positions {seen[n]} and {i}",
+                    "auto_fixable": True,
+                    "req_id": _fmt(ns, n),
+                })
+            else:
+                seen[n] = i
+
+        missing = [n for n in range(1, max(nums) + 1) if n not in set(nums)]
+        if missing:
             issues.append({
-                "type": "REQ_ID_DUPLICATE",
-                "message": f"REQ-{req_num:03d} appears at table positions {seen[req_num]} and {i}",
+                "type": "REQ_ID_GAP",
+                "message": f"Namespace {ns or '(legacy)'}: missing {', '.join(_fmt(ns, n) for n in missing)}",
                 "auto_fixable": True,
-                "req_id": f"REQ-{req_num:03d}",
+                "missing_ids": [_fmt(ns, n) for n in missing],
             })
-        else:
-            seen[req_num] = i
 
-    expected = list(range(1, max(ids) + 1))
-    missing = [n for n in expected if n not in set(ids)]
-    if missing:
-        missing_labels = [f"REQ-{n:03d}" for n in missing]
-        issues.append({
-            "type": "REQ_ID_GAP",
-            "message": f"Non-sequential: missing {', '.join(missing_labels)}",
-            "auto_fixable": True,
-            "missing_ids": missing_labels,
-        })
+        if nums != sorted(nums):
+            issues.append({
+                "type": "REQ_ID_ORDER",
+                "message": f"Namespace {ns or '(legacy)'}: REQ IDs not in ascending order",
+                "auto_fixable": True,
+            })
 
-    if ids != sorted(ids):
-        issues.append({
-            "type": "REQ_ID_ORDER",
-            "message": "REQ IDs are not in ascending order in the functional table",
-            "auto_fixable": True,
-        })
+    return issues
 
+
+def check_ears(content: str) -> list[dict]:
+    """ADVISORY (cụm 7=A): mỗi functional requirement nên theo EARS — keyword
+    tiếng Anh 'SHALL' (vd 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'). Chỉ
+    CẢNH BÁO, KHÔNG làm fail structure_ok."""
+    issues: list[dict] = []
+    for cells in functional_req_rows(content):
+        rid = ""
+        for c in cells:
+            if REQ_ID_PATTERN.match(c.strip()):
+                rid = c.strip()
+                break
+        if rid and "shall" not in " ".join(cells).lower():
+            issues.append({
+                "type": "EARS_ADVISORY",
+                "message": f"{rid}: chưa theo EARS (thiếu 'SHALL'). Gợi ý: 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'.",
+                "auto_fixable": False,
+                "advisory": True,
+                "req_id": rid,
+            })
     return issues
 
 
@@ -191,10 +218,11 @@ def check_nfr_measurable(content: str) -> list[dict]:
 # Structural checks this validator performs, and the semantic facets it
 # deliberately does NOT judge (deferred to the LLM review layer — Đợt 2).
 CHECKED = [
-    "REQ ID uniqueness/sequence (functional table column)",
+    "REQ ID uniqueness/sequence per namespace (feature/SHARED)",
     "vague terminology",
     "required sections present and non-empty",
     "NFR measurable-criteria presence",
+    "EARS shape (advisory — warning only, không fail)",
 ]
 NOT_CHECKED = [
     "REQ semantic correctness / đủ-nghĩa (LLM review)",
@@ -217,13 +245,17 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     all_issues.extend(check_vague_terms(content, vague_terms))
     all_issues.extend(check_sections(content))
     all_issues.extend(check_nfr_measurable(content))
+    all_issues.extend(check_ears(content))
 
-    auto_fixable = [i for i in all_issues if i.get("auto_fixable")]
-    manual_fix = [i for i in all_issues if not i.get("auto_fixable")]
+    # Advisory issues (EARS) warn but do NOT fail the structural verdict (cụm 7=A).
+    blocking = [i for i in all_issues if not i.get("advisory")]
+    advisory = [i for i in all_issues if i.get("advisory")]
+    auto_fixable = [i for i in blocking if i.get("auto_fixable")]
+    manual_fix = [i for i in blocking if not i.get("auto_fixable")]
 
     req_count = len(functional_req_ids(content))
 
-    structure_ok = len(all_issues) == 0
+    structure_ok = len(blocking) == 0
     result = verdict(
         structure_ok,
         semantic_review=SEMANTIC_NA,
@@ -233,9 +265,10 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     # Backward-compatible keys (consumed by SKILL.md / phase-gate) + new verdict fields.
     result.update({
         "valid": structure_ok,
-        "total_issues": len(all_issues),
+        "total_issues": len(blocking),
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
+        "advisory_count": len(advisory),
         "req_count": req_count,
         "issues": all_issues,
     })

@@ -18,28 +18,42 @@ matrix. Run it **before closing the Phase 2 gate** (`hbc-phase-gate`).
 > (is each REQ *meaningfully* covered, every facet handled) stays with the Lớp-2
 > semantic review + the facet rubric (`hbc-shared/references/semantic-review-rubric.md`).
 
+## Conventions
+
+- Bare paths (e.g. `references/foo.md`) resolve from the skill root.
+- `{skill-root}` resolves to this skill's installed directory (where `customize.toml` lives).
+- `{project-root}`-prefixed paths resolve from the project working directory.
+- `{skill-name}` resolves to the skill directory's basename.
+
 ## When to use
 
 - Right before `hbc-phase-gate` Phase 2 (gate item **P2-11** expects this).
 - Anytime after D-02 changes, to confirm downstream docs are still in sync.
 
+## Feature scope (v2)
+
+Readiness is evaluated **per feature** — a feature can close Phase 2 independently of others. Resolve `{feature}` first: a `feature=<slug>` arg wins; else an active-feature value carried in the session; else ask (interactive). **Headless with no resolvable feature → block** with `reason: "feature_required"` (the inputs are per-feature paths and can't be located otherwise). The Phase 2 gate invokes this skill with the active `feature=`.
+
 ## Inputs
 
-Resolve from `{planning_artifacts}` (default `_bmad-output/planning-artifacts`):
-- `D-02` requirements (required — the source of truth)
-- `D-27` test spec, `D-26` test plan, `D-21` API spec (optional, reconciled if present)
-- traceability matrix (optional)
+Resolve from `{workflow.input_dir}` = `{output_folder}/features/{feature}/planning-artifacts`:
+- `D-02` requirements (required — the source of truth, with `REQ-<FEAT>-NNN` ids)
+- `D-27` test spec, `D-26` test plan (per-feature; optional, reconciled if present)
+- `D-21` API spec — **DUAL scope**: prefer the per-feature override (`{workflow.api_feature_path}/D-21-{feature}-api-spec.md`) if it exists, else the shared baseline (`{workflow.api_shared_path}/D-21-*-api-spec.md`) — path-existence precedence
+- the **per-feature** traceability matrix `{workflow.matrix_path}` (optional). Pass the per-feature matrix, NOT the rollup — a rollup carries other features' REQ ids and would surface them as false orphans.
 
 ## Process
 
-1. Locate the documents under `{planning_artifacts}` (glob `D-02-*`, `D-27-*`, …, dir-aware).
+1. Resolve `{feature}` (above) and locate the documents under `{workflow.input_dir}` (glob `D-02-*`, `D-27-*`, …, dir-aware); resolve D-21 by the DUAL precedence and the matrix at `{workflow.matrix_path}`.
 2. Run the deterministic engine:
 
 ```
 python3 {skill-root}/scripts/check-readiness.py \
-  --d02 <D-02 path> [--d27 <path>] [--d26 <path>] [--d21 <path>] [--matrix <path>] \
-  -o {planning_artifacts}/readiness-report.json
+  --d02 <D-02 path> [--d27 <path>] [--d26 <path>] [--d21 <resolved D-21 path>] [--matrix <per-feature matrix>] \
+  -o {workflow.output_path}
 ```
+
+The engine matches namespaced ids (`REQ-<FEAT>-NNN`) and legacy `REQ-NNN` alike.
 
 It reports, for every REQ DEFINED in D-02's functional table (not prose):
 - `uncovered_by_test` / `uncovered_by_plan` / `uncovered_by_api` — REQs no downstream doc references
@@ -56,8 +70,10 @@ It reports, for every REQ DEFINED in D-02's functional table (not prose):
 
 ## Output
 
-`readiness-report.json` (honest verdict + reconciliation sets). Headless: return the
-JSON and exit non-zero when `ready: false`.
+`readiness-report.json` (honest verdict + reconciliation sets) at `{workflow.output_path}`.
+Headless: return the JSON and exit non-zero when `ready: false`. Full input args,
+return schema, exit codes, and the closed-set of blocked `reason` values live in
+[`references/headless-contract.md`](references/headless-contract.md).
 
 ## Limitations
 

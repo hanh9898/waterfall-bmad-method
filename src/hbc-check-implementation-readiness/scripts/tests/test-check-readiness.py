@@ -323,6 +323,47 @@ def test_d27_tc_without_req_id_surfaced():
         assert data["ready"] is True  # the two real REQs are still covered
 
 
+D02_NS = """\
+# D-02
+
+## Yêu cầu chức năng
+
+| REQ ID | Mô tả |
+|--------|-------|
+| REQ-AUTH-001 | Login |
+| REQ-AUTH-002 | Logout |
+"""
+
+
+def test_feature_namespaced_ids_covered():
+    # v2 false-green regression guard: namespaced REQ-<FEAT>-NNN ids must be
+    # DEFINED + reconciled. A bare `REQ-\d{3,}` regex matched zero of these →
+    # d02_req_count:0 → ready:true for everything (the seam bug).
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02_NS)
+        d27 = _w(d, "D-27.md", _d27("REQ-AUTH-001", "REQ-AUTH-002"))
+        data, code = run(["--d02", d02, "--d27", d27])
+        assert data["d02_req_count"] == 2          # ids were actually parsed
+        assert data["ready"] is True
+        assert data["uncovered_by_test"] == []
+        assert code == 0
+
+
+def test_feature_namespaced_gap_detected():
+    # The one a false-green would hide: a defined namespaced REQ with no TC must
+    # be reported uncovered (not silently green).
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02_NS)
+        d27 = _w(d, "D-27.md", _d27("REQ-AUTH-001"))  # 002 missing
+        data, code = run(["--d02", d02, "--d27", d27])
+        assert data["d02_req_count"] == 2
+        assert data["uncovered_by_test"] == ["REQ-AUTH-002"]
+        assert data["ready"] is False
+        assert code == 1
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
