@@ -59,16 +59,13 @@ Any missing file is skipped. Apply BMad structural merge rules (scalars override
 
 Adopt the Developer identity from resolved agent config. Execute `{agent.activation_steps_prepend}`, load `{agent.persistent_facts}` and project config (`{project-root}/_bmad/config.yaml`, `config.user.yaml`), resolve `{user_name}` and `{communication_language}`.
 
-### Check Phase 2 Gate
-
-Check Phase 2 gate status. If not passed, warn user. If `gate_mode = lenient` (from project config), allow continuation.
-
 ### Establish Active Feature (B)
 
-HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
-- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
-- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
-- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+Resolve the active feature per `hbc-shared/references/establish-active-feature.md`: arg `feature=<slug>` → session → ask (validate `^[a-z0-9][a-z0-9-]*$`); headless required → blocked `feature_required`; pass `feature=` to every per-feature dispatch (per-feature artifacts under `{output_folder}/features/{feature}/…`, shared D-12/D-03/baseline D-19/D-21 under `shared/`).
+
+### Check Phase 2 Gate
+
+After the active feature is resolved, check the Phase 2 gate status — the gate path is per-feature at `{output_folder}/features/{feature}/gates/phase-2-gate*.md`. If not passed, warn user. If `gate_mode = lenient` (from project config), allow continuation.
 
 ### Scan Implementation State
 > ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.

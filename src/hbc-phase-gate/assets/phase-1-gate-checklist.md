@@ -3,7 +3,7 @@
 | item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
 |---------|-------------|------|----------|------------------|----------|-----------------|
 | P1-01 | D-02 Requirements document exists | FILE | yes | {output_folder}/features/{feature}/planning-artifacts/D-02-* | | hbc-create-requirements |
-| P1-02 | D-02 contains requirement IDs | CONTENT | yes | {output_folder}/features/{feature}/planning-artifacts/D-02-* | REQ-\d{3} | hbc-create-requirements |
+| P1-02 | D-02 contains requirement IDs | CONTENT | yes | {output_folder}/features/{feature}/planning-artifacts/D-02-* | REQ-(?:[A-Z0-9]+-)?\d{3,} | hbc-create-requirements |
 | P1-03 | D-03 Glossary document exists | FILE | yes | {output_folder}/shared/glossary/D-03-* | | hbc-create-glossary |
 | P1-04 | D-06 Business Flow document exists | FILE | yes | {output_folder}/features/{feature}/planning-artifacts/D-06-* | | hbc-create-business-flow-diagram |
 | P1-05 | D-06 contains Mermaid flowcharts | CONTENT | yes | {output_folder}/features/{feature}/planning-artifacts/D-06-* | ```mermaid | hbc-create-business-flow-diagram |

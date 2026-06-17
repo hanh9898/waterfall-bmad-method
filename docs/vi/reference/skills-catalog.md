@@ -6,7 +6,7 @@
 
 Gọi skill bằng **menu code** (vd `REQ`), **tên skill** (`hbc-create-requirements`), hoặc qua **agent**. Mỗi skill workflow hỗ trợ 3 chế độ **Create / Update / Validate**; phần lớn có `--headless` / `-H` để chạy không tương tác.
 
-HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi qua 4 phase có cổng kiểm soát + TDD rồi ship độc lập. Trước đó chạy **Phase 0** một lần cho toàn dự án. Mỗi skill có **phạm vi** (scope):
+HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi qua 4 phase có cổng kiểm soát + TDD rồi ship độc lập. Trước đó **Phase 0 là bắt buộc và chạy đầu tiên** một lần cho toàn dự án (hoặc chạy lại để cập nhật trực tiếp). Mỗi skill có **phạm vi** (scope):
 
 - **per-feature** — chạy cho từng tính năng, output vào `_bmad-output/features/<feature>/...`; ở chế độ headless bắt buộc truyền `feature=<slug>` (thiếu sẽ bị chặn `feature_required`).
 - **shared** — tài liệu dùng chung toàn dự án, output vào `_bmad-output/shared/...`; không cần `feature`.
@@ -24,11 +24,11 @@ HBC giao **tăng dần theo từng tính năng** (incremental per-feature delive
 
 ## Phase 0 — Project Init
 
-Chạy **một lần** cho toàn dự án, **trước mọi tính năng**. Không có `feature` arg. Idempotent — bỏ qua những gì đã tồn tại.
+**Bắt buộc và chạy đầu tiên**, một lần cho toàn dự án, **trước mọi tính năng** (hoặc chạy lại để cập nhật trực tiếp các deliverable dùng chung). Không có `feature` arg. `PI` **nhận biết brownfield**: với codebase đã có, nó tài liệu hoá code trước (`bmad-document-project` + `project-context.md`) rồi suy ra các deliverable dùng chung từ đó; với greenfield thì suy ra từ PRD/lựa chọn. **D-12 Coding Standards và D-03 Glossary là deliverable dùng chung (shared) sinh ở Phase 0.**
 
 | Code | Skill | Mô tả | Deliverable | Phạm vi |
 | --- | --- | --- | --- | --- |
-| `PI` | `hbc-project-init` | Tạo các deliverable dùng chung: D-12 Coding Standards, D-03 Glossary, và baseline D-19 ERD / D-21 API trước khi bắt đầu tính năng đầu tiên | D-12, D-03, baseline D-19/D-21 | shared |
+| `PI` | `hbc-project-init` | Bắt buộc, chạy đầu tiên. Brownfield: tài liệu hoá code (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield: suy ra từ PRD/lựa chọn. Tạo các shared deliverable: D-12 Coding Standards, D-03 Glossary, và baseline D-19 ERD / D-21 API | D-12, D-03, baseline D-19/D-21 | shared |
 
 Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 
@@ -37,8 +37,8 @@ Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 | Code | Skill | Mô tả | Deliverable | Phạm vi | Bắt buộc |
 | --- | --- | --- | --- | --- | :---: |
 | `REQ` | `hbc-create-requirements` | Sinh đặc tả yêu cầu với REQ-<FEAT>-NNN ID và ranh giới phạm vi | D-02 | per-feature | ✅ |
-| `GLO` | `hbc-create-glossary` | Thuật ngữ miền thống nhất từ tài liệu dự án & yêu cầu | D-03 | shared | — |
-| `BFD` | `hbc-create-business-flow-diagram` | Sơ đồ luồng nghiệp vụ AS-IS/TO-BE (Mermaid) từ PRD | D-06 | per-feature | — |
+| `GLO` | `hbc-create-glossary` | Duy trì **D-03 dùng chung** (đã khởi tạo ở Phase 0) — thuật ngữ miền thống nhất từ tài liệu dự án & yêu cầu | D-03 | shared | — |
+| `BFD` | `hbc-create-business-flow-diagram` | Sơ đồ luồng nghiệp vụ AS-IS/TO-BE (Mermaid) từ PRD | D-06 | per-feature | ✅ |
 
 Output per-feature: `_bmad-output/features/<feature>/planning-artifacts/`. Output shared: `_bmad-output/shared/glossary/`.
 
@@ -47,7 +47,7 @@ Output per-feature: `_bmad-output/features/<feature>/planning-artifacts/`. Outpu
 | Code | Skill | Mô tả | Deliverable | Phạm vi | Bắt buộc |
 | --- | --- | --- | --- | --- | :---: |
 | `ERD` | `hbc-create-er-diagram` | Thiết kế CSDL + ER Diagram (Mermaid) từ yêu cầu & kiến trúc | D-19 | dual | ✅ |
-| `CS` | `hbc-create-coding-standards` | Coding standards theo dự án, điều chỉnh theo framework | D-12 | shared | ✅ |
+| `CS` | `hbc-create-coding-standards` | Duy trì **D-12 dùng chung** (đã khởi tạo ở Phase 0) — coding standards theo dự án, điều chỉnh theo framework | D-12 | shared | ✅ |
 | `API` | `hbc-create-api-spec` | Đặc tả API — endpoint và schema request/response | D-21 | dual | — |
 | `TP` | `hbc-create-test-plan` | Test plan — chiến lược, phạm vi, lịch, tiêu chí vào/ra, rủi ro | D-26 | per-feature | ✅ |
 | `TS` | `hbc-create-test-spec` | Test case chi tiết với TC-xxx ID, các bước & kết quả mong đợi | D-27 | per-feature | ✅ |
@@ -92,7 +92,7 @@ Ma trận truy vết 8 cột: `feature | req_id | story_id | design_ref | code_r
 
 ```
 PI                                      (một lần, đầu tiên — shared D-12/D-03 + baseline D-19/D-21)
-BA → REQ → (GLO, BFD) → TRI → PG 1
+BA → REQ → GLO → BFD → TRI → PG 1   (GLO dùng chung từ Phase 0; BFD/D-06 bắt buộc cho Phase 1)
 ARCH → ERD → CS → (API) ┐
 QA   → TP  → TS         ┘ → IR → TRU → PG 2
 DEV  → TB  → IM         → TRU → PG 3

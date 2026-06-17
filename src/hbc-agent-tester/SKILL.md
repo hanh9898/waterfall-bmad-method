@@ -63,10 +63,7 @@ Check if Phase 3 gate exists and passed. If not — warn user. If `gate_mode = l
 
 ### Establish Active Feature (B)
 
-HBC giao tăng dần **theo từng tính năng**. Đầu phiên, xác lập **active feature** rồi giữ suốt phiên:
-- Nhận arg `feature=<slug>` hoặc hỏi user (kebab-case, vd `change-password`); validate `^[a-z0-9][a-z0-9-]*$`. Headless: bắt buộc, thiếu → blocked `feature_required`.
-- **Truyền `feature=<slug>`** cho MỌI skill bạn dispatch (REQ/GLO/BFD/ERD/CS/API/TP/TS/TB/IM/TE/AC/PG/TR…) — cùng context capsule.
-- Artifact của feature ở `{output_folder}/features/{feature}/…`; deliverable dùng chung (D-12/D-03, baseline D-19/D-21) ở `shared/`.
+Resolve the active feature per `hbc-shared/references/establish-active-feature.md`: arg `feature=<slug>` → session → ask (validate `^[a-z0-9][a-z0-9-]*$`); headless required → blocked `feature_required`; pass `feature=` to every per-feature dispatch (per-feature artifacts under `{output_folder}/features/{feature}/…`, shared D-12/D-03/baseline D-19/D-21 under `shared/`).
 
 ### Scan Testing State
 > ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.

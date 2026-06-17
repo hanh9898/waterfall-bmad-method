@@ -37,12 +37,14 @@ Resolve customization, load persistent facts and config per standard BMad activa
 1b. **Source scan.** Run pre-pass to discover project state:
 
 ```
-python3 {workflow.scan_script} --project-root {project-root}
+python3 {workflow.scan_script} --project-root {project-root} --project-knowledge {project_knowledge}
 ```
 
-Headless: forward `--sources` arg if provided: `python3 {workflow.scan_script} --project-root {project-root} --sources "{sources}"`.
+Headless: forward `--sources` arg if provided: `python3 {workflow.scan_script} --project-root {project-root} --sources "{sources}"`. (`--sources` skips ALL auto-discovery, including project-knowledge, for back-compat.)
 
-Returns JSON with `state` (fresh/resume/update), `existing_d03`, `source_docs` (D-02, project-context, etc.), and `raw_candidates` (each with `term` and `method`: quoted/abbreviation). Candidates are raw structural extractions — filter for domain relevance using LLM judgment in Stage 2. Use `state` to route:
+**Brownfield ingest (#7).** `--project-knowledge {project_knowledge}` points at the `bmad-document-project` output dir (typically `{project-root}/docs`). When present, the scan also ingests its domain docs (`index.md` + project docs) as additional glossary sources — `source_docs`/`raw_candidates` will include terms extracted from the **real documented domain**, so D-03 reflects the actual codebase vocabulary, not just project-context.md. Greenfield (dir absent) is a no-op.
+
+Returns JSON with `state` (fresh/resume/update), `existing_d03`, `source_docs` (D-02, project-context, project-knowledge domain docs, etc.), and `raw_candidates` (each with `term` and `method`: quoted/abbreviation). Candidates are raw structural extractions — filter for domain relevance using LLM judgment in Stage 2. Use `state` to route:
    - **Fresh** — no prior D-03. Proceed to Stage 2.
    - **Resume** — partial D-03 found (`lastStep` < `complete`). Show summary, offer resume or restart. Restart: overwrite with fresh template, reset frontmatter, append restart note to decision log.
    - **Update** — complete D-03 exists. Show current term count, proceed to Update Mode.

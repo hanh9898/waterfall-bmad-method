@@ -50,19 +50,6 @@ def find_skill_folders(module_dir: Path, exclude_name: str = "") -> list[str]:
     return sorted(skills)
 
 
-def is_library_skill(skill_dir: Path) -> bool:
-    """True for a non-invocable shared library skill (e.g. a `*-shared` lib
-    imported by sibling skills via a sys.path bootstrap). Such a skill has no
-    menu code and intentionally no module-help.csv capability row, so it must be
-    exempt from the 'every skill has a CSV entry' check. Detected by an explicit
-    'not user-invocable' marker in its SKILL.md."""
-    skill_md = skill_dir / "SKILL.md"
-    if not skill_md.is_file():
-        return False
-    text = skill_md.read_text(encoding="utf-8", errors="replace").lower()
-    return "not user-invocable" in text
-
-
 def detect_standalone_module(module_dir: Path) -> Path | None:
     """Detect a standalone module: single skill folder with assets/module.yaml."""
     skill_dirs = [
@@ -220,16 +207,10 @@ def validate(module_dir: Path, verbose: bool = False) -> dict:
     info["skill_folders"] = skill_folders
     info["csv_skills"] = sorted(csv_skills)
 
-    # 7. Skills without CSV entries (library/non-invocable skills are exempt)
-    library_skills: list[str] = []
+    # 7. Skills without CSV entries
     for skill in skill_folders:
         if skill not in csv_skills:
-            if is_library_skill(module_dir / skill):
-                library_skills.append(skill)
-                continue
             finding("high", "missing-entry", f"Skill '{skill}' has no capability entries in the CSV")
-    if library_skills:
-        info["library_skills"] = library_skills
 
     # 8. Orphan CSV entries
     setup_name = setup_dir.name if setup_dir else ""

@@ -44,7 +44,7 @@ Based on D-27 test cases for this task:
 - Write test file(s) following D-12 test organization conventions.
 - Tests must be specific and match D-27 expected results.
 - Run the tests — they should FAIL (RED). If they pass, the test is wrong or the functionality already exists.
-- **Lưu RED-evidence (cưỡng chế quy trình):** ghi lần chạy test FAIL vào `{workflow.tdd_evidence_dir}/<TASK-xxx>.md` (lệnh chạy + output chứa dòng `FAIL`). **HALT — KHÔNG sang GREEN/viết code khi chưa có RED-evidence cho task này.** *(Lưu ý: evidence tự khai — đây là kỷ luật test-first, không phải bằng chứng mật mã chống ngụy tạo.)*
+- **Lưu RED-evidence (cưỡng chế quy trình):** ghi lần chạy test FAIL vào `{workflow.tdd_evidence_dir}/<TASK-xxx>.md` (lệnh chạy + output chứa dòng `FAIL`). **HALT — KHÔNG sang GREEN/viết code khi chưa có RED-evidence cho task này.** *(Lưu ý: RED-evidence là **tự khai** — cưỡng chế mềm ở cấp quy trình: gate Phase 3 chỉ kiểm tra evidence **tồn tại/đã được ghi**, KHÔNG phải bằng chứng mật mã chống ngụy tạo. Đây là chủ ý — TDD mềm.)*
 
 Present test code to user for review before proceeding.
 

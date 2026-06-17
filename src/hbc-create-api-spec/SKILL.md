@@ -40,15 +40,17 @@ Resolve customization, load persistent facts and config per standard BMad activa
    - **Shared baseline** (no feature): `{api_dir} = {workflow.output_dir}`; `{d21_file} = {api_dir}/D-21-{project_name}-api-spec.md`.
 3. **Path-existence precedence** (resume/read): if a per-feature override already exists for the active feature, it takes precedence for resume/update; a downstream reader resolves D-21 by checking the per-feature path first, then the shared baseline.
 
+**Resolve log (#10 — dual-scope):** after binding, append one line to the decision log stating which path was chosen — e.g. `Scope resolved: per-feature override (feature={feature}) → {d21_file}` or `Scope resolved: shared baseline (no feature) → {d21_file}`. Headless: log the same line. This makes the per-feature-override-vs-shared-baseline decision auditable.
+
 Use `{api_dir}` and `{d21_file}` (not the raw `{workflow.output_dir}`) for every scan / write / validate reference below.
 
 1a. **Source scan.** Run pre-pass to discover project state and sources:
 
 ```
-python3 scripts/scan-api-sources.py --project-root {project-root} --output-dir {api_dir}
+python3 scripts/scan-api-sources.py --project-root {project-root} --output-dir {api_dir} --project-knowledge {project_knowledge}
 ```
 
-Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + frontmatter), `d02_path`, `d19_path`, `framework`, and `needs_api` (boolean heuristic). Use this to route:
+Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + frontmatter), `d02_path`, `d19_path`, `framework`, `needs_api` (boolean heuristic), and `project_knowledge_docs` (brownfield `bmad-document-project` output — `index.md` + project docs; empty for greenfield). Use this to route:
    - **Skip** — project detected as not needing API (e.g., Odoo internal module with no REST endpoints). Confirm with user before exiting.
    - **Fresh** — no prior D-21. Proceed to Stage 2.
    - **Resume** — partial D-21 found (`lastStep` < `complete`). Show summary, offer resume or restart.
@@ -56,7 +58,11 @@ Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + fro
 
 1b. **API necessity gate.** If `needs_api` is false or uncertain, ask the user: _"Does this project expose a REST/GraphQL API? If not, D-21 can be skipped."_ Exit gracefully if user confirms no API needed.
 
-1c. **Source inventory.** Load D-02 (requirements) and D-19 (database design) as primary inputs. Supplement with user-provided API design notes, existing OpenAPI/Swagger files, or Postman collections. In headless mode, sources are required via `--sources` arg.
+1c. **Source inventory.** Load D-02 (requirements) and D-19 (database design) as primary inputs. Supplement with user-provided API design notes, existing OpenAPI/Swagger files, or Postman collections.
+
+   **Brownfield ingest (#7).** When `project_knowledge_docs` is non-empty (existing codebase documented via `bmad-document-project`), treat it as a first-class SOURCE: read `{project_knowledge}/index.md` and the listed project docs for the **real endpoint inventory and existing API surface** (routes, controllers, serializers, auth middleware, error envelopes). Derive D-21 from these actual endpoints — not just the abstract D-02/project-context.md — reconciling discovered routes against D-02 REQ-xxx IDs and flagging any endpoint with no requirement (or any requirement with no endpoint). Greenfield (`project_knowledge_docs` empty) keeps the existing D-02/D-19-driven behavior unchanged.
+
+   In headless mode, sources are required via `--sources` arg.
 
 ## Stage 2: Discovery
 
