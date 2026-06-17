@@ -22,7 +22,7 @@ persistent_facts = [
 # To override: set this key in {project-root}/_bmad/custom/hbc-traceability.toml
 matrix_path = "{output_folder}/features/{feature}/traceability/matrix.md"
 
-# Cross-feature coverage roll-up report (TRR đọc mọi matrix per-feature → tổng hợp).
+# Cross-feature coverage roll-up report (TRR reads every per-feature matrix → aggregates).
 rollup_path = "{output_folder}/traceability/coverage-rollup.md"
 
 # Template used when initializing a new matrix.
@@ -47,19 +47,19 @@ gate_reports_glob = "{output_folder}/features/{feature}/gates/phase-*-gate.md"
 # Git baseline for change detection (override at runtime with --since <ref>).
 impact_git_baseline = "HEAD"
 
-# Verify (lan ngang) flood guard: nhóm/cảnh báo khi một artifact dùng chung
-# bởi nhiều REQ vượt ngưỡng này.
+# Verify (horizontal spread) flood guard: group/warn when a shared artifact is
+# referenced by more REQs than this threshold.
 impact_flood_threshold = 20
 
-# RECONCILE: số vòng re-suggest tối đa trước khi block + báo human.
+# RECONCILE: max number of re-suggest rounds before blocking + notifying a human.
 impact_reconcile_max_retries = 2
 
 # ref-type → owning-skill map (Stage 3 SUGGEST). Override merges by `id`:
-# matching id replaced, new id appended. `match` = LLM hint để chọn khi
-# design_ref vừa có thể là thực thể (ER) vừa có thể là endpoint (API).
+# matching id replaced, new id appended. `match` = LLM hint for choosing when
+# a design_ref could be either an entity (ER) or an endpoint (API).
 [[workflow.ref_skill_map]]
 id = "design_ref_entity"
-match = "thực thể/bảng/module → ER"
+match = "entity/table/module → ER"
 skill = "hbc-create-er-diagram"
 
 [[workflow.ref_skill_map]]

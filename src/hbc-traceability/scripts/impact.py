@@ -10,8 +10,8 @@ review, suggestion wording); this script only computes what is deterministic.
 Subcommands:
   detect   git changed-set (working tree vs HEAD, or --since) + user-declared,
            normalized to REQ ids via matrix reverse-lookup (code/test/design_ref).
-  analyze  artifact-centric impact over the matrix: apply (lan dọc) + verify
-           (lan ngang), deduped, with a flood guard for shared artifacts.
+  analyze  artifact-centric impact over the matrix: apply (vertical spread) +
+           verify (horizontal spread), deduped, with a flood guard for shared artifacts.
   freeze   freeze-check per REQ: combine matrix gate_status + task-breakdown
            status + phase-gate reports; priority task > gate > matrix.
 

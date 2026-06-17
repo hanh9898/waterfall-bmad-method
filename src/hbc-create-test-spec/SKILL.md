@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in session → ask (headless: required; if missing → blocked `feature_required`). Substitute `{feature}` in every workflow path.
 
 Before structured discovery, invite the user to share testing priorities, known edge cases, and domain-specific test concerns. Absorb this context before proceeding.
 
@@ -90,9 +90,9 @@ Script checks: TC IDs unique and sequential, every REQ-xxx has ≥1 TC-xxx, no o
 
 **Parallel-lens menu:** `[A]` Advanced (coverage gap analysis) / `[P]` Party Mode / `[C]` Continue.
 
-## Stage 4b: Semantic Review (Lớp 2)
+## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation (Stage 4) and the `check-facet-coverage.py` metric only prove **cấu trúc + declared facets** — máy lo cấu trúc. Before saving, run the **LLM semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) — người/LLM lo ngữ nghĩa & đủ-nghĩa. This is the same Lớp-2 layer `hbc-create-requirements` runs on D-02; here it judges whether the test cases meaningfully exercise each REQ.
+Structural validation (Stage 4) and the `check-facet-coverage.py` metric only prove **structure + declared facets** — the machine handles structure. Before saving, run the **LLM semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) — the human/LLM handles semantics and meaning-completeness. This is the same Layer-2 step `hbc-create-requirements` runs on D-02; here it judges whether the test cases meaningfully exercise each REQ.
 
 **LLM facet-split review.** For every REQ this D-27 covers, apply the **facet-split discipline** (read/write · api/admin/ui/batch · create/update/suspend/revoke/rotate lifecycle): ask which facets apply and whether **each applicable facet** is meaningfully exercised by a TC — not just "≥1 TC exists". Beyond facet presence, judge with your own reasoning:
 - Do the TCs **meaningfully** exercise each REQ's facets, or do they only touch the happy path?
@@ -133,5 +133,5 @@ Headless: return JSON per `references/headless-contract.md`.
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest: _"Document updated. Run `hbc-traceability impact` to sync dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

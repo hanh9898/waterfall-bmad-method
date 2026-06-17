@@ -64,10 +64,10 @@ Load every entry in `{agent.persistent_facts}` as foundational context for the s
 
 Resolve the active feature per `hbc-shared/references/establish-active-feature.md`: arg `feature=<slug>` → session → ask (validate `^[a-z0-9][a-z0-9-]*$`); headless required → blocked `feature_required`; pass `feature=` to every per-feature dispatch (per-feature artifacts under `{output_folder}/features/{feature}/…`, shared D-12/D-03/baseline D-19/D-21 under `shared/`).
 
-**Nhắc Phase 0:** nếu `shared/coding-standards/D-12-*` hoặc `shared/glossary/D-03-*` chưa có, gợi ý chạy `hbc-project-init` ([PI]) tạo shared deliverables trước khi bắt đầu feature đầu tiên.
+**Phase 0 reminder:** if `shared/coding-standards/D-12-*` or `shared/glossary/D-03-*` does not exist yet, suggest running `hbc-project-init` ([PI]) to create the shared deliverables before starting the first feature.
 
 ### Scan Phase 1 State
-> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+> ℹ️ **Shared** deliverables (D-03/D-12, baseline D-19/D-21) live at `{output_folder}/shared/...` — not per-feature; if a per-feature scan reports them missing, check `shared/`.
 
 
 Run: `python3 {skill-root}/scripts/scan-phase1-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates --output-folder {output_folder}`

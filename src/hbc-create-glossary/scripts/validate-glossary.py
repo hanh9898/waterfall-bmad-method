@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_validation import (  # noqa: E402

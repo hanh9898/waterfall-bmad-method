@@ -18,7 +18,7 @@ Carve-outs preserved verbatim everywhere: Mermaid keywords/identifiers and `AS-I
 
 ## On Activation
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow (D-06 ghi per-feature).
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask (headless: required, missing → blocked `feature_required`). Substitute `{feature}` in every workflow path (D-06 is written per-feature).
 
 Execute the activation sequence per [`references/stage-guide.md`](references/stage-guide.md) § *On Activation (detail)*:
 
@@ -70,7 +70,7 @@ One Mermaid block per in-scope flow (`actor` for humans, `participant` for syste
 
 Run both validators in parallel: `validate-mermaid.py {primary} --expected-actors "<stage-2 actors>" -o {ws}/.scan/mermaid.json` and `check-fr-coverage.py --prd <each-prd-or-shard> --d06 {primary} --pattern "{workflow.fr_id_pattern}" -o {ws}/.scan/fr.json`. Inspect `render_check` (ok / failed / `skipped: mmdc not installed` — not verified); handle `vacuous: true`. LLM judgment checks: layout, AS-IS/TO-BE delta clarity, revision history, language consistency. Fix: interactive loop vs headless apply only `auto_fixable: true` (else blocked `mermaid_validation_failed` / `fr_coverage_gap`). `stepsCompleted += stage-4`. Then Parallel-lens menu. Detail: stage-guide § Stage 4.
 
-### 4b. Semantic Review (Lớp 2)
+### 4b. Semantic Review (Layer 2)
 
 Before saving, run the semantic review per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with **facet-split discipline** (read vs write/state-change · UI/admin/back-office/API/batch surface · lifecycle transitions). Record `semanticReview` frontmatter (`status: passed` only when `openFacets` empty, else `pending` + list). Headless: never blocks (Phase 1 gate enforces); never fabricate coverage. Detail: stage-guide § Stage 4b.
 
@@ -84,4 +84,4 @@ Read `{workflow.on_complete}` from the already-resolved workflow block (kept in 
 
 ## Sync Handoff (hbc-traceability impact integration)
 
-Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md` (and stage-guide § Sync Handoff). Suppression guard (BR-13): if `--invoked-by-sync` / `invoked_by_sync=true`, skip this section. Hybrid trigger (default): suggest `hbc-traceability impact`. Auto-chained: if `{workflow.auto_sync_after_update}` is true, invoke it directly (default false).
+Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md` (and stage-guide § Sync Handoff). Suppression guard (BR-13): if `--invoked-by-sync` / `invoked_by_sync=true`, skip this section. Hybrid trigger (default): suggest `hbc-traceability impact` (suggestion prose itself is emitted in `{communication_language}`). Auto-chained: if `{workflow.auto_sync_after_update}` is true, invoke it directly (default false).

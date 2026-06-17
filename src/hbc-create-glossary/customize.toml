@@ -23,7 +23,7 @@ scan_script = "scripts/scan-glossary-sources.py"
 # D-03 template path. Override to use a custom template.
 template_path = "assets/D-03_glossary_template.md"
 
-# D-03 Glossary là SHARED (toàn dự án), tạo ở Phase 0.
+# D-03 Glossary is SHARED (project-wide), created in Phase 0.
 glossary_output_path = "{output_folder}/shared/glossary/D-03-glossary.md"
 
 # Validation script. Override to use a custom validator with the same CLI interface.

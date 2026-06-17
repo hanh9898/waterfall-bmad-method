@@ -24,7 +24,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_validation import (  # noqa: E402
@@ -142,9 +142,9 @@ def check_req_ids(content: str) -> list[dict]:
 
 
 def check_ears(content: str) -> list[dict]:
-    """ADVISORY (cụm 7=A): mỗi functional requirement nên theo EARS — keyword
-    tiếng Anh 'SHALL' (vd 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'). Chỉ
-    CẢNH BÁO, KHÔNG làm fail structure_ok."""
+    """ADVISORY (cluster 7=A): each functional requirement should follow EARS —
+    English keyword 'SHALL' (e.g. 'WHEN <condition> THE SYSTEM SHALL <behavior>').
+    WARNING only, does NOT fail structure_ok."""
     issues: list[dict] = []
     for cells in functional_req_rows(content):
         rid = ""
@@ -216,7 +216,7 @@ def check_nfr_measurable(content: str) -> list[dict]:
 
 
 # Structural checks this validator performs, and the semantic facets it
-# deliberately does NOT judge (deferred to the LLM review layer — Đợt 2).
+# deliberately does NOT judge (deferred to the LLM review layer — Batch 2).
 CHECKED = [
     "REQ ID uniqueness/sequence per namespace (feature/SHARED)",
     "vague terminology",
@@ -247,7 +247,7 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     all_issues.extend(check_nfr_measurable(content))
     all_issues.extend(check_ears(content))
 
-    # Advisory issues (EARS) warn but do NOT fail the structural verdict (cụm 7=A).
+    # Advisory issues (EARS) warn but do NOT fail the structural verdict (cluster 7=A).
     blocking = [i for i in all_issues if not i.get("advisory")]
     advisory = [i for i in all_issues if i.get("advisory")]
     auto_fixable = [i for i in blocking if i.get("auto_fixable")]

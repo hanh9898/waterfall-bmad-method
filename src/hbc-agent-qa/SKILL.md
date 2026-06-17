@@ -71,7 +71,7 @@ After the active feature is resolved, check if Phase 1 gate exists and passed:
 - If not found or `FAILED` — warn the user. If `gate_mode = lenient`, allow continuation with warning.
 
 ### Scan Test Design State
-> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+> ℹ️ **Shared** deliverables (D-03/D-12, baseline D-19/D-21) live at `{output_folder}/shared/...` — not per-feature; if a per-feature scan reports them missing, check `shared/`.
 
 
 Run: `python3 {skill-root}/scripts/scan-test-design-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates`

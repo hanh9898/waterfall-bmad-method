@@ -21,7 +21,7 @@ Authoritative per-stage detail for `hbc-create-business-flow-diagram`. `SKILL.md
 
 ## On Activation (detail)
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow (D-06 ghi per-feature).
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask (headless: required, missing → blocked `feature_required`). Substitute `{feature}` in every workflow path (D-06 is written per-feature).
 
 ### Step 1: Resolve the Workflow Block
 
@@ -114,7 +114,7 @@ In headless mode 1b is skipped entirely.
 
 ### 1b′. Brainstorming suggestion (interactive only, Fresh state only)
 
-If the user is designing TO-BE flows and the domain is complex or requirements are sparse, suggest: _"TO-BE flow cần sáng tạo — muốn chạy `bmad-brainstorming` trước để explore alternative flows và improvement ideas không? Output sẽ feed vào D-06."_ If declined, proceed. If accepted, pause — user runs brainstorming separately, then resumes here. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load it as supplementary source alongside PRD and D-02. Skip this suggestion for AS-IS capture or Update/Resume states.
+If the user is designing TO-BE flows and the domain is complex or requirements are sparse, suggest (emit the message in `{communication_language}`): _"Designing a TO-BE flow benefits from creative exploration — want to run `bmad-brainstorming` first to explore alternative flows and improvement ideas? Its output will feed into D-06."_ If declined, proceed. If accepted, pause — user runs brainstorming separately, then resumes here. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load it as supplementary source alongside PRD and D-02. Skip this suggestion for AS-IS capture or Update/Resume states.
 
 ### 1c. Consume source inventory
 
@@ -221,9 +221,9 @@ Update primary frontmatter `stepsCompleted` to include `stage-4` and `updated` t
 
 Then present the **Parallel-lens menu** (above). Stage-4 lens-targets: challenge edge cases (failure paths, race conditions, hostile inputs) and check the artifact reads cleanly to a fresh reviewer.
 
-## Stage 4b — Semantic Review (Lớp 2)
+## Stage 4b — Semantic Review (Layer 2)
 
-Script + render validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per flow (read vs write/state-change · the surface the flow runs on — UI / admin / back-office / API / batch · lifecycle transitions): a diagram that draws only the happy read path while D-02 implies a write, admin, or exception variant has an open facet — name it so downstream `hbc-create-er-diagram` (D-19) and the test skills (D-26/D-27) know it must be modelled and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 1 gate REVIEW item reads it.
+Script + render validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per flow (read vs write/state-change · the surface the flow runs on — UI / admin / back-office / API / batch · lifecycle transitions): a diagram that draws only the happy read path while D-02 implies a write, admin, or exception variant has an open facet — name it so downstream `hbc-create-er-diagram` (D-19) and the test skills (D-26/D-27) know it must be modelled and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 1 gate REVIEW item reads it.
 
 **Headless:** run the same rubric and write the frontmatter; if `openFacets` is non-empty, leave `status: pending`, log the open facets to `.decision-log.md`, and proceed (this layer does not block — the Phase 1 gate enforces it). Never fabricate coverage to force `passed`.
 
@@ -247,5 +247,5 @@ If the flow will feed downstream LLM consumers, offer to invoke `bmad-distillato
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest (emit the message in `{communication_language}`): _"The document has been updated. Run `hbc-traceability impact` to sync the dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

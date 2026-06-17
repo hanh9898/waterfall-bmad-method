@@ -63,7 +63,7 @@ In headless mode 1b is skipped entirely.
 
 ### 1b′. Brainstorming suggestion (interactive only, Fresh state only)
 
-If the user is designing a new database (not capturing existing schema) and the domain model is complex or ambiguous, suggest: _"Domain model phức tạp — muốn chạy `bmad-brainstorming` trước để explore entity relationships và normalization trade-offs không? Output sẽ feed vào D-19."_ If declined, proceed. If accepted, pause for a separate brainstorming session. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load it as supplementary context for entity discovery. Skip for schema-capture intent or Update/Resume states.
+If the user is designing a new database (not capturing existing schema) and the domain model is complex or ambiguous, suggest: _"The domain model is complex — want to run `bmad-brainstorming` first to explore entity relationships and normalization trade-offs? The output will feed into D-19."_ If declined, proceed. If accepted, pause for a separate brainstorming session. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load it as supplementary context for entity discovery. Skip for schema-capture intent or Update/Resume states.
 
 ### 1c. Consume source inventory
 
@@ -195,9 +195,9 @@ Update primary frontmatter `stepsCompleted` to include `stage-4` and `updated` t
 
 Then present the **Parallel-lens menu** (same as Stage 3). Stage-4 lens-targets: challenge edge cases (nullable FKs, soft deletes, polymorphic associations, temporal data) and check the artifact reads cleanly to a fresh reviewer.
 
-### 4b. Semantic Review (Lớp 2)
+### 4b. Semantic Review (Layer 2)
 
-Script validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per entity (read vs write/admin surface · entity lifecycle — `create` / `update` / `suspend` / `revoke` / `rotate` where the entity has one · relationship cardinality): an entity with a real lifecycle (account, key, subscription) whose state transitions have no representation (no status column, no state machine), or an admin-managed entity with no downstream owner, has an open facet — name it so downstream `hbc-create-api-spec` (D-21) and the test skills (D-26/D-27) know it must be designed and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 2 gate REVIEW item reads it.
+Script validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per entity (read vs write/admin surface · entity lifecycle — `create` / `update` / `suspend` / `revoke` / `rotate` where the entity has one · relationship cardinality): an entity with a real lifecycle (account, key, subscription) whose state transitions have no representation (no status column, no state machine), or an admin-managed entity with no downstream owner, has an open facet — name it so downstream `hbc-create-api-spec` (D-21) and the test skills (D-26/D-27) know it must be designed and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 2 gate REVIEW item reads it.
 
 **Headless:** run the same rubric and write the frontmatter; if `openFacets` is non-empty, leave `status: pending`, log the open facets to `.decision-log.md`, and proceed (this layer does not block — the Phase 2 gate enforces it). Never fabricate coverage to force `passed`.
 

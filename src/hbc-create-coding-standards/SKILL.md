@@ -9,7 +9,7 @@ description: "Generate D-12 Coding Standards adapted to project framework. Use w
 
 Generate D-12 (Coding Standards) — per-project coding conventions adapted to the project's framework, language, and team preferences. The resulting document is the reference standard for all implementation work in Phase 3.
 
-Four-stage workflow: Prerequisites + Discovery → Generation → Validation → Save, plus a Stage 3b Semantic Review (Lớp 2). Supports resume state, headless mode. Requires Python 3.10+ for validation scripts.
+Four-stage workflow: Prerequisites + Discovery → Generation → Validation → Save, plus a Stage 3b Semantic Review (Layer 2). Supports resume state, headless mode. Requires Python 3.10+ for validation scripts.
 
 **Args:** `create` (default), `update` (revise existing D-12), `validate` (check existing D-12). Optional: `--headless` / `-H`.
 
@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Scope: SHARED** — deliverable này dùng chung toàn dự án (tạo ở Phase 0 qua `hbc-project-init`), **không** nhận `feature`; ghi vào `shared/`.
+> **Scope: SHARED** — this deliverable is shared across the whole project (created in Phase 0 via `hbc-project-init`), does **not** take a `feature`, and is written to `shared/`.
 
 ## Stage 1: Prerequisites + Discovery
 
@@ -100,9 +100,9 @@ Script checks: all required sections present and non-empty, no internal contradi
 
 **Compaction flush:** Write validation results summary to decision log.
 
-## Stage 3b: Semantic Review (Lớp 2)
+## Stage 3b: Semantic Review (Layer 2)
 
-Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm the standards are internally consistent, actually fit the project's framework, and contain no contradictory rules. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets`/open concerns empty, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm the standards are internally consistent, actually fit the project's framework, and contain no contradictory rules. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets`/open concerns empty, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 4: Save and Handoff
 
@@ -117,5 +117,5 @@ Headless: return JSON per `references/headless-contract.md`.
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest running `hbc-traceability impact` to sync the dependent documents/tests/code.
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

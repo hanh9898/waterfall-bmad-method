@@ -73,9 +73,9 @@ _REQ_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 
 
 def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
-    """TDD soft (cụm 1=C / 3): mỗi task DONE phải có RED-evidence — file
-    <evidence_dir>/<TASK>.md ghi lần chạy test FAIL trước khi viết code.
-    Lưu ý: evidence do agent tự khai (self-attested), KHÔNG phải bằng chứng mật mã."""
+    """TDD soft (cluster 1=C / 3): every DONE task must have RED-evidence — a file
+    <evidence_dir>/<TASK>.md recording the FAIL test run before code is written.
+    Note: the evidence is self-attested by the agent, NOT a cryptographic proof."""
     issues: list[dict] = []
     d = Path(evidence_dir)
     for m in _TASK_ROW_RE.finditer(tasks_text):
@@ -106,8 +106,8 @@ def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
 
 
 def _matrix_table(matrix_text: str) -> tuple[dict, list[list[str]]]:
-    """Parse matrix → (header_map name→index, data rows). Header-name based, nên
-    chịu được cả matrix 7 cột (legacy) lẫn 8 cột (có cột `feature` mới)."""
+    """Parse matrix → (header_map name→index, data rows). Header-name based, so it
+    tolerates both the 7-column matrix (legacy) and the 8-column one (with the new `feature` column)."""
     header: dict = {}
     rows: list[list[str]] = []
     for line in matrix_text.splitlines():
