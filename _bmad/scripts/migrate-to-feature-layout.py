@@ -19,7 +19,8 @@ Legacy artifacts go to feature `--feature` (default: "default"). Shared delivera
 (D-12, D-03, D-19, D-21) are routed to shared/.
 
 With --reprefix, legacy REQ-NNN ids are namespaced to REQ-<FEAT>-NNN across every
-moved D-02 / D-26 / D-27 / matrix. TC ids are NOT namespaced — they stay TC-NNN
+moved D-02 / D-06 / D-26 / D-27 / matrix (D-06 business-flow may reference REQ ids
+in its flows, so it is re-prefixed too). TC ids are NOT namespaced — they stay TC-NNN
 (numeric, per-feature) and are left untouched. The traceability matrix is also
 rebuilt from the legacy 7-col shape to the v2 8-col shape (a leading `feature`
 column is injected; REQ-SHARED rows get `shared`, everything else the feature slug).
@@ -54,7 +55,7 @@ if hasattr(sys.stdout, "reconfigure"):
 SHARED = {"D-12": "coding-standards", "D-03": "glossary", "D-19": "erd", "D-21": "api"}
 
 # Deliverables that carry REQ ids and thus get re-prefixed when moved.
-REPREFIX_DOCS = ("D-02", "D-26", "D-27")
+REPREFIX_DOCS = ("D-02", "D-06", "D-26", "D-27")  # D-06 may reference REQ ids in flows
 
 # Legacy 7-col matrix header (no leading `feature`).
 LEGACY_MATRIX_COLS = ["req_id", "story_id", "design_ref", "code_ref",

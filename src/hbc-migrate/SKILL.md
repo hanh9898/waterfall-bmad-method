@@ -64,7 +64,11 @@ Idempotent: artifact đã v2 → skip.
 
 ### Stage 5: Verify & Handoff
 
-Chạy validators trên artifact đã migrate + `trace-report.py --d02` (d02-sync) + readiness `[IR]` (`hbc-check-implementation-readiness`). Report pass/gaps. Handoff:
+Chạy validators trên artifact đã migrate + `trace-report.py --d02` (d02-sync) + readiness `[IR]` (`hbc-check-implementation-readiness`). Report pass/gaps.
+
+> **Gap ma trận sau migrate.** Migration **giữ trung thực** ma trận v1 — KHÔNG bịa thêm row. Nếu ma trận v1 vốn thiếu REQ (vd D-02 có `REQ-AUTH-003` nhưng ma trận không có dòng đó), `trace-report --d02` sau migrate sẽ báo `missing_from_matrix: [REQ-AUTH-003]`. Đây KHÔNG phải lỗi migrate — **báo rõ REQ thiếu** cho user và **gợi ý chạy `[TRU]`** (`hbc-traceability update`) để backfill cho khớp D-02. Tương tự, orphan (REQ không còn trong D-02) → gợi ý dọn.
+
+Handoff:
 
 _"Migrate xong → layout v2. Nếu shared còn thiếu, chạy `[PI]` (`hbc-project-init`). Sau đó tiếp tục per-feature: `[BA]` / `hbc-create-requirements` với `feature=<slug>`."_
 
