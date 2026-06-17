@@ -22,7 +22,13 @@ from pathlib import Path
 # --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
-    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        check_required_sections,
+        find_section,
+        section_body,
+        verdict,
+    )
 except ModuleNotFoundError:
     print(json.dumps({
         "error": "Shared lib 'hbc_validation' not found.",
@@ -40,16 +46,68 @@ REQUIRED_SECTIONS = [
     ("Data Models", "Mô hình dữ liệu"),
 ]
 
-ENDPOINT_TABLE_RE = re.compile(
-    r"\|\s*\d+\s*\|\s*(\w+)\s*\|\s*([^\|]+)\|\s*([^\|]+)\|\s*([^\|]*)\|"
-)
-
 # Namespace-aware (v2): full-match (non-capturing) so findall returns whole ids
 # like REQ-AUTH-001 / REQ-SHARED-002 / legacy REQ-001. A capturing `REQ-(\d{3,})`
 # returned only the digits and silently skipped every REQ-<FEAT>-NNN id.
 REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 
 HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+
+
+def _normalize_entity(name: str) -> str:
+    """Normalize an entity/model name for comparison: lowercase, drop separators,
+    de-pluralize. So `OrderItem`, `order_item`, and `ORDER_ITEM` all compare equal
+    (the old bare-substring match failed on separator/case differences)."""
+    n = name.lower().replace("_", "").replace("-", "").replace(" ", "")
+    if n.endswith("s") and len(n) > 3:
+        n = n[:-1]
+    return n
+
+
+def _endpoint_rows(content: str) -> list[dict]:
+    """Header-aware parse of the Endpoint List table → [{method,url,desc,req}].
+
+    Locates columns by header name (Method / Endpoint / Description / REQ), so a
+    table with or without a leading ``#`` column, and rows with or without a
+    trailing pipe (GFM allows omitting it), all parse correctly. Language-aware
+    section + header labels.
+    """
+    m = find_section(content, "Endpoint List", "Danh sách endpoint")
+    if not m:
+        return []
+    pipe_lines = [ln.strip() for ln in section_body(content, m).splitlines()
+                  if ln.strip().startswith("|")]
+    if len(pipe_lines) < 2:
+        return []
+
+    header = [c.strip().lower() for c in pipe_lines[0].strip("|").split("|")]
+
+    def col(*names: str) -> int | None:
+        for i, h in enumerate(header):
+            if any(n in h for n in names):
+                return i
+        return None
+
+    i_method = col("method", "phương thức")
+    i_url = col("endpoint", "url", "đường dẫn")
+    i_desc = col("description", "mô tả")
+    i_req = col("req")
+
+    def cell(cells: list[str], i: int | None) -> str:
+        return cells[i].strip() if i is not None and i < len(cells) else ""
+
+    rows: list[dict] = []
+    for line in pipe_lines[1:]:
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if set("".join(cells)) <= {"-", " ", ":"}:
+            continue  # separator row
+        rows.append({
+            "method": cell(cells, i_method),
+            "url": cell(cells, i_url),
+            "desc": cell(cells, i_desc),
+            "req": cell(cells, i_req),
+        })
+    return rows
 
 
 def check_sections(content: str) -> list[dict]:
@@ -60,7 +118,7 @@ def check_sections(content: str) -> list[dict]:
 def check_endpoints(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    rows = ENDPOINT_TABLE_RE.findall(content)
+    rows = _endpoint_rows(content)
     if not rows:
         issues.append({
             "type": "NO_ENDPOINTS",
@@ -70,7 +128,8 @@ def check_endpoints(content: str) -> list[dict]:
         return issues
 
     seen_urls: dict[str, str] = {}
-    for method, url, _desc, req_ids in rows:
+    for row in rows:
+        method, url, req_ids = row["method"], row["url"], row["req"]
         method_clean = method.strip().upper()
         url_clean = url.strip()
         key = f"{method_clean} {url_clean}"
@@ -159,16 +218,24 @@ def check_entity_consistency(content: str, d19_path: str | None) -> list[dict]:
     if not model_section:
         return issues
 
-    model_names = set(
-        re.findall(r"###\s+\d+\.\d+\s+(\w+)", model_section.group(1))
-    )
-
-    for model in model_names:
-        close_match = any(
-            model.lower() in e.lower() or e.lower() in model.lower()
-            for e in entity_names
+    # Any ###-level heading inside the Data Models section names a model. Accept an
+    # optional leading number ("### 6.1 Order" or "### Order") and stop at end of
+    # line so multi-word headings don't capture trailing tokens — the old
+    # `### N.N Name` form silently missed unnumbered or differently-numbered models.
+    model_names = {
+        h.strip()
+        for h in re.findall(
+            r"^#{3,}\s+(?:[\d.]+\s+)?(.+?)\s*$",
+            model_section.group(1),
+            re.MULTILINE,
         )
-        if not close_match and model.lower() not in {e.lower() for e in entity_names}:
+    }
+
+    normalized_entities = {_normalize_entity(e) for e in entity_names}
+    for model in model_names:
+        # Normalized comparison (strip separators/case, de-pluralize) so a D-21
+        # model `OrderItem` matches a D-19 entity `ORDER_ITEM`.
+        if _normalize_entity(model) not in normalized_entities:
             issues.append({
                 "type": "ENTITY_MISMATCH",
                 "message": f"Data model '{model}' in D-21 has no matching entity in D-19",
@@ -195,7 +262,7 @@ def validate(
     auto_fixable = [i for i in all_issues if i.get("auto_fixable")]
     manual_fix = [i for i in all_issues if not i.get("auto_fixable")]
 
-    endpoint_rows = ENDPOINT_TABLE_RE.findall(content)
+    endpoint_rows = _endpoint_rows(content)
 
     structure_ok = len(all_issues) == 0
     result = verdict(

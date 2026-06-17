@@ -114,7 +114,8 @@ class TestCheckEndpoints:
         assert len(no_ep) == 1
 
     def test_duplicate_endpoint(self):
-        content = """
+        content = """## Endpoint List
+
 | # | Method | Endpoint | Description | REQ ID |
 |---|--------|----------|-------------|--------|
 | 1 | GET | /api/v1/users | List users | REQ-001 |
@@ -125,7 +126,8 @@ class TestCheckEndpoints:
         assert len(dups) == 1
 
     def test_no_req_reference(self):
-        content = """
+        content = """## Endpoint List
+
 | # | Method | Endpoint | Description | REQ ID |
 |---|--------|----------|-------------|--------|
 | 1 | GET | /api/v1/users | List users |  |
@@ -133,6 +135,18 @@ class TestCheckEndpoints:
         issues = check_endpoints(content)
         no_ref = [i for i in issues if i["type"] == "NO_REQ_REFERENCE"]
         assert len(no_ref) == 1
+
+    def test_endpoint_no_number_col_no_trailing_pipe(self):
+        # Bug D2: the rigid regex required a leading numeric `#` column AND a
+        # trailing pipe; a header-keyed parse handles a table that omits both.
+        content = """## Endpoint List
+
+| Method | Endpoint | Description | REQ ID |
+|--------|----------|-------------|--------|
+| GET | /api/v1/users | List users | REQ-001
+"""
+        issues = check_endpoints(content)
+        assert issues == []
 
 
 class TestReqTraceability:
@@ -171,6 +185,25 @@ class TestEntityConsistency:
         _write(d19, "# DB Design\n\nNo diagram here.")
         issues = check_entity_consistency(MINIMAL_VALID, d19)
         assert len(issues) == 0
+
+    def test_separator_insensitive_entity_match(self, tmp_path):
+        # Bug D1: model `OrderItem` (D-21) vs entity `ORDER_ITEM` (D-19) was a
+        # false ENTITY_MISMATCH — bare substring match ignored case/underscores.
+        d19 = str(tmp_path / "D-19.md")
+        _write(d19, "# DB\n\n```mermaid\nerDiagram\n    ORDER_ITEM {\n        int id PK\n    }\n```\n")
+        d21 = "## 6. Data Models\n\n### 6.1 OrderItem\n\n| Field | Type |\n|---|---|\n"
+        issues = check_entity_consistency(d21, d19)
+        assert [i for i in issues if i["type"] == "ENTITY_MISMATCH"] == []
+
+    def test_unnumbered_model_heading_matched(self, tmp_path):
+        # Bug D3: `### Order` (no N.N numbering) was silently skipped → a real
+        # mismatch went unreported. Now any ###-level heading names a model.
+        d19 = str(tmp_path / "D-19.md")
+        _write(d19, "# DB\n\n```mermaid\nerDiagram\n    ORDER {\n        int id PK\n    }\n```\n")
+        ok = "## Data Models\n\n### Order\n\n| Field | Type |\n|---|---|\n"
+        assert [i for i in check_entity_consistency(ok, d19) if i["type"] == "ENTITY_MISMATCH"] == []
+        bad = "## Data Models\n\n### Ghost\n\n| Field | Type |\n|---|---|\n"
+        assert [i for i in check_entity_consistency(bad, d19) if i["type"] == "ENTITY_MISMATCH"]
 
 
 class TestFullValidation:
