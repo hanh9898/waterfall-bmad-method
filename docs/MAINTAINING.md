@@ -4,11 +4,13 @@ This is a meta-document for **doc maintainers**, not end users. It records the
 conventions that keep the bilingual documentation correct and in sync, and the
 v2 model the docs must reflect.
 
-> **Authority note.** When the docs, this file, or `module-help.csv` disagree about
-> the HBC model, the **v2 documentation contract** (`.v2-doc-contract.tmp.md` at the
-> repo root) wins. It is the single source of truth for the *model* (phases, scope,
-> IDs, skill set). `module-help.csv` remains the source of truth for the *mechanics*
-> a single skill exposes (menu codes, args, `required` flags) — see §2.
+> **Authority note.** The HBC **model** (phases, scope, IDs, skill set) is defined by
+> §2 of this file together with the user-facing docs (`README.md` +
+> `docs/{vi,en}/explanation/concepts.md`); when pages disagree, those lead. The
+> **mechanics** a single skill exposes (menu codes, args, `required` flags) come from
+> `src/hbc-setup/assets/module-help.csv`, and which skills ship from
+> `.claude-plugin/marketplace.json` — see §2. (There is no separate contract file; an
+> earlier build used a temporary `.v2-doc-contract.tmp.md` that has been removed.)
 
 ## 1. Bilingual mirror rule
 
@@ -46,10 +48,15 @@ as contrast. Every doc must be consistent with the following.
 
 ### 2.1 Phases & the run-once init
 
-- **Phase 0 — Project Init (`PI`, `hbc-project-init`):** run **once, project-wide**,
-  before any feature. Creates the SHARED deliverables (D-12 Coding Standards, D-03
-  Glossary, baseline D-19 ERD / D-21 API). Idempotent (skips what exists); takes no
-  `feature` arg.
+- **Phase 0 — Project Init (`PI`, `hbc-project-init`):** **mandatory, runs FIRST**
+  before any feature — once project-wide, or re-run to **update directly**.
+  **Brownfield-aware:** on an existing codebase it documents the project first
+  (`bmad-document-project` + `project-context.md` via `bmad-generate-project-context`),
+  then derives the SHARED deliverables from that context — D-12 Coding Standards
+  (from existing conventions), D-03 Glossary, baseline D-19 ERD (from the DB schema),
+  baseline D-21 API (from existing endpoints); greenfield creates them from a
+  PRD/choices. Idempotent (skips what exists); takes no `feature` arg. D-12/D-03 are
+  Phase 0 SHARED deliverables, not optional Phase 1/2 steps.
 - Per feature: **Phase 1 Analysis → Phase 2 Design + Test Design → Phase 3
   Implementation → Phase 4 Testing**, each closed by a **Phase Gate** (`PG <n>`) that
   carries `feature=`.
@@ -199,6 +206,25 @@ docs:mermaid-check:
     - changes: [ "docs/**/*", "README*.md" ]
 ```
 
+### Module validation (VM)
+
+`bmad-module-builder`'s Validate Module checks structural integrity (every skill has a
+CSV capability row, menu codes unique, refs resolve):
+
+```bash
+python .claude/skills/bmad-module-builder/scripts/validate-module.py src
+```
+
+**Expected result: exactly ONE finding** — `hbc-shared` has no CSV capability row.
+This is **by design**: `hbc-shared` is a non-invocable internal library (the
+`hbc_validation` lib imported by sibling skills via a sys.path bootstrap), so it
+intentionally has no menu code / CSV row. Treat that single finding as the
+known-good baseline; **any OTHER finding is a real issue** to fix.
+
+> Do NOT patch `validate-module.py` to suppress the `hbc-shared` finding — that file
+> belongs to the BMad Builder (bmb) module and is overwritten on every bmb
+> install/update, so the patch never survives. Accept the one expected finding instead.
+
 ## 5. The trade-off we chose (and the exit)
 
 We keep the bilingual mirror and the hand-copied reference data **manually**,
@@ -221,10 +247,11 @@ What HAS been verified:
 
 What has NOT been fully verified — do this before relying on the docs in anger:
 
-- **CSV ↔ model reconciliation.** `module-help.csv` may still carry v1 mechanics
-  (flat `planning_artifacts`/`implementation_artifacts` output locations; no `PI`/`IR`/
-  `SYNC` rows). Reconcile the CSV toward the contract (§2), then re-cross-check the
-  reference docs against it.
+- **Installed CSV may lag the source.** The SOURCE `src/hbc-setup/assets/module-help.csv`
+  is current (per-feature/shared output locations; `PI`/`IR`/`SYNC` rows present). But an
+  **installed** copy at `_bmad/hbc/module-help.csv` can be a preserved older file (the
+  installer preserves it). If `bmad-help` in this repo shows stale output locations,
+  reconcile the installed copy toward the source (§2) or reinstall.
 - **No full end-to-end run.** Command sequences are correct *on paper* but have not been
   executed start-to-finish against a live install. Run the Quickstart + Walkthrough once
   on a clean project — including Phase 0 (`PI`) and an `IR` readiness check — and
