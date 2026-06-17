@@ -21,10 +21,18 @@ def run_script(artifacts_dir: str, template_path: str, primary: str | None = Non
     return {}
 
 
-def run_script_full(artifacts_dir: str, template_path: str, output_path: str, primary: str | None = None) -> dict:
+def run_script_full(
+    artifacts_dir: str,
+    template_path: str,
+    output_path: str,
+    primary: str | None = None,
+    project_knowledge: str | None = None,
+) -> dict:
     cmd = [sys.executable, SCRIPT, artifacts_dir, "--template-path", template_path, "-o", output_path]
     if primary:
         cmd.extend(["--primary", primary])
+    if project_knowledge:
+        cmd.extend(["--project-knowledge", project_knowledge])
     subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     return json.loads(Path(output_path).read_text(encoding="utf-8"))
 
@@ -124,6 +132,62 @@ def test_resume_state_crashed():
         assert data["resume_state"]["fresh_reason"] == "crashed_no_progress"
 
 
+def test_greenfield_no_project_knowledge():
+    """Without --project-knowledge, the key stays None (greenfield unaffected)."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        arts = Path(tmpdir) / "artifacts"
+        arts.mkdir()
+        tpl = Path(tmpdir) / "template.md"
+        tpl.write_text("# Template\n", encoding="utf-8")
+        out = str(Path(tmpdir) / "out.json")
+        data = run_script_full(str(arts), str(tpl), out)
+        assert data["project_knowledge"] is None
+
+
+def test_brownfield_ingests_project_knowledge():
+    """With --project-knowledge, index.md, docs, and schema files are ingested."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        arts = Path(tmpdir) / "artifacts"
+        arts.mkdir()
+        pk = Path(tmpdir) / "project-knowledge"
+        (pk / "src" / "models").mkdir(parents=True)
+        (pk / "index.md").write_text("# Project Index\n", encoding="utf-8")
+        (pk / "architecture-overview.md").write_text("# Arch\n", encoding="utf-8")
+        (pk / "db" ).mkdir()
+        (pk / "db" / "schema.sql").write_text("CREATE TABLE users (id INT);\n", encoding="utf-8")
+        (pk / "src" / "models" / "user.py").write_text("class User: pass\n", encoding="utf-8")
+        tpl = Path(tmpdir) / "template.md"
+        tpl.write_text("# Template\n", encoding="utf-8")
+        out = str(Path(tmpdir) / "out.json")
+        data = run_script_full(str(arts), str(tpl), out, project_knowledge=str(pk))
+        pk_result = data["project_knowledge"]
+        assert pk_result is not None
+        assert pk_result["exists"] is True
+        assert pk_result["index"] is not None
+        # the overview doc is enumerated (index.md excluded from docs)
+        doc_paths = [d["path"] for d in pk_result["docs"]]
+        assert any("architecture-overview.md" in p for p in doc_paths)
+        assert all("index.md" not in p for p in doc_paths)
+        # schema artifacts (sql + ORM model) are picked up
+        schema_paths = [s["path"] for s in pk_result["schema"]]
+        assert any(p.endswith("schema.sql") for p in schema_paths)
+        assert any(p.endswith("user.py") for p in schema_paths)
+
+
+def test_brownfield_missing_project_knowledge_dir():
+    """A non-existent project-knowledge root reports exists=False, not a crash."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        arts = Path(tmpdir) / "artifacts"
+        arts.mkdir()
+        tpl = Path(tmpdir) / "template.md"
+        tpl.write_text("# Template\n", encoding="utf-8")
+        out = str(Path(tmpdir) / "out.json")
+        data = run_script_full(
+            str(arts), str(tpl), out, project_knowledge=str(Path(tmpdir) / "nope")
+        )
+        assert data["project_knowledge"]["exists"] is False
+
+
 if __name__ == "__main__":
     tests = [
         test_empty_artifacts_dir,
@@ -133,6 +197,9 @@ if __name__ == "__main__":
         test_resume_state_fresh,
         test_resume_state_update,
         test_resume_state_crashed,
+        test_greenfield_no_project_knowledge,
+        test_brownfield_ingests_project_knowledge,
+        test_brownfield_missing_project_knowledge_dir,
     ]
     failed = 0
     for t in tests:

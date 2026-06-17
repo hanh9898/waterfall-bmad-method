@@ -92,27 +92,31 @@ Script checks: TC IDs unique and sequential, every REQ-xxx has ≥1 TC-xxx, no o
 
 ## Stage 4b: Semantic Review (Lớp 2)
 
-Structural validation (Stage 4) only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric: `.claude/skills/hbc-shared/references/semantic-review-rubric.md`.
+Structural validation (Stage 4) and the `check-facet-coverage.py` metric only prove **cấu trúc + declared facets** — máy lo cấu trúc. Before saving, run the **LLM semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) — người/LLM lo ngữ nghĩa & đủ-nghĩa. This is the same Lớp-2 layer `hbc-create-requirements` runs on D-02; here it judges whether the test cases meaningfully exercise each REQ.
 
-Apply the **facet-split discipline** to every REQ this D-27 covers: for each REQ, ask which facets apply (read/write · api/admin · lifecycle) and whether **each applicable facet** has a TC — not just "≥1 TC exists". This is the seam-catching step (e.g. a REQ whose admin/write facet was cut from REST must still be tested or explicitly out-of-scope).
+**LLM facet-split review.** For every REQ this D-27 covers, apply the **facet-split discipline** (read/write · api/admin/ui/batch · create/update/suspend/revoke/rotate lifecycle): ask which facets apply and whether **each applicable facet** is meaningfully exercised by a TC — not just "≥1 TC exists". Beyond facet presence, judge with your own reasoning:
+- Do the TCs **meaningfully** exercise each REQ's facets, or do they only touch the happy path?
+- Are **edge cases / boundaries** covered (empty, max, concurrent, expired)?
+- Are **negative paths** covered (invalid input, unauthorized, conflict, failure modes)?
+- This is the seam-catching step — e.g. a REQ whose admin/write facet was cut from REST must still be tested or explicitly marked out-of-scope with an owner. Don't let a facet be implied but unowned.
 
-**Automated check (M-1):** declare each TC's facets (`**Facets:**` field) and each REQ's required facets (Coverage Matrix `Facets` column), then run:
+**Supporting automated check (M-1)** — the script stays; the LLM layer above sits on top of it. Declare each TC's facets (`**Facets:**` field) and each REQ's required facets (Coverage Matrix `Facets` column), then run:
 ```
 python3 {skill-root}/scripts/check-facet-coverage.py --d27 "{workflow.output_dir}/D-27-{project_name}-test-spec.md" [--d02 "{d02_path}"]
 ```
-`facet_covered: false` ⇒ list `uncovered_facets` in `openFacets` and keep `status: pending`. The metric only checks declared facets — your LLM judgment still decides whether the declared facet set is COMPLETE.
+`facet_covered: false` ⇒ list `uncovered_facets` in `openFacets` and keep `status: pending`. The metric only checks **declared** facets — your LLM judgment still decides whether the declared facet set is COMPLETE and whether the TCs behind each facet are meaningful (edge/negative), not just present.
 
-Record the outcome in the D-27 frontmatter (A-3):
+Record the outcome in the D-27 frontmatter (A-3) — `status` is `passed` **only** when `openFacets` is empty and you have actually reviewed depth (facets + edge + negative); otherwise `pending` with the gaps listed:
 
 ```yaml
 semanticReview:
   status: passed        # passed only when openFacets is empty; else pending
   reviewedBy: llm
   date: "{date}"
-  openFacets: []        # e.g. ["REQ-013 admin/write facet has no TC"]
+  openFacets: []        # e.g. ["REQ-013 admin/write facet has no TC", "REQ-007 no negative-path TC"]
 ```
 
-Headless: if any facet is uncovered, set `status: pending`, list `openFacets`, and return `blocked`. The Phase 2 gate REVIEW item (#5) reads this status.
+Headless: if any facet/REQ remains open (uncovered facet, or missing edge/negative coverage you judged required), set `status: pending`, list `openFacets`, and return `blocked`. The Phase 2 gate REVIEW item (#5) reads this status.
 
 ## Stage 5: Save and Handoff
 

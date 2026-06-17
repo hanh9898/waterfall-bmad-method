@@ -44,5 +44,6 @@
 
 - `"no_test_runner"` — Test command not found or not configured.
 - `"no_tests_found"` — No test files detected.
+- `"no_test_spec"` — D-27 (test specification) not found in headless mode. Required-but-missing: without the TC inventory, a "passed" result would silently hide unrun TCs, so headless blocks (interactive only warns and continues).
 - `"environment_error"` — Test environment not ready.
 - `"feature_required"` — headless invocation with no resolvable feature.

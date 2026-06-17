@@ -87,7 +87,35 @@ def find_project_context(project_root: str) -> str | None:
     return None
 
 
-def scan(project_root: str, output_dir: str) -> dict:
+def scan_project_knowledge(project_knowledge: str | None) -> list[dict]:
+    """Enumerate bmad-document-project output for brownfield convention ingestion.
+
+    Returns the document-project index plus its sibling project docs so D-12
+    derives from the REAL codebase conventions, not just project-context.md.
+    Greenfield (dir absent / empty) → []."""
+    if not project_knowledge:
+        return []
+    root = project_knowledge
+    if not os.path.isdir(root):
+        return []
+
+    docs: list[dict] = []
+    seen: set[str] = set()
+    index_path = os.path.join(root, "index.md")
+    if os.path.isfile(index_path):
+        seen.add(os.path.normpath(index_path))
+        docs.append({"path": index_path, "name": "index.md", "role": "index"})
+
+    for path in sorted(glob.glob(os.path.join(root, "**", "*.md"), recursive=True)):
+        norm = os.path.normpath(path)
+        if norm in seen or not os.path.isfile(path):
+            continue
+        seen.add(norm)
+        docs.append({"path": path, "name": os.path.basename(path)})
+    return docs
+
+
+def scan(project_root: str, output_dir: str, project_knowledge: str | None = None) -> dict:
     d12_matches = glob.glob(os.path.join(output_dir, "D-12*"))
 
     existing_d12 = None
@@ -114,12 +142,16 @@ def scan(project_root: str, output_dir: str) -> dict:
     project_context_path = find_project_context(project_root)
     framework = detect_framework(project_context_path)
 
+    project_knowledge_docs = scan_project_knowledge(project_knowledge)
+
     return {
         "state": state,
         "existing_d12": existing_d12,
         "framework": framework,
         "project_context_path": project_context_path,
         "output_dir": output_dir,
+        "project_knowledge_docs": project_knowledge_docs,
+        "project_knowledge_count": len(project_knowledge_docs),
     }
 
 
@@ -133,10 +165,15 @@ def main():
     parser.add_argument(
         "--output-dir", required=True, help="Output directory to scan for D-12"
     )
+    parser.add_argument(
+        "--project-knowledge",
+        help="bmad-document-project output dir (brownfield code conventions); "
+        "typically {project-root}/docs. Greenfield: omit or point at a missing dir.",
+    )
     parser.add_argument("-o", "--output", help="Write JSON to file instead of stdout")
     args = parser.parse_args()
 
-    result = scan(args.project_root, args.output_dir)
+    result = scan(args.project_root, args.output_dir, args.project_knowledge)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

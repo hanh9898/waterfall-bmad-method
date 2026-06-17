@@ -146,6 +146,56 @@ def test_explicit_sources_skips_autodiscovery():
         assert "ContextTerm" not in terms
 
 
+def test_ingests_project_knowledge():
+    # Brownfield (#7): docs/ from bmad-document-project feed glossary sources.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        docs = Path(tmpdir) / "docs"
+        docs.mkdir()
+        (docs / "index.md").write_text("# Index\n", encoding="utf-8")
+        (docs / "domain.md").write_text("**Picking Wave** is a domain term\n", encoding="utf-8")
+        cmd = [
+            sys.executable, SCRIPT, "--project-root", tmpdir,
+            "--project-knowledge", str(docs),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(result.stdout)
+        names = {d["name"] for d in data["source_docs"]}
+        assert "domain.md" in names
+        terms = [c["term"] for c in data["raw_candidates"]]
+        assert "Picking Wave" in terms
+
+
+def test_project_knowledge_missing_dir_noop():
+    # Greenfield: pointing at a non-existent docs dir is a no-op.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmd = [
+            sys.executable, SCRIPT, "--project-root", tmpdir,
+            "--project-knowledge", str(Path(tmpdir) / "docs"),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(result.stdout)
+        assert data["source_count"] == 0
+
+
+def test_explicit_sources_skips_project_knowledge():
+    # --sources skips ALL auto-discovery, including project-knowledge.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src = Path(tmpdir) / "my-notes.md"
+        src.write_text("**SpecificTerm** only\n", encoding="utf-8")
+        docs = Path(tmpdir) / "docs"
+        docs.mkdir()
+        (docs / "domain.md").write_text("**PKTerm** here\n", encoding="utf-8")
+        cmd = [
+            sys.executable, SCRIPT, "--project-root", tmpdir,
+            "--sources", "my-notes.md", "--project-knowledge", str(docs),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(result.stdout)
+        terms = [c["term"] for c in data["raw_candidates"]]
+        assert "SpecificTerm" in terms
+        assert "PKTerm" not in terms
+
+
 if __name__ == "__main__":
     tests = [
         test_fresh_project,
@@ -161,6 +211,9 @@ if __name__ == "__main__":
         test_output_to_file,
         test_explicit_sources,
         test_explicit_sources_skips_autodiscovery,
+        test_ingests_project_knowledge,
+        test_project_knowledge_missing_dir_noop,
+        test_explicit_sources_skips_project_knowledge,
     ]
     failed = 0
     for t in tests:

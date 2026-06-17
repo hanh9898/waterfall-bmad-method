@@ -101,6 +101,35 @@ def detect_needs_api(project_root: str, framework: str | None) -> bool | None:
     return None
 
 
+def scan_project_knowledge(project_knowledge: str | None) -> list[dict]:
+    """Enumerate bmad-document-project output for brownfield API ingestion.
+
+    Returns the document-project index plus its sibling project docs (endpoint
+    inventory, existing API surface) so D-21 derives from the REAL codebase, not
+    just project-context.md. Greenfield (dir absent / empty) → []."""
+    if not project_knowledge:
+        return []
+    root = project_knowledge
+    if not os.path.isdir(root):
+        return []
+
+    docs: list[dict] = []
+    seen: set[str] = set()
+    index_path = os.path.join(root, "index.md")
+    if os.path.isfile(index_path):
+        norm = os.path.normpath(index_path)
+        seen.add(norm)
+        docs.append({"path": index_path, "name": "index.md", "role": "index"})
+
+    for path in sorted(glob.glob(os.path.join(root, "**", "*.md"), recursive=True)):
+        norm = os.path.normpath(path)
+        if norm in seen or not os.path.isfile(path):
+            continue
+        seen.add(norm)
+        docs.append({"path": path, "name": os.path.basename(path)})
+    return docs
+
+
 def find_artifact(output_dir: str, prefix: str) -> str | None:
     # Also probe the sibling "plan" dir when given a "design" dir. Use a
     # separator-agnostic swap: a literal "/design"→"/plan" replace silently no-ops
@@ -116,7 +145,7 @@ def find_artifact(output_dir: str, prefix: str) -> str | None:
     return None
 
 
-def scan(project_root: str, output_dir: str) -> dict:
+def scan(project_root: str, output_dir: str, project_knowledge: str | None = None) -> dict:
     d21_matches = glob.glob(os.path.join(output_dir, "D-21*"))
 
     existing_d21 = None
@@ -149,6 +178,8 @@ def scan(project_root: str, output_dir: str) -> dict:
     d02_path = find_artifact(output_dir, "D-02")
     d19_path = find_artifact(output_dir, "D-19")
 
+    project_knowledge_docs = scan_project_knowledge(project_knowledge)
+
     return {
         "state": state,
         "existing_d21": existing_d21,
@@ -156,6 +187,8 @@ def scan(project_root: str, output_dir: str) -> dict:
         "d19_path": d19_path,
         "framework": framework,
         "needs_api": needs_api,
+        "project_knowledge_docs": project_knowledge_docs,
+        "project_knowledge_count": len(project_knowledge_docs),
     }
 
 
@@ -169,10 +202,15 @@ def main():
     parser.add_argument(
         "--output-dir", required=True, help="Output directory to scan for D-21"
     )
+    parser.add_argument(
+        "--project-knowledge",
+        help="bmad-document-project output dir (brownfield endpoint/API inventory); "
+        "typically {project-root}/docs. Greenfield: omit or point at a missing dir.",
+    )
     parser.add_argument("-o", "--output", help="Write JSON to file instead of stdout")
     args = parser.parse_args()
 
-    result = scan(args.project_root, args.output_dir)
+    result = scan(args.project_root, args.output_dir, args.project_knowledge)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

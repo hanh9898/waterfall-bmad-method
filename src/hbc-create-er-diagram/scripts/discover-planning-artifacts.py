@@ -11,6 +11,13 @@ HBC files. Verifies the configured er_diagram_template exists. Optionally
 emits resume-state for Stage 1a when --primary (the output document path) is
 given, reading the peer .decision-log.md beside it.
 
+Brownfield ingest: when --project-knowledge <dir> is given (the
+bmad-document-project output root), the script ALSO enumerates that root's
+index.md, the project docs beneath it, and any existing DB schema files
+(*.sql / *schema*.{md,json,yaml,prisma} / ORM model dirs). These feed the
+D-19 baseline so it reflects the real DB, not just the PRD. Greenfield runs
+omit the flag and are unaffected.
+
 Exit codes:
   0  inventory produced, no fatal issues
   1  template missing or planning_artifacts unreadable (skill should HALT
@@ -50,6 +57,18 @@ TABLE_DEF_GLOBS = [
     "*table_def*.md",
 ]
 RESEARCH_GLOBS = ["research/*.md", "research/**/*.md"]
+# Brownfield: existing DB schema artifacts under the bmad-document-project root.
+SCHEMA_GLOBS = [
+    "**/*.sql",
+    "**/*schema*.md",
+    "**/*schema*.json",
+    "**/*schema*.yaml",
+    "**/*schema*.yml",
+    "**/*.prisma",
+    "**/schema.rb",
+    "**/models/**/*.py",
+    "**/entities/**/*.ts",
+]
 
 
 def _make_entry(p: Path) -> dict[str, object]:
@@ -114,6 +133,36 @@ def _classify_prd(prd_path: Path) -> dict[str, object]:
     entry["is_sharded"] = _is_sharded(prd_path)
     entry["shard_paths"] = _enumerate_shards(prd_path) if entry["is_sharded"] else []
     return entry
+
+
+def _scan_project_knowledge(pk_root: Path) -> dict[str, object]:
+    """Brownfield ingest: enumerate the bmad-document-project output.
+
+    Returns the project index.md, the project docs beneath the root, and any
+    existing DB schema artifacts. These give the D-19 baseline a view of the
+    real database rather than relying on the PRD alone."""
+    out: dict[str, object] = {
+        "root": str(pk_root),
+        "exists": pk_root.exists(),
+        "index": None,
+        "docs": [],
+        "schema": [],
+    }
+    if not pk_root.exists():
+        return out
+
+    index = pk_root / "index.md"
+    if index.exists():
+        out["index"] = _make_entry(index)
+
+    docs = [
+        p
+        for p in sorted(pk_root.glob("**/*.md"))
+        if p.name != "index.md"
+    ]
+    out["docs"] = [_make_entry(p) for p in _unique_paths(docs)]
+    out["schema"] = [_make_entry(p) for p in _glob(pk_root, SCHEMA_GLOBS)]
+    return out
 
 
 def _extract_resume_state(primary: Path) -> dict[str, object]:
@@ -192,6 +241,11 @@ def main() -> int:
         help="Resolved path to er_diagram_template (Stage 1 will refuse to start if missing)",
     )
     parser.add_argument(
+        "--project-knowledge",
+        default=None,
+        help="Optional (brownfield): path to the bmad-document-project output root. When provided, the script ALSO ingests its index.md, project docs, and existing DB schema files into the source inventory so the D-19 baseline reflects the real database. Omit for greenfield.",
+    )
+    parser.add_argument(
         "--primary",
         default=None,
         help="Optional: path to the single output document. When provided, the script emits resume_state for Stage 1a, reading the peer .decision-log.md beside it.",
@@ -213,6 +267,7 @@ def main() -> int:
         "use_case": [],
         "table_definitions": [],
         "research": [],
+        "project_knowledge": None,
     }
 
     fatal = False
@@ -237,6 +292,9 @@ def main() -> int:
         result["use_case"] = [_make_entry(p) for p in _glob(artifacts, USE_CASE_GLOBS)]
         result["table_definitions"] = [_make_entry(p) for p in _glob(artifacts, TABLE_DEF_GLOBS)]
         result["research"] = [_make_entry(p) for p in _glob(artifacts, RESEARCH_GLOBS)]
+
+    if args.project_knowledge:
+        result["project_knowledge"] = _scan_project_knowledge(Path(args.project_knowledge))
 
     if args.primary:
         result["resume_state"] = _extract_resume_state(Path(args.primary))

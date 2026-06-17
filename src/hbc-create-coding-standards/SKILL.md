@@ -35,13 +35,15 @@ Resolve customization, load persistent facts and config per standard BMad activa
 1a. **Source scan.** Check `{workflow.output_dir}` for existing D-12 artifacts:
 
 ```
-python3 scripts/scan-coding-standards.py --project-root {project-root} --output-dir {workflow.output_dir}
+python3 scripts/scan-coding-standards.py --project-root {project-root} --output-dir {workflow.output_dir} --project-knowledge {project_knowledge}
 ```
 
-Returns JSON with `state` (fresh/resume/update), `existing_d12` (path + frontmatter), `framework` (detected from project-context.md), and `project_context_path`. Use this to route:
+Returns JSON with `state` (fresh/resume/update), `existing_d12` (path + frontmatter), `framework` (detected from project-context.md), `project_context_path`, and `project_knowledge_docs` (brownfield `bmad-document-project` output — `index.md` + project docs; empty for greenfield). Use this to route:
    - **Fresh** — no prior D-12. Proceed to discovery.
    - **Resume** — partial D-12 found (`lastStep` < `complete`). Show summary, offer resume or restart.
    - **Update** — complete D-12 exists. Show what to update, load as baseline.
+
+1a′. **Brownfield ingest (#7).** When `project_knowledge_docs` is non-empty (existing codebase documented via `bmad-document-project`), treat it as a first-class SOURCE: read `{project_knowledge}/index.md` and the listed project docs for the **real, already-in-use code conventions** (naming, layout, error handling, lint config, import ordering) plus any existing lint/format configs they reference. **Derive D-12 from these actual conventions** so the standard codifies what the codebase already does rather than imposing generic framework defaults — surface real conventions as confirmations in 1c, and only deviate where the team explicitly chooses to. Greenfield (`project_knowledge_docs` empty) keeps the existing framework-default behavior unchanged.
 
 1b. **Framework detection.** If `{workflow.framework}` is set, use it as the framework override (skip auto-detection). Otherwise read `project-context.md` (loaded via persistent_facts) to detect the primary framework and language. If still not detectable, ask the user. Common stacks: Odoo (Python), Django (Python), Next.js (TypeScript), React (TypeScript/JavaScript), Laravel (PHP), Spring Boot (Java).
 

@@ -74,6 +74,7 @@ def scan_sources(
     project_root: str,
     explicit_sources: list[str] | None = None,
     output_folder: str = "_bmad-output",
+    project_knowledge: str | None = None,
 ) -> dict:
     """Scan project for glossary sources and existing D-03.
 
@@ -82,6 +83,12 @@ def scan_sources(
     old flat location and project root). Source docs (D-02 etc.) may be
     per-feature or project-level, so the whole _bmad-output tree (plus root) is
     searched for them.
+
+    Brownfield (#7): when `project_knowledge` (bmad-document-project output, e.g.
+    {project-root}/docs) is provided, its domain docs are ingested as additional
+    glossary sources so D-03 terms derive from the REAL codebase domain, not just
+    project-context.md. Greenfield (dir absent) is a no-op. `--sources` still
+    skips ALL auto-discovery, including project-knowledge, for back-compat.
     """
     root = Path(project_root)
     out_root = Path(output_folder) if Path(output_folder).is_absolute() else root / output_folder
@@ -154,6 +161,29 @@ def scan_sources(
             all_candidates.extend(extract_candidates(ctx))
             break
 
+        # Brownfield (#7): ingest bmad-document-project domain docs as additional
+        # glossary sources. Greenfield (no project_knowledge dir) is a no-op.
+        if project_knowledge:
+            pk_root = (
+                Path(project_knowledge)
+                if Path(project_knowledge).is_absolute()
+                else root / project_knowledge
+            )
+            if pk_root.is_dir():
+                for path in sorted(pk_root.rglob("*.md")):
+                    if not path.is_file():
+                        continue
+                    rel = (
+                        str(path.relative_to(root))
+                        if path.is_relative_to(root)
+                        else str(path)
+                    )
+                    if rel in seen_src:
+                        continue
+                    seen_src.add(rel)
+                    source_docs.append({"path": rel, "name": path.name})
+                    all_candidates.extend(extract_candidates(path))
+
     seen: dict[str, dict] = {}
     for c in all_candidates:
         if c["term"] not in seen:
@@ -192,6 +222,11 @@ def main():
         default="_bmad-output",
         help="HBC output folder (default: _bmad-output); D-03 resolves under {output-folder}/shared/glossary",
     )
+    parser.add_argument(
+        "--project-knowledge",
+        help="bmad-document-project output dir (brownfield domain docs); typically "
+        "{project-root}/docs. Ingested as extra glossary sources. Greenfield: omit.",
+    )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
 
@@ -200,6 +235,7 @@ def main():
         args.project_root,
         explicit_sources=sources,
         output_folder=args.output_folder,
+        project_knowledge=args.project_knowledge,
     )
 
     text = json.dumps(result, indent=2, ensure_ascii=False)

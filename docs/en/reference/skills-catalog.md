@@ -92,7 +92,7 @@ Output: `_bmad-output/features/<feature>/implementation-artifacts/`.
 
 ```
 PI                                      (once, first — shared D-12/D-03 + baseline D-19/D-21)
-BA → REQ → (GLO, BFD) → TRI → PG 1
+BA → REQ → GLO → BFD → TRI → PG 1   (GLO shared from Phase 0; BFD/D-06 required for Phase 1)
 ARCH → ERD → CS → (API) ┐
 QA   → TP  → TS         ┘ → IR → TRU → PG 2
 DEV  → TB  → IM         → TRU → PG 3

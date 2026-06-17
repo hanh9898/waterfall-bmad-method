@@ -92,7 +92,7 @@ Ma trận truy vết 8 cột: `feature | req_id | story_id | design_ref | code_r
 
 ```
 PI                                      (một lần, đầu tiên — shared D-12/D-03 + baseline D-19/D-21)
-BA → REQ → (GLO, BFD) → TRI → PG 1
+BA → REQ → GLO → BFD → TRI → PG 1   (GLO dùng chung từ Phase 0; BFD/D-06 bắt buộc cho Phase 1)
 ARCH → ERD → CS → (API) ┐
 QA   → TP  → TS         ┘ → IR → TRU → PG 2
 DEV  → TB  → IM         → TRU → PG 3

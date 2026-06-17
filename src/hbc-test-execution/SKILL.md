@@ -39,7 +39,9 @@ Then verify test environment readiness:
 - **D-27** exists — load test case inventory for result mapping.
 - **Code** is at a known state (clean git working tree recommended).
 
-If D-27 not found, warn but allow execution (results won't map to TC-xxx IDs).
+**D-27 presence (D-27 gate).** D-27 is the test-case inventory results map to. If it is not found:
+- **Interactive** — warn but allow execution (results won't map to TC-xxx IDs); record the warning in the report. The user accepts the lost TC mapping.
+- **Headless** — return `blocked` (reason `no_test_spec`). Do NOT silently run a headless suite with no D-27: with no inventory to reconcile against, a "passed" result would silently hide unrun TCs (the D1 reconciliation in Stage 5 has nothing to check). Headless callers must supply D-27 or accept the block.
 
 ## Stage 2: Execute
 

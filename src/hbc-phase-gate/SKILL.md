@@ -86,7 +86,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 
 ## Headless Mode
 
-When invoked with `--headless` or by another skill passing `headless=true`:
+When invoked with `--headless` or by another skill passing `headless=true` (full I/O contract — input args, return schema, blocked reasons: `references/headless-contract.md`):
 
 1. Phase number is **required** (no interactive prompt, no inference).
 2. QUALITY items are evaluated headlessly using the same LLM judgment logic — no user prompts are issued. Evidence is embedded in the JSON result.

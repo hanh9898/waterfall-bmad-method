@@ -32,7 +32,7 @@ Resolve customization, load persistent facts and config per standard BMad activa
 
 ## Headless Mode
 
-`-H` / `--headless` runs `create` / `status` non-interactively. Detects brownfield vs greenfield deterministically (codebase presence), uses any existing project documentation as source, then writes shared deliverables under `_bmad-output/shared/...`. Idempotent — existing deliverables are skipped. No `feature` arg.
+`-H` / `--headless` runs `create` / `status` non-interactively (full I/O contract — input args, return schema, blocked reasons: `references/headless-contract.md`). Detects brownfield vs greenfield deterministically (codebase presence), uses any existing project documentation as source, then writes shared deliverables under `_bmad-output/shared/...`. Idempotent — existing deliverables are skipped. No `feature` arg.
 
 Blocked reasons (closed set):
 

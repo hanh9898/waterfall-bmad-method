@@ -21,6 +21,7 @@ scan = mod.scan
 detect_framework = mod.detect_framework
 detect_needs_api = mod.detect_needs_api
 find_artifact = mod.find_artifact
+scan_project_knowledge = mod.scan_project_knowledge
 
 
 def _write(path: str, content: str = "") -> None:
@@ -123,6 +124,58 @@ class TestFindArtifact:
         assert find_artifact(str(design_dir), "D-02") is None
 
 
+class TestScanProjectKnowledge:
+    def test_none_returns_empty(self):
+        assert scan_project_knowledge(None) == []
+
+    def test_missing_dir_returns_empty(self, tmp_path):
+        assert scan_project_knowledge(str(tmp_path / "docs")) == []
+
+    def test_index_first(self, tmp_path):
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        _write(str(docs / "index.md"), "# Index")
+        _write(str(docs / "api-endpoints.md"), "# Endpoints")
+        result = scan_project_knowledge(str(docs))
+        names = [d["name"] for d in result]
+        assert names[0] == "index.md"
+        assert result[0]["role"] == "index"
+        assert "api-endpoints.md" in names
+
+    def test_nested_docs(self, tmp_path):
+        docs = tmp_path / "docs"
+        (docs / "modules").mkdir(parents=True)
+        _write(str(docs / "modules" / "orders.md"), "# Orders API")
+        result = scan_project_knowledge(str(docs))
+        assert any(d["name"] == "orders.md" for d in result)
+
+    def test_no_duplicate_index(self, tmp_path):
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        _write(str(docs / "index.md"), "# Index")
+        result = scan_project_knowledge(str(docs))
+        assert [d["name"] for d in result].count("index.md") == 1
+
+
+class TestScanIngestsProjectKnowledge:
+    def test_greenfield_empty(self, tmp_path):
+        output_dir = tmp_path / "design"
+        output_dir.mkdir()
+        result = scan(str(tmp_path), str(output_dir))
+        assert result["project_knowledge_docs"] == []
+        assert result["project_knowledge_count"] == 0
+
+    def test_brownfield_populated(self, tmp_path):
+        output_dir = tmp_path / "design"
+        output_dir.mkdir()
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        _write(str(docs / "index.md"), "# Index")
+        _write(str(docs / "endpoints.md"), "# Endpoints")
+        result = scan(str(tmp_path), str(output_dir), str(docs))
+        assert result["project_knowledge_count"] == 2
+
+
 class TestCLI:
     def test_cli_json_output(self, tmp_path):
         import subprocess
@@ -144,3 +197,28 @@ class TestCLI:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert data["state"] == "fresh"
+
+    def test_cli_project_knowledge(self, tmp_path):
+        import subprocess
+
+        output_dir = tmp_path / "design"
+        output_dir.mkdir()
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        _write(str(docs / "index.md"), "# Index")
+
+        script = os.path.join(
+            os.path.dirname(__file__), "..", "scan-api-sources.py"
+        )
+        result = subprocess.run(
+            [
+                sys.executable, script,
+                "--project-root", str(tmp_path),
+                "--output-dir", str(output_dir),
+                "--project-knowledge", str(docs),
+            ],
+            capture_output=True,
+        )
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert data["project_knowledge_count"] == 1
