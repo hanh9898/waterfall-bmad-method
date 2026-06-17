@@ -100,7 +100,7 @@ Run deterministic validator:
 python3 {workflow.validation_script} "{workflow.output_dir}/task-breakdown.md" --d19 "{d19_path}" --d27 "{d27_path}"
 ```
 
-Checks: all entities covered, all test cases assigned, no circular dependencies, task IDs unique and sequential.
+Checks: all entities covered, all test cases assigned, dependency ordering (no task depends on a later-listed one), task IDs unique and sequential.
 
 **LLM judgment checks:**
 - Task descriptions are actionable and specific.

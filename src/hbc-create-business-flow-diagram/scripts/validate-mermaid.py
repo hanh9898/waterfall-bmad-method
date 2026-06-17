@@ -53,9 +53,17 @@ MERMAID_BLOCK_RE = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
 #   participant "Quoted Alias" as Display
 #   participant "Quoted Alias"
 #   actor variants of all the above
+# Bare (unquoted) alias: word chars with internal single hyphens (e.g.
+# `Auth-Service`). Hyphens are matched only BETWEEN word chars — `\w+(?:-\w+)*` —
+# so the pattern can never consume an arrow operator's hyphens (`-->>`, `->>`),
+# whose hyphens are consecutive or trail into `>`. (Mermaid still prefers quoting
+# such names; this just keeps detection consistent instead of emitting a
+# misleading orphan/undeclared pair.)
+_BARE = r"\w+(?:-\w+)*"
+
 DECL_RE = re.compile(
-    r"""^\s*(participant|actor)\s+
-        (?:"(?P<quoted>[^"]+)"|(?P<bare>\w+))
+    rf"""^\s*(participant|actor)\s+
+        (?:"(?P<quoted>[^"]+)"|(?P<bare>{_BARE}))
         (?:\s+as\s+(?P<display>.+))?\s*$""",
     re.MULTILINE | re.VERBOSE,
 )
@@ -63,10 +71,10 @@ DECL_RE = re.compile(
 # Arrow forms in sequenceDiagram (source on left, target on right). Each
 # side may carry an activation prefix (`+`, `-`).
 ARROW_RE = re.compile(
-    r"""^\s*
-        \+?(?P<src>"[^"]+"|\w+)
+    rf"""^\s*
+        \+?(?P<src>"[^"]+"|{_BARE})
         \s*(?:->>?|-->>?|--?\)|--?x|--?X)\s*
-        [+-]?(?P<dst>"[^"]+"|\w+)
+        [+-]?(?P<dst>"[^"]+"|{_BARE})
         \s*:""",
     re.MULTILINE | re.VERBOSE,
 )
@@ -80,8 +88,8 @@ NOTE_RE = re.compile(
 
 # `activate A` / `deactivate A`
 ACTIVATION_RE = re.compile(
-    r"""^\s*(?:activate|deactivate)\s+
-        (?P<name>"[^"]+"|\w+)\s*$""",
+    rf"""^\s*(?:activate|deactivate)\s+
+        (?P<name>"[^"]+"|{_BARE})\s*$""",
     re.MULTILINE | re.VERBOSE,
 )
 

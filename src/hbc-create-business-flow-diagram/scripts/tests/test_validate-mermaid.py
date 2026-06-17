@@ -81,6 +81,27 @@ sequenceDiagram
         self.assertEqual(result["render_check"], "skipped: --no-render")
         self.assertTrue(result["passed"])
 
+    def test_hyphenated_bare_participant(self) -> None:
+        # L3: a hyphenated bare alias (Auth-Service) declared and used in arrows
+        # must parse as ONE token — no false undeclared/orphan — while a `-->>`
+        # arrow's hyphens are still not consumed into a name.
+        body = """```mermaid
+sequenceDiagram
+    participant User as User
+    participant Auth-Service
+    User->>Auth-Service: login
+    Auth-Service-->>User: token
+```
+"""
+        target = make_md(self.root, body)
+        proc = run_script(str(target), "--no-render", "-o", str(self.out))
+        self.assertEqual(proc.returncode, 0, f"stderr: {proc.stderr}")
+        result = self._result()
+        kinds = {i.get("kind") for i in result.get("issues", [])}
+        self.assertNotIn("undeclared_participant", kinds)
+        self.assertNotIn("orphan_declaration", kinds)
+        self.assertTrue(result["passed"])
+
     def test_quoted_alias_declarations_parsed(self) -> None:
         # Two valid Mermaid quoted forms — both must parse.
         #   (a) `participant OS as "Order Service"` — short id, quoted display

@@ -72,6 +72,11 @@ def check_sections(content: str) -> list[dict]:
 
 
 def check_contradictions(content: str) -> list[dict]:
+    """ADVISORY only. Mentioning both sides of a choice (e.g. "use spaces, never
+    tabs") is normal — even mandatory — in a standards document, so this can NOT
+    decide a real contradiction; it merely flags a pair for the reviewer to eyeball.
+    Marked advisory so it never fails the structural verdict (a blocking version
+    false-failed virtually every valid D-12, whose indentation rule names both)."""
     issues: list[dict] = []
     lower = content.lower()
 
@@ -81,9 +86,10 @@ def check_contradictions(content: str) -> list[dict]:
         if has_a and has_b:
             issues.append({
                 "type": "CONTRADICTION",
-                "message": f"Potential contradiction in {topic}: both '{has_a.group()}' and '{has_b.group()}' mentioned — verify intent",
+                "message": f"Both '{has_a.group()}' and '{has_b.group()}' mentioned for {topic} — likely a 'use X not Y' rule; verify it is not a real conflict",
                 "topic": topic,
                 "auto_fixable": False,
+                "advisory": True,
             })
 
     return issues
@@ -155,7 +161,10 @@ def validate(doc_path: str, framework: str | None = None) -> dict:
         re.findall(r"^##\s", content, re.MULTILINE)
     )
 
-    structure_ok = len(all_issues) == 0
+    # Advisory issues (e.g. heuristic contradictions) are surfaced but do NOT fail
+    # the structural verdict.
+    blocking = [i for i in all_issues if not i.get("advisory")]
+    structure_ok = len(blocking) == 0
     result = verdict(
         structure_ok,
         semantic_review=SEMANTIC_NA,

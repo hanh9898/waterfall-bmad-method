@@ -184,6 +184,21 @@ class TestCheckContradictions:
         issues = check_contradictions(content)
         assert len(issues) == 0
 
+    def test_contradiction_is_advisory_not_blocking(self, tmp_path):
+        # L1: a normal D-12 indentation rule names both "spaces" and "tabs"
+        # ("use spaces, never tabs"). That must NOT fail the structural verdict —
+        # the contradiction signal is advisory only.
+        content = MINIMAL_VALID.replace(
+            "Use 4 spaces for indentation. Max line length: 120.",
+            "Use 4 spaces for indentation; never use tabs. Max line length: 120.",
+        )
+        path = str(tmp_path / "d12.md")
+        _write(path, content)
+        result = validate(path, framework="django")
+        assert result["valid"] is True
+        contradictions = [i for i in result["issues"] if i["type"] == "CONTRADICTION"]
+        assert contradictions and contradictions[0].get("advisory") is True
+
     def test_tab_space_contradiction(self):
         content = "Use tabs for indentation in section A.\nUse 2 spaces for indentation in section B."
         issues = check_contradictions(content)
