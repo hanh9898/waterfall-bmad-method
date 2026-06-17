@@ -1,12 +1,12 @@
-# D-19 — Thiết kế cơ sở dữ liệu (Database Design / ER Diagram)
+# D-19 — Database Design (ER Diagram)
 
-## 1. Tổng quan (Overview)
-- **Tổng quan**: (Mô tả phạm vi và mục đích của thiết kế cơ sở dữ liệu này)
+## 1. Overview
+- **Overview**: (Describe the scope and purpose of this database design)
 
-## 2. Sơ đồ ER (ER Diagram)
+## 2. ER Diagram
 
 > [!NOTE]
-> Mô tả quan hệ giữa các bảng bằng sơ đồ ER (dùng Mermaid).
+> Describe the relationships between tables with an ER diagram (using Mermaid).
 
 ```mermaid
 erDiagram
@@ -25,31 +25,31 @@ erDiagram
     EntityA ||--o{ EntityB : has
 ```
 
-## 3. Định nghĩa bảng (Table Definitions)
+## 3. Table Definitions
 
 ---
-### 3.1. Tên bảng (Table Name)
-- **Tên logic (Logical name)**:
-- **Tên vật lý (Physical name)**:
-- **Tổng quan (Overview)**:
+### 3.1. Table Name
+- **Logical name**:
+- **Physical name**:
+- **Overview**:
 
-| Tên logic | Tên vật lý | Kiểu | Ràng buộc | Mô tả |
+| Logical name | Physical name | Type | Constraints | Description |
 |---|---|---|---|---|
 | ID | id | INTEGER | PK, NOT NULL, AUTO_INCREMENT | |
 | | | | | |
 
 ---
 
-## 4. Định nghĩa index (Index Definitions)
+## 4. Index Definitions
 
-| Tên bảng (vật lý) | Tên index | Cột | UNIQUE |
+| Table (physical) | Index name | Columns | UNIQUE |
 |---|---|---|---|
 | | | | |
 
 ---
 
-**Lịch sử sửa đổi (Revision History)**
+**Revision History**
 
-| Ngày | Phiên bản | Nội dung | Người thực hiện |
+| Date | Version | Changes | Author |
 |---|---|---|---|
-| yyyy-mm-dd | 1.0 | Bản đầu (Initial creation) | |
+| yyyy-mm-dd | 1.0 | Initial creation | |
