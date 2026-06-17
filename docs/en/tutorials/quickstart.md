@@ -2,19 +2,21 @@
 
 > 🌐 **English** · [Tiếng Việt](../../vi/tutorials/quickstart.md)
 >
-> 📘 **Tutorial** — go from zero to your first win: see an agent greet you and produce your first D-02 document. About 10 minutes.
+> 📘 **Tutorial** — go from zero to your first win: see an agent greet you and produce your first D-02 document for your first feature. About 10 minutes.
 >
-> 📖 **Hit an unfamiliar term?** (deliverable, D-02, phase gate, traceability…) → [Concept Glossary](../reference/concept-glossary.md).
+> 📖 **Hit an unfamiliar term?** (deliverable, D-02, phase gate, traceability, per-feature/shared/dual scope…) → [Concept Glossary](../reference/concept-glossary.md).
 
 ## What you'll achieve
 
-By the end you will: install HBC, confirm it runs, type your first command, and **produce a D-02 Requirements file** — enough to know "yes, I can use HBC". Want the full 4 phases? Head to [Get Started with HBC (walkthrough)](getting-started-hbc.md) after this.
+By the end you will: install HBC, **initialize the project once** (`PI`) to create the shared deliverables, confirm the agent runs, then produce **your first D-02 Requirements file for a specific feature** — enough to know "yes, I can use HBC". Want the full 4 phases for a feature? Head to [Get Started with HBC (walkthrough)](getting-started-hbc.md) after this.
+
+> ℹ️ **Delivery model:** HBC delivers **incrementally, per-feature**. Each feature goes through 4 phases + TDD, then ships independently. "Waterfall" is only a *way of slicing scope* — inside a single feature HBC keeps waterfall-like discipline (design-first, gate each milestone) — it is not the module's architecture.
 
 ## Step 0 — Prerequisites
 
 | You need | Check |
 | --- | --- |
-| An **AI coding agent** (Claude Code, Cursor, or equivalent) | This is where you'll "type" commands like `BA`, `REQ`… — **not** a plain terminal |
+| An **AI coding agent** (Claude Code, Cursor, or equivalent) | This is where you'll "type" commands like `PI`, `BA`, `REQ`… — **not** a plain terminal |
 | **Node.js** (to run `npx`) | `node -v` |
 | **Python 3.10+** (for HBC's validation scripts) | `python --version` |
 | **2 companion BMad modules** — `core` + `bmm` (required) | `_bmad/core/` and `_bmad/bmm/` folders exist in the project |
@@ -85,13 +87,37 @@ bmad-help
 
 ```text
 BMad Help — inspected your project.
-State: no deliverables yet in _bmad-output/ → you're at the start of Phase 1.
-Suggestion: open the Business Analyst (type BA), then create D-02 Requirements (type REQ).
+State: no deliverables yet in _bmad-output/ → you haven't initialized the project.
+Suggestion: run hbc-project-init (type PI) ONCE to create the shared deliverables, then start your first feature.
 ```
 
-> ℹ️ If your install doesn't have `bmad-help`, just skip this and type `BA` below — that's enough of a test to confirm HBC is ready.
+> ℹ️ If your install doesn't have `bmad-help`, just skip this and type `PI` below — that's enough of a test to confirm HBC is ready.
 
-Then type:
+## Step 3 — Initialize the project ONCE (Phase 0)
+
+Before doing any feature, run **`hbc-project-init`** once for the whole project to create the **shared deliverables**: D-12 Coding Standards, D-03 Glossary, and the baseline D-19 ERD + D-21 API. This step is **idempotent** — re-running it skips what already exists — and takes **no** `feature` argument.
+
+Still in the agent, type:
+
+```
+PI
+```
+
+**Expected result** — shared files appear under `_bmad-output/shared/` (**illustrative example**):
+
+```text
+hbc-project-init — created shared deliverables:
+  _bmad-output/shared/coding-standards/  (D-12)
+  _bmad-output/shared/glossary/          (D-03)
+  _bmad-output/shared/erd/               (D-19 baseline)
+  _bmad-output/shared/api/               (D-21 baseline)
+```
+
+> ℹ️ This is the common foundation for **every** feature. Do it once — later features reuse it (and can override it per-feature when needed).
+
+## Step 4 — Meet the Phase 1 agent 🎉
+
+Now open the agent for your first feature. Type:
 
 ```
 BA
@@ -115,7 +141,9 @@ This is where newcomers get stuck. Try in order:
 3. **Did the install finish?** Re-run Step 1; check for a `_bmad/hbc/` folder and `_bmad/hbc/config.yaml`.
 4. **Still stuck?** Type `bmad-help` and describe the problem — it will help diagnose.
 
-## Step 3 — Create your first document (D-02)
+## Step 5 — Create your first document (D-02) for your first feature
+
+D-02 is a **per-feature** deliverable — it always belongs to a specific feature. So you need to name the feature (`feature`) in **kebab-case**, e.g. `change-password`.
 
 Still in the agent, type:
 
@@ -123,21 +151,25 @@ Still in the agent, type:
 REQ
 ```
 
-The agent interviews you about a requirement. Answer briefly, e.g.:
+The agent asks for the feature name and interviews you about a requirement. Answer briefly, e.g.:
 
+> **feature:** `change-password`
+>
 > A logged-in user can change their password: enter old password + new password; the system checks the old password is correct and the new one is ≥ 8 characters.
 
 > 💡 **Not sure how to answer?** That's fine — give a rough answer. Re-run `REQ` in `update` mode later to refine it. The goal right now is just to produce your first D-02 file.
 
-**Expected result** — a **D-02 Requirements Specification** file appears in `_bmad-output/planning-artifacts/`, with requirements numbered `REQ-001`, `REQ-002`… Open it: that's your first deliverable.
+**Expected result** — a **D-02 Requirements Specification** file appears in `_bmad-output/features/change-password/planning-artifacts/`, with requirements numbered per feature: `REQ-CHANGE-PASSWORD-001`, `REQ-CHANGE-PASSWORD-002`… (the general pattern is `REQ-<FEAT>-NNN`). Open it: that's your first deliverable.
 
-> 🎉 **You've finished the Quickstart!** You just: installed HBC → verified it → created D-02. This is a **stopping point** — you now know the basics of using HBC.
+> ℹ️ **Output layout:** each feature has its own folder under `_bmad-output/features/<feature>/` (with `planning-artifacts`, `implementation-artifacts`, `gates`, `traceability`); shared deliverables live in `_bmad-output/shared/`. The old flat `_bmad-output/planning-artifacts/` folder is gone.
+
+> 🎉 **You've finished the Quickstart!** You just: installed HBC → initialized the project (`PI`) → verified it → created D-02 for your first feature. This is a **stopping point** — you now know the basics of using HBC.
 
 ## Next steps
 
-- ▶️ **The full lifecycle:** [Get Started with HBC (4-phase walkthrough)](getting-started-hbc.md) — from D-02 to acceptance.
+- ▶️ **The full lifecycle:** [Get Started with HBC (4-phase walkthrough)](getting-started-hbc.md) — from D-02 to acceptance, shipping one feature independently.
 - 🗺️ See the big picture: [Workflow Map](workflow-map.md).
-- 💡 Understand the concepts: [Core Concepts](../explanation/concepts.md).
+- 💡 Understand the concepts: [Core Concepts](../explanation/concepts.md) · [Why incremental + TDD](../explanation/why-incremental-tdd.md).
 - 🔧 Specific tasks: [Run a Phase Gate](../how-to/run-a-phase-gate.md) · [Manage Traceability](../how-to/manage-traceability.md) · [Use Headless Mode](../how-to/use-headless-mode.md) · [Customize Configuration](../how-to/customize-config.md).
 
 > 💡 Whenever you're unsure what's next — type `bmad-help`.

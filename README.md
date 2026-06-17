@@ -2,13 +2,13 @@
 
 > 🌐 **Tiếng Việt** (mặc định) · [English](README.en.md)
 
-Workflow phát triển **theo từng tính năng** cho HBLAB: mỗi feature đi 4 giai đoạn có cổng kiểm soát + TDD, truy vết yêu cầu → test.
+Workflow phát triển **giao tăng dần theo từng tính năng** (incremental, per-feature) cho HBLAB: chạy **Phase 0 — Project Init** một lần để tạo deliverable dùng chung, rồi **mỗi feature** đi trọn 4 giai đoạn có cổng kiểm soát + TDD (test-first, có bằng chứng RED), truy vết yêu cầu → test.
 
 ## Mục lục
 
 - [HBC giải quyết gì cho bạn?](#hbc-giải-quyết-gì-cho-bạn)
 - [🚀 Bắt đầu nhanh](#-bắt-đầu-nhanh)
-- [🗺️ Mô hình tư duy: 4 phase](#-mô-hình-tư-duy-4-phase)
+- [🗺️ Mô hình tư duy: Phase 0 + 4 phase](#-mô-hình-tư-duy-phase-0--4-phase)
 - [📦 Yêu cầu & Cài đặt](#-yêu-cầu--cài-đặt)
 - [📚 Tài liệu](#-tài-liệu)
 - [🧰 Tổng quan skill](#-tổng-quan-skill)
@@ -25,7 +25,7 @@ Khi làm dự án có hợp đồng và nghiệm thu, ba nỗi đau quen thuộc
 - **Test sót so với yêu cầu** → bug lọt, không biết đã phủ đủ chưa.
 - **Khó chứng minh "đã làm đủ"** khi bàn giao hoặc audit.
 
-**HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **incremental + TDD** theo **từng tính năng**: **5 agent điều phối** dẫn bạn qua **4 phase**, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
+**HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **incremental + TDD** theo **từng tính năng**: chạy **Phase 0 (`PI`)** một lần để tạo các **deliverable dùng chung** (shared), sau đó **5 agent điều phối** dẫn mỗi feature qua **4 phase**, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
 
 - **Dành cho:** team làm theo incremental + TDD — BA, Architect, QA, Developer, Tester.
 - **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
@@ -42,9 +42,11 @@ Khi làm dự án có hợp đồng và nghiệm thu, ba nỗi đau quen thuộc
 
 Sau khi cài đặt, **trong AI coding agent** (vd Claude Code) mở tại thư mục dự án, người mới làm theo **3 bước**:
 
+> 🅿️ **Bước 0 (tùy chọn, chạy MỘT lần cho cả dự án):** gõ `PI` (`hbc-project-init`) để tạo các deliverable **dùng chung**: D-12 Coding Standards, D-03 Glossary, và baseline D-19 ERD / D-21 API. Idempotent — bỏ qua thứ đã có, **không** cần tham số `feature`. Làm việc này trước khi bắt đầu feature đầu tiên.
+
 1. **Mở agent điều phối Phase 1** → gõ `BA` (hoặc `hbc-agent-ba`).
-2. **Tạo bản đặc tả yêu cầu (D-02)** → gõ `REQ`. Đây là deliverable bắt buộc, làm nền cho mọi phase sau.
-3. **Chạy Phase Gate** trước khi sang phase kế → gõ `PG 1` (luôn kèm số phase 1–4). Gate "pass" mới đi tiếp.
+2. **Tạo bản đặc tả yêu cầu (D-02)** → gõ `REQ`. Đây là deliverable **per-feature** bắt buộc, làm nền cho mọi phase sau; ID đặt theo dạng `REQ-<FEAT>-NNN` (vd `REQ-AUTH-001`).
+3. **Chạy Phase Gate** trước khi sang phase kế → gõ `PG 1` (luôn kèm số phase 1–4, và `feature=<slug>`). Gate "pass" mới đi tiếp.
 
 Ví dụ những gì bạn thấy (**minh họa** — câu chữ thực tế có thể khác):
 
@@ -53,34 +55,44 @@ Ví dụ những gì bạn thấy (**minh họa** — câu chữ thực tế có
 Business Analyst — điều phối Phase 1 Analysis. Bạn có thể: REQ, GLO, BFD…
 > REQ
 … (agent phỏng vấn yêu cầu của bạn) …
-✓ Đã tạo _bmad-output/planning-artifacts/D-02-requirements.md  (REQ-001, REQ-002…)
+✓ Đã tạo _bmad-output/features/auth/planning-artifacts/D-02-requirements.md  (REQ-AUTH-001, REQ-AUTH-002…)
 ```
 
-Sau đó cứ lặp lại: mở agent của phase → chạy skill bắt buộc → chạy `PG <số phase>`. Đi hết 4 phase là xong. *(Tutorial còn chèn `TRI` sau bước 2 để bật traceability.)*
+Sau đó cứ lặp lại: mở agent của phase → chạy skill bắt buộc → chạy `PG <số phase> feature=<slug>`. Đi hết 4 phase là **giao được feature đó độc lập**. *(Tutorial còn chèn `TRI` sau bước 2 để bật traceability.)*
+
+> 🗂️ **Bố cục output:** mỗi feature nằm dưới `_bmad-output/features/<feature>/…`; deliverable dùng chung nằm dưới `_bmad-output/shared/…`.
 
 📘 **Lần đầu dùng?** Bắt đầu từ [Khởi động nhanh 10 phút](docs/vi/tutorials/quickstart.md) — cài đặt, xác nhận chạy, và tạo D-02 đầu tiên.
 
 ---
 
-## 🗺️ Mô hình tư duy: 4 phase
+## 🗺️ Mô hình tư duy: Phase 0 + 4 phase
 
-HBC đi **tuần tự** qua 4 phase. Mỗi phase sinh deliverable bắt buộc, và phải qua **Phase Gate** (`PG`) mới được sang phase sau.
+Chạy **Phase 0 — Project Init (`PI`)** **một lần** cho cả dự án để tạo deliverable dùng chung; sau đó **mỗi feature** đi **tuần tự** qua 4 phase. Mỗi phase sinh deliverable bắt buộc và phải qua **Phase Gate** (`PG`) mới được sang phase sau.
 
 ```mermaid
 flowchart LR
-    P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
-    P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan"]
-    P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD)"]
-    P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
+    P0["Phase 0 · Project Init<br/>👤 PI<br/>shared D-12 · D-03 · baseline D-19 · D-21"]
 
-    P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
+    subgraph FEAT["Lặp cho mỗi feature"]
+        direction LR
+        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
+        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR"]
+        P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD · RED→GREEN)"]
+        P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
+        P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
+    end
 
-    TR["🔗 Traceability (xuyên suốt)<br/>TRI → TRU → TRA"]
+    P0 --> P1
+
+    TR["🔗 Traceability (xuyên suốt)<br/>TRI → TRU → TRA · SYNC"]
     TR -.->|theo dõi| P1 & P2 & P3 & P4
 ```
 
-- **Phase Gate (`PG`)** — chốt kiểm soát ở ranh giới mỗi phase (kiểm tra tự động + đánh giá bằng LLM).
-- **Traceability (`TRI` → `TRU` → `TRA`)** — ma trận truy vết, đảm bảo mọi yêu cầu (REQ ID) đều có thiết kế, code và test tương ứng.
+- **Phase 0 (`PI`)** — chạy một lần, tạo deliverable dùng chung (D-12, D-03) + baseline (D-19, D-21); idempotent, không cần `feature`.
+- **Phase Gate (`PG`)** — chốt kiểm soát ở ranh giới mỗi phase (kiểm tra tự động + đánh giá bằng LLM); mang theo `feature=`.
+- **Readiness check (`IR`)** — cổng nối ở Phase 2, đối soát D-02 ↔ D-21/D-26/D-27 + ma trận trước khi sang implementation.
+- **Traceability (`TRI` → `TRU` → `TRA`)** — ma trận truy vết, đảm bảo mọi yêu cầu (REQ ID) đều có thiết kế, code và test tương ứng. **`SYNC`** đề xuất cập nhật lan truyền (cascade) khi một tài liệu nguồn thay đổi.
 
 👉 Muốn hiểu sâu khái niệm Phase / Gate / Deliverable / Traceability: [Khái niệm cốt lõi](docs/vi/explanation/concepts.md).
 
@@ -135,16 +147,17 @@ Tài liệu tổ chức theo mô hình [Divio](https://docs.divio.com/documentat
 
 ## 🧰 Tổng quan skill
 
-HBC gồm **5 agent điều phối** + các skill workflow cho từng phase. Mỗi skill workflow hỗ trợ chế độ **Create / Update / Validate**, đa số có `--headless` / `-H`.
+HBC gồm **5 agent điều phối** + các skill workflow cho từng phase. Mỗi skill workflow hỗ trợ chế độ **Create / Update / Validate**, đa số có `--headless` / `-H`. Cột **Phạm vi** cho biết deliverable là **dùng chung** (shared, cả dự án), **per-feature** (mỗi feature một bản), hay **dual** (baseline dùng chung + bản ghi đè per-feature tùy chọn).
 
-| Phase | Agent | Skill chính (deliverable) |
-| --- | --- | --- |
-| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) |
-| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) |
-| 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) |
-| 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) |
-| 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) |
-| Xuyên suốt | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) |
+| Phase | Agent | Skill chính (deliverable) | Phạm vi |
+| --- | --- | --- | --- |
+| 0 · Project Init | — | `PI` (shared D-12/D-03 + baseline D-19/D-21) | shared (chạy 1 lần) |
+| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) | D-02/D-06 per-feature · D-03 shared |
+| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) | D-12 shared · D-19/D-21 dual |
+| 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) · `IR` (Readiness) | per-feature |
+| 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) | per-feature |
+| 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) | per-feature |
+| Xuyên suốt | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) · `SYNC` (Cascade Sync) | per-feature (`PG`/`TR*`) · cross-cutting (`SYNC`) |
 
 📖 Danh sách đầy đủ kèm mô tả: [Catalog skill](docs/vi/reference/skills-catalog.md).
 

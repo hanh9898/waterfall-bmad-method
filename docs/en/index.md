@@ -4,6 +4,8 @@
 
 The **HBLAB BMad Custom (HBC)** docs follow the [Divio](https://docs.divio.com/documentation-system/) model — pick by what you need.
 
+HBC ships **incrementally, per-feature**: each feature goes through all 4 phases + TDD, then ships independently. First run **Phase 0 — Project Init** once for the whole project (`hbc-project-init`) to set up the shared deliverables.
+
 > 💡 Brand new? Start with the [10-minute Quickstart](tutorials/quickstart.md). Stuck anytime? Type `bmad-help`.
 
 ## 📘 Tutorials — learning by doing
@@ -11,15 +13,15 @@ The **HBLAB BMad Custom (HBC)** docs follow the [Divio](https://docs.divio.com/d
 For newcomers who want step-by-step hand-holding.
 
 - [Quickstart (10 minutes)](tutorials/quickstart.md) — **start here**: install → verify → create your first D-02.
-- [Get Started with HBC (walkthrough)](tutorials/getting-started-hbc.md) — take a feature through all 4 phases.
-- [Workflow Map](tutorials/workflow-map.md) — the whole picture of phases, agents, skills, deliverables on one page *(best read after your first run)*.
+- [Get Started with HBC (walkthrough)](tutorials/getting-started-hbc.md) — run Phase 0 once, then take a feature through all 4 phases.
+- [Workflow Map](tutorials/workflow-map.md) — the whole picture of Phase 0 + the 4 per-feature phases, agents, skills, deliverables on one page *(best read after your first run)*.
 
 ## 💡 Explanation — understand why
 
 For those who want the thinking behind it.
 
-- [Core Concepts](explanation/concepts.md) — Phase, Phase Gate, Deliverable D-xx, Traceability.
-- [Why Incremental + TDD](explanation/why-incremental-tdd.md) — HBC's foundational choice.
+- [Core Concepts](explanation/concepts.md) — Phase 0, Phase Gate, Deliverable D-xx, scope (per-feature·shared·dual), Traceability.
+- [Why Incremental + TDD](explanation/why-incremental-tdd.md) — HBC's foundational choice: incremental per-feature delivery, test-first with RED evidence.
 
 ## 🔧 How-to — solve one specific task
 

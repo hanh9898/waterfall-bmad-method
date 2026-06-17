@@ -4,6 +4,8 @@
 
 Tài liệu **HBLAB BMad Custom (HBC)** tổ chức theo mô hình [Divio](https://docs.divio.com/documentation-system/) — chọn theo nhu cầu của bạn.
 
+HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi trọn 4 phase + TDD rồi ship độc lập. Trước tiên chạy **Phase 0 — Project Init** một lần cho cả dự án (`hbc-project-init`) để dựng các deliverable dùng chung.
+
 > 💡 Mới hoàn toàn? Bắt đầu từ [Khởi động nhanh 10 phút](tutorials/quickstart.md). Bí lúc nào thì gõ `bmad-help`.
 
 ## 📘 Tutorials — học qua làm
@@ -11,15 +13,15 @@ Tài liệu **HBLAB BMad Custom (HBC)** tổ chức theo mô hình [Divio](https
 Dành cho người mới, muốn được dắt tay từng bước.
 
 - [Khởi động nhanh (10 phút)](tutorials/quickstart.md) — **bắt đầu ở đây**: cài đặt → xác nhận chạy → tạo D-02 đầu tiên.
-- [Bắt đầu với HBC (walkthrough)](tutorials/getting-started-hbc.md) — đưa một tính năng đi trọn 4 phase.
-- [Bản đồ quy trình](tutorials/workflow-map.md) — toàn cảnh phase, agent, skill, deliverable trong một trang *(nên đọc sau khi đã chạy thử lần đầu)*.
+- [Bắt đầu với HBC (walkthrough)](tutorials/getting-started-hbc.md) — chạy Phase 0 một lần, rồi đưa một tính năng đi trọn 4 phase.
+- [Bản đồ quy trình](tutorials/workflow-map.md) — toàn cảnh Phase 0 + 4 phase per-feature, agent, skill, deliverable trong một trang *(nên đọc sau khi đã chạy thử lần đầu)*.
 
 ## 💡 Explanation — hiểu vì sao
 
 Dành cho người muốn nắm tư duy đằng sau.
 
-- [Khái niệm cốt lõi](explanation/concepts.md) — Phase, Phase Gate, Deliverable D-xx, Traceability.
-- [Vì sao Incremental + TDD](explanation/why-incremental-tdd.md) — lựa chọn nền tảng của HBC.
+- [Khái niệm cốt lõi](explanation/concepts.md) — Phase 0, Phase Gate, Deliverable D-xx, phạm vi (per-feature·shared·dual), Traceability.
+- [Vì sao Incremental + TDD](explanation/why-incremental-tdd.md) — lựa chọn nền tảng của HBC: giao tăng dần per-feature, test-first với bằng chứng RED.
 
 ## 🔧 How-to — giải quyết một việc cụ thể
 
