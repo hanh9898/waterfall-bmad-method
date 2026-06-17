@@ -8,7 +8,7 @@
 
 ## Bạn sẽ đạt được gì
 
-Cuối bài này bạn sẽ: cài xong HBC, **khởi tạo dự án một lần** (`PI`) để tạo các deliverable dùng chung, xác nhận agent chạy, rồi tạo **D-02 Requirements đầu tiên cho một tính năng cụ thể** — đủ để biết "à, mình dùng được HBC rồi". Muốn đi trọn 4 phase cho một tính năng? Sang [Bắt đầu với HBC (walkthrough)](getting-started-hbc.md) sau khi xong bài này.
+Cuối bài này bạn sẽ: cài xong HBC, chạy **Phase 0 bắt buộc** (`PI`) — bước **đầu tiên** giúp HBC hiểu dự án và tạo các deliverable dùng chung, xác nhận agent chạy, rồi tạo **D-02 Requirements đầu tiên cho một tính năng cụ thể** — đủ để biết "à, mình dùng được HBC rồi". Muốn đi trọn 4 phase cho một tính năng? Sang [Bắt đầu với HBC (walkthrough)](getting-started-hbc.md) sau khi xong bài này.
 
 > ℹ️ **Mô hình giao hàng:** HBC giao **tăng dần theo từng tính năng** (incremental per-feature). Mỗi tính năng đi qua 4 phase + TDD rồi ship độc lập. "Waterfall" chỉ là *kiểu chia phạm vi* — bên trong một tính năng, HBC vẫn giữ kỷ luật kiểu waterfall (thiết kế trước, gate từng mốc) — chứ không phải kiến trúc của cả module.
 
@@ -93,9 +93,18 @@ Gợi ý: chạy hbc-project-init (gõ PI) MỘT LẦN để tạo deliverable d
 
 > ℹ️ Nếu bản cài của bạn không có `bmad-help`, cứ bỏ qua bước này và gõ thẳng `PI` ở dưới — nó là phép thử đủ để xác nhận HBC đã sẵn sàng.
 
-## Bước 3 — Khởi tạo dự án MỘT LẦN (Phase 0)
+## Bước 3 — Phase 0 BẮT BUỘC, chạy ĐẦU TIÊN (`PI`)
 
-Trước khi làm bất kỳ tính năng nào, chạy **`hbc-project-init`** một lần cho cả dự án để tạo các **deliverable dùng chung** (shared): D-12 Coding Standards, D-03 Glossary, và bản nền (baseline) D-19 ERD + D-21 API. Bước này **idempotent** — chạy lại sẽ bỏ qua thứ đã có — và **không cần** tham số `feature`.
+Phase 0 (`hbc-project-init`) là bước **bắt buộc** và phải **hoàn tất trước** mọi công việc tính năng. Chạy **một lần** cho cả dự án; về sau muốn cập nhật thì **chạy lại để sửa trực tiếp** (không phải "bỏ qua thứ đã có"). Bước này **không cần** tham số `feature`.
+
+Phase 0 làm **hai việc**:
+
+1. **Hiểu dự án.**
+   - *Brownfield* (đã có codebase): lập tài liệu code trước bằng `bmad-document-project`, rồi đảm bảo có `project-context.md` (qua `bmad-generate-project-context`).
+   - *Greenfield* (dự án mới): lấy bối cảnh từ PRD/brief, hoặc agent sẽ hỏi bạn.
+2. **Tạo các deliverable dùng chung (shared) TỪ bối cảnh đó:** D-12 Coding Standards (brownfield: rút ra từ quy ước code sẵn có), D-03 Glossary (từ domain), bản nền (baseline) D-19 ERD (brownfield: từ schema DB sẵn có), bản nền D-21 API (brownfield: từ các endpoint sẵn có).
+
+> ℹ️ D-12 và D-03 là deliverable **dùng chung của Phase 0** — không phải "bước tùy chọn" của Phase 1/2.
 
 Vẫn trong agent, gõ:
 
@@ -113,7 +122,7 @@ hbc-project-init — đã tạo deliverable dùng chung:
   _bmad-output/shared/api/               (D-21 baseline)
 ```
 
-> ℹ️ Đây là phần móng chung cho **mọi** tính năng. Làm một lần là xong — các tính năng sau sẽ dùng lại (và có thể ghi đè per-feature khi cần).
+> ℹ️ Đây là phần móng chung cho **mọi** tính năng, dựng **từ** bối cảnh dự án ở việc (1). Làm một lần là xong — các tính năng sau sẽ dùng lại (và có thể ghi đè per-feature khi cần); muốn cập nhật thì chạy lại `PI` để sửa trực tiếp.
 
 ## Bước 4 — Gặp agent Phase 1 🎉
 

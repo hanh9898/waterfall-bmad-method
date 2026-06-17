@@ -58,19 +58,26 @@ Yêu cầu được đánh mã **`REQ-AUTH-NNN`** (per-feature, ví dụ `REQ-AU
 
 ---
 
-## Phase 0 — Project Init (chạy MỘT lần cho cả dự án)
+## Phase 0 — Project Init (BẮT BUỘC, chạy ĐẦU TIÊN cho cả dự án)
 
-**Mục tiêu:** tạo các deliverable **dùng chung** trước khi đụng tới bất kỳ tính năng nào. Bước này chạy đúng một lần cho cả dự án, **không** kèm tên tính năng.
+**Phase 0 là bắt buộc và phải hoàn thành TRƯỚC khi làm bất kỳ tính năng nào.** Chạy một lần cho cả dự án; về sau muốn cập nhật thì **chạy lại để cập nhật trực tiếp**. Bước này **không** kèm tên tính năng.
 
 ```
 PI
 ```
 
-`PI` (`hbc-project-init`) tạo: **D-12 Coding Standards** + **D-03 Glossary** (shared), và **baseline D-19 ERD / D-21 API** ở `shared/`. Nó **idempotent** — chạy lại sẽ bỏ qua những gì đã có, nên cứ yên tâm chạy.
+`PI` (`hbc-project-init`) làm hai việc, theo thứ tự:
 
-> 📌 Vì không gắn với tính năng nào, `PI` **không** nhận `feature=`. Sau bước này, mọi việc còn lại đều theo từng tính năng.
+1. **Hiểu dự án** —
+   - *Brownfield* (đã có code): tài liệu hóa codebase trước bằng `bmad-document-project`, rồi đảm bảo có `project-context.md` (`bmad-generate-project-context`).
+   - *Greenfield* (làm mới): rút bối cảnh từ PRD / product brief / yêu cầu bạn cung cấp.
+2. **Tạo các deliverable dùng chung TỪ bối cảnh đó** — **D-12 Coding Standards** (brownfield: rút từ quy ước code hiện có), **D-03 Glossary** (thuật ngữ nghiệp vụ), và **baseline D-19 ERD** (brownfield: từ schema DB) / **baseline D-21 API** (brownfield: từ các endpoint hiện có), ghi vào `shared/`.
 
-✅ **Xong Phase 0:** dự án đã có chuẩn code, glossary, và baseline ERD/API dùng chung. Giờ đưa tính năng `auth` vào quy trình.
+`PI` **idempotent** — chạy lại sẽ bỏ qua những gì đã có (hoặc cập nhật trực tiếp), nên cứ yên tâm chạy.
+
+> 📌 Vì không gắn với tính năng nào, `PI` **không** nhận `feature=`. **D-12 và D-03 là deliverable dùng chung của Phase 0**, không phải bước tùy chọn của Phase 1/2. Sau bước này, mọi việc còn lại đều theo từng tính năng.
+
+✅ **Xong Phase 0:** dự án đã hiểu rõ bối cảnh và có chuẩn code, glossary, baseline ERD/API dùng chung — tạo ra từ chính bối cảnh đó. Giờ đưa tính năng `auth` vào quy trình.
 
 ---
 
@@ -99,7 +106,7 @@ Agent phỏng vấn bạn về tính năng. Với `auth`, bạn có thể trả 
 
 Kết quả: file **D-02 Requirements Specification** ở `_bmad-output/features/auth/planning-artifacts/`, với các yêu cầu đánh mã `REQ-AUTH-001`, `REQ-AUTH-002`… Cú pháp từ khóa EARS giữ tiếng Anh (`WHEN … THE SYSTEM SHALL …`); phần văn xuôi theo `{document_output_language}`.
 
-> 📌 **D-02 là bắt buộc** — nó là nền cho mọi phase sau. Các deliverable khác của Phase 1 (`GLO` glossary dùng chung, `BFD` business flow per-feature) là tùy chọn, làm khi cần.
+> 📌 **D-02 (REQ) là deliverable bắt buộc của Phase 1** — nó là nền cho mọi phase sau. **D-06 (BFD) là deliverable per-feature** của Phase 1, làm khi cần. Lưu ý: **D-03 glossary đến từ Phase 0** (dùng chung), không phải bước Phase 1 — về sau skill `GLO` chỉ *cập nhật* D-03 đã có.
 
 ### Bước 1.3 — Khởi tạo Traceability
 

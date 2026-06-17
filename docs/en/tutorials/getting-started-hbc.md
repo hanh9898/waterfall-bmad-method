@@ -58,19 +58,26 @@ Requirements are coded **`REQ-AUTH-NNN`** (per-feature, e.g. `REQ-AUTH-001`); sh
 
 ---
 
-## Phase 0 — Project Init (run ONCE, project-wide)
+## Phase 0 — Project Init (MANDATORY, runs FIRST, project-wide)
 
-**Goal:** create the **shared** deliverables before touching any feature. This runs exactly once for the whole project, with **no** feature name.
+**Phase 0 is mandatory and must complete BEFORE any feature.** Run it once for the whole project; to update it later, **re-run to update directly**. This step takes **no** feature name.
 
 ```
 PI
 ```
 
-`PI` (`hbc-project-init`) creates: **D-12 Coding Standards** + **D-03 Glossary** (shared), and **baseline D-19 ERD / D-21 API** under `shared/`. It is **idempotent** — re-running skips whatever already exists, so it's safe to run.
+`PI` (`hbc-project-init`) does two things, in order:
 
-> 📌 Because it isn't tied to any feature, `PI` takes **no** `feature=`. After this step, everything else is per-feature.
+1. **Understand the project** —
+   - *Brownfield* (existing code): document the codebase first via `bmad-document-project`, then ensure `project-context.md` exists (`bmad-generate-project-context`).
+   - *Greenfield*: derive the context from the PRD / product brief / your ask.
+2. **Create the shared deliverables FROM that context** — **D-12 Coding Standards** (brownfield: from existing conventions), **D-03 Glossary** (domain terms), and **baseline D-19 ERD** (brownfield: from the DB schema) / **baseline D-21 API** (brownfield: from existing endpoints), written under `shared/`.
 
-✅ **Phase 0 done:** the project has shared coding standards, a glossary, and baseline ERD/API. Now let's put the `auth` feature through the process.
+`PI` is **idempotent** — re-running skips whatever already exists (or updates it directly), so it's safe to run.
+
+> 📌 Because it isn't tied to any feature, `PI` takes **no** `feature=`. **D-12 and D-03 are Phase 0 shared deliverables**, not optional Phase 1/2 steps. After this step, everything else is per-feature.
+
+✅ **Phase 0 done:** the project is understood and has shared coding standards, a glossary, and baseline ERD/API — all created from that context. Now let's put the `auth` feature through the process.
 
 ---
 
@@ -99,7 +106,7 @@ The agent interviews you about the feature. For `auth` you might answer somethin
 
 Result: a **D-02 Requirements Specification** file in `_bmad-output/features/auth/planning-artifacts/`, with requirements numbered `REQ-AUTH-001`, `REQ-AUTH-002`… EARS keyword syntax stays English (`WHEN … THE SYSTEM SHALL …`); prose follows `{document_output_language}`.
 
-> 📌 **D-02 is required** — it's the foundation for every later phase. Other Phase 1 deliverables (`GLO` shared glossary, `BFD` per-feature business flow) are optional, used as needed.
+> 📌 **D-02 (REQ) is the mandatory Phase 1 deliverable** — it's the foundation for every later phase. **D-06 (BFD) is a per-feature** Phase 1 deliverable, produced as needed. Note: **the D-03 glossary comes from Phase 0** (shared), not a Phase 1 step — later the `GLO` skill only *updates* the existing D-03.
 
 ### Step 1.3 — Initialize Traceability
 

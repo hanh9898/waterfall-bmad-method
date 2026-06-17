@@ -8,7 +8,7 @@
 
 ## What you'll achieve
 
-By the end you will: install HBC, **initialize the project once** (`PI`) to create the shared deliverables, confirm the agent runs, then produce **your first D-02 Requirements file for a specific feature** — enough to know "yes, I can use HBC". Want the full 4 phases for a feature? Head to [Get Started with HBC (walkthrough)](getting-started-hbc.md) after this.
+By the end you will: install HBC, run the **mandatory Phase 0** (`PI`) — the **first** step that lets HBC understand your project and create the shared deliverables, confirm the agent runs, then produce **your first D-02 Requirements file for a specific feature** — enough to know "yes, I can use HBC". Want the full 4 phases for a feature? Head to [Get Started with HBC (walkthrough)](getting-started-hbc.md) after this.
 
 > ℹ️ **Delivery model:** HBC delivers **incrementally, per-feature**. Each feature goes through 4 phases + TDD, then ships independently. "Waterfall" is only a *way of slicing scope* — inside a single feature HBC keeps waterfall-like discipline (design-first, gate each milestone) — it is not the module's architecture.
 
@@ -93,9 +93,18 @@ Suggestion: run hbc-project-init (type PI) ONCE to create the shared deliverable
 
 > ℹ️ If your install doesn't have `bmad-help`, just skip this and type `PI` below — that's enough of a test to confirm HBC is ready.
 
-## Step 3 — Initialize the project ONCE (Phase 0)
+## Step 3 — Phase 0 is MANDATORY and runs FIRST (`PI`)
 
-Before doing any feature, run **`hbc-project-init`** once for the whole project to create the **shared deliverables**: D-12 Coding Standards, D-03 Glossary, and the baseline D-19 ERD + D-21 API. This step is **idempotent** — re-running it skips what already exists — and takes **no** `feature` argument.
+Phase 0 (`hbc-project-init`) is **mandatory** and must **complete before** any feature work. Run it **once** for the whole project; to update it later, **re-run to edit directly** (it does not "skip what already exists"). This step takes **no** `feature` argument.
+
+Phase 0 does **two things**:
+
+1. **Understand the project.**
+   - *Brownfield* (existing codebase): document the code first with `bmad-document-project`, then ensure `project-context.md` exists (via `bmad-generate-project-context`).
+   - *Greenfield* (new project): take context from a PRD/brief, or the agent asks you.
+2. **Create the shared deliverables FROM that context:** D-12 Coding Standards (brownfield: derived from existing code conventions), D-03 Glossary (from the domain), baseline D-19 ERD (brownfield: from the existing DB schema), baseline D-21 API (brownfield: from existing endpoints).
+
+> ℹ️ D-12 and D-03 are **Phase 0 shared** deliverables — not "optional steps" of Phase 1/2.
 
 Still in the agent, type:
 
@@ -113,7 +122,7 @@ hbc-project-init — created shared deliverables:
   _bmad-output/shared/api/               (D-21 baseline)
 ```
 
-> ℹ️ This is the common foundation for **every** feature. Do it once — later features reuse it (and can override it per-feature when needed).
+> ℹ️ This is the common foundation for **every** feature, built **from** the project context in step (1). Do it once — later features reuse it (and can override it per-feature when needed); to update it, re-run `PI` to edit directly.
 
 ## Step 4 — Meet the Phase 1 agent 🎉
 

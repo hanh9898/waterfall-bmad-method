@@ -12,7 +12,7 @@ HBC ships **incrementally, per feature (incremental per-feature)**: each feature
 - **shared** — project-wide, stored under `shared/…`, produced **once** in Phase 0 (`hbc-project-init`).
 - **dual** — a shared baseline at `shared/…` plus an optional **per-feature override**; resolved by path-existence precedence (the override wins if it exists).
 
-> 📌 **Phase 0 — Project Init** (`PI`, run once): creates the shared deliverables — D-12 Coding Standards, D-03 Glossary — and baseline D-19 ERD / D-21 API. Idempotent (skips what already exists), no `feature` argument.
+> 📌 **Phase 0 — Project Init** (`PI`): **mandatory and runs first**, once for the whole project (or re-run to update directly). **Brownfield-aware** — for an existing codebase it documents the code first (`bmad-document-project` + `project-context.md`) then derives the shared deliverables; greenfield derives them from the PRD/choices. Creates the shared deliverables — **D-12 Coding Standards, D-03 Glossary** — and baseline D-19 ERD / D-21 API. No `feature` argument.
 
 ## D-xx documents
 
@@ -38,13 +38,13 @@ HBC ships **incrementally, per feature (incremental per-feature)**: each feature
 Requirements with **REQ IDs** and scope boundaries. IDs follow **`REQ-<FEAT>-NNN`** (e.g. `REQ-AUTH-001`) for per-feature requirements, plus **`REQ-SHARED-NNN`** for shared requirements (legacy `REQ-NNN` still parses). The foundation for every later phase and the source for initializing traceability (`TRI`). Scope: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-03 — Glossary
-Unified domain terminology, compiled from project documents and requirements. Optional. Scope: shared → `shared/glossary/`, produced in Phase 0.
+Unified domain terminology, compiled from project documents and requirements. Optional. Scope: shared → `shared/glossary/`, **produced in Phase 0 (`PI`)**; `GLO` maintains it thereafter.
 
 ### D-06 — Business Flow Diagram
 AS-IS / TO-BE business flow diagrams in Mermaid, built from the PRD and planning artifacts. Optional. Scope: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-12 — Coding Standards ✅
-Per-project coding standards — naming, formatting, error handling — adapted to the framework in use. Scope: shared → `shared/coding-standards/`, produced in Phase 0.
+Per-project coding standards — naming, formatting, error handling — adapted to the framework in use. Scope: shared → `shared/coding-standards/`, **produced in Phase 0 (`PI`)**; `CS` maintains it thereafter.
 
 ### D-19 — Database Design / ER Diagram ✅
 Database design document with an ER Diagram (Mermaid), derived from requirements and architecture. Scope: dual — baseline at `shared/erd/`, with an optional per-feature override at `features/<feature>/planning-artifacts/` (the override wins if it exists).

@@ -12,7 +12,7 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 - **shared** — dùng chung toàn dự án, lưu dưới `shared/…`, sinh **một lần** ở Phase 0 (`hbc-project-init`).
 - **dual** — có bản baseline dùng chung ở `shared/…`, kèm tùy chọn **bản ghi đè per-feature**; ưu tiên theo path-existence (bản override thắng nếu tồn tại).
 
-> 📌 **Phase 0 — Project Init** (`PI`, chạy một lần): tạo các deliverable dùng chung — D-12 Coding Standards, D-03 Glossary — và baseline D-19 ERD / D-21 API. Idempotent (bỏ qua cái đã có), không cần tham số `feature`.
+> 📌 **Phase 0 — Project Init** (`PI`): **bắt buộc và chạy đầu tiên**, một lần cho toàn dự án (hoặc chạy lại để cập nhật trực tiếp). **Nhận biết brownfield** — với codebase đã có, tài liệu hoá code trước (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield suy ra từ PRD/lựa chọn. Tạo các deliverable dùng chung — **D-12 Coding Standards, D-03 Glossary** — và baseline D-19 ERD / D-21 API. Không cần tham số `feature`.
 
 ## Tài liệu D-xx
 
@@ -38,13 +38,13 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 Đặc tả yêu cầu với các **REQ ID** và ranh giới phạm vi. ID theo dạng **`REQ-<FEAT>-NNN`** (ví dụ `REQ-AUTH-001`) cho yêu cầu của từng tính năng, cộng **`REQ-SHARED-NNN`** cho yêu cầu dùng chung (dạng cũ `REQ-NNN` vẫn parse được). Là nền của mọi phase sau và là nguồn để khởi tạo traceability (`TRI`). Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-03 — Glossary
-Thuật ngữ miền nghiệp vụ thống nhất, tổng hợp từ tài liệu dự án và yêu cầu. Tùy chọn. Phạm vi: shared → `shared/glossary/`, sinh ở Phase 0.
+Thuật ngữ miền nghiệp vụ thống nhất, tổng hợp từ tài liệu dự án và yêu cầu. Tùy chọn. Phạm vi: shared → `shared/glossary/`, **sinh ở Phase 0 (`PI`)**; `GLO` duy trì về sau.
 
 ### D-06 — Business Flow Diagram
 Sơ đồ luồng nghiệp vụ AS-IS / TO-BE bằng Mermaid, dựng từ PRD và planning artifacts. Tùy chọn. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-12 — Coding Standards ✅
-Quy chuẩn code theo từng dự án — đặt tên, format, xử lý lỗi — điều chỉnh theo framework đang dùng. Phạm vi: shared → `shared/coding-standards/`, sinh ở Phase 0.
+Quy chuẩn code theo từng dự án — đặt tên, format, xử lý lỗi — điều chỉnh theo framework đang dùng. Phạm vi: shared → `shared/coding-standards/`, **sinh ở Phase 0 (`PI`)**; `CS` duy trì về sau.
 
 ### D-19 — Database Design / ER Diagram ✅
 Tài liệu thiết kế CSDL kèm ER Diagram (Mermaid), suy ra từ yêu cầu và kiến trúc. Phạm vi: dual — baseline ở `shared/erd/`, có thể ghi đè per-feature tại `features/<feature>/planning-artifacts/` (bản override thắng nếu tồn tại).

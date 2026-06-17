@@ -24,7 +24,7 @@ But not everything belongs to a single feature. Some deliverables are **shared**
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `_bmad-output/shared/glossary/`, `…/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | a shared baseline in `shared/erd\|api/` + an optional per-feature override in `features/<feature>/planning-artifacts/` |
 
-**Why split by scope?** A Glossary or Coding Standards that each feature redefined would contradict itself — so they are *shared*, written once for the whole project. Conversely, a requirements spec (D-02) or tests (D-27) are tightly bound to a single feature — so they are *per-feature*.
+**Why split by scope?** A Glossary or Coding Standards that each feature redefined would contradict itself — so they are *shared*, **deliverables produced once by Phase 0 for the whole project** (not an optional per-feature step — see [section 2](#2-phase-0--project-init-the-mandatory-run-first-step-for-the-whole-project)). Conversely, a requirements spec (D-02) or tests (D-27) are tightly bound to a single feature — so they are *per-feature*. D-19/D-21 are **dual**: a shared baseline built in Phase 0, plus an optional per-feature override.
 
 **Dual = path-existence precedence.** ERD (D-19) and API (D-21) have a **shared baseline** for the whole project, but a feature may need a **local override**. The rule is dead simple:
 
@@ -39,19 +39,24 @@ flowchart LR
 
 ---
 
-## 2. Phase 0 — Project Init: build the shared parts *once*, up front
+## 2. Phase 0 — Project Init: the **mandatory, run-first** step for the whole project
 
-Because shared deliverables serve *every* feature, it would make no sense to let the first feature spawn them. So HBC has **Phase 0 — Project Init** (`PI`, skill `hbc-project-init`), which runs **once for the whole project** *before* any feature begins.
+Because shared deliverables serve *every* feature, it would make no sense to let the first feature spawn them. So HBC has **Phase 0 — Project Init** (`PI`, skill `hbc-project-init`) — a **mandatory** step that **runs first**, *before* any feature begins, once for the whole project (re-run to **update it directly** when the groundwork changes).
 
-Phase 0 creates the **shared** deliverables:
+**Why first?** Phase 0 does two foundational things every feature relies on: it *establishes the project understanding* and *builds the shared groundwork* that each feature stands on. Without this groundwork, the first feature's Phase 1 has no coding standards, glossary, or baseline DB schema to anchor to — so Phase 0 must come first.
 
-- **D-12 Coding Standards** — project-wide coding standards.
-- **D-03 Glossary** — project-wide terminology glossary.
-- **baseline D-19 ERD** and **baseline D-21 API** — the shared foundations.
+**Phase 0 is brownfield-aware.** For an **existing codebase**, Phase 0 *documents the project first*: it scans the source with `bmad-document-project` and builds `project-context.md` via `bmad-generate-project-context` — then **derives the shared deliverables from that analysis**:
 
-**Why once, up front?** So every later feature stands on the same ground: same coding standards, same naming, same baseline DB schema. Phase 0 is **idempotent** (re-running skips what already exists) and takes **no** `feature` argument — because it belongs to the whole project by nature.
+- **D-12 Coding Standards** — derived from the existing code conventions.
+- **D-03 Glossary** — derived from the project's domain.
+- **baseline D-19 ERD** — built from the existing DB schema.
+- **baseline D-21 API** — built from the existing endpoints.
 
-> 🔎 **Analogy:** like pouring the foundation and running the utilities for the whole plot *before* building each individual house. Do it once, every house benefits.
+For a **greenfield** project (no code yet), these deliverables are created from a PRD/brief/choices rather than from codebase analysis.
+
+**Why once, up front?** So every later feature stands on the same ground: same coding standards, same naming, same baseline DB schema. Phase 0 takes **no** `feature` argument — because it belongs to the whole project by nature; and when the groundwork changes, re-run it to **update the shared deliverables directly**.
+
+> 🔎 **Analogy:** like surveying the plot, then pouring the foundation and running the utilities for the whole site *before* building each individual house. If the plot already has structures (brownfield), survey what's there first, then lay the shared groundwork. Do it once, every house benefits.
 
 ---
 

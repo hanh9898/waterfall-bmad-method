@@ -6,7 +6,7 @@
 
 Invoke skills by **menu code** (e.g. `REQ`), **skill name** (`hbc-create-requirements`), or via an **agent**. Each workflow skill supports 3 modes — **Create / Update / Validate**; most support `--headless` / `-H` for non-interactive runs.
 
-HBC delivers **incrementally, per-feature** (incremental per-feature delivery): each feature passes through 4 gated phases + TDD, then ships independently. Before that, run **Phase 0** once for the whole project. Each skill has a **scope**:
+HBC delivers **incrementally, per-feature** (incremental per-feature delivery): each feature passes through 4 gated phases + TDD, then ships independently. Before that, **Phase 0 is mandatory and runs first** — once for the whole project (or re-run to update directly). Each skill has a **scope**:
 
 - **per-feature** — runs for an individual feature, output goes to `_bmad-output/features/<feature>/...`; in headless mode you must pass `feature=<slug>` (omitting it is blocked with `feature_required`).
 - **shared** — project-wide shared deliverable, output goes to `_bmad-output/shared/...`; no `feature` arg.
@@ -24,11 +24,11 @@ HBC delivers **incrementally, per-feature** (incremental per-feature delivery): 
 
 ## Phase 0 — Project Init
 
-Run **once** for the whole project, **before any feature**. No `feature` arg. Idempotent — skips what already exists.
+**Mandatory and runs first**, once for the whole project, **before any feature** (or re-run to update the shared deliverables directly). No `feature` arg. `PI` is **brownfield-aware**: for an existing codebase it documents the code first (`bmad-document-project` + `project-context.md`) then derives the shared deliverables from it; for greenfield it derives them from the PRD/choices. **D-12 Coding Standards and D-03 Glossary are shared deliverables created in Phase 0.**
 
 | Code | Skill | Description | Deliverable | Scope |
 | --- | --- | --- | --- | --- |
-| `PI` | `hbc-project-init` | Create the shared deliverables: D-12 Coding Standards, D-03 Glossary, and baseline D-19 ERD / D-21 API before the first feature starts | D-12, D-03, baseline D-19/D-21 | shared |
+| `PI` | `hbc-project-init` | Mandatory, runs first. Brownfield: document the code (`bmad-document-project` + `project-context.md`) then derive the shared deliverables; greenfield: derive from the PRD/choices. Creates the shared deliverables: D-12 Coding Standards, D-03 Glossary, and baseline D-19 ERD / D-21 API | D-12, D-03, baseline D-19/D-21 | shared |
 
 Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 
@@ -37,7 +37,7 @@ Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 | Code | Skill | Description | Deliverable | Scope | Required |
 | --- | --- | --- | --- | --- | :---: |
 | `REQ` | `hbc-create-requirements` | Generate a requirements spec with REQ-<FEAT>-NNN IDs and scope boundaries | D-02 | per-feature | ✅ |
-| `GLO` | `hbc-create-glossary` | Unified domain terminology from project docs & requirements | D-03 | shared | — |
+| `GLO` | `hbc-create-glossary` | Maintains the **shared D-03** (originated in Phase 0) — unified domain terminology from project docs & requirements | D-03 | shared | — |
 | `BFD` | `hbc-create-business-flow-diagram` | AS-IS/TO-BE business flow diagrams (Mermaid) from the PRD | D-06 | per-feature | — |
 
 Per-feature output: `_bmad-output/features/<feature>/planning-artifacts/`. Shared output: `_bmad-output/shared/glossary/`.
@@ -47,7 +47,7 @@ Per-feature output: `_bmad-output/features/<feature>/planning-artifacts/`. Share
 | Code | Skill | Description | Deliverable | Scope | Required |
 | --- | --- | --- | --- | --- | :---: |
 | `ERD` | `hbc-create-er-diagram` | DB design + ER Diagram (Mermaid) from requirements & architecture | D-19 | dual | ✅ |
-| `CS` | `hbc-create-coding-standards` | Per-project coding standards, adapted to the framework | D-12 | shared | ✅ |
+| `CS` | `hbc-create-coding-standards` | Maintains the **shared D-12** (originated in Phase 0) — per-project coding standards, adapted to the framework | D-12 | shared | ✅ |
 | `API` | `hbc-create-api-spec` | API spec — endpoints and request/response schemas | D-21 | dual | — |
 | `TP` | `hbc-create-test-plan` | Test plan — strategy, scope, schedule, entry/exit criteria, risk | D-26 | per-feature | ✅ |
 | `TS` | `hbc-create-test-spec` | Detailed test cases with TC-xxx IDs, steps & expected results | D-27 | per-feature | ✅ |
