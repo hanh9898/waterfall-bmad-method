@@ -10,7 +10,8 @@
 
 | Term | Short definition | Go deeper |
 | --- | --- | --- |
-| **Waterfall** | A sequential model: finish one phase before the next, no skipping. | [Why Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
+| **Incremental (staged delivery)** | **HBC's delivery model**: ship **one feature at a time**, each a gated cycle + TDD. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
+| **Waterfall** | A one-pass, whole-product sequential model. HBC does **not** use this — it only borrows the *sequential, design-first discipline* inside each feature. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | One of HBC's 4 ordered stages: Analysis → Design → Implementation → Testing. | [Core Concepts](../explanation/concepts.md) |
 | **Deliverable** | A handover artifact from a phase (a document or code), usually coded `D-xx`. | [Core Concepts](../explanation/concepts.md) |
 | **Phase Gate** | A control checkpoint at each phase boundary — must "pass" to advance (command `PG <n>`). | [Core Concepts](../explanation/concepts.md) |
@@ -30,8 +31,8 @@
 
 | Term | Short definition | Go deeper |
 | --- | --- | --- |
-| **TDD** | Test-Driven Development: **write the test first**, then write code to make it pass. | [Why Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
-| **RED → GREEN → REFACTOR** | The TDD cycle: 🔴 write a failing test → 🟢 write minimal code to pass → ♻️ clean up, tests stay green. | [Why Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
+| **TDD** | Test-Driven Development: **write the test first**, then write code to make it pass. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
+| **RED → GREEN → REFACTOR** | The TDD cycle: 🔴 write a failing test → 🟢 write minimal code to pass → ♻️ clean up, tests stay green. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **ERD (ER Diagram)** | Entity-Relationship Diagram — describes data tables and the links between them (deliverable D-19). | [D-19 Database Design](deliverables-glossary.md) |
 | **Triage (defects)** | Classifying and prioritizing the defects found, so the important ones are handled first. | [Deliverables Glossary](deliverables-glossary.md) |
 | **Deterministic** | "Gives a fixed result" — automated checks by hard rules (yes/no), not subjective judgment. | [Core Concepts](../explanation/concepts.md) |

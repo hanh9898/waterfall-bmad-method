@@ -51,7 +51,7 @@ Gộp 3 nguồn; khi bất đồng, **ưu tiên: task status > phase-gate > matr
 
 ## Stage 3 — SUGGEST (CAP-4)
 
-Trình impact cho user, dùng `{workflow.ref_skill_map}` map mỗi ref → owning-skill, xếp theo thứ tự waterfall (design→test→code; apply trước verify). Trình bảng đề xuất rồi dừng — mọi áp dụng chờ user hành động (Stage APPLY). Ref không map được skill → flag thủ công, không bỏ qua im lặng. Output là một bảng đề xuất "chạy skill nào, thứ tự nào" + danh sách "tạo task mới" cho phần frozen.
+Trình impact cho user, dùng `{workflow.ref_skill_map}` map mỗi ref → owning-skill, xếp theo thứ tự pha tuần tự (design→test→code; apply trước verify). Trình bảng đề xuất rồi dừng — mọi áp dụng chờ user hành động (Stage APPLY). Ref không map được skill → flag thủ công, không bỏ qua im lặng. Output là một bảng đề xuất "chạy skill nào, thứ tự nào" + danh sách "tạo task mới" cho phần frozen.
 
 **Validate-plan (trước APPLY):** trước khi mutate bất cứ thứ gì, xác nhận lại plan với nguồn-sự-thật — mỗi ref còn resolve được owning-skill, phần frozen định tuyến sang new-task (không sửa tại chỗ), nhãn apply/verify nhất quán. Trình plan-đã-validate cho user; chỉ sang APPLY khi user đồng ý (headless: validate xong tiếp). Đây là chốt cuối trước thao tác không-hồi.
 

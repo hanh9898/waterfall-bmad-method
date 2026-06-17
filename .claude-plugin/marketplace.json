@@ -4,12 +4,12 @@
   "license": "UNLICENSED",
   "homepage": "",
   "repository": "",
-  "keywords": ["bmad", "hblab-custom", "waterfall", "tdd", "requirements", "business-flow", "er-diagram", "traceability", "phase-gate", "test-plan", "coding-standards"],
+  "keywords": ["bmad", "hblab-custom", "incremental", "tdd", "requirements", "business-flow", "er-diagram", "traceability", "phase-gate", "test-plan", "coding-standards"],
   "plugins": [
     {
       "name": "hblab-bmad-custom",
       "source": "./",
-      "description": "HBLAB custom BMad workflows for waterfall + TDD lifecycle — 5 agents, 14 workflows, phase gates, and requirements traceability",
+      "description": "HBLAB custom BMad workflows for incremental + TDD lifecycle — 5 agents, 14 workflows, phase gates, and requirements traceability",
       "version": "1.0.0",
       "author": { "name": "HBLAB" },
       "skills": [

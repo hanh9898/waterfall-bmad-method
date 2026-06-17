@@ -87,7 +87,7 @@ flowchart LR
 
 ## How to read this map
 
-- **Go left → right, in order.** HBC is waterfall: don't skip phases.
+- **Go left → right, in order.** Within a feature, phases run sequentially with gates — no skipping. (Applied per feature, so at the project level it's *incremental*, not a one-pass waterfall.)
 - **Every boundary has a Gate.** Hitting `PG ✅` means stop and validate before moving on.
 - **Traceability runs in the background.** Run `TRU` at the end of each phase; run `TRA` at the end of the project.
 

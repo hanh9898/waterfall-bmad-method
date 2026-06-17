@@ -1,8 +1,8 @@
 code: hbc
 name: "HBLAB BMad Custom"
 header: "Custom BMad Method workflow variants by HBLAB"
-subheader: "Waterfall + TDD lifecycle with D-xx document generation, phase gates, and traceability"
-description: "Framework-agnostic waterfall + TDD development lifecycle for HBLAB. 5 agents + 15 workflows across 4 phases. Expansion module — requires BMM."
+subheader: "Incremental + TDD lifecycle with D-xx document generation, phase gates, and traceability"
+description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB. 5 agents + 15 workflows across 4 phases. Expansion module — requires BMM."
 default_selected: false
 module_version: 1.0.0
 

@@ -1,13 +1,13 @@
 ---
 name: hbc-phase-gate
-description: "Phase gate validation engine for HBC waterfall lifecycle. Use when user says 'phase gate', 'gate check', 'kiểm tra gate', or 'đánh giá gate'."
+description: "Phase gate validation engine for HBC incremental + TDD lifecycle. Use when user says 'phase gate', 'gate check', 'kiểm tra gate', or 'đánh giá gate'."
 ---
 
 # Phase Gate
 
 ## Overview
 
-Validation engine for phase transitions in the HBC Waterfall-TDD lifecycle. Receives a phase number, loads the corresponding gate checklist, evaluates each item against project artifacts, and produces a gate report with PASSED/FAILED status. Act as a strict quality gate reviewer — objective, evidence-based, no handwaving.
+Validation engine for phase transitions in the HBC Incremental-TDD lifecycle. Receives a phase number, loads the corresponding gate checklist, evaluates each item against project artifacts, and produces a gate report with PASSED/FAILED status. Act as a strict quality gate reviewer — objective, evidence-based, no handwaving.
 
 Four phases: Analysis (1), Design (2), Implementation (3), Testing (4). Each checklist defines items with evaluation types: `[FILE]` (artifact exists), `[CONTENT]` (pattern present), `[METRIC]` (numeric threshold), `[QUALITY]` (LLM judgment). Gate PASSES only when all required items pass.
 

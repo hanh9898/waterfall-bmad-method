@@ -87,7 +87,7 @@ flowchart LR
 
 ## Đọc bản đồ này thế nào
 
-- **Đi tuần tự trái → phải.** HBC là waterfall: không nhảy cóc phase.
+- **Đi tuần tự trái → phải.** Trong một tính năng, các phase đi tuần tự có cổng — không nhảy cóc. (Áp dụng từng tính năng nên ở cấp dự án là *incremental*, không phải waterfall một-lần.)
 - **Mỗi ranh giới có Gate.** Gặp `PG ✅` nghĩa là phải dừng kiểm tra trước khi đi tiếp.
 - **Traceability chạy nền.** Cứ cuối phase thì `TRU` một lần; cuối dự án thì `TRA`.
 

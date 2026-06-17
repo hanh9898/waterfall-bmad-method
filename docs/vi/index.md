@@ -19,7 +19,7 @@ Dành cho người mới, muốn được dắt tay từng bước.
 Dành cho người muốn nắm tư duy đằng sau.
 
 - [Khái niệm cốt lõi](explanation/concepts.md) — Phase, Phase Gate, Deliverable D-xx, Traceability.
-- [Vì sao Waterfall + TDD](explanation/why-waterfall-tdd.md) — lựa chọn nền tảng của HBC.
+- [Vì sao Incremental + TDD](explanation/why-incremental-tdd.md) — lựa chọn nền tảng của HBC.
 
 ## 🔧 How-to — giải quyết một việc cụ thể
 

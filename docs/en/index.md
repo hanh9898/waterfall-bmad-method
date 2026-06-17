@@ -19,7 +19,7 @@ For newcomers who want step-by-step hand-holding.
 For those who want the thinking behind it.
 
 - [Core Concepts](explanation/concepts.md) — Phase, Phase Gate, Deliverable D-xx, Traceability.
-- [Why Waterfall + TDD](explanation/why-waterfall-tdd.md) — HBC's foundational choice.
+- [Why Incremental + TDD](explanation/why-incremental-tdd.md) — HBC's foundational choice.
 
 ## 🔧 How-to — solve one specific task
 

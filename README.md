@@ -2,7 +2,7 @@
 
 > 🌐 **Tiếng Việt** (mặc định) · [English](README.en.md)
 
-Quy trình **waterfall + TDD** cho HBLAB: dẫn bạn qua 4 giai đoạn có kiểm soát chất lượng, truy vết mọi yêu cầu tới tận test.
+Workflow phát triển **theo từng tính năng** cho HBLAB: mỗi feature đi 4 giai đoạn có cổng kiểm soát + TDD, truy vết yêu cầu → test.
 
 ## Mục lục
 
@@ -25,10 +25,12 @@ Khi làm dự án có hợp đồng và nghiệm thu, ba nỗi đau quen thuộc
 - **Test sót so với yêu cầu** → bug lọt, không biết đã phủ đủ chưa.
 - **Khó chứng minh "đã làm đủ"** khi bàn giao hoặc audit.
 
-**HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **waterfall + TDD**: **5 agent điều phối** dẫn bạn qua **4 phase**, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
+**HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **incremental + TDD** theo **từng tính năng**: **5 agent điều phối** dẫn bạn qua **4 phase**, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
 
-- **Dành cho:** team làm theo waterfall + TDD — BA, Architect, QA, Developer, Tester.
+- **Dành cho:** team làm theo incremental + TDD — BA, Architect, QA, Developer, Tester.
 - **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
+
+> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. "Waterfall" là **mô hình triển khai**, không phải kiến trúc HBC — ở đây nó chỉ là kỷ luật **bên trong một feature** (thiết kế trước, duyệt từng mốc). Chi tiết: [HBC có thực sự là waterfall thuần?](docs/vi/explanation/why-incremental-tdd.md#hbc-có-thực-sự-là-waterfall-thuần-không)*
 
 > 📖 Lần đầu nghe "deliverable / phase gate / traceability"? → [Glossary khái niệm](docs/vi/reference/concept-glossary.md).
 

@@ -2,7 +2,7 @@
 
 > 🌐 [Tiếng Việt](README.md) (default) · **English**
 
-A **waterfall + TDD** workflow for HBLAB: guides you through 4 quality-gated phases and traces every requirement down to its tests.
+A **per-feature** development workflow for HBLAB: each feature runs 4 quality-gated stages + TDD, tracing requirements down to their tests.
 
 ## Table of contents
 
@@ -25,10 +25,12 @@ On contractual projects with formal acceptance, three familiar pains:
 - **Tests that miss requirements** → bugs slip through; no way to know coverage is complete.
 - **Hard to prove "we did everything"** at handover or audit.
 
-**HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) implementing a **waterfall + TDD** lifecycle: **5 coordinator agents** guide you through **4 phases**, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
+**HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) applying an **incremental + TDD** process **per feature**: **5 coordinator agents** guide you through **4 phases**, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
 
-- **For:** teams working waterfall + TDD — BA, Architect, QA, Developer, Tester.
+- **For:** teams working incrementally with TDD — BA, Architect, QA, Developer, Tester.
 - **Where you type commands:** inside your **AI coding agent** (Claude Code, Cursor…), **not** a plain terminal.
+
+> ℹ️ *This project delivers **incrementally, feature by feature**: each feature runs all 4 gated stages + TDD, then ships. "Waterfall" is a **delivery model**, not HBC's architecture — here it only refers to the discipline **within a single feature** (design first, sign off each milestone). Details: [Is HBC really pure waterfall?](docs/en/explanation/why-incremental-tdd.md#is-hbc-really-pure-waterfall)*
 
 > 📖 New to "deliverable / phase gate / traceability"? → [Concept Glossary](docs/en/reference/concept-glossary.md).
 

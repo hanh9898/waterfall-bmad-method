@@ -10,7 +10,8 @@
 
 | Thuật ngữ | Định nghĩa ngắn | Đọc sâu |
 | --- | --- | --- |
-| **Waterfall** | Mô hình làm tuần tự: xong phase này mới sang phase kế, không nhảy cóc. | [Vì sao Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
+| **Incremental (staged delivery)** | **Mô hình triển khai của HBC**: giao **từng tính năng** một, mỗi feature là một chu trình có cổng + TDD. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
+| **Waterfall** | Mô hình làm tuần tự **một-lượt cả sản phẩm**. HBC **không** dùng kiểu này — chỉ mượn *kỷ luật tuần tự, thiết kế-trước* bên trong mỗi feature. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | Một trong 4 chặng có thứ tự của HBC: Analysis → Design → Implementation → Testing. | [Khái niệm cốt lõi](../explanation/concepts.md) |
 | **Deliverable** | Sản phẩm bàn giao được của một phase (tài liệu hoặc code), thường đánh mã `D-xx`. | [Khái niệm cốt lõi](../explanation/concepts.md) |
 | **Phase Gate** | Chốt kiểm soát ở ranh giới mỗi phase — phải "pass" mới được sang phase sau (lệnh `PG <n>`). | [Khái niệm cốt lõi](../explanation/concepts.md) |
@@ -30,8 +31,8 @@
 
 | Thuật ngữ | Định nghĩa ngắn | Đọc sâu |
 | --- | --- | --- |
-| **TDD** | Test-Driven Development: **viết test trước**, rồi mới viết code cho test đó pass. | [Vì sao Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
-| **RED → GREEN → REFACTOR** | Chu trình TDD: 🔴 viết test thấy fail → 🟢 viết code tối thiểu cho pass → ♻️ dọn code, test vẫn xanh. | [Vì sao Waterfall + TDD](../explanation/why-waterfall-tdd.md) |
+| **TDD** | Test-Driven Development: **viết test trước**, rồi mới viết code cho test đó pass. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
+| **RED → GREEN → REFACTOR** | Chu trình TDD: 🔴 viết test thấy fail → 🟢 viết code tối thiểu cho pass → ♻️ dọn code, test vẫn xanh. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **ERD (ER Diagram)** | Sơ đồ quan hệ thực thể — mô tả các bảng dữ liệu và liên kết giữa chúng (deliverable D-19). | [D-19 Database Design](deliverables-glossary.md) |
 | **Triage (lỗi)** | Phân loại và xếp ưu tiên các lỗi tìm được, để xử lý cái quan trọng trước. | [Bảng deliverable](deliverables-glossary.md) |
 | **Deterministic** | "Cho kết quả cố định" — kiểm tra tự động bằng quy tắc cứng (có/không), không phụ thuộc đánh giá chủ quan. | [Khái niệm cốt lõi](../explanation/concepts.md) |

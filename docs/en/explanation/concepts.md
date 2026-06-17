@@ -10,7 +10,7 @@ HBC rests on 4 concepts. Understand these four and you understand the whole meth
 
 ## 1. Phase — split work into 4 ordered stages
 
-HBC follows a **waterfall** model: work moves sequentially through 4 phases, each completed before the next begins.
+HBC runs **sequentially, with gates** through 4 phases: each phase completes (passes a Phase Gate) before the next begins. This is a waterfall-style *skeleton* — but applied *per feature* and with an iterative TDD core in Phase 3, so it's not a rigid one-pass waterfall (see [Is HBC really pure waterfall?](why-incremental-tdd.md#is-hbc-really-pure-waterfall)).
 
 | Phase | Answers the question | Main output |
 | --- | --- | --- |

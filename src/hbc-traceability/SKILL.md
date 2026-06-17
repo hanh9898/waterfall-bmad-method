@@ -1,6 +1,6 @@
 ---
 name: hbc-traceability
-description: "Living traceability matrix + cascade document sync for the HBC waterfall lifecycle. Use when user says 'traceability', 'ma trận', 'truy vết', 'sync', 'đồng bộ tài liệu', 'cascade', 'lan truyền thay đổi', or agent menu [TR]/[SYNC]."
+description: "Living traceability matrix + cascade document sync for the HBC incremental + TDD lifecycle. Use when user says 'traceability', 'ma trận', 'truy vết', 'sync', 'đồng bộ tài liệu', 'cascade', 'lan truyền thay đổi', or agent menu [TR]/[SYNC]."
 ---
 
 # Traceability Matrix
