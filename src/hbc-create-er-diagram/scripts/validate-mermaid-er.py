@@ -52,18 +52,18 @@ ENTITY_BLOCK_RE = re.compile(
 # Relationship lines:
 #   EntityA ||--o{ EntityB : "has"
 #   EntityA }o--o{ EntityB : "many-to-many"
+#   EntityA }|..|{ EntityB : "non-identifying one-or-more"
 RELATIONSHIP_RE = re.compile(
     r"""^\s*(?P<left>\w+)\s+
         (?P<card>
-            \|\|--o\{|  # one-to-many
-            \}o--\|\||  # many-to-one (reverse)
-            \|\|--\|\|| # one-to-one
-            \}o--o\{|   # many-to-many
-            \|\|--o\||  # one-to-zero-or-one
-            \|o--\|\||  # zero-or-one-to-one (reverse)
-            \|o--o\{|   # zero-or-one-to-many
-            \}o--o\||   # many-to-zero-or-one (reverse)
-            \|o--o\|    # zero-or-one-to-zero-or-one
+            # Mermaid ER cardinality = left-marker + line + right-marker.
+            #   left-marker  : |o (0..1)  || (1)  }o (0..*)  }| (1..*)
+            #   line         : -- (identifying)  .. (non-identifying)
+            #   right-marker : o| (0..1)  || (1)  o{ (0..*)  |{ (1..*)
+            # Compositional (not an enumerated list) so every valid combination —
+            # including one-or-more (}| / |{) and dotted lines — is accepted.
+            # Keep in sync with check-entity-coverage.py RELATIONSHIP_ENTITY_RE.
+            (?:\|o|\|\||\}o|\}\|)(?:--|\.\.)(?:o\||\|\||o\{|\|\{)
         )\s+
         (?P<right>\w+)\s*:\s*
         (?P<label>.+)$""",
@@ -74,8 +74,9 @@ RELATIONSHIP_RE = re.compile(
 #   type name PK "comment"
 #   type name FK "comment"
 #   type name
+# Type token allows parameterized/array types (e.g. decimal(10,2), string[]).
 ATTR_RE = re.compile(
-    r"""^\s*(?P<type>\w+)\s+
+    r"""^\s*(?P<type>[\w()\[\],]+)\s+
         (?P<name>\w+)
         (?:\s+(?P<constraint>PK|FK|UK))?
         (?:\s+"(?P<comment>[^"]*)")?""",
@@ -184,14 +185,18 @@ def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
             # Try to infer target entity from FK attribute name (e.g. user_id -> User).
             fk_name = fk["name"] or ""
             if fk_name.endswith("_id"):
-                candidate = fk_name[:-3].title().replace("_", "")
-                if candidate not in declared and candidate not in referenced:
+                # Mermaid ER entities are conventionally UPPERCASE; the old
+                # `.title()` ("User") never matched a declared "USER", flagging
+                # every valid FK. Compare the de-underscored base case-insensitively.
+                base = fk_name[:-3].replace("_", "").lower()
+                known = {e.lower() for e in (declared | referenced)}
+                if base and base not in known:
                     issues.append({
                         "block": idx,
                         "kind": "fk_target_missing",
                         "name": f"{name}.{fk_name}",
                         "auto_fixable": False,
-                        "detail": f"FK attribute '{fk_name}' may reference undeclared entity '{candidate}'",
+                        "detail": f"FK attribute '{fk_name}' may reference undeclared entity '{fk_name[:-3]}'",
                     })
 
     return issues

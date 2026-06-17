@@ -118,6 +118,24 @@ def test_missing_d19():
         assert data["error"] == "d19_missing"
 
 
+def test_relationship_only_entities_captured():
+    # Bug C3: entities that appear only on a `}|--|{` relationship line (no `{}`
+    # attribute block) were invisible because that cardinality token was not in the
+    # enumerated list, so PRD entities were falsely reported uncovered.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        prd = Path(tmpdir) / "prd.md"
+        prd.write_text("Entity: Invoice\nEntity: Lineitem\n", encoding="utf-8")
+        d19 = Path(tmpdir) / "d19.md"
+        d19.write_text(
+            "```mermaid\nerDiagram\n  INVOICE }|--|{ LINEITEM : contains\n```\n",
+            encoding="utf-8",
+        )
+        out = str(Path(tmpdir) / "out.json")
+        data = run_script([str(prd)], str(d19), out)
+        assert "Invoice" not in data["uncovered"]
+        assert "Lineitem" not in data["uncovered"]
+
+
 if __name__ == "__main__":
     tests = [
         test_perfect_coverage,
@@ -127,6 +145,7 @@ if __name__ == "__main__":
         test_empty_prd_warns,
         test_explicit_markers,
         test_missing_d19,
+        test_relationship_only_entities_captured,
     ]
     failed = 0
     for t in tests:
