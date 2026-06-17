@@ -131,15 +131,18 @@ def cmd_detect(args):
 # -------------------------------------------------------------------------- analyze
 def cmd_analyze(args):
     parse_matrix = _load_parse_matrix()
+
+    # Empty --changed is a no-op regardless of the matrix, so check it before
+    # requiring the matrix to exist (nothing changed → nothing to analyze, exit 2).
+    changed = [c.strip() for c in re.split(r"[,\s]+", args.changed or "") if c.strip()]
+    if not changed:
+        _emit({"status": "noop", "changed": []}, 2)
+
     matrix_p = Path(args.matrix)
     if not matrix_p.exists():
         _emit({"blocked": "matrix_not_found", "matrix": args.matrix}, 1)
     rows = parse_matrix(str(matrix_p))
     by_req = {r["req_id"]: r for r in rows if r.get("req_id")}
-
-    changed = [c.strip() for c in re.split(r"[,\s]+", args.changed or "") if c.strip()]
-    if not changed:
-        _emit({"status": "noop", "changed": []}, 2)
 
     unknown = [c for c in changed if c not in by_req]  # #5 deleted/unknown
     incomplete = []  # #6 rows with all refs empty
@@ -253,13 +256,15 @@ def cmd_freeze(args):
     for req in reqs:
         row = by_req.get(req, {})
         matrix_gate = (row.get("gate_status") or "").upper()
-        # task signal: a task whose design_ref/test_refs mentions this req's refs
+        # task signal: a task whose design_ref/test_refs mentions this req's refs.
+        # Tokenize EACH ref column independently — joining the columns with spaces
+        # and then splitting only on ',;' (as before) collapsed all three refs into
+        # one token that never matched a task blob, so the task tier never fired.
         task_status = None
-        refs_text = " ".join(row.get(c, "") for c in REF_COLUMNS)
+        ref_tokens = [tok for c in REF_COLUMNS for tok in _split(row.get(c, ""))]
         for t in tasks:
             blob = f"{t['design_ref']} {t['test_refs']}"
-            if req in blob or (refs_text and any(
-                    tok and tok in blob for tok in _split(refs_text))):
+            if req in blob or any(tok in blob for tok in ref_tokens):
                 # most-advanced status wins among matches (DONE > IN_PROGRESS > TODO)
                 order = {"DONE": 3, "IN_PROGRESS": 2, "TODO": 1}
                 if order.get(t["status"], 0) > order.get(task_status or "", 0):

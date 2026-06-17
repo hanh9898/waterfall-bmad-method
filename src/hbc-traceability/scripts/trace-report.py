@@ -70,6 +70,10 @@ def parse_matrix(matrix_path: str) -> list[dict]:
                 key = col_order[i]
                 if key in COLUMNS:
                     row[key] = cell.strip()
+        # Raw parsed cell count (every row is pre-filled with all COLUMNS keys, so
+        # a `col in row` test can't detect a truncated row — validate_matrix uses
+        # this against the table's own header width instead).
+        row["_raw_cols"] = len(cells)
         rows.append(row)
 
     return rows
@@ -156,10 +160,15 @@ def validate_matrix(rows: list[dict]) -> dict:
         elif rid:
             seen[rid] = i
 
+    # Compare each row's raw cell count against the table's own width (the widest
+    # row = its header), so a truncated row is caught WITHOUT penalizing a
+    # consistent legacy 7-column matrix.
+    widths = [r.get("_raw_cols", 0) for r in rows]
+    width = max(widths) if widths else 0
     for i, r in enumerate(rows, 1):
-        col_count = sum(1 for c in COLUMNS if c in r)
-        if col_count < len(COLUMNS):
-            issues.append(f"Row {i} has {col_count}/{len(COLUMNS)} columns")
+        raw = r.get("_raw_cols", width)
+        if raw < width:
+            issues.append(f"Row {i} has {raw}/{width} columns")
 
     return {
         "valid": len(issues) == 0,
