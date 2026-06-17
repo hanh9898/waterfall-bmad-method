@@ -261,10 +261,10 @@ CHECKED = [
     "vague terminology",
     "required sections present and non-empty",
     "NFR measurable-criteria presence",
-    "EARS shape (advisory — warning only, không fail)",
+    "EARS shape (advisory — warning only, does not fail)",
 ]
 NOT_CHECKED = [
-    "REQ semantic correctness / đủ-nghĩa (LLM review)",
+    "REQ semantic correctness / completeness (LLM review)",
     "REQ facet coverage: read/write · api/admin (LLM review)",
     "cross-document consistency D-02 ↔ D-03/D-06/... (readiness gate)",
 ]

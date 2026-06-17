@@ -98,7 +98,7 @@ def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
         if "fail" not in body:
             issues.append({
                 "type": "RED_EVIDENCE_NO_FAIL",
-                "message": f"{task_id}: RED-evidence không thấy dấu hiệu test FAIL (RED)",
+                "message": f"{task_id}: RED-evidence shows no sign of a failing test (RED)",
                 "task_id": task_id,
                 "auto_fixable": False,
             })
@@ -209,7 +209,7 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         checked=checked,
         not_checked=[
             "whether the code actually fulfils the task (LLM review / acceptance)",
-            "RED-evidence là self-attested — không có bằng chứng git/thời gian chống ngụy tạo (cụm 1=C)",
+            "RED-evidence is self-attested — no git/timestamp proof against tampering (cluster 1=C)",
         ],
     )
     v.update({"valid": structure_ok, "total_issues": len(issues), "issues": issues})

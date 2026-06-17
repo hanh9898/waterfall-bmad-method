@@ -113,7 +113,7 @@ def cmd_detect(args):
 
     changed_set = sorted(set(declared_valid) | git_reqs)
     if not changed_set and not declared_invalid and not untraced:
-        _emit({"status": "noop", "message": "Đã đồng bộ — không có thay đổi",
+        _emit({"status": "noop", "message": "In sync — no changes",
                "changed_set": []}, 2)  # #3
 
     _emit({

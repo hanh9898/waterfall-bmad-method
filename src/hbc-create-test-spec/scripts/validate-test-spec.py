@@ -228,7 +228,7 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
         structure_ok,
         semantic_review=SEMANTIC_NA,
         checked=["required sections", "TC id uniqueness", "REQ coverage vs D-02", "required fields per TC"],
-        not_checked=["test-case adequacy / đủ-nghĩa (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
+        not_checked=["test-case adequacy / completeness (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
     )
     result.update({
         "valid": structure_ok,
