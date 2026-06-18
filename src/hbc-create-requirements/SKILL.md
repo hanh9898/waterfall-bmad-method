@@ -49,7 +49,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 
 1c. **Intent gate.** Confirm user wants to create/update requirements (not a different artifact). If wrong skill: product brief → `hbc-create-prd`, brainstorming → `hbc-brainstorming`, project setup → `hbc-project-setup`.
 
-1d. **Brainstorming suggestion** (interactive, Fresh only). If the domain is complex / scope unclear, suggest running `bmad-brainstorming` first (its output feeds D-02); if accepted, pause — the user runs it separately and resumes (1a detects the partial D-02). A file in `{output_folder}/brainstorming/` counts as a source.
+1d. **Brainstorming decision** (interactive, Fresh only) — a **mandatory** stop, not the model's call: present the choice and wait for the user — run `bmad-brainstorming` first (output feeds D-02), or go straight to Discovery? Do not decide for them based on perceived complexity. If they pick brainstorming, pause — they run it separately and resume (1a detects the partial D-02). A file in `{output_folder}/brainstorming/` counts as a source. Headless: proceed to Stage 2.
 
 ## Stage 2: Discovery
 
@@ -85,7 +85,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 
 **Compaction flush:** Write generated REQ count, scope summary, and version to decision log.
 
-**Parallel-lens menu:** After generation, **render this menu as a numbered list and STOP for the user's choice** — do not auto-continue to Stage 4: `[A]` Advanced Elicitation (deeper probing on weak areas) · `[P]` Party Mode (multi-agent lateral review) · `[C]` Continue. Interactive only — in headless, or if the lens subagents are genuinely unavailable, skip the menu and apply the lens perspective directly (and say so).
+**Parallel-lens decision:** After generation, a **mandatory** stop — render this menu as a numbered list and wait for the user's pick (don't auto-continue/skip/default): `[A]` Advanced Elicitation (deeper probing on weak areas) · `[P]` Party Mode (multi-agent lateral review) · `[C]` Continue. The user decides. Headless only — or if the lens subagents are genuinely unavailable — skip the menu and apply the lens perspective directly (and say so).
 
 ## Stage 4: Validation
 
