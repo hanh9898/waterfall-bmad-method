@@ -4,7 +4,7 @@
 >
 > 💡 **Explanation** — this explains HBC's foundational choice: *incremental delivery, feature by feature (staged delivery)*, where each feature runs a *gated, design-first* cycle combined with *TDD*.
 
-HBC combines two layers: a **gated, design-first process** (each feature runs sequentially through Analysis → Design → Implementation → Testing) at the delivery layer, and **TDD** at the coding layer. The whole thing is applied **per feature** — and v2 *guarantees* that independence by isolating output per feature, gating per feature, and accepting per feature. So at the project level it's **incremental**, not a one-pass waterfall. The combination is deliberate.
+HBC combines two layers: a **gated, design-first process** (each feature runs sequentially through Analysis → Design → Implementation → Testing) at the delivery layer, and **TDD** at the coding layer. The whole thing is applied **per feature** — and v2 *guarantees* that independence by isolating output per feature, gating per feature, and accepting per feature. So at the project level it's **incremental**, not a one-pass build of the whole project. The combination is deliberate.
 
 ---
 
@@ -81,15 +81,15 @@ These four pieces of scaffolding turn "incremental" from intent into a **structu
 
 ---
 
-## Is HBC really "pure waterfall"?
+## HBC's delivery model: feature by feature, not one pass
 
-Short answer: **"waterfall" is a *project delivery model*, not HBC's architecture.** Whether a project is waterfall is decided by *how it's actually executed* — how you slice scope, write & sign off documents, break down tasks, schedule, and hand over — not by "how many steps the tool has".
+Short answer: **a project's delivery model is decided by *how it's actually executed***, not by "how many steps the tool has" — how you slice scope, write & sign off documents, break down tasks, schedule, and hand over.
 
-HBC is just a **gated, deliverable-driven workflow for ONE unit of work** (a feature): REQ → design → code (TDD/RED) → test, with a Phase Gate at each boundary. That sequential-gated ordering does *not* by itself make the whole project waterfall. The same HBC runs two ways:
+HBC is a **gated, deliverable-driven workflow for ONE unit of work** (a feature): REQ → design → code (TDD/RED) → test, with a Phase Gate at each boundary. That sequential-gated ordering describes the discipline *within a feature*; it does *not* by itself decide how the whole project is delivered. The same HBC runs two ways:
 
 ```mermaid
 flowchart LR
-    subgraph A["(A) Waterfall — whole product in one pass"]
+    subgraph A["(A) One pass — whole product at once"]
         a1[REQ for all] --> a2[Design all] --> a3[Code all] --> a4[Test all]
     end
     subgraph B["(B) Incremental — feature by feature ✅ this project"]
@@ -97,9 +97,9 @@ flowchart LR
     end
 ```
 
-> 📌 **In this project:** HBC is delivered as **(B) — incremental, feature by feature**. After Phase 0 lays the shared foundation, each feature goes through all 4 gated stages + TDD, then ships (output isolated in `features/<feature>/...`, with its own gates and acceptance); one feature done, on to the next. So at the project level this is **incremental delivery (staged delivery)**, not a one-pass waterfall. "Waterfall" only describes the *discipline within a single feature* (design first, sign off each milestone, full documentation) — not the project's delivery model.
+> 📌 **In this project:** HBC is delivered as **(B) — incremental, feature by feature**. After Phase 0 lays the shared foundation, each feature goes through all 4 gated stages + TDD, then ships (output isolated in `features/<feature>/...`, with its own gates and acceptance); one feature done, on to the next. So at the project level this is **incremental delivery (staged delivery)**: the *sequential, design-first discipline* (design first, sign off each milestone, full documentation) applies inside a single feature, while the project as a whole ships one feature at a time.
 
-Also, even *within a feature* HBC is softer than textbook waterfall: tests are **specified early (Design), executed late (Testing)** — a **V** shape; and there's **feedback tolerance** (the gate `fail → fix → re-run`, the `update` mode).
+Also, even *within a feature* HBC is softer than a textbook sequential process: tests are **specified early (Design), executed late (Testing)** — a **V** shape; and there's **feedback tolerance** (the gate `fail → fix → re-run`, the `update` mode).
 
 ---
 
@@ -112,7 +112,7 @@ Also, even *within a feature* HBC is softer than textbook waterfall: tests are *
 | Mechanism | Phase + Gate + Traceability (per-feature) | RED-GREEN-REFACTOR (soft enforcement via RED evidence) |
 | Fits when | Stable requirements, need traceability | Whenever you write code |
 
-> 🏷️ **The correct term:** HBC's delivery model is **incremental / staged delivery** — Phase 0 lays the shared foundation once, then each feature is a gated, design-first cycle + TDD, isolated and shipped independently. Don't label the whole project "waterfall".
+> 🏷️ **The correct term:** HBC's delivery model is **incremental / staged delivery** — Phase 0 lays the shared foundation once, then each feature is a gated, design-first cycle + TDD, isolated and shipped independently.
 
 ## Read next
 

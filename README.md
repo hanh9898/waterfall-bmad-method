@@ -72,7 +72,7 @@ HBC xử lý:
 - **Dành cho:** team làm theo incremental + TDD — BA, Architect, QA, Developer, Tester.
 - **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
 
-> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. "Waterfall" là **mô hình triển khai**, không phải kiến trúc HBC — ở đây nó chỉ là kỷ luật **bên trong một feature** (thiết kế trước, duyệt từng mốc). Chi tiết: [HBC có thực sự là waterfall thuần?](docs/vi/explanation/why-incremental-tdd.md#hbc-có-thực-sự-là-waterfall-thuần-không)*
+> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. Chi tiết: [Vì sao Incremental + TDD](docs/vi/explanation/why-incremental-tdd.md)*
 
 > 📖 Lần đầu nghe "deliverable / phase gate / traceability"? → [Glossary khái niệm](docs/vi/reference/concept-glossary.md).
 

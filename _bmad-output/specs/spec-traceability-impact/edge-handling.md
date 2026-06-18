@@ -40,7 +40,7 @@ Companion của `SPEC.md`. Kho **duy nhất** các quy tắc biên: mỗi dòng 
 |---|---|
 | Owning-skill thiếu update contract | Interactive: flag cập nhật thủ công + gợi ý cài hợp đồng. Headless: `blocked` reason `skill_no_update_contract`. |
 | Owning-skill lỗi runtime giữa chừng | Branch-stop nhánh đó, giữ trạng thái đã áp, báo rõ artifact đã/chưa xong, tiếp các nhánh độc lập. |
-| User áp TẬP CON các đề xuất | Hỗ trợ subset; giữ thứ tự waterfall; cảnh báo phần bỏ lại có thể gây lệch. |
+| User áp TẬP CON các đề xuất | Hỗ trợ subset; giữ thứ tự phase cố định; cảnh báo phần bỏ lại có thể gây lệch. |
 
 ## CAP-6 — RECONCILE
 

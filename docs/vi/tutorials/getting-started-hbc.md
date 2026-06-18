@@ -13,7 +13,7 @@ Sau hướng dẫn này, bạn sẽ:
 - Tự tay đưa một tính năng đi hết Phase 1 → 4: Analysis → Design → Implementation → Testing, rồi **ship riêng tính năng đó**.
 - Biết cách bật **traceability** để truy vết từ yêu cầu đến test.
 
-HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi qua các phase rồi ship độc lập với tính năng khác. "Waterfall" ở đây chỉ là *cách cắt phạm vi*, không phải kiến trúc của HBC — bên trong **một** tính năng, HBC vẫn giữ kỷ luật kiểu waterfall (thiết kế trước, đóng gate ở mỗi mốc).
+HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi qua các phase rồi ship độc lập với tính năng khác. Bên trong **một** tính năng, HBC giữ **kỷ luật tuần tự, thiết kế-trước** (thiết kế trước, đóng gate ở mỗi mốc) — đó là cách làm việc bên trong một feature, không phải mô hình giao hàng của cả dự án.
 
 Chúng ta dùng một ví dụ xuyên suốt: tính năng **`auth`** (Đăng nhập / Xác thực). Mọi đường dẫn và mã ID dưới đây đều theo tính năng này.
 

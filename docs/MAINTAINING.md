@@ -42,9 +42,10 @@ cross-links intact when you edit.
 
 HBC is an expansion module for the BMad Method. Delivery is **incremental, per-feature
 (staged delivery)**: each feature runs four gated phases + soft-TDD, then ships
-independently. "Waterfall" describes a *delivery model* (how scope is sliced), not HBC's
-architecture — keep that reframing wherever it appears; do not delete the word, frame it
-as contrast. Every doc must be consistent with the following.
+independently. State this positively: the *sequential, design-first discipline* applies
+**inside** a single feature, while the project's **delivery model** is incremental /
+staged delivery — keep that framing wherever it appears. Every doc must be consistent
+with the following.
 
 ### 2.1 Phases & the run-once init
 

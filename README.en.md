@@ -72,7 +72,7 @@ How HBC handles it:
 - **For:** teams working incrementally with TDD — BA, Architect, QA, Developer, Tester.
 - **Where you type commands:** inside your **AI coding agent** (Claude Code, Cursor…), **not** a plain terminal.
 
-> ℹ️ *This project delivers **incrementally, feature by feature**: each feature runs all 4 gated stages + TDD, then ships. "Waterfall" is a **delivery model**, not HBC's architecture — here it only refers to the discipline **within a single feature** (design first, sign off each milestone). Details: [Is HBC really pure waterfall?](docs/en/explanation/why-incremental-tdd.md#is-hbc-really-pure-waterfall)*
+> ℹ️ *This project delivers **incrementally, feature by feature**: each feature runs all 4 gated stages + TDD, then ships. Details: [Why Incremental + TDD](docs/en/explanation/why-incremental-tdd.md)*
 
 > 📖 New to "deliverable / phase gate / traceability"? → [Concept Glossary](docs/en/reference/concept-glossary.md).
 

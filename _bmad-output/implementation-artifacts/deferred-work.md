@@ -72,7 +72,7 @@ Findings surfaced incidentally during review but out of scope for the current st
 - **N6 (LOW)** `bmad-help.csv` — menu-code `[IR]` của `hbc-check-implementation-readiness` TRÙNG với `bmad-check-implementation-readiness` (cũng IR). Gõ `[IR]` → ambiguous. Fix: đổi code HBC (vd `[RD]`/`[IRH]`).
 - **Đồng thuận với review trước (không vá lại):** Gap1/Gap2 "P2-08/P2-11 type QUALITY → PENDING_LLM, không hard-block tất định" = A#3 (by-design; gate required nghĩa LLM PHẢI xử lý output script, không phải script auto-reject). Cân nhắc nâng P2-11/P2-08 thành item chạy-script-tất-định ở đợt sau nếu muốn chặn cứng.
 
-## DONE (2026-06-09): waterfall flow hardening — nhóm 3 (B/E/C) + bug A1/A2
+## DONE (2026-06-09): phase-flow hardening — nhóm 3 (B/E/C) + bug A1/A2
 Theo quyết định: B=enforced-overridable, E=gate-driven auto-feed, C=chuỗi tuyến tính.
 - **B2** engine `evaluate-gate-checklist.py`: thêm `_is_entry_gate` + `entry_gate_failed` trong summary; entry-gate (prior-gate PASSED) KHÔNG bị lenient hạ → overall FAILED bất kể mode. SKILL step 4 cập nhật. +3 test.
 - **B1** task-breakdown (P3 entry→check P2 gate) & test-execution (P4 entry→check P3 gate): activation chạy gate headless, HALT nếu !PASSED, chỉ qua khi user override; headless→blocked.
@@ -100,5 +100,5 @@ Theo quyết định: B=enforced-overridable, E=gate-driven auto-feed, C=chuỗi
 - SKILL: hbc-implement closeout chạy validate-implementation + update matrix code_ref; hbc-test-execution validation thêm --d27.
 - Regression: focused 54 pass; broad .claude/skills 650 pass (1 fail pre-existing bmad-module-builder, không liên quan); 4 gate checklist parse+run OK qua engine.
 
-## TỔNG KẾT review-waterfall → fix (toàn bộ nhóm 1+2+3 DONE)
+## TỔNG KẾT review-phase-flow → fix (toàn bộ nhóm 1+2+3 DONE)
 Mọi finding HIGH/CRITICAL từ review 4-explorer đã đóng bằng code + test, trừ các mục pre-existing/contrived đã ghi defer (bmad-module-builder fail không liên quan; F2/F3/F4 convention drift LOW; story_id/gate_status dead columns; staleness content-hash).

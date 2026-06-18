@@ -1,7 +1,7 @@
 # Business Overview
 
 ## Business Description
-HBLAB BMad Custom (`hbc`) là một **expansion module** cho BMad Method, triển khai một lifecycle phát triển phần mềm theo mô hình **Waterfall + TDD**. Hệ thống hướng dẫn team đi qua 4 phase, sinh ra các deliverable D-xx, với phase gate và traceability đầy đủ từ requirement đến test.
+HBLAB BMad Custom (`hbc`) là một **expansion module** cho BMad Method, triển khai một lifecycle phát triển phần mềm theo mô hình **Incremental + TDD** (giao tăng dần theo từng tính năng). Hệ thống hướng dẫn team đi qua 4 phase, sinh ra các deliverable D-xx, với phase gate và traceability đầy đủ từ requirement đến test.
 
 ## Business Transactions
 | Transaction | Mô tả |

@@ -12,7 +12,6 @@
 | --- | --- | --- |
 | **Incremental (staged delivery)** | **HBC's delivery model**: ship **one feature at a time**, each a gated cycle + TDD, shipped independently of other features. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Feature** | HBC's unit of delivery: one slice of scope that runs through all 4 phases + TDD, then ships on its own. Each feature has a `<slug>` (e.g. `auth`) that keys its folders and IDs. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
-| **Waterfall** | A one-pass, whole-product sequential model — this is a *delivery model*, **not** HBC's architecture. HBC delivers incrementally; it only borrows the *sequential, design-first discipline* **inside** each feature (design-first, gate each milestone). | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | One of HBC's 4 ordered stages: Analysis → Design → Implementation → Testing. | [Core Concepts](../explanation/concepts.md) |
 | **Phase 0 (Project Init)** | A step run **once, project-wide** before any feature (skill `PI` / hbc-project-init): produces the **shared** deliverables (D-12, D-03) + baseline D-19/D-21. Idempotent (skips what exists), no `feature` arg. | [Skills Catalog (PI)](skills-catalog.md) |
 | **Phase Gate** | A control checkpoint at each phase boundary — must "pass" to advance (command `PG <n>`, carrying `feature=`). | [Core Concepts](../explanation/concepts.md) |

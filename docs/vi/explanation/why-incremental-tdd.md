@@ -4,7 +4,7 @@
 >
 > 💡 **Explanation** — bài này lý giải lựa chọn nền tảng của HBC: *giao tăng dần theo từng tính năng (incremental / staged delivery)*, mỗi tính năng chạy một chu trình *có cổng, thiết kế-trước* kết hợp *TDD*.
 
-HBC kết hợp hai tầng: **quy trình có cổng, thiết kế-trước** (mỗi feature đi tuần tự Analysis → Design → Implementation → Testing) ở tầng triển khai, và **TDD** ở tầng viết code. Toàn bộ áp dụng **theo từng tính năng** — và v2 *đảm bảo* tính độc lập đó bằng cách cô lập đầu ra theo feature, gate theo feature, nghiệm thu theo feature. Nên ở cấp dự án đây là **incremental (giao tăng dần)**, không phải waterfall một-lượt. Sự kết hợp này là có chủ đích.
+HBC kết hợp hai tầng: **quy trình có cổng, thiết kế-trước** (mỗi feature đi tuần tự Analysis → Design → Implementation → Testing) ở tầng triển khai, và **TDD** ở tầng viết code. Toàn bộ áp dụng **theo từng tính năng** — và v2 *đảm bảo* tính độc lập đó bằng cách cô lập đầu ra theo feature, gate theo feature, nghiệm thu theo feature. Nên ở cấp dự án đây là **incremental (giao tăng dần)**, không phải làm một-lượt cả dự án. Sự kết hợp này là có chủ đích.
 
 ---
 
@@ -81,15 +81,15 @@ Chính bốn bệ đỡ này biến "incremental" từ ý định thành **bảo
 
 ---
 
-## HBC có thực sự là "waterfall thuần" không?
+## Mô hình giao hàng của HBC: từng tính năng, không làm một lượt
 
-Câu trả lời gọn: **"waterfall" là một *mô hình triển khai dự án*, không phải kiến trúc của HBC.** Một dự án là waterfall hay không do *cách triển khai thật* quyết định — cách chia scope, viết & duyệt tài liệu, chia task, lên lịch, bàn giao — chứ không phải do "công cụ có mấy bước".
+Câu trả lời gọn: **mô hình giao hàng là một *thuộc tính của cách triển khai dự án*, không phải kiến trúc của HBC.** Một dự án giao theo cách nào do *cách triển khai thật* quyết định — cách chia scope, viết & duyệt tài liệu, chia task, lên lịch, bàn giao — chứ không phải do "công cụ có mấy bước".
 
-HBC chỉ là **workflow có cổng, hướng-deliverable cho MỘT đơn vị công việc** (một feature): REQ → thiết kế → code (TDD/RED) → test, có Phase Gate ở mỗi ranh giới. Cái thứ-tự-có-cổng đó *không* tự làm cả dự án thành waterfall. Cùng một HBC chạy được theo hai cách:
+HBC chỉ là **workflow có cổng, hướng-deliverable cho MỘT đơn vị công việc** (một feature): REQ → thiết kế → code (TDD/RED) → test, có Phase Gate ở mỗi ranh giới. Cái thứ-tự-có-cổng đó *không* tự quyết định mô hình giao hàng của cả dự án. Cùng một HBC chạy được theo hai cách:
 
 ```mermaid
 flowchart LR
-    subgraph A["(A) Waterfall — cả sản phẩm một lượt"]
+    subgraph A["(A) Một lượt — cả sản phẩm một lần"]
         a1[REQ tất cả] --> a2[Thiết kế tất cả] --> a3[Code tất cả] --> a4[Test tất cả]
     end
     subgraph B["(B) Incremental — từng feature ✅ dự án này dùng cách này"]
@@ -97,9 +97,9 @@ flowchart LR
     end
 ```
 
-> 📌 **Ở dự án này:** HBC được triển khai theo **(B) — incremental, từng tính năng**. Sau Phase 0 dựng nền chung, mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao (đầu ra cô lập trong `features/<feature>/...`, gate và nghiệm thu riêng), xong feature này sang feature khác. Nên ở cấp dự án đây là **giao tăng dần (incremental / staged delivery)**, không phải waterfall một-lượt. "Waterfall" chỉ mô tả *kỷ luật bên trong một feature* (thiết kế trước, duyệt từng mốc, tài liệu đầy đủ) — không phải mô hình triển khai cả dự án.
+> 📌 **Ở dự án này:** HBC được triển khai theo **(B) — incremental, từng tính năng**. Sau Phase 0 dựng nền chung, mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao (đầu ra cô lập trong `features/<feature>/...`, gate và nghiệm thu riêng), xong feature này sang feature khác. Nên ở cấp dự án đây là **giao tăng dần (incremental / staged delivery)**, không phải làm một-lượt cả dự án. Cái thứ-tự-có-cổng chỉ mô tả *kỷ luật bên trong một feature* (thiết kế trước, duyệt từng mốc, tài liệu đầy đủ) — không phải mô hình giao hàng cả dự án.
 
-Ngoài ra, ngay *bên trong một feature* HBC cũng đã mềm hơn waterfall giáo khoa: test được **đặc tả sớm (Design) chạy muộn (Testing)** — hình chữ **V**; và có **dung sai phản hồi** (gate `fail → fix → re-run`, chế độ `update`).
+Ngoài ra, ngay *bên trong một feature* kỷ luật tuần tự của HBC cũng đã mềm hơn một quy trình tuần tự giáo khoa: test được **đặc tả sớm (Design) chạy muộn (Testing)** — hình chữ **V**; và có **dung sai phản hồi** (gate `fail → fix → re-run`, chế độ `update`).
 
 ---
 
@@ -112,7 +112,7 @@ Ngoài ra, ngay *bên trong một feature* HBC cũng đã mềm hơn waterfall g
 | Cơ chế | Phase + Gate + Traceability (per-feature) | RED-GREEN-REFACTOR (cưỡng chế mềm qua bằng chứng RED) |
 | Hợp khi | Yêu cầu ổn, cần truy vết | Mọi lúc viết code |
 
-> 🏷️ **Thuật ngữ đúng:** mô hình triển khai của HBC là **incremental (giao tăng dần) / staged delivery** — Phase 0 dựng nền chung một lần, rồi mỗi tính năng là một chu trình có cổng, thiết kế-trước + TDD, cô lập và giao độc lập. Không gọi cả dự án là "waterfall".
+> 🏷️ **Thuật ngữ đúng:** mô hình giao hàng của HBC là **incremental (giao tăng dần) / staged delivery** — Phase 0 dựng nền chung một lần, rồi mỗi tính năng là một chu trình có cổng, thiết kế-trước + TDD, cô lập và giao độc lập.
 
 ## Đọc tiếp
 

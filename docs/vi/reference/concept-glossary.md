@@ -12,7 +12,6 @@
 | --- | --- | --- |
 | **Incremental (giao tăng dần)** | **Mô hình triển khai của HBC**: giao **từng tính năng** một, mỗi feature là một chu trình có cổng + TDD, ship độc lập với các feature khác. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Feature (tính năng)** | Đơn vị giao hàng của HBC: một lát cắt phạm vi đi qua trọn 4 phase + TDD rồi ship riêng. Mỗi feature có một `<slug>` (vd `auth`) làm khóa cho thư mục và ID. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
-| **Waterfall** | Mô hình làm tuần tự **một-lượt cả sản phẩm** — đây là một *mô hình giao hàng*, **không phải** kiến trúc của HBC. HBC giao incremental; nó chỉ mượn *kỷ luật tuần tự, thiết kế-trước* **bên trong** mỗi feature (design-first, chốt từng mốc). | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | Một trong 4 chặng có thứ tự của HBC: Analysis → Design → Implementation → Testing. | [Khái niệm cốt lõi](../explanation/concepts.md) |
 | **Phase 0 (Project Init)** | Bước chạy **một lần, cho cả dự án** trước mọi feature (skill `PI` / hbc-project-init): sinh các deliverable **dùng chung** (D-12, D-03) + baseline D-19/D-21. Idempotent (bỏ qua cái đã có), không cần arg `feature`. | [Catalog skill (PI)](skills-catalog.md) |
 | **Phase Gate** | Chốt kiểm soát ở ranh giới mỗi phase — phải "pass" mới được sang phase sau (lệnh `PG <n>`, mang `feature=`). | [Khái niệm cốt lõi](../explanation/concepts.md) |
