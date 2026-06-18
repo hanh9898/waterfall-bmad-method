@@ -19,11 +19,53 @@ An **incremental, per-feature** development workflow for HBLAB. The process has 
 
 ## What HBC solves for you
 
-On contractual projects with formal acceptance, three familiar pains:
+> **Software outlives the people who build it.** The deepest pain isn't *getting it wrong* — it's that **correctness gets anchored to one person's memory, then leaves when they do.**
 
-- **Vague requirements** → you only discover the misunderstanding after building it.
-- **Tests that miss requirements** → bugs slip through; no way to know coverage is complete.
-- **Hard to prove "we did everything"** at handover or audit.
+Requirements, design, code, tests, and docs each tend to live in a different place, and only *people* hold them together. When teams change and requirements pass through many hands, every handover drops a fragment of the truth — and usually nobody notices what's missing until they hit it. In short, three familiar pains:
+
+- **Truth at the input is fragile** — vague requirements, no one challenging them, mistakes found too late.
+- **Truth between spec–code–test leaks** — code and tests drift apart; gaps no one owns.
+- **Truth leaves with people** — teams rotate, docs are scattered, the project is hard to migrate/onboard.
+
+HBC doesn't impose a process. It grew out of **each role's real pain**, and **anchors correctness to the process instead of to memory**:
+
+### 🅐 At the input — requirements with enough meaning, drift caught early
+
+- *Requirement owner (Project Owner):* "I'm not afraid of being wrong. I'm afraid of being wrong and only finding out a month later."
+- *BA (Business Analyst):* "I need to ask the *right* questions and *find things again*."
+
+How HBC handles it:
+
+- `REQ` (`hbc-create-requirements`) → **D-02** with `REQ-<FEAT>-NNN` IDs in **EARS** style, a validator that flags vague terms + parallel-lens review.
+- `GLO` (`hbc-create-glossary`) → **D-03** to unify language.
+- Discovery interrogates against both the original requirement **and** existing source code/business *(when available)*.
+- `PG` (`hbc-phase-gate`) + `IR` (`hbc-check-implementation-readiness`) → stop drift right at each phase boundary.
+- Spec is **stored per feature** (`_bmad-output/features/<feature>/`), not all in one pile.
+
+### 🅑 Between spec–code–test — each role guards one gate
+
+- *Developer:* "One person guarding two gates means every gate leaks."
+- *Tester:* needs a clear role and anchor for spec↔test quality.
+
+How HBC handles it:
+
+- TDD via `IM` (`hbc-implement`, RED→GREEN) + `TB` (`hbc-task-breakdown`) → **the test is the contract**; the dev only ensures *code matches test*.
+- `TP` / `TS` (`hbc-create-test-plan` / `hbc-create-test-spec`, **D-26/D-27**) → the tester owns the *test↔spec* gate.
+- Traceability matrix `TRI`/`TRU`/`TRA` (`hbc-traceability`) → **every REQ has a design, code, and tests**; gaps always surface.
+
+> ℹ️ *Tooling for the tester role is currently foundational and still maturing.*
+
+### 🅒 Over time — people are replaceable, the system doesn't break
+
+- *Project sponsor (Sponsor):* "I want something that's still understandable after the people who made it are gone."
+- *Project manager (PM):* "People are replaceable; the system shouldn't break."
+
+How HBC handles it:
+
+- **Readable** docs: `BFD` (`hbc-create-business-flow-diagram`, **D-06**) + `ERD` (`hbc-create-er-diagram`, **D-19**) + `API` (`hbc-create-api-spec`, **D-21**).
+- **Shared deliverables** from `PI` (`hbc-project-init`): `CS` (`hbc-create-coding-standards`, **D-12**) + **D-03** glossary.
+- **5 coordinator agents** (`hbc-agent-ba/architect/qa/dev/tester`) → one shared workflow instead of a separate tool per role.
+- `SYNC` (`hbc-traceability`) → cascades updates when a source document changes.
 
 **HBC** is an expansion module for [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD) applying an **incremental + TDD** process **per feature**. The process has **4 phases** per feature, but **Phase 0 (`PI`) is mandatory and runs first** — once project-wide (or re-run to update directly) — to create the **shared deliverables** (coding standards D-12, glossary D-03, baseline ERD/API). After Phase 0, **5 coordinator agents** guide each feature through the 4 phases, each producing clear **deliverables**, with a **phase gate** stopping errors at every boundary and **traceability** linking every requirement down to its tests. At project end you can answer instantly: *"Every requirement has a design, code, and tests."*
 
