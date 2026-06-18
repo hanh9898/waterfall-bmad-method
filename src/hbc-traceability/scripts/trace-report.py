@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from pathlib import Path
 
 # Feature-namespaced REQ ids (REQ-<FEAT>-NNN / REQ-SHARED-NNN); tolerant of legacy REQ-NNN.
-REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 COLUMNS = ["feature", "req_id", "story_id", "design_ref", "code_ref", "test_ref", "gate_status", "timestamp"]
 COVERAGE_COLUMNS = ["design_ref", "code_ref", "test_ref"]
 

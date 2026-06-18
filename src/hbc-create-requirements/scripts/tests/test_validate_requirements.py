@@ -250,6 +250,21 @@ def test_nfr_four_column_empty_criteria_flagged():
     assert any(i["nfr_id"] == "NFR-001" for i in nfr_issues)
 
 
+def test_multisegment_feature_code_recognized():
+    # Regression: a multi-segment feature code (slug resource-plan-billable →
+    # REQ-RESOURCE-PLAN-BILLABLE-NNN) must be parsed; the old single-segment regex
+    # read 0 REQs → false REQ_ID_MISSING.
+    doc = (VALID_DOC
+           .replace("REQ-001", "REQ-RESOURCE-PLAN-BILLABLE-001")
+           .replace("REQ-002", "REQ-RESOURCE-PLAN-BILLABLE-002")
+           .replace("REQ-003", "REQ-RESOURCE-PLAN-BILLABLE-003"))
+    result, code = run_script(doc)
+    assert code == 0, result
+    assert result["valid"] is True
+    assert result["req_count"] == 3
+    assert not [i for i in result["issues"] if i["type"] == "REQ_ID_MISSING"]
+
+
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -298,6 +313,7 @@ if __name__ == "__main__":
         test_nfr_missing_criteria,
         test_nfr_namespaced_missing_criteria,
         test_nfr_four_column_empty_criteria_flagged,
+        test_multisegment_feature_code_recognized,
         test_missing_document,
         test_output_to_file,
         test_no_req_ids,

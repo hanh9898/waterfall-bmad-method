@@ -44,7 +44,7 @@ business_flow_output_path = "{output_folder}/features/{feature}/planning-artifac
 # shared `REQ-SHARED-NNN` as well as legacy `REQ-001` / dotted `REQ-1.2`. A
 # namespace-blind `REQ-[0-9]+` silently skipped every REQ-<FEAT>-NNN id.
 # Override for projects using UC-01, US-001, etc.
-fr_id_pattern = '\b(REQ-(?:[A-Z0-9]+-)?[0-9]+(?:\.[0-9]+)*)\b'
+fr_id_pattern = '\b(REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?[0-9]+(?:\.[0-9]+)*)\b'
 
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".

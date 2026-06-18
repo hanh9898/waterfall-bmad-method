@@ -49,7 +49,7 @@ TC_ID_RE = re.compile(r"TC-(\d{3,})")
 # (REQ-AUTH-001 / REQ-SHARED-002 / legacy REQ-001). A capturing `REQ-(\d{3,})`
 # returned only the digits and silently skipped every REQ-<FEAT>-NNN. TC ids stay
 # numeric-only — they are per-feature within each D-27, not namespaced.
-REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 # Mirror the shared iter_tc_blocks detection (levels 3-6, fence-stripped) so this
 # validator agrees with the readiness + facet engines on which TCs exist (F1).
 _TC_HEADING_NUM_RE = re.compile(r"^#{3,6}[ \t]+TC-(\d{3,})", re.MULTILINE | re.IGNORECASE)

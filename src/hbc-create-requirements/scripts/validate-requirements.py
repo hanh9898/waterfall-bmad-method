@@ -57,10 +57,10 @@ DEFAULT_VAGUE_TERMS = [
 ]
 
 # group1 = namespace (feature/SHARED, e.g. AUTH); group2 = number. Legacy REQ-NNN → ns "".
-REQ_ID_PATTERN = re.compile(r"REQ-(?:([A-Z0-9]+)-)?(\d{3,})")
+REQ_ID_PATTERN = re.compile(r"REQ-(?:([A-Z0-9]+(?:-[A-Z0-9]+)*)-)?(\d{3,})")
 
 # Namespace-aware NFR id (full-match a single cell): NFR-001 / NFR-AUTH-001 / NFR-SHARED-001.
-NFR_ID_RE = re.compile(r"NFR-(?:[A-Z0-9]+-)?\d{3,}")
+NFR_ID_RE = re.compile(r"NFR-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 
 
 def functional_req_rows(content: str) -> list[list[str]]:
