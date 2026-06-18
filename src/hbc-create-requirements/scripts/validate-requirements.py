@@ -30,7 +30,9 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        find_section,
         parse_table,
+        section_body,
         verdict,
     )
 except ModuleNotFoundError:
@@ -51,6 +53,9 @@ REQUIRED_SECTIONS = [
     ("Constraints", "Ràng buộc"),
 ]
 
+# Fallback ONLY for direct/no-arg runs. The authoritative list is customize.toml
+# `vague_terms`, which the SKILL always passes via --vague-terms; keep this in sync
+# (or treat customize.toml as source of truth) when editing.
 DEFAULT_VAGUE_TERMS = [
     "fast", "easy", "user-friendly", "simple", "good",
     "nice", "efficient", "appropriate", "adequate", "reasonable",
@@ -270,9 +275,108 @@ NOT_CHECKED = [
 ]
 
 
-def validate(doc_path: str, project_root: str, vague_terms_override: str | None = None) -> dict:
+def _functional_table(content: str) -> tuple[list[str], list[list[str]]]:
+    """(header cells lowercased, data rows) of the functional requirements table.
+
+    Header-aware (unlike parse_table which drops the header) so the brownfield
+    check can locate the Change Type / Existing System Ref columns by name.
+    """
+    m = find_section(content, "Functional Requirements", "Yêu cầu chức năng")
+    if not m:
+        return [], []
+    pipe = [ln.strip() for ln in section_body(content, m).splitlines()
+            if ln.strip().startswith("|")]
+    if len(pipe) < 2:
+        return [], []
+    header = [c.strip().lower() for c in pipe[0].strip("|").split("|")]
+    rows: list[list[str]] = []
+    for line in pipe[1:]:
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if set("".join(cells)) <= {"-", " ", ":"}:
+            continue  # separator
+        rows.append(cells)
+    return header, rows
+
+
+# A "#### Change Spec — REQ-..." block grounds a CHANGE/REMOVE requirement in the
+# existing system (AS-IS → TO-BE). Em-dash or hyphen separator both accepted.
+CHANGE_SPEC_RE = re.compile(
+    r"^#{2,6}\s+Change Spec\s*[—:-]\s*(REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,})",
+    re.MULTILINE | re.IGNORECASE,
+)
+
+
+def check_brownfield_grounding(content: str) -> list[dict]:
+    """Brownfield-only: a requirement that touches the existing system must be
+    reconciled against AS-IS. Every CHANGE/REMOVE REQ needs an `Existing System
+    Ref` and a `Change Spec — <REQ>` block (AS-IS → TO-BE). Surfaces a vague ask
+    that was never grounded. Run ONLY when the project is brownfield (the caller
+    passes --brownfield when Phase 0 produced a project-context.md)."""
+    issues: list[dict] = []
+    header, rows = _functional_table(content)
+    if not header:
+        return issues
+
+    def col(*names: str) -> int | None:
+        for i, h in enumerate(header):
+            if any(n in h for n in names):
+                return i
+        return None
+
+    # Headers matched bilingually (English canonical + configured-language alias),
+    # consistent with find_section/check_required_sections — the doc renders in
+    # {document_output_language}. The change-type VALUES (NEW/CHANGE/REMOVE) stay
+    # English keywords (like EARS), so only the headers need aliases.
+    ci_ct = col("change type", "loại thay đổi")
+    ci_ref = col("existing system ref", "existing ref", "hệ thống hiện có", "tham chiếu hệ thống")
+
+    if ci_ct is None:
+        issues.append({
+            "type": "BROWNFIELD_NO_CHANGE_TYPE",
+            "message": "Brownfield project but the functional table has no 'Change Type' column — "
+                       "requirements are not reconciled against the existing system. Use the brownfield D-02 template.",
+            "auto_fixable": False,
+        })
+        return issues
+
+    spec_reqs = set(CHANGE_SPEC_RE.findall(content))
+    for cells in rows:
+        # REQ id located by anchored pattern, not a header-name guess — robust to
+        # column reordering and language ('req' as a header substring also matched
+        # 'Requirement (EARS)'). One id per row.
+        req = next((c.strip() for c in cells if REQ_ID_PATTERN.match(c.strip())), "")
+        ct = cells[ci_ct].strip().lower() if ci_ct < len(cells) else ""
+        ref = cells[ci_ref].strip() if (ci_ref is not None and ci_ref < len(cells)) else ""
+        if ct in ("change", "remove"):
+            if not ref or ref in {"-", "n/a"}:
+                issues.append({
+                    "type": "BROWNFIELD_NO_EXISTING_REF",
+                    "message": f"{req or '(REQ)'}: {ct.upper()} requirement has no Existing System Ref "
+                               "(which existing feature/flow/entity it changes).",
+                    "req_id": req,
+                    "auto_fixable": False,
+                })
+            if req and req not in spec_reqs:
+                issues.append({
+                    "type": "BROWNFIELD_NO_CHANGE_SPEC",
+                    "message": f"{req}: {ct.upper()} requirement is missing a 'Change Spec — {req}' block "
+                               "(AS-IS → TO-BE · invariants · out-of-scope).",
+                    "req_id": req,
+                    "auto_fixable": False,
+                })
+    return issues
+
+
+def validate(doc_path: str, project_root: str, vague_terms_override: str | None = None,
+             brownfield: bool = False) -> dict:
     """Run all structural validation checks and return the honest verdict."""
     content = Path(doc_path).read_text(encoding="utf-8")
+
+    # Self-describing brownfield: a D-02 marked `project_kind: brownfield` in
+    # frontmatter enables the grounding checks even without the flag — so a later
+    # validate-only run that skips the source scan still enforces them.
+    if not brownfield and re.search(r"(?m)^project_kind:\s*[\"']?brownfield", content):
+        brownfield = True
 
     if vague_terms_override:
         vague_terms = [t.strip() for t in vague_terms_override.split(",") if t.strip()]
@@ -285,6 +389,8 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     all_issues.extend(check_sections(content))
     all_issues.extend(check_nfr_measurable(content))
     all_issues.extend(check_ears(content))
+    if brownfield:
+        all_issues.extend(check_brownfield_grounding(content))
 
     # Advisory issues (EARS) warn but do NOT fail the structural verdict (cluster 7=A).
     blocking = [i for i in all_issues if not i.get("advisory")]
@@ -294,11 +400,15 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
 
     req_count = len(functional_req_ids(content))
 
+    checked = list(CHECKED)
+    if brownfield:
+        checked.append("brownfield grounding (CHANGE/REMOVE REQ → Existing System Ref + Change Spec AS-IS→TO-BE)")
+
     structure_ok = len(blocking) == 0
     result = verdict(
         structure_ok,
         semantic_review=SEMANTIC_NA,
-        checked=CHECKED,
+        checked=checked,
         not_checked=NOT_CHECKED,
     )
     # Backward-compatible keys (consumed by SKILL.md / phase-gate) + new verdict fields.
@@ -325,6 +435,11 @@ def main():
     parser.add_argument(
         "--vague-terms", help="Comma-separated vague terms (overrides config)"
     )
+    parser.add_argument(
+        "--brownfield", action="store_true",
+        help="Enforce brownfield grounding: CHANGE/REMOVE REQs need Existing System Ref + Change Spec. "
+             "Pass when Phase 0 produced a project-context.md.",
+    )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
 
@@ -337,7 +452,7 @@ def main():
         print(json.dumps(error, indent=2, ensure_ascii=False))
         sys.exit(1)
 
-    result = validate(str(doc_path), args.project_root, args.vague_terms)
+    result = validate(str(doc_path), args.project_root, args.vague_terms, brownfield=args.brownfield)
 
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

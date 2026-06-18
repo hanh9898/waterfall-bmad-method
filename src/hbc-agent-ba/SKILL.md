@@ -13,6 +13,8 @@ In a sequential, design-first cycle, a vague requirement compounds across phases
 
 Core outcome: user completes Phase 1 with D-02 Requirements, D-03 Glossary, and D-06 Business Flow — all consistent and cross-referenced. No vague requirements pass through.
 
+**Brownfield discipline:** when the project has existing code (the source scan reports `brownfield: true` / a `project_context`), reconcile every customer ask against the **existing system** before accepting it as a requirement. A general ask is not a requirement until it names what it touches and how it differs from today: no `CHANGE`/`REMOVE` requirement passes without an *existing-system ref* (feature/flow/entity) and a *Change Spec* (AS-IS → TO-BE). Use the scan's `existing_system` catalog as the anchor pick-list; if it is thin, push for `bmad-document-project` / Phase 0 baselines before eliciting.
+
 ## Conventions
 
 - Bare paths (e.g. `references/guide.md`) resolve from the skill root.

@@ -4,6 +4,7 @@ document_id: D-02
 feature: "{feature}"
 title: "{project_name} — Requirements Specification — feature: {feature}"
 version: "1.0"
+project_kind: "greenfield"   # set to "brownfield" when grounded against an existing system (enables --brownfield checks)
 status: draft
 stepsCompleted: []
 lastStep: ""
@@ -56,6 +57,27 @@ updated: ""
 
 | REQ ID | Category | Requirement (EARS) | Priority | User Role | Acceptance Criteria |
 |--------|----------|--------------------|----------|-----------|-------------------|
+
+<!--
+  BROWNFIELD ONLY (project has existing code → Phase 0 produced project-context.md):
+  reconcile every requirement against the EXISTING system. Use the EXTENDED table
+  below (adds Change Type + Existing System Ref) INSTEAD of the one above, and add a
+  Change Spec block per CHANGE/REMOVE requirement. Greenfield: ignore this block.
+
+  | REQ ID | Category | Requirement (EARS) | Change Type | Existing System Ref | Priority | User Role | Acceptance Criteria |
+  |--------|----------|--------------------|-------------|---------------------|----------|-----------|-------------------|
+
+  - Change Type: NEW | CHANGE | REMOVE
+  - Existing System Ref: the existing feature/flow/entity it touches
+    (e.g. flow:checkout, entity:Invoice, feature:resource-plan) — NOT a code path.
+  - NEW requirements need no Change Spec; CHANGE/REMOVE require one:
+
+  #### Change Spec — REQ-<FEAT>-NNN
+  - AS-IS (current behavior): …
+  - TO-BE (target behavior — WHAT changes; the Acceptance Criteria column is HOW to verify it): …
+  - Invariants (must stay unchanged): …
+  - Out-of-scope (NOT changing this release): …
+-->
 
 ## 5. Non-Functional Requirements
 

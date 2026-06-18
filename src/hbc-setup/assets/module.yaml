@@ -41,13 +41,13 @@ agents:
 post-install-notes: |
   HBLAB BMad Custom module installed successfully!
   Required: BMM module must be installed first.
-  Mô hình: giao tăng dần THEO TỪNG TÍNH NĂNG (per-feature). Artifact ở _bmad-output/features/<feature>/; deliverable dùng chung ở _bmad-output/shared/.
+  Model: incremental delivery PER FEATURE. Per-feature artifacts in _bmad-output/features/<feature>/; shared deliverables in _bmad-output/shared/.
   Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
-  Di chuyển từ HBC v1 (layout phẳng)? Chạy [MIG] Migrate v1→v2 trước Phase 0 (dry-run→apply).
-  Phase 0 (một lần): [PI] Project Init — tạo shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
+  Migrating from HBC v1 (flat layout)? Run [MIG] Migrate v1→v2 before Phase 0 (dry-run → apply).
+  Phase 0 (once): [PI] Project Init — create shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
   Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow
   Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
   Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
   Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check
-  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Sync (impact analysis khi tài liệu đổi)
+  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Sync (impact analysis when documents change)
   Start with: [BA] Business Analyst or [REQ] Create Requirements
