@@ -8,7 +8,7 @@
 
 HBC is an expansion module for BMad Method. Delivery is **incremental, per-feature (staged delivery)**: each feature passes through 4 gated phases + TDD, then ships — **independently** of other features.
 
-"Waterfall" here is a *delivery model* (how you slice scope), **not** HBC's architecture. Inside a **single** feature, HBC keeps waterfall-like discipline (design-first, gate each milestone); but at the project level, slicing per feature makes the whole *incremental*, not a one-pass waterfall.
+Inside a **single** feature, HBC follows a *sequential, design-first discipline* (design-first, gate each milestone); but at the project level, slicing per feature makes the whole *incremental*, not a one-pass build of the whole project.
 
 Before any feature, run **Phase 0** once for the whole project to create the shared deliverables. Then each feature runs Phases 1–4.
 
@@ -150,7 +150,7 @@ Phase 3 `IM` runs RED→GREEN→REFACTOR. **Soft enforcement:** a **failing-test
 ## How to read this map
 
 - **Phase 0 first, then the feature loop.** Run `PI` once; then repeat Phases 1→4 for each feature, shipping each one independently.
-- **Go left → right, in order within a feature.** Phases run sequentially with gates — no skipping. (Applied per feature, so at the project level it's *incremental*, not a one-pass waterfall.)
+- **Go left → right, in order within a feature.** Phases run sequentially with gates — no skipping. (Applied per feature, so at the project level it's *incremental*, not a one-pass build of the whole project.)
 - **Every boundary has a Gate.** Hitting `PG <n> ✅` means stop and validate before moving on; `IR` is the readiness gate at the Phase 2 → 3 seam.
 - **Traceability + Sync run in the background.** Run `TRU` at the end of each phase; run `TRA` at the end of the project; run `SYNC` when a source doc changes to cascade the update.
 

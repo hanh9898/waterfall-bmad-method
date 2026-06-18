@@ -13,7 +13,7 @@ By the end of this tutorial you will:
 - Take one feature through Phase 1 → 4 yourself: Analysis → Design → Implementation → Testing, then **ship that feature independently**.
 - Know how to turn on **traceability** to trace from requirement to test.
 
-HBC ships **incrementally, per feature** (incremental per-feature delivery): each feature goes through the phases, then ships independently of other features. "Waterfall" here is only a *way to slice scope*, not HBC's architecture — inside a **single** feature, HBC keeps waterfall-like discipline (design first, close a gate at every milestone).
+HBC ships **incrementally, per feature** (incremental per-feature delivery): each feature goes through the phases, then ships independently of other features. Inside a **single** feature, HBC follows a *sequential, design-first discipline* (design first, close a gate at every milestone); slicing per feature keeps the project-level delivery incremental.
 
 We'll use one running example: the **`auth`** feature (Login / Authentication). Every path and ID below follows this feature.
 

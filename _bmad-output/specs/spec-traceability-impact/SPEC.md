@@ -15,7 +15,7 @@ sources:
 
 ## Why
 
-Trong vòng đời waterfall của HBC, khi một tài liệu đổi (vd đổi REQ), các artifact hạ nguồn (design, test, code) và các artifact dùng chung có thể lệch — ai đó sẽ xây/kiểm thử sai thứ. Đây là **pain cần giải**. Bản orchestrator cũ `src/hbc-sync` tự nuôi một mô hình trạng thái song song (DAG tĩnh + hash manifest) nên (a) **âm thầm bỏ sót** artifact bị ảnh hưởng — API spec/glossary thành "lá" không cascade tới đâu, (b) xác minh "skill đã chạy" chứ không xác minh "thay đổi đã nhập", và (c) phải bảo trì một nguồn-sự-thật thứ hai chắc chắn lệch với thực tế. Bộ skill HBC **đã có sẵn** nguồn sự thật chính xác hơn: traceability matrix (REQ↔artifact theo từng REQ), `task-breakdown` status, `hbc-phase-gate`, và git. Việc cần làm là dựng lại "đồng bộ" thành một **capability `impact` nhúng trong hbc-traceability** — chỉ ĐỌC các nguồn đã có, suy tác động chính xác, ĐỀ XUẤT, để con người quyết, và không bao giờ tự sửa nội dung.
+Trong vòng đời tuần tự theo phase của HBC, khi một tài liệu đổi (vd đổi REQ), các artifact hạ nguồn (design, test, code) và các artifact dùng chung có thể lệch — ai đó sẽ xây/kiểm thử sai thứ. Đây là **pain cần giải**. Bản orchestrator cũ `src/hbc-sync` tự nuôi một mô hình trạng thái song song (DAG tĩnh + hash manifest) nên (a) **âm thầm bỏ sót** artifact bị ảnh hưởng — API spec/glossary thành "lá" không cascade tới đâu, (b) xác minh "skill đã chạy" chứ không xác minh "thay đổi đã nhập", và (c) phải bảo trì một nguồn-sự-thật thứ hai chắc chắn lệch với thực tế. Bộ skill HBC **đã có sẵn** nguồn sự thật chính xác hơn: traceability matrix (REQ↔artifact theo từng REQ), `task-breakdown` status, `hbc-phase-gate`, và git. Việc cần làm là dựng lại "đồng bộ" thành một **capability `impact` nhúng trong hbc-traceability** — chỉ ĐỌC các nguồn đã có, suy tác động chính xác, ĐỀ XUẤT, để con người quyết, và không bao giờ tự sửa nội dung.
 
 ## Capabilities
 
@@ -32,8 +32,8 @@ Trong vòng đời waterfall của HBC, khi một tài liệu đổi (vd đổi 
   success: Một artifact bị ảnh hưởng nhưng task của nó đã DONE (hoặc phase gate đã PASSED) không bao giờ bị đề xuất sửa tại chỗ — nó được nêu dưới dạng gợi ý "tạo task mới". Biên (3 nguồn bất đồng → ưu tiên task > phase-gate > matrix; thiếu task-breakdown → fallback gate+matrix): xem `edge-handling.md`.
 
 - id: CAP-4
-  intent: Hệ thống trình impact kèm trình tự owning-skill nên chạy theo thứ tự waterfall, đã khử trùng artifact dùng chung, mà không tự sửa bất kỳ nội dung nào.
-  success: Output nêu, cho mỗi artifact bị ảnh hưởng (đã khử trùng nếu nhiều REQ dùng chung), owning-skill và thứ tự (waterfall design→test→code; apply trước verify); không có gì được áp cho tới khi user hành động. Biên (ref không map được skill): xem `edge-handling.md`.
+  intent: Hệ thống trình impact kèm trình tự owning-skill nên chạy theo thứ tự phase cố định, đã khử trùng artifact dùng chung, mà không tự sửa bất kỳ nội dung nào.
+  success: Output nêu, cho mỗi artifact bị ảnh hưởng (đã khử trùng nếu nhiều REQ dùng chung), owning-skill và thứ tự (phase cố định design→test→code; apply trước verify); không có gì được áp cho tới khi user hành động. Biên (ref không map được skill): xem `edge-handling.md`.
 
 - id: CAP-5
   intent: Khi user hành động, hệ thống gọi owning-skill của từng artifact ở update mode một cách an toàn, để một update bị kích hoạt không thể tái kích hoạt sync.
@@ -53,7 +53,7 @@ Trong vòng đời waterfall của HBC, khi một tài liệu đổi (vd đổi 
 - **Không bao giờ tự sửa nội dung tài liệu/code**; mọi sửa đổi đi qua owning-skill (bất biến single-responsibility).
 - **Không áp gì khi chưa có hành động tường minh của user** (suggest-not-decide).
 - Detection **user-declared là chính**; git chỉ đối chiếu/gợi ý, không phải nguồn quyết định.
-- Tác động và thứ tự suy ra từ matrix + chuỗi phase waterfall cố định — **không DAG tĩnh, không topological sort**.
+- Tác động và thứ tự suy ra từ matrix + chuỗi phase cố định — **không DAG tĩnh, không topological sort**.
 - Artifact đã frozen (done) **không bao giờ bị sửa tại chỗ**; thay đổi với chúng trở thành task mới.
 - Sống như một **capability bên trong hbc-traceability**, không phải skill độc lập (đứng cạnh Initialize/Update/Report/Audit).
 - Mọi lệnh gọi owning-skill ủy quyền phải mang `--invoked-by-sync` (an toàn chống loop).

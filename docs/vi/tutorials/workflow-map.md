@@ -8,7 +8,7 @@
 
 HBC là module mở rộng của BMad Method. Cách giao hàng là **giao tăng dần theo từng tính năng (staged delivery)**: mỗi tính năng đi qua 4 phase có cổng + TDD rồi nghiệm thu — **độc lập** với các tính năng khác.
 
-"Waterfall" ở đây là một *mô hình giao hàng* (cách bạn chia phạm vi), **không phải** kiến trúc của HBC. Bên trong **một** tính năng, HBC vẫn giữ kỷ luật kiểu waterfall (thiết kế trước, chốt từng mốc bằng gate); nhưng ở cấp dự án, việc chia theo từng tính năng khiến tổng thể là *incremental*, không phải waterfall một-lần.
+Mô hình giao hàng là *cách bạn chia phạm vi*, **không phải** kiến trúc của HBC. Bên trong **một** tính năng, HBC giữ **kỷ luật tuần tự, thiết kế-trước** (thiết kế trước, chốt từng mốc bằng gate); nhưng ở cấp dự án, việc chia theo từng tính năng khiến tổng thể là *incremental*, không phải làm một-lượt cả dự án.
 
 Trước khi làm bất kỳ tính năng nào, chạy **Phase 0** một lần cho cả dự án để tạo các deliverable dùng chung. Sau đó mỗi tính năng chạy Phase 1–4.
 
@@ -150,7 +150,7 @@ Phase 3 `IM` chạy RED→GREEN→REFACTOR. **Enforcement mềm:** phải có/gh
 ## Đọc bản đồ này thế nào
 
 - **Phase 0 trước, rồi vòng lặp tính năng.** Chạy `PI` một lần; sau đó lặp lại Phase 1→4 cho từng tính năng, mỗi tính năng giao độc lập.
-- **Đi tuần tự trái → phải trong một tính năng.** Các phase đi tuần tự có cổng — không nhảy cóc. (Áp dụng từng tính năng nên ở cấp dự án là *incremental*, không phải waterfall một-lần.)
+- **Đi tuần tự trái → phải trong một tính năng.** Các phase đi tuần tự có cổng — không nhảy cóc. (Áp dụng từng tính năng nên ở cấp dự án là *incremental*, không phải làm một-lượt cả dự án.)
 - **Mỗi ranh giới có Gate.** Gặp `PG <n> ✅` nghĩa là phải dừng kiểm tra trước khi đi tiếp; `IR` là gate readiness ở đường nối Phase 2 → 3.
 - **Traceability + Sync chạy nền.** Cứ cuối phase thì `TRU` một lần; cuối dự án thì `TRA`; khi tài liệu nguồn đổi thì `SYNC` để lan truyền.
 

@@ -71,7 +71,7 @@ For *each* feature, HBC runs **sequentially, with gates** through 4 phases: each
 | 3 · Implementation | *How do we write the code?* | Code (via TDD) |
 | 4 · Testing | *Is it correct?* | Acceptance report |
 
-This is a **waterfall**-style *skeleton* — but that's only the **discipline inside a single feature** (design-first, lock each milestone), *not* HBC's delivery model. HBC's delivery model is **incremental per-feature delivery**: many "small waterfalls" running in parallel at their own pace, rather than one big waterfall for the whole project (see [Is HBC really pure waterfall?](why-incremental-tdd.md#is-hbc-really-pure-waterfall)).
+This is a sequential, design-first *skeleton* — but that's only the **discipline inside a single feature** (design-first, lock each milestone), *not* HBC's delivery model. HBC's delivery model is **incremental per-feature delivery**: many small, self-contained feature cycles running at their own pace, rather than one big cycle for the whole project (see [HBC's delivery model](why-incremental-tdd.md#hbcs-delivery-model-feature-by-feature-not-one-pass)).
 
 **Why sequential inside a feature?** Each phase stands on the shoulders of the previous one. You can't design a database without clear requirements; you can't write correct code without a design. Going in order avoids costly rework from misunderstandings baked in early.
 

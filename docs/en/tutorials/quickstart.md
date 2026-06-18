@@ -10,7 +10,7 @@
 
 By the end you will: install HBC, run the **mandatory Phase 0** (`PI`) — the **first** step that lets HBC understand your project and create the shared deliverables, confirm the agent runs, then produce **your first D-02 Requirements file for a specific feature** — enough to know "yes, I can use HBC". Want the full 4 phases for a feature? Head to [Get Started with HBC (walkthrough)](getting-started-hbc.md) after this.
 
-> ℹ️ **Delivery model:** HBC delivers **incrementally, per-feature**. Each feature goes through 4 phases + TDD, then ships independently. "Waterfall" is only a *way of slicing scope* — inside a single feature HBC keeps waterfall-like discipline (design-first, gate each milestone) — it is not the module's architecture.
+> ℹ️ **Delivery model:** HBC delivers **incrementally, per-feature**. Each feature goes through 4 phases + TDD, then ships independently. The *sequential, design-first discipline* (design-first, gate each milestone) applies inside a single feature; at the project level, slicing per feature keeps the whole delivery incremental.
 
 ## Step 0 — Prerequisites
 

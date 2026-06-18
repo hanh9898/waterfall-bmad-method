@@ -71,7 +71,7 @@ Với *mỗi* tính năng, HBC chạy **tuần tự, có cổng** qua 4 phase: m
 | 3 · Implementation | *Viết code thế nào?* | Code (theo TDD) |
 | 4 · Testing | *Đã đúng chưa?* | Báo cáo nghiệm thu |
 
-Đây là *bộ xương* kiểu **waterfall** — nhưng đó chỉ là **cách kỷ luật bên trong một tính năng** (design-first, chốt từng mốc), *không phải* mô hình giao hàng của HBC. Mô hình giao hàng của HBC là **giao tăng dần theo từng tính năng**: nhiều "thác nước nhỏ" chạy song song theo nhịp riêng, chứ không phải một thác lớn cho cả dự án (xem [HBC có thực sự là waterfall thuần?](why-incremental-tdd.md#hbc-có-thực-sự-là-waterfall-thuần-không)).
+Đây là *bộ xương* tuần tự, thiết kế-trước — nhưng đó chỉ là **cách kỷ luật bên trong một tính năng** (design-first, chốt từng mốc), *không phải* mô hình giao hàng của HBC. Mô hình giao hàng của HBC là **giao tăng dần theo từng tính năng**: nhiều chu trình nhỏ chạy song song theo nhịp riêng, chứ không phải một chu trình lớn cho cả dự án (xem [Mô hình giao hàng của HBC](why-incremental-tdd.md#mô-hình-giao-hàng-của-hbc-từng-tính-năng-không-làm-một-lượt)).
 
 **Vì sao tuần tự bên trong tính năng?** Mỗi phase đứng trên vai phase trước. Bạn không thể thiết kế DB nếu chưa rõ yêu cầu; không thể viết code đúng nếu chưa có thiết kế. Đi đúng thứ tự giúp tránh làm lại tốn kém vì hiểu sai từ đầu.
 

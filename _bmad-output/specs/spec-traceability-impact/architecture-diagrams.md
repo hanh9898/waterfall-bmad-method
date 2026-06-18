@@ -34,7 +34,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     R10[REQ-010 đổi<br/>credit_limit → theo chi nhánh]
-    R10 -->|lan DỌC = apply| DS[hạ nguồn REQ-010<br/>D-19 → D-27 → code<br/>theo thứ tự waterfall]
+    R10 -->|lan DỌC = apply| DS[hạ nguồn REQ-010<br/>D-19 → D-27 → code<br/>theo thứ tự phase cố định]
     R10 -->|đổi artifact dùng chung| CUS[(thực thể Customer)]
     CUS -->|lan NGANG = verify| R22[REQ-022 dùng chung Customer<br/>review order.py / TC-220]
     DS --> FZ{freeze-check}

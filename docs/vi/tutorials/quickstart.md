@@ -10,7 +10,7 @@
 
 Cuối bài này bạn sẽ: cài xong HBC, chạy **Phase 0 bắt buộc** (`PI`) — bước **đầu tiên** giúp HBC hiểu dự án và tạo các deliverable dùng chung, xác nhận agent chạy, rồi tạo **D-02 Requirements đầu tiên cho một tính năng cụ thể** — đủ để biết "à, mình dùng được HBC rồi". Muốn đi trọn 4 phase cho một tính năng? Sang [Bắt đầu với HBC (walkthrough)](getting-started-hbc.md) sau khi xong bài này.
 
-> ℹ️ **Mô hình giao hàng:** HBC giao **tăng dần theo từng tính năng** (incremental per-feature). Mỗi tính năng đi qua 4 phase + TDD rồi ship độc lập. "Waterfall" chỉ là *kiểu chia phạm vi* — bên trong một tính năng, HBC vẫn giữ kỷ luật kiểu waterfall (thiết kế trước, gate từng mốc) — chứ không phải kiến trúc của cả module.
+> ℹ️ **Mô hình giao hàng:** HBC giao **tăng dần theo từng tính năng** (incremental per-feature). Mỗi tính năng đi qua 4 phase + TDD rồi ship độc lập. Bên trong một tính năng, HBC giữ **kỷ luật tuần tự, thiết kế-trước** (thiết kế trước, gate từng mốc) — đó là cách làm việc bên trong một feature, không phải mô hình giao hàng của cả module.
 
 ## Bước 0 — Chuẩn bị
 

@@ -19,17 +19,17 @@ Workflow phát triển cho HBLAB theo mô hình **giao tăng dần từng tính 
 
 ## HBC giải quyết gì cho bạn?
 
-> **Phần mềm sống lâu hơn những người làm ra nó.** Nỗi đau lớn nhất không phải *làm sai* — mà là **sự đúng đắn bị neo vào trí nhớ của một người, để rồi mất theo khi người ấy đi.**
+> **Phần mềm sống lâu hơn những người làm ra nó.** Nỗi đau lớn nhất không phải *làm sai* — mà là **yêu cầu, lý do thiết kế và cách kiểm thử chỉ nằm trong đầu một người, rồi mất theo khi người ấy rời đi.**
 
-Yêu cầu, thiết kế, code, test và tài liệu thường mỗi thứ sống một nơi, và chỉ *con người* ghì chúng lại với nhau. Khi đội ngũ thay đổi, khi yêu cầu chuyển qua nhiều tay, mỗi lần bàn giao là một lần một mảnh sự thật rơi rụng — và thường không ai biết đã mất gì cho tới khi va phải. Tóm lại, ba nỗi đau quen thuộc:
+Yêu cầu, thiết kế, code, test và tài liệu mỗi thứ được tạo ở một nơi, một thời điểm, bởi một vai khác nhau — và **quan hệ giữa chúng** (yêu cầu nào dẫn tới thiết kế nào, test nào phủ yêu cầu nào) thường không được ghi lại ở đâu. Khi đội ngũ thay đổi hoặc yêu cầu đi qua nhiều tay, mỗi lần bàn giao là một lần **mất thông tin** — một quyết định thiết kế không ai ghi, một thay đổi yêu cầu không phản ánh vào test — và thường không ai phát hiện cho tới khi va phải. Ba vấn đề quen thuộc:
 
-- **Sự thật ở đầu vào dễ lệch** — yêu cầu mơ hồ, không ai chất vấn, phát hiện sai thì đã muộn.
-- **Sự thật giữa spec–code–test bị hở** — code và test rời nhau, gap không ai chịu trách nhiệm.
-- **Sự thật mất theo người** — đội ngũ đổi, tài liệu rời rạc, dự án khó migrate/onboard.
+- **Yêu cầu đầu vào chưa rõ ràng** — mô tả mơ hồ, không ai chất vấn, đến lúc bàn giao mới lộ ra hiểu sai → sửa lại tốn kém.
+- **Spec, code và test không khớp nhau** — code và test cùng sinh từ spec nhưng độc lập, sai lệch giữa chúng không ai chịu trách nhiệm phát hiện.
+- **Tri thức mất khi người rời đi** — tài liệu rời rạc, khó đọc; người mới khó tiếp quản, dự án khó migrate.
 
-HBC không áp đặt một quy trình. Nó sinh ra từ **nỗi đau thật của từng vai**, và **neo sự đúng đắn vào quy trình thay vì vào trí nhớ**:
+HBC không áp đặt một quy trình. Nó sinh ra từ **nỗi đau thật của từng vai**, và **ghi quan hệ giữa các artifact thành dữ liệu kiểm tra được, thay vì để trong trí nhớ**:
 
-### 🅐 Ở đầu vào — yêu cầu đủ nghĩa, lệch bị bắt sớm
+### Đầu vào — yêu cầu viết rõ ràng, kiểm chứng được; thiếu sót bị chặn tại cổng phase
 
 - *Người nêu yêu cầu (Project Owner):* "Tôi không sợ làm sai. Tôi sợ làm sai mà cả tháng sau mới biết."
 - *BA (Business Analyst):* "Tôi cần hỏi *đúng* và tìm lại *được*."
@@ -42,7 +42,7 @@ HBC xử lý:
 - `PG` (`hbc-phase-gate`) + `IR` (`hbc-check-implementation-readiness`) → chặn lệch ngay tại ranh giới phase.
 - Spec **lưu theo từng feature** (`_bmad-output/features/<feature>/`), không gom một đống.
 
-### 🅑 Giữa spec–code–test — mỗi vai gác một cổng
+### Spec–code–test khớp nhau — mỗi vai chịu trách nhiệm một cổng
 
 - *Lập trình viên (Developer):* "Một người gác hai cổng thì cổng nào cũng hở."
 - *Kiểm thử viên (Tester):* cần vai trò và điểm tựa rõ ràng cho chất lượng spec↔test.
@@ -55,7 +55,7 @@ HBC xử lý:
 
 > ℹ️ *Công cụ cho vai tester hiện ở mức nền và đang hoàn thiện.*
 
-### 🅒 Theo thời gian — con người thay được, hệ thống không gãy
+### Dài hạn — tài liệu đủ để người mới tiếp quản, không phụ thuộc người cũ
 
 - *Nhà tài trợ dự án (Sponsor):* "Tôi muốn một thứ vẫn còn hiểu được sau khi người tạo ra nó đã đi."
 - *Quản lý dự án (PM):* "Con người thay được, hệ thống không gãy."
@@ -72,7 +72,7 @@ HBC xử lý:
 - **Dành cho:** team làm theo incremental + TDD — BA, Architect, QA, Developer, Tester.
 - **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
 
-> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. "Waterfall" là **mô hình triển khai**, không phải kiến trúc HBC — ở đây nó chỉ là kỷ luật **bên trong một feature** (thiết kế trước, duyệt từng mốc). Chi tiết: [HBC có thực sự là waterfall thuần?](docs/vi/explanation/why-incremental-tdd.md#hbc-có-thực-sự-là-waterfall-thuần-không)*
+> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. Chi tiết: [Vì sao Incremental + TDD](docs/vi/explanation/why-incremental-tdd.md)*
 
 > 📖 Lần đầu nghe "deliverable / phase gate / traceability"? → [Glossary khái niệm](docs/vi/reference/concept-glossary.md).
 

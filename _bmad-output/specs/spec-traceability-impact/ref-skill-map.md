@@ -1,6 +1,6 @@
-# Ref → Owning-Skill Map & Waterfall Order
+# Ref → Owning-Skill Map & Fixed Phase Order
 
-Companion của `SPEC.md`. Là tri thức tĩnh nhỏ thay thế cho `dependency-graph.yaml` cũ: capability `impact` cần biết (a) cột matrix nào → owning-skill nào, và (b) thứ tự waterfall cố định để xếp cascade (CAP-4). Không còn DAG, không topological sort.
+Companion của `SPEC.md`. Là tri thức tĩnh nhỏ thay thế cho `dependency-graph.yaml` cũ: capability `impact` cần biết (a) cột matrix nào → owning-skill nào, và (b) thứ tự phase cố định để xếp cascade (CAP-4). Không còn DAG, không topological sort.
 
 ## Cột matrix → owning-skill
 
@@ -25,7 +25,7 @@ Companion của `SPEC.md`. Là tri thức tĩnh nhỏ thay thế cho `dependency
 | D-12 coding-standards | hbc-create-coding-standards | reverse-text-scan (advisory) |
 | D-06 business-flow | hbc-create-business-flow-diagram | theo REQ (qua D-26) |
 
-## Thứ tự waterfall cố định (thay topological sort)
+## Thứ tự phase cố định (thay topological sort)
 
 Cascade cho một REQ đi theo đúng chuỗi phase lifecycle, bỏ qua phần đã done:
 
