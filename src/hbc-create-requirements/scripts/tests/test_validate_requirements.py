@@ -265,6 +265,86 @@ def test_multisegment_feature_code_recognized():
     assert not [i for i in result["issues"] if i["type"] == "REQ_ID_MISSING"]
 
 
+_BROWNFIELD_BASE = """\
+---
+document_id: D-02
+title: "Test"
+---
+
+# Test
+
+## 1. Tổng quan dự án
+System for orders.
+
+## 2. Phạm vi
+In scope: order. Out of scope: payment.
+
+## 3. Vai trò người dùng
+| Role | Description | Key Requirements |
+|------|-------------|-----------------|
+| Admin | admin | Order |
+
+## 4. Yêu cầu chức năng
+
+{FR}
+
+## 5. Yêu cầu phi chức năng
+| NFR ID | Requirement | Measurable Criteria |
+|--------|-------------|-------------------|
+| NFR-001 | Response | < 2 seconds |
+
+## 6. Ràng buộc và giả định
+PostgreSQL 15.
+"""
+
+_FR_GROUNDED = """| REQ ID | Category | Requirement | Change Type | Existing System Ref | Priority | User Role | Acceptance Criteria |
+|--------|----------|-------------|-------------|---------------------|----------|-----------|-------------------|
+| REQ-001 | Auth | THE SYSTEM SHALL login | NEW | | High | Admin | ok |
+| REQ-002 | Order | THE SYSTEM SHALL apply discount | CHANGE | flow:order-create | High | Admin | ok |
+
+#### Change Spec — REQ-002
+- AS-IS: order created without discount
+- TO-BE: order created with discount applied
+- Invariants: total >= 0
+- Out-of-scope: payment flow
+"""
+
+_FR_UNGROUNDED = """| REQ ID | Category | Requirement | Change Type | Existing System Ref | Priority | User Role | Acceptance Criteria |
+|--------|----------|-------------|-------------|---------------------|----------|-----------|-------------------|
+| REQ-001 | Auth | THE SYSTEM SHALL login | NEW | | High | Admin | ok |
+| REQ-002 | Order | THE SYSTEM SHALL apply discount | CHANGE | | High | Admin | ok |
+"""
+
+
+def test_brownfield_ungrounded_change_flagged():
+    # A CHANGE REQ with no Existing System Ref and no Change Spec must fail loudly
+    # under --brownfield (the vague-ask-not-reconciled case).
+    doc = _BROWNFIELD_BASE.format(FR=_FR_UNGROUNDED)
+    result, code = run_script(doc, ["--brownfield"])
+    types = {i["type"] for i in result["issues"]}
+    assert "BROWNFIELD_NO_EXISTING_REF" in types
+    assert "BROWNFIELD_NO_CHANGE_SPEC" in types
+    assert result["valid"] is False
+    assert code == 1
+
+
+def test_brownfield_grounded_change_ok():
+    doc = _BROWNFIELD_BASE.format(FR=_FR_GROUNDED)
+    result, code = run_script(doc, ["--brownfield"])
+    assert not [i for i in result["issues"] if i["type"].startswith("BROWNFIELD_")]
+    assert result["valid"] is True
+    assert code == 0
+
+
+def test_greenfield_skips_brownfield_checks():
+    # Without --brownfield, the grounding checks must NOT run even if the table has
+    # an ungrounded CHANGE row (greenfield path stays frictionless).
+    doc = _BROWNFIELD_BASE.format(FR=_FR_UNGROUNDED)
+    result, code = run_script(doc)
+    assert not [i for i in result["issues"] if i["type"].startswith("BROWNFIELD_")]
+    assert result["valid"] is True
+
+
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -314,6 +394,9 @@ if __name__ == "__main__":
         test_nfr_namespaced_missing_criteria,
         test_nfr_four_column_empty_criteria_flagged,
         test_multisegment_feature_code_recognized,
+        test_brownfield_ungrounded_change_flagged,
+        test_brownfield_grounded_change_ok,
+        test_greenfield_skips_brownfield_checks,
         test_missing_document,
         test_output_to_file,
         test_no_req_ids,

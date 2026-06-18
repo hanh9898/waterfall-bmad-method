@@ -60,6 +60,16 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 - **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria.
 - **Constraints and assumptions** — technical, business, legal constraints.
 
+### Brownfield grounding (only when `project_context` exists)
+
+If Stage 1a's scan returned a `project_context` path, the project is **brownfield** — a vague customer ask must be reconciled against the **existing system** before it becomes a requirement, otherwise D-02 drifts into greenfield wishful thinking. For each functional ask, run a short **gap-analysis probe**:
+
+1. **Load the AS-IS picture.** Read `project-context.md` (existing modules / features / entities / endpoints) — the primary source. If a `D-06` business flow with an AS-IS section already exists, use it to enrich. (Do not force D-06 to come first.)
+2. **Probe each ask** against AS-IS: which existing **feature / flow / entity** does it touch? Is it **NEW** (no AS-IS), **CHANGE** (alters existing behavior), or **REMOVE**? What is the current behavior (AS-IS) vs the target (TO-BE)? What invariants must hold? What is explicitly out-of-scope (not changing)?
+3. **Emit a delta requirement.** Fill the D-02 **Change Type** + **Existing System Ref** columns. For every **CHANGE / REMOVE** REQ, add a `Change Spec — <REQ>` block (AS-IS → TO-BE · invariants · out-of-scope). `NEW` REQs need no Change Spec.
+
+Probe vague asks into testable EARS: paraphrase, ask for a concrete example, surface hidden assumptions — don't accept a general statement that names no existing-system anchor. Greenfield (no `project_context`): skip this sub-step entirely.
+
 At each area boundary, soft-gate: _"Anything else on [area], or move to [next]?"_ Silently capture glossary-worthy terms and business-flow processes mentioned during Discovery — surface them in Stage 5 handoff.
 
 **Compaction flush:** Write discovered requirements to decision log at end of Stage 2 — actor list, REQ count, scope boundaries. This survives compaction.
@@ -85,10 +95,12 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 Run deterministic validator, then LLM judgment checks:
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/D-02-{feature}.md" --project-root {project-root} --vague-terms "{workflow.vague_terms}"
+python3 {workflow.validation_script} "{workflow.output_dir}/D-02-{feature}.md" --project-root {project-root} --vague-terms "{workflow.vague_terms}" [--brownfield]
 ```
 
-Script checks: REQ IDs unique and sequential, no vague terms (configurable word list), all required sections present, no empty sections. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable (Python not installed), fall back to LLM-only validation and note the limitation in the decision log.
+Pass `--brownfield` when Stage 1a's scan found a `project_context` — it makes the grounding checks **blocking**: every CHANGE/REMOVE REQ must carry an `Existing System Ref` and a `Change Spec` block (else `BROWNFIELD_NO_EXISTING_REF` / `BROWNFIELD_NO_CHANGE_SPEC` / `BROWNFIELD_NO_CHANGE_TYPE`). Omit it for greenfield — the checks don't run.
+
+Script checks: REQ IDs unique and sequential, no vague terms (configurable word list), all required sections present, no empty sections; with `--brownfield`, also the grounding above. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable (Python not installed), fall back to LLM-only validation and note the limitation in the decision log.
 
 **LLM judgment checks:**
 - Requirements are testable and unambiguous.
