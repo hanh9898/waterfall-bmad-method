@@ -20,7 +20,7 @@ persistent_facts = [
 # Migration engine. Deterministic move / re-prefix / matrix-rebuild / backup live here.
 # Override to use a custom engine with the same CLI (dry-run default, --apply, --feature,
 # --reprefix, --json, --timestamp, --force).
-migrate_script = "{project-root}/_bmad/scripts/migrate-to-feature-layout.py"
+migrate_script = "{skill-root}/scripts/migrate-to-feature-layout.py"
 
 # Output root migrated IN PLACE (no `feature` namespacing — engine rewrites _bmad-output).
 out_dir = "{output_folder}"

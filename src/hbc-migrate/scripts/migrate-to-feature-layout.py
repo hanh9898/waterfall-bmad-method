@@ -36,8 +36,8 @@ With --json, emits a machine-readable plan to stdout (always computed in dry-run
 NOTE: this is for CONSUMER projects upgrading from HBC v1. This repo itself has no
 legacy D-02 to migrate, so it ships unused here.
 
-Usage:
-    python _bmad/scripts/migrate-to-feature-layout.py [--out _bmad-output]
+Usage (engine ships with the skill; the skill invokes it via {skill-root}/scripts):
+    python .claude/skills/hbc-migrate/scripts/migrate-to-feature-layout.py [--out _bmad-output]
         [--feature default] [--apply] [--reprefix] [--json]
         [--force] [--timestamp <ts>]
 """

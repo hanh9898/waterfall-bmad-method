@@ -11,7 +11,7 @@ Convert a project that ran **HBC v1** (flat output: `_bmad-output/{planning-arti
 
 **Args:** `plan` (default — dry-run preview, writes nothing), `apply` (execute). Optional: `feature=<slug>`, `--apply`, `--force`, `-H` / `--headless`.
 
-Orchestrated engine: `{project-root}/_bmad/scripts/migrate-to-feature-layout.py` (dry-run default, `--apply`, `--feature`, `--reprefix`, `--json`, `--timestamp`, `--force`). Determinism (move/re-prefix/rebuild matrix/backup) lives in the script; judgment (which feature? shared or per-feature? split multi-feature?) lives in the skill.
+Orchestrated engine: `{skill-root}/scripts/migrate-to-feature-layout.py` (dry-run default, `--apply`, `--feature`, `--reprefix`, `--json`, `--timestamp`, `--force`). Determinism (move/re-prefix/rebuild matrix/backup) lives in the script; judgment (which feature? shared or per-feature? split multi-feature?) lives in the skill.
 
 ## Conventions
 

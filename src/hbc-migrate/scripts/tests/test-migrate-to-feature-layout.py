@@ -4,7 +4,7 @@
 # ///
 """Tests for migrate-to-feature-layout.py.
 
-Run: PYTHONUTF8=1 python _bmad/scripts/tests/test-migrate-to-feature-layout.py
+Run: PYTHONUTF8=1 python src/hbc-migrate/scripts/tests/test-migrate-to-feature-layout.py
 Covers: dry-run plan JSON, shared-vs-per-feature routing, REQ reprefix (TC untouched),
 8-col matrix rebuild, idempotency (already-v2 → nothing to migrate), backup + dirty guard.
 """
