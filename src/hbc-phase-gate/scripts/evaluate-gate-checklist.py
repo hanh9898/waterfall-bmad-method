@@ -143,7 +143,14 @@ def evaluate_content(
             files_checked.append(fpath)
             try:
                 content = Path(fpath).read_text(encoding="utf-8")
-                found = re.findall(criteria, content)
+                try:
+                    found = re.findall(criteria, content)
+                except re.error:
+                    # criteria came from a gate-checklist cell and is not a
+                    # valid regex (e.g. an escaped markdown pipe like
+                    # "P2-03 \|..."). Degrade to a literal substring search so
+                    # one malformed criterion can't crash the whole evaluator.
+                    found = [criteria] if criteria in content else []
                 if found:
                     for m in found[:3]:
                         for line_num, line in enumerate(content.splitlines(), 1):
