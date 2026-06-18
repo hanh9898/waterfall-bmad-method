@@ -77,6 +77,8 @@ Verify "the change propagated correctly" — **2 main pillars + 1 auxiliary**:
 
 Not-propagated-correctly → push back to SUGGEST (no clear, no rollback). The re-suggest loop is capped at `{workflow.impact_reconcile_max_retries}` → block + notify a human. Finally run `hbc-traceability update` for the related REQ so the matrix reflects the cascade.
 
+> **When the cascade touched D-27 (added/renumbered TCs), re-pull `test_ref` (DF-9).** A cascade that grows D-27 is the exact source of matrix `test_ref` drift — the Update Phase 2 re-run above re-extracts TC↔REQ from the current D-27. Confirm it landed with `trace-report.py --matrix … --d27 …`: `d27_sync.in_sync` must be true (no `test_ref_drift`) before the cascade is considered reconciled. This is corroboration for pillar 3, not a substitute for the semantic review.
+
 **Completeness check (close the cascade):** run
 ```
 python3 scripts/impact.py complete --state {output_folder}/traceability/.cascade-state.json --changed "<REQ-xxx,...>"

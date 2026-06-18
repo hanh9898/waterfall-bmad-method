@@ -223,6 +223,94 @@ def test_iter_tc_blocks_levels_and_case():
     assert hv.iter_tc_blocks("```\n### TC-1\n```\n") == []         # fenced example
 
 
+# --- tc_req_map / matrix_req_tc_map / test_ref_drift (DF-9 matrix staleness) ---
+
+D27_DOC = """\
+## Test Cases
+
+### TC-001 — login happy path
+**REQ ID:** REQ-AUTH-001
+**Facets:** read
+
+### TC-002 — lockout
+**REQ ID:** REQ-AUTH-002, REQ-AUTH-001
+**Facets:** write
+
+#### TC-044 — new cascade case
+**REQ ID:** REQ-AUTH-002
+
+```
+### TC-999 — fenced example, not real
+**REQ ID:** REQ-AUTH-009
+```
+"""
+
+
+def test_tc_req_map_inverts_tc_to_req():
+    m = hv.tc_req_map(D27_DOC)
+    assert m["REQ-AUTH-001"] == {"TC-001", "TC-002"}  # TC-002 names two REQs
+    assert m["REQ-AUTH-002"] == {"TC-002", "TC-044"}  # 4-hash heading counted
+    assert "REQ-AUTH-009" not in m  # fenced example never leaks
+
+
+def test_matrix_req_tc_map_header_aware():
+    matrix = """\
+| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |
+|---|---|---|---|---|---|---|---|
+| auth | REQ-AUTH-001 | S-1 | D-06§1 | auth.py | TC-001, TC-002 | PASS | 2026-06-19 |
+| auth | REQ-AUTH-002 | S-2 | D-06§2 | lock.py |  | | |
+"""
+    m = hv.matrix_req_tc_map(matrix)
+    assert m["REQ-AUTH-001"] == {"TC-001", "TC-002"}
+    assert m["REQ-AUTH-002"] == set()  # present row, empty test_ref
+
+
+def test_matrix_req_tc_map_legacy_7col_no_feature():
+    # No leading `feature` column — columns must be located by name, not position.
+    matrix = """\
+| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |
+|---|---|---|---|---|---|---|
+| REQ-001 | S-1 | d | c | TC-005 | PASS | t |
+"""
+    assert hv.matrix_req_tc_map(matrix) == {"REQ-001": {"TC-005"}}
+
+
+def test_test_ref_drift_reports_missing_and_stale():
+    matrix = """\
+| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |
+|---|---|---|---|---|---|---|---|
+| auth | REQ-AUTH-001 | S-1 | d | c | TC-001 | PASS | t |
+| auth | REQ-AUTH-002 | S-2 | d | c | TC-002, TC-077 | PASS | t |
+"""
+    drift = hv.test_ref_drift(D27_DOC, matrix)
+    # REQ-AUTH-001: D-27 binds {TC-001, TC-002}; matrix has only TC-001 → missing TC-002
+    assert drift["REQ-AUTH-001"] == {"missing": ["TC-002"], "stale": []}
+    # REQ-AUTH-002: D-27 binds {TC-002, TC-044}; matrix has {TC-002, TC-077}
+    #   → missing TC-044 (in D-27, not in matrix), stale TC-077 (in matrix, not in D-27)
+    assert drift["REQ-AUTH-002"] == {"missing": ["TC-044"], "stale": ["TC-077"]}
+
+
+def test_test_ref_drift_empty_when_in_sync():
+    matrix = """\
+| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |
+|---|---|---|---|---|---|---|---|
+| auth | REQ-AUTH-001 | S-1 | d | c | TC-001, TC-002 | PASS | t |
+| auth | REQ-AUTH-002 | S-2 | d | c | TC-002, TC-044 | PASS | t |
+"""
+    assert hv.test_ref_drift(D27_DOC, matrix) == {}
+
+
+def test_test_ref_drift_ignores_req_absent_from_matrix():
+    # A REQ bound in D-27 but with NO matrix row is NOT test_ref drift (it's the
+    # matrix↔D-02 check's missing_from_matrix). Drift only covers REQs in the matrix.
+    matrix = """\
+| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |
+|---|---|---|---|---|---|---|---|
+| auth | REQ-AUTH-001 | S-1 | d | c | TC-001, TC-002 | PASS | t |
+"""
+    assert hv.test_ref_drift(D27_DOC, matrix) == {}  # REQ-AUTH-002 absent → ignored
+
+
 if __name__ == "__main__":
     import pytest
 

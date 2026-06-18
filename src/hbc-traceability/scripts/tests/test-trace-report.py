@@ -268,3 +268,54 @@ def test_d02_sync_empty_table_does_not_fall_back_to_prose():
         assert "REQ-999" not in sync["missing_from_matrix"], sync
         assert sync["missing_from_matrix"] == []         # nothing defined yet
         assert "REQ-001" in sync["orphan_in_matrix"]     # matrix-only
+
+
+# --- DF-9: matrix test_ref ↔ D-27 drift ---
+
+_D27 = (
+    "## Test Cases\n\n"
+    "### TC-001 — login\n**REQ ID:** REQ-AUTH-001\n\n"
+    "### TC-002 — lockout\n**REQ ID:** REQ-AUTH-002\n\n"
+    "#### TC-044 — cascade-added case\n**REQ ID:** REQ-AUTH-002\n"
+)
+
+
+def test_d27_sync_detects_stale_matrix():
+    # The DF-9 failure mode: D-27 grew TC-044 for REQ-AUTH-002, but the matrix
+    # test_ref still lists only TC-002 → trace-report --d27 must flag the drift.
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|---|---|---|---|---|---|---|---|\n"
+            "| auth | REQ-AUTH-001 | | D | c | TC-001 | | |\n"
+            "| auth | REQ-AUTH-002 | | D | c | TC-002 | | |\n",
+            encoding="utf-8",
+        )
+        d27 = Path(tmp) / "D-27.md"
+        d27.write_text(_D27, encoding="utf-8")
+        data, code = run(str(matrix), ["--d27", str(d27), "--strict"])
+        sync = data["d27_sync"]
+        assert sync["in_sync"] is False, sync
+        assert sync["test_ref_drift"]["REQ-AUTH-002"]["missing"] == ["TC-044"]
+        assert "REQ-AUTH-002" in sync["drifted_reqs"]
+        assert code == 1  # strict → drift fails
+
+
+def test_d27_sync_in_sync_passes_strict():
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|---|---|---|---|---|---|---|---|\n"
+            "| auth | REQ-AUTH-001 | | D | c | TC-001 | | |\n"
+            "| auth | REQ-AUTH-002 | | D | c | TC-002, TC-044 | | |\n",
+            encoding="utf-8",
+        )
+        d27 = Path(tmp) / "D-27.md"
+        d27.write_text(_D27, encoding="utf-8")
+        data, code = run(str(matrix), ["--d27", str(d27), "--strict"])
+        assert data["d27_sync"]["in_sync"] is True, data["d27_sync"]
+        assert code == 0

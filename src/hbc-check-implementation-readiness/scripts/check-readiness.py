@@ -51,6 +51,7 @@ try:
         iter_tc_blocks,
         parse_table,
         tc_field,
+        test_ref_drift,
         verdict,
     )
 except ModuleNotFoundError:
@@ -200,6 +201,17 @@ def check_readiness(
         if missing:
             gaps = True
 
+    # Matrix test_ref ↔ D-27 drift (DF-9): when both are present, the matrix's
+    # test_ref must reflect D-27's current TC↔REQ binding. Catches a matrix gone
+    # stale after D-27 grew (e.g. a cascade added TCs) but test_ref was never
+    # back-filled — readiness must NOT close Phase 2 on a matrix that silently
+    # under-reports test coverage. {req: {missing, stale}}; gates ready.
+    if d27_text is not None and matrix_text is not None:
+        drift = test_ref_drift(d27_text, matrix_text)
+        if drift:
+            result["test_ref_drift"] = drift
+            gaps = True
+
     result["orphan_reqs_downstream"] = sorted(all_orphans)
     if all_orphans:
         gaps = True
@@ -215,6 +227,7 @@ def check_readiness(
             "D-02 REQ ids mentioned in the test plan D-26 (if given)",
             "no orphan REQ referenced but undefined",
             "matrix ↔ D-02 sync (if matrix given)",
+            "matrix test_ref ↔ D-27 TC binding drift (if both given)",
         ],
         not_checked=[
             "whether each TC actually EXERCISES its REQ adequately (LLM review)",
