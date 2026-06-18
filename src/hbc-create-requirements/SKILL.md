@@ -49,7 +49,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 
 1c. **Intent gate.** Confirm user wants to create/update requirements (not a different artifact). If wrong skill: product brief → `hbc-create-prd`, brainstorming → `hbc-brainstorming`, project setup → `hbc-project-setup`.
 
-1d. **Brainstorming suggestion** (interactive only, Fresh state only). If the domain is complex or the user seems uncertain about scope, suggest: _"This domain looks complex — want to run `bmad-brainstorming` first to explore the problem space and surface hidden requirements? The brainstorming output will feed directly into D-02."_ If declined or in headless mode, proceed to Stage 2. If accepted, pause this workflow — the user runs brainstorming in a separate context window, then resumes here (the resume-state in 1a will detect the partial D-02). If a brainstorming session file exists in `{output_folder}/brainstorming/`, note it as an available source in the source inventory.
+1d. **Brainstorming suggestion** (interactive, Fresh only). If the domain is complex / scope unclear, suggest running `bmad-brainstorming` first (its output feeds D-02); if accepted, pause — the user runs it separately and resumes (1a detects the partial D-02). A file in `{output_folder}/brainstorming/` counts as a source.
 
 ## Stage 2: Discovery
 
@@ -85,7 +85,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 
 **Compaction flush:** Write generated REQ count, scope summary, and version to decision log.
 
-**Parallel-lens menu:** After generation, offer `[A]` Advanced Elicitation (deeper probing on weak areas) / `[P]` Party Mode (multi-agent lateral review) / `[C]` Continue. If subagents unavailable, apply lens perspective directly.
+**Parallel-lens menu:** After generation, **render this menu as a numbered list and STOP for the user's choice** — do not auto-continue to Stage 4: `[A]` Advanced Elicitation (deeper probing on weak areas) · `[P]` Party Mode (multi-agent lateral review) · `[C]` Continue. Interactive only — in headless, or if the lens subagents are genuinely unavailable, skip the menu and apply the lens perspective directly (and say so).
 
 ## Stage 4: Validation
 
