@@ -116,7 +116,7 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 
 ## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. **Brownfield:** also apply the rubric's *AS-IS reconciliation* facet — every CHANGE/REMOVE REQ must name the existing feature/flow/entity it changes and carry a *meaningful* Change Spec (AS-IS → TO-BE), not a vacuous one; list any ungrounded REQ in `openFacets`. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 5: Save and Handoff
 

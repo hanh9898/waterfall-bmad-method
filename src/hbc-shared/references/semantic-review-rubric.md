@@ -28,6 +28,23 @@ The axes are extensible — add an axis if the domain needs it. **Seam lesson:**
 admin/write facet out of REST, that facet must still have an owner in D-26/D-27 (test) or be
 explicitly recorded as intentional out-of-scope — never let it drop silently.
 
+## Brownfield: AS-IS reconciliation (D-02, brownfield only)
+
+When the project is brownfield (a `project-context.md` exists), a requirement that
+touches the existing system must be **reconciled against AS-IS** — a general customer
+ask is not a requirement until it states *what it changes*. For each functional REQ:
+
+- **Change type named** — `NEW` / `CHANGE` / `REMOVE`.
+- **Existing-system anchor** — every `CHANGE`/`REMOVE` REQ names the existing
+  feature/flow/entity it touches (not a code path).
+- **Delta is meaningful** — the Change Spec's `AS-IS → TO-BE · invariants · out-of-scope`
+  describes a real, specific change, not a restatement of the ask.
+
+An ungrounded or vacuous `CHANGE`/`REMOVE` REQ is an **open facet** → record it in
+`openFacets` (e.g. `"REQ-RPB-005 CHANGE: AS-IS not reconciled / Change Spec vacuous"`).
+The deterministic counterpart is `validate-requirements.py --brownfield` (presence of
+ref + Change Spec); this rubric is the semantic check that the delta is *meaningful*.
+
 ## Output: frontmatter `semanticReview` (A-3)
 
 ```yaml
