@@ -65,7 +65,7 @@ except ModuleNotFoundError:
 # id grammar used by validate-requirements.py and trace-report.py. A bare
 # `REQ-\d{3,}` here silently matched ZERO feature-namespaced ids → every gap
 # reported green (the false-green seam bug).
-REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 FUNCTIONAL_LABELS = ("Functional Requirements", "Yêu cầu chức năng")
 
 

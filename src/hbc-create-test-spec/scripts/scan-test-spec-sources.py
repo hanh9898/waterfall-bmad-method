@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from pathlib import Path
 
 # Namespace-aware (v2): matches REQ-<FEAT>-NNN / REQ-SHARED-NNN + legacy REQ-NNN.
-REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 TC_COUNT_RE = re.compile(r"tc_count:\s*['\"]?(\d+)['\"]?")
 
 

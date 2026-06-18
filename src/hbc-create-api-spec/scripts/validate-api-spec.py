@@ -49,7 +49,7 @@ REQUIRED_SECTIONS = [
 # Namespace-aware (v2): full-match (non-capturing) so findall returns whole ids
 # like REQ-AUTH-001 / REQ-SHARED-002 / legacy REQ-001. A capturing `REQ-(\d{3,})`
 # returned only the digits and silently skipped every REQ-<FEAT>-NNN id.
-REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+REQ_ID_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 
 HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 

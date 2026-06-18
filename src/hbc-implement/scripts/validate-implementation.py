@@ -69,7 +69,7 @@ def check_done_tasks(tasks_text: str) -> list[dict]:
     return issues
 
 
-_REQ_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
+_REQ_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
 
 
 def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:

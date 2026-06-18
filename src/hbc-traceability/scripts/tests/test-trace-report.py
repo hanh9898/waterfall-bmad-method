@@ -201,6 +201,30 @@ def test_d02_sync_in_sync_and_strict():
         assert code == 0
 
 
+def test_d02_sync_multisegment_feature_code():
+    # Regression: a multi-segment feature code (slug `resource-plan-billable` →
+    # REQ-RESOURCE-PLAN-BILLABLE-001) must be recognized. The old single-segment
+    # regex read 0 REQs from D-02 and flagged every matrix row as a false orphan.
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|---------|--------|----------|------------|----------|----------|-------------|----------|\n"
+            "| resource-plan-billable | REQ-RESOURCE-PLAN-BILLABLE-001 | | E | c | TC-1 | | |\n"
+        )
+        d02 = Path(tmp) / "D-02.md"
+        d02.write_text(
+            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n"
+            "| REQ-RESOURCE-PLAN-BILLABLE-001 | Billable plan |\n"
+        )
+        data, code = run(str(matrix), ["--d02", str(d02), "--strict"])
+        sync = data["d02_sync"]
+        assert sync["in_sync"] is True, sync
+        assert sync["d02_req_count"] == 1, sync
+        assert code == 0
+
+
 def test_d02_sync_ignores_prose_req_refs():
     # F2: a REQ mentioned only in D-02 prose must NOT count as a defined requirement
     with tempfile.TemporaryDirectory() as tmp:
