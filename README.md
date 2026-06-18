@@ -19,11 +19,53 @@ Workflow phát triển cho HBLAB theo mô hình **giao tăng dần từng tính 
 
 ## HBC giải quyết gì cho bạn?
 
-Khi làm dự án có hợp đồng và nghiệm thu, ba nỗi đau quen thuộc:
+> **Phần mềm sống lâu hơn những người làm ra nó.** Nỗi đau lớn nhất không phải *làm sai* — mà là **sự đúng đắn bị neo vào trí nhớ của một người, để rồi mất theo khi người ấy đi.**
 
-- **Yêu cầu mơ hồ** → làm xong mới phát hiện hiểu sai, sửa lại tốn kém.
-- **Test sót so với yêu cầu** → bug lọt, không biết đã phủ đủ chưa.
-- **Khó chứng minh "đã làm đủ"** khi bàn giao hoặc audit.
+Yêu cầu, thiết kế, code, test và tài liệu thường mỗi thứ sống một nơi, và chỉ *con người* ghì chúng lại với nhau. Khi đội ngũ thay đổi, khi yêu cầu chuyển qua nhiều tay, mỗi lần bàn giao là một lần một mảnh sự thật rơi rụng — và thường không ai biết đã mất gì cho tới khi va phải. Tóm lại, ba nỗi đau quen thuộc:
+
+- **Sự thật ở đầu vào dễ lệch** — yêu cầu mơ hồ, không ai chất vấn, phát hiện sai thì đã muộn.
+- **Sự thật giữa spec–code–test bị hở** — code và test rời nhau, gap không ai chịu trách nhiệm.
+- **Sự thật mất theo người** — đội ngũ đổi, tài liệu rời rạc, dự án khó migrate/onboard.
+
+HBC không áp đặt một quy trình. Nó sinh ra từ **nỗi đau thật của từng vai**, và **neo sự đúng đắn vào quy trình thay vì vào trí nhớ**:
+
+### 🅐 Ở đầu vào — yêu cầu đủ nghĩa, lệch bị bắt sớm
+
+- *Người nêu yêu cầu (Project Owner):* "Tôi không sợ làm sai. Tôi sợ làm sai mà cả tháng sau mới biết."
+- *BA (Business Analyst):* "Tôi cần hỏi *đúng* và tìm lại *được*."
+
+HBC xử lý:
+
+- `REQ` (`hbc-create-requirements`) → **D-02** với ID `REQ-<FEAT>-NNN` chuẩn **EARS**, validator bắt thuật ngữ mơ hồ + rà đa góc nhìn (parallel-lens).
+- `GLO` (`hbc-create-glossary`) → **D-03** thống nhất ngôn ngữ.
+- Khâu discovery chất vấn dựa trên yêu cầu gốc **và** source code/business hiện có *(khi có sẵn)*.
+- `PG` (`hbc-phase-gate`) + `IR` (`hbc-check-implementation-readiness`) → chặn lệch ngay tại ranh giới phase.
+- Spec **lưu theo từng feature** (`_bmad-output/features/<feature>/`), không gom một đống.
+
+### 🅑 Giữa spec–code–test — mỗi vai gác một cổng
+
+- *Lập trình viên (Developer):* "Một người gác hai cổng thì cổng nào cũng hở."
+- *Kiểm thử viên (Tester):* cần vai trò và điểm tựa rõ ràng cho chất lượng spec↔test.
+
+HBC xử lý:
+
+- TDD qua `IM` (`hbc-implement`, RED→GREEN) + `TB` (`hbc-task-breakdown`) → **test là hợp đồng**, dev chỉ lo *code đúng test*.
+- `TP` / `TS` (`hbc-create-test-plan` / `hbc-create-test-spec`, **D-26/D-27**) → tester sở hữu cổng *test↔spec*.
+- Ma trận truy vết `TRI`/`TRU`/`TRA` (`hbc-traceability`) → **mọi REQ đều có thiết kế, code và test**, gap luôn lộ ra.
+
+> ℹ️ *Công cụ cho vai tester hiện ở mức nền và đang hoàn thiện.*
+
+### 🅒 Theo thời gian — con người thay được, hệ thống không gãy
+
+- *Nhà tài trợ dự án (Sponsor):* "Tôi muốn một thứ vẫn còn hiểu được sau khi người tạo ra nó đã đi."
+- *Quản lý dự án (PM):* "Con người thay được, hệ thống không gãy."
+
+HBC xử lý:
+
+- Tài liệu **readable**: `BFD` (`hbc-create-business-flow-diagram`, **D-06**) + `ERD` (`hbc-create-er-diagram`, **D-19**) + `API` (`hbc-create-api-spec`, **D-21**).
+- **Deliverable dùng chung** từ `PI` (`hbc-project-init`): `CS` (`hbc-create-coding-standards`, **D-12**) + **D-03** glossary.
+- **5 agent điều phối** (`hbc-agent-ba/architect/qa/dev/tester`) → một workflow chung thay cho mỗi vai một tool.
+- `SYNC` (`hbc-traceability`) → cập nhật lan truyền khi tài liệu nguồn đổi.
 
 **HBC** là module mở rộng cho [BMad Method](https://github.com/bmad-code-org/BMAD-METHOD), áp dụng quy trình **incremental + TDD** theo **từng tính năng**. Quy trình có **4 phase** cho mỗi tính năng, nhưng **bắt buộc chạy Phase 0 (`PI`) trước tiên** — đúng một lần cho cả dự án (hoặc chạy lại để update trực tiếp) — để tạo các **deliverable dùng chung** (shared: chuẩn code D-12, glossary D-03, baseline ERD/API). Sau Phase 0, **5 agent điều phối** dẫn mỗi feature qua 4 phase, mỗi phase sinh **deliverable** rõ ràng, có **phase gate** chặn lỗi ở mỗi ranh giới, và **traceability** nối mọi yêu cầu tới tận test. Cuối dự án bạn trả lời được ngay: *"Yêu cầu nào cũng có thiết kế, code và test."*
 
