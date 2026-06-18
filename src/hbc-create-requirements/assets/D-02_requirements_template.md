@@ -4,6 +4,7 @@ document_id: D-02
 feature: "{feature}"
 title: "{project_name} — Requirements Specification — feature: {feature}"
 version: "1.0"
+project_kind: "greenfield"   # set to "brownfield" when grounded against an existing system (enables --brownfield checks)
 status: draft
 stepsCompleted: []
 lastStep: ""

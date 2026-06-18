@@ -26,12 +26,16 @@ output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-requirements.py"
 
-# Vague terms to flag during validation. Resolver joins array with commas for CLI.
-# Override to adjust for your domain. Arrays use BMad append-merge.
-# Scan script for source discovery.
+# Scan script for source discovery (state, sources, project-context, brownfield catalog).
 scan_script = "scripts/scan-sources.py"
 
+# Vague terms to flag during validation (source of truth; the resolver joins this
+# array with commas for --vague-terms). Override for your domain; arrays append-merge.
 vague_terms = ["fast", "easy", "user-friendly", "simple", "good", "nice", "efficient", "appropriate", "adequate", "reasonable"]
+
+# NOTE: the brownfield change-type vocabulary (NEW / CHANGE / REMOVE) is intentionally
+# NOT customizable — it is a fixed controlled vocabulary (like EARS keywords) keyed on
+# by the template, validator, gate and rubric. Changing it means forking those together.
 
 # hbc-traceability impact integration (REQ-005, BR-13). When true, after a successful `update`
 # auto-invoke hbc-traceability impact to cascade downstream. Default false (no behavior change).

@@ -60,19 +60,13 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 - **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria.
 - **Constraints and assumptions** — technical, business, legal constraints.
 
-### Brownfield grounding (only when `project_context` exists)
+### Brownfield grounding (only when the scan reports `brownfield: true`)
 
-If Stage 1a's scan returned a `project_context` path, the project is **brownfield** — a vague customer ask must be reconciled against the **existing system** before it becomes a requirement, otherwise D-02 drifts into greenfield wishful thinking. For each functional ask, run a short **gap-analysis probe**:
-
-1. **Load the AS-IS picture.** Start from the scan's `existing_system` catalog (baseline `entities` + `endpoints` — a ready pick-list of anchors). Read `project-context.md` for tech stack / implementation rules. If a `D-06` business flow with an AS-IS section already exists, use it to enrich flows. (Do not force D-06 to come first.) If the catalog is thin (its `hint` is set), tell the user the AS-IS is sparse and suggest running `bmad-document-project` / creating the Phase 0 baselines first.
-2. **Probe each ask** against AS-IS: which existing **feature / flow / entity** does it touch? Is it **NEW** (no AS-IS), **CHANGE** (alters existing behavior), or **REMOVE**? What is the current behavior (AS-IS) vs the target (TO-BE)? What invariants must hold? What is explicitly out-of-scope (not changing)?
-3. **Emit a delta requirement.** Fill the D-02 **Change Type** + **Existing System Ref** columns. For every **CHANGE / REMOVE** REQ, add a `Change Spec — <REQ>` block (AS-IS → TO-BE · invariants · out-of-scope). `NEW` REQs need no Change Spec.
-
-Probe vague asks into testable EARS: paraphrase, ask for a concrete example, surface hidden assumptions — don't accept a general statement that names no existing-system anchor. Greenfield (no `project_context`): skip this sub-step entirely.
+Reconcile every ask against the existing system before it becomes a requirement: classify `NEW`/`CHANGE`/`REMOVE`, anchor to an existing feature/flow/entity from the scan's `existing_system` catalog, and add a Change Spec (AS-IS → TO-BE) for each `CHANGE`/`REMOVE`. Full procedure — catalog use, compaction flush, headless behavior — in [`references/brownfield-grounding.md`](references/brownfield-grounding.md). Greenfield: skip.
 
 At each area boundary, soft-gate: _"Anything else on [area], or move to [next]?"_ Silently capture glossary-worthy terms and business-flow processes mentioned during Discovery — surface them in Stage 5 handoff.
 
-**Compaction flush:** Write discovered requirements to decision log at end of Stage 2 — actor list, REQ count, scope boundaries. This survives compaction.
+**Compaction flush:** Write discovered requirements to decision log at end of Stage 2 — actor list, REQ count, scope boundaries. **Brownfield:** also one line per probed ask (`<REQ> · <Change Type> · <Existing System Ref>`) so the change classifications survive a mid-probe compaction (see `references/brownfield-grounding.md`).
 
 ## Stage 3: Generation
 
@@ -81,6 +75,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 - Scope section explicitly lists out-of-scope items.
 - Non-functional requirements have measurable criteria (not "fast" but "< 2s response time").
 - Cross-reference user roles with requirements that mention them.
+- **Brownfield** (scan `brownfield: true`): use the template's **extended functional table** (`Change Type` + `Existing System Ref`) — NOT the greenfield one — and add a `Change Spec` block per `CHANGE`/`REMOVE` REQ. Greenfield: use the base table.
 
 **Revision history:** If Update mode, detect scope-of-change:
 - Same requirements, polish only → append note, no version bump.
@@ -98,7 +93,7 @@ Run deterministic validator, then LLM judgment checks:
 python3 {workflow.validation_script} "{workflow.output_dir}/D-02-{feature}.md" --project-root {project-root} --vague-terms "{workflow.vague_terms}" [--brownfield]
 ```
 
-Pass `--brownfield` when Stage 1a's scan found a `project_context` — it makes the grounding checks **blocking**: every CHANGE/REMOVE REQ must carry an `Existing System Ref` and a `Change Spec` block (else `BROWNFIELD_NO_EXISTING_REF` / `BROWNFIELD_NO_CHANGE_SPEC` / `BROWNFIELD_NO_CHANGE_TYPE`). Omit it for greenfield — the checks don't run.
+Pass `--brownfield` when the scan reports `brownfield: true` — it makes the grounding checks blocking (every CHANGE/REMOVE REQ needs an `Existing System Ref` + `Change Spec`; the script's `BROWNFIELD_*` messages name any gap). Omit for greenfield. (A D-02 with `project_kind: brownfield` in frontmatter enables them even without the flag.)
 
 Script checks: REQ IDs unique and sequential, no vague terms (configurable word list), all required sections present, no empty sections; with `--brownfield`, also the grounding above. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable (Python not installed), fall back to LLM-only validation and note the limitation in the decision log.
 
@@ -116,11 +111,11 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 
 ## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. **Brownfield:** also apply the rubric's *AS-IS reconciliation* facet — every CHANGE/REMOVE REQ must name the existing feature/flow/entity it changes and carry a *meaningful* Change Spec (AS-IS → TO-BE), not a vacuous one; list any ungrounded REQ in `openFacets`. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. **Brownfield:** also apply the rubric's *AS-IS reconciliation* facet — judge whether each CHANGE/REMOVE Change Spec is a *meaningful* AS-IS → TO-BE delta (the deterministic check already proved it's present); list any vacuous/ungrounded REQ in `openFacets`. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 5: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
+Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`; set `project_kind: brownfield` when the scan was brownfield, so the grounding checks stay enforced on later validate-only runs). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
 
 Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
 

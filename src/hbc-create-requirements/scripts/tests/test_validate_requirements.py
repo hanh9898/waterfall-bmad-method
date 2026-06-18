@@ -316,6 +316,53 @@ _FR_UNGROUNDED = """| REQ ID | Category | Requirement | Change Type | Existing S
 """
 
 
+_FR_GROUNDED_VI = """| Mã yêu cầu | Nhóm | Yêu cầu | Loại thay đổi | Tham chiếu hệ thống hiện có | Ưu tiên | Vai trò | Tiêu chí |
+|---|---|---|---|---|---|---|---|
+| REQ-001 | Auth | THE SYSTEM SHALL login | NEW | | Cao | Admin | ok |
+| REQ-002 | Order | THE SYSTEM SHALL apply discount | CHANGE | flow:order-create | Cao | Admin | ok |
+
+#### Change Spec — REQ-002
+- AS-IS: order created without discount
+- TO-BE: order created with discount applied
+- Invariants: total >= 0
+- Out-of-scope: payment flow
+"""
+
+_FR_NO_CHANGE_TYPE = """| REQ ID | Category | Requirement | Priority | User Role | Acceptance Criteria |
+|---|---|---|---|---|---|
+| REQ-001 | Auth | THE SYSTEM SHALL login | High | Admin | ok |
+| REQ-002 | Order | THE SYSTEM SHALL apply discount | High | Admin | ok |
+"""
+
+
+def test_brownfield_bilingual_headers_grounded_ok():
+    # Theme A: Vietnamese column headers (Loại thay đổi / Tham chiếu hệ thống) must
+    # be recognized — an English-only matcher false-failed the rendered (VI) doc.
+    doc = _BROWNFIELD_BASE.format(FR=_FR_GROUNDED_VI)
+    result, code = run_script(doc, ["--brownfield"])
+    assert not [i for i in result["issues"] if i["type"].startswith("BROWNFIELD_")], result["issues"]
+    assert result["valid"] is True
+
+
+def test_brownfield_greenfield_table_flagged_no_change_type():
+    # Theme G / enh-02: brownfield project but D-02 used the greenfield table (no
+    # Change Type column) — the headline misuse the feature exists to catch.
+    doc = _BROWNFIELD_BASE.format(FR=_FR_NO_CHANGE_TYPE)
+    result, code = run_script(doc, ["--brownfield"])
+    assert any(i["type"] == "BROWNFIELD_NO_CHANGE_TYPE" for i in result["issues"])
+    assert result["valid"] is False
+
+
+def test_brownfield_frontmatter_marker_enables_checks_without_flag():
+    # Theme D: project_kind: brownfield in frontmatter enables grounding even when
+    # --brownfield is NOT passed (self-describing on validate-only runs).
+    doc = _BROWNFIELD_BASE.format(FR=_FR_UNGROUNDED).replace(
+        'title: "Test"', 'title: "Test"\nproject_kind: "brownfield"')
+    result, code = run_script(doc)  # no --brownfield flag
+    assert any(i["type"] == "BROWNFIELD_NO_EXISTING_REF" for i in result["issues"])
+    assert result["valid"] is False
+
+
 def test_brownfield_ungrounded_change_flagged():
     # A CHANGE REQ with no Existing System Ref and no Change Spec must fail loudly
     # under --brownfield (the vague-ask-not-reconciled case).
@@ -397,6 +444,9 @@ if __name__ == "__main__":
         test_brownfield_ungrounded_change_flagged,
         test_brownfield_grounded_change_ok,
         test_greenfield_skips_brownfield_checks,
+        test_brownfield_bilingual_headers_grounded_ok,
+        test_brownfield_greenfield_table_flagged_no_change_type,
+        test_brownfield_frontmatter_marker_enables_checks_without_flag,
         test_missing_document,
         test_output_to_file,
         test_no_req_ids,

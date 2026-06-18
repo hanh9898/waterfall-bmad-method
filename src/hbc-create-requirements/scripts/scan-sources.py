@@ -48,26 +48,63 @@ def parse_frontmatter(path: Path) -> dict:
     return fields
 
 
-_ERD_ENTITY_RE = re.compile(r"^\s*(\w+)\s*\{", re.MULTILINE)
+_HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 _MERMAID_ER_RE = re.compile(r"```mermaid.*?erDiagram(.*?)```", re.DOTALL)
-_ENDPOINT_ROW_RE = re.compile(
-    r"\|[^|\n]*\|\s*(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*\|\s*([^|\n]+?)\s*\|",
-    re.IGNORECASE,
+_ERD_ENTITY_RE = re.compile(r"^\s*(\w+)\s*\{", re.MULTILINE)
+# Mermaid ER relationship line — compositional cardinality (left + line + right),
+# so an entity that appears ONLY in a relationship (no attribute block) is captured.
+_ER_REL_RE = re.compile(
+    r"^\s*(\w+)\s+(?:\|o|\|\||\}o|\}\|)(?:--|\.\.)(?:o\||\|\||o\{|\|\{)\s+(\w+)\s*:",
+    re.MULTILINE,
 )
+_DETAIL_METHOD_RE = re.compile(r"\*\*Method:\*\*\s*`?([A-Za-z]+)", re.IGNORECASE)
+_DETAIL_URL_RE = re.compile(r"\*\*URL:\*\*\s*`?(\S+)", re.IGNORECASE)
+
+
+def _extract_entities(text: str) -> list[str]:
+    ents: list[str] = []
+    for block in _MERMAID_ER_RE.findall(text):
+        ents.extend(e for e in _ERD_ENTITY_RE.findall(block) if e != "erDiagram")
+        for left, right in _ER_REL_RE.findall(block):
+            ents.extend([left, right])
+    return ents
+
+
+def _extract_endpoints(text: str) -> list[str]:
+    """Endpoints from a D-21: the Endpoint List table (header-keyed, so column order
+    / a missing leading column doesn't matter; English or configured-language headers)
+    plus any `**Method:** / **URL:**` detail blocks."""
+    out: list[str] = []
+    pipe = [ln.strip() for ln in text.splitlines() if ln.strip().startswith("|")]
+    for hi, line in enumerate(pipe):
+        cells = [c.strip().lower() for c in line.strip("|").split("|")]
+        mi = next((i for i, c in enumerate(cells) if "method" in c or "phương thức" in c), None)
+        ei = next((i for i, c in enumerate(cells) if "endpoint" in c or "url" in c or "đường dẫn" in c), None)
+        if mi is None or ei is None:
+            continue
+        for dl in pipe[hi + 1:]:
+            dc = [c.strip() for c in dl.strip("|").split("|")]
+            if set("".join(dc)) <= {"-", " ", ":"}:
+                continue
+            if mi < len(dc) and ei < len(dc):
+                method, url = dc[mi].upper(), dc[ei]
+                if method in _HTTP_METHODS and url:
+                    out.append(f"{method} {url}")
+        break  # only the first method+endpoint table is the Endpoint List
+    methods = _DETAIL_METHOD_RE.findall(text)
+    urls = _DETAIL_URL_RE.findall(text)
+    for m, u in zip(methods, urls):
+        if m.upper() in _HTTP_METHODS:
+            out.append(f"{m.upper()} {u}")
+    return out
 
 
 def existing_system_catalog(root: Path, hbc_output: Path, project_context: str | None) -> dict:
-    """Best-effort AS-IS anchor catalog for brownfield grounding.
-
-    Pulls deterministic anchors from the baseline artifacts Phase 0 (brownfield)
-    produces: entities from the shared D-19 ER diagram, endpoints from the shared
-    D-21 API spec. project-context.md is listed as a source (its canonical shape is
-    tech-stack + rules, not an entity inventory, so nothing is parsed from it).
-    Business flows are NOT parsed here — the BA reads D-06 AS-IS directly.
-
-    Empty lists when the artifacts are absent; the caller surfaces a hint to run
-    bmad-document-project / create the Phase 0 baselines so AS-IS is not thin.
-    """
+    """Best-effort AS-IS anchor catalog for brownfield grounding: entities from the
+    shared D-19 ER diagram, endpoints from the shared D-21 API spec, plus the AS-IS
+    source docs present. The `hint` names which baseline is missing so the caller can
+    route to the right Phase 0 doc (a thin catalog misleads the BA into thinking an
+    existing entity/endpoint is absent)."""
     sources: list[str] = []
     entities: list[str] = []
     endpoints: list[str] = []
@@ -81,26 +118,19 @@ def existing_system_catalog(root: Path, hbc_output: Path, project_context: str |
         for d19 in sorted(erd_dir.glob("D-19-*.md")):
             sources.append(str(d19.relative_to(root)))
             try:
-                text = d19.read_text(encoding="utf-8")
+                entities.extend(_extract_entities(d19.read_text(encoding="utf-8")))
             except (OSError, UnicodeDecodeError):
                 continue
-            for block in _MERMAID_ER_RE.findall(text):
-                entities.extend(e for e in _ERD_ENTITY_RE.findall(block) if e != "erDiagram")
 
     api_dir = shared / "api"
     if api_dir.exists():
         for d21 in sorted(api_dir.glob("D-21-*.md")):
             sources.append(str(d21.relative_to(root)))
             try:
-                text = d21.read_text(encoding="utf-8")
+                endpoints.extend(_extract_endpoints(d21.read_text(encoding="utf-8")))
             except (OSError, UnicodeDecodeError):
                 continue
-            for method, url in _ENDPOINT_ROW_RE.findall(text):
-                token = f"{method.upper()} {url.strip()}"
-                if url.strip() and not url.strip().lower().startswith("endpoint"):
-                    endpoints.append(token)
 
-    # de-dup, keep order
     entities = list(dict.fromkeys(entities))
     endpoints = list(dict.fromkeys(endpoints))
 
@@ -109,11 +139,18 @@ def existing_system_catalog(root: Path, hbc_output: Path, project_context: str |
         "entities": entities,
         "endpoints": endpoints,
     }
-    if not entities and not endpoints:
+    # Per-baseline hint: fire when EITHER anchor set is empty (not only when both),
+    # so a project with D-19 but no D-21 (a common mid-Phase-0 state) is still told.
+    missing = []
+    if not entities:
+        missing.append("entities (shared D-19 ERD)")
+    if not endpoints:
+        missing.append("endpoints (shared D-21 API)")
+    if missing:
         catalog["hint"] = (
-            "AS-IS anchors are thin. For a brownfield project, run bmad-document-project "
-            "and create the Phase 0 baselines (shared D-19 ERD / D-21 API) so requirements "
-            "can be grounded against existing entities/endpoints."
+            "AS-IS anchors sparse — missing " + "; ".join(missing) + ". Run "
+            "bmad-document-project / create the Phase 0 baseline(s) so requirements "
+            "can be grounded against the existing system."
         )
     return catalog
 

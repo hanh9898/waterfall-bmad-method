@@ -152,6 +152,38 @@ def test_brownfield_catalog_from_baselines():
         assert "hint" not in cat
 
 
+def test_brownfield_catalog_captures_relationship_only_entity():
+    # det-01: an entity that appears ONLY in a relationship line (no {} block) must
+    # still be captured, else the pick-list is incomplete.
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "project-context.md").write_text("# PC\n## Technology Stack & Versions\nX\n", encoding="utf-8")
+        erd = root / "_bmad-output" / "shared" / "erd"
+        erd.mkdir(parents=True)
+        (erd / "D-19-baseline.md").write_text(
+            "# D-19\n\n```mermaid\nerDiagram\n  Customer { int id PK }\n"
+            "  Customer ||--o{ Order : places\n```\n", encoding="utf-8")
+        out = run_scan(tmp)
+        ents = out["existing_system"]["entities"]
+        assert "Customer" in ents and "Order" in ents  # Order has no {} block
+
+
+def test_brownfield_hint_per_baseline_when_one_missing():
+    # det-05: D-19 present but no D-21 → still hint (names the missing endpoints baseline).
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "project-context.md").write_text("# PC\n## Technology Stack & Versions\nX\n", encoding="utf-8")
+        erd = root / "_bmad-output" / "shared" / "erd"
+        erd.mkdir(parents=True)
+        (erd / "D-19-baseline.md").write_text(
+            "# D-19\n\n```mermaid\nerDiagram\n  Customer { int id PK }\n```\n", encoding="utf-8")
+        out = run_scan(tmp)
+        cat = out["existing_system"]
+        assert cat["entities"] == ["Customer"]
+        assert cat["endpoints"] == []
+        assert "hint" in cat and "endpoint" in cat["hint"].lower()
+
+
 def test_brownfield_thin_catalog_sets_hint():
     # Brownfield but no baseline D-19/D-21 → empty catalog + hint to run document-project.
     with tempfile.TemporaryDirectory() as tmp:

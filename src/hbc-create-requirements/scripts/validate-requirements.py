@@ -53,6 +53,9 @@ REQUIRED_SECTIONS = [
     ("Constraints", "Ràng buộc"),
 ]
 
+# Fallback ONLY for direct/no-arg runs. The authoritative list is customize.toml
+# `vague_terms`, which the SKILL always passes via --vague-terms; keep this in sync
+# (or treat customize.toml as source of truth) when editing.
 DEFAULT_VAGUE_TERMS = [
     "fast", "easy", "user-friendly", "simple", "good",
     "nice", "efficient", "appropriate", "adequate", "reasonable",
@@ -320,9 +323,12 @@ def check_brownfield_grounding(content: str) -> list[dict]:
                 return i
         return None
 
-    ci_ct = col("change type")
-    ci_ref = col("existing system ref", "existing ref")
-    ci_req = col("req id", "req")
+    # Headers matched bilingually (English canonical + configured-language alias),
+    # consistent with find_section/check_required_sections — the doc renders in
+    # {document_output_language}. The change-type VALUES (NEW/CHANGE/REMOVE) stay
+    # English keywords (like EARS), so only the headers need aliases.
+    ci_ct = col("change type", "loại thay đổi")
+    ci_ref = col("existing system ref", "existing ref", "hệ thống hiện có", "tham chiếu hệ thống")
 
     if ci_ct is None:
         issues.append({
@@ -335,7 +341,10 @@ def check_brownfield_grounding(content: str) -> list[dict]:
 
     spec_reqs = set(CHANGE_SPEC_RE.findall(content))
     for cells in rows:
-        req = cells[ci_req].strip() if (ci_req is not None and ci_req < len(cells)) else ""
+        # REQ id located by anchored pattern, not a header-name guess — robust to
+        # column reordering and language ('req' as a header substring also matched
+        # 'Requirement (EARS)'). One id per row.
+        req = next((c.strip() for c in cells if REQ_ID_PATTERN.match(c.strip())), "")
         ct = cells[ci_ct].strip().lower() if ci_ct < len(cells) else ""
         ref = cells[ci_ref].strip() if (ci_ref is not None and ci_ref < len(cells)) else ""
         if ct in ("change", "remove"):
@@ -362,6 +371,12 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
              brownfield: bool = False) -> dict:
     """Run all structural validation checks and return the honest verdict."""
     content = Path(doc_path).read_text(encoding="utf-8")
+
+    # Self-describing brownfield: a D-02 marked `project_kind: brownfield` in
+    # frontmatter enables the grounding checks even without the flag — so a later
+    # validate-only run that skips the source scan still enforces them.
+    if not brownfield and re.search(r"(?m)^project_kind:\s*[\"']?brownfield", content):
+        brownfield = True
 
     if vague_terms_override:
         vague_terms = [t.strip() for t in vague_terms_override.split(",") if t.strip()]
