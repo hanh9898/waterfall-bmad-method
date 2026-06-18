@@ -12,6 +12,10 @@ For each functional ask, classify and anchor it against AS-IS:
 
 If the catalog's `hint` is set, the AS-IS is sparse — tell the user and suggest running `bmad-document-project` / creating the Phase 0 baselines (shared D-19/D-21) before eliciting.
 
+**NFRs too.** A non-functional requirement that tightens an existing guarantee is also a CHANGE: state the **current baseline → target** in its measurable criteria (e.g. "p95 5s → < 2s"), not just the target. (NFRs have no Change Type column; the grounding lives in the criteria text.)
+
+**TO-BE vs Acceptance Criteria.** In a Change Spec, *TO-BE* is the target **behavior** (what changes); the D-02 *Acceptance Criteria* column is **how to verify** it (the testable condition). They are not duplicates — TO-BE describes the delta, AC proves it.
+
 ## Output
 
 Use the D-02 **brownfield table variant** (adds `Change Type` + `Existing System Ref`) and add the Change Spec blocks. The deterministic backstop is `validate-requirements.py --brownfield`; the meaningful-vs-vacuous judgment is the Stage 4b semantic facet.

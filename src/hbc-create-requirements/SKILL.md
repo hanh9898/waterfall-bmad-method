@@ -38,10 +38,12 @@ Resolve customization, load persistent facts and config per standard BMad activa
 python3 {workflow.scan_script} --project-root {project-root}
 ```
 
-Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmatter), `source_docs` list, `project_context` path, a `brownfield` flag (true when a `project_context` was found), and — when brownfield — an `existing_system` catalog (`sources_present`, `entities` from baseline D-19, `endpoints` from baseline D-21, plus a `hint` when thin). Use this to route:
+Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmatter), `source_docs` list, `project_context` path, a `brownfield` flag (true when a `project_context` was found), `brownfield_suspected` (existing code markers but no project-context.md), and — when brownfield — an `existing_system` catalog (`sources_present`, `entities` from baseline D-19, `endpoints` from baseline D-21, plus a `hint` when thin). Use this to route:
    - **Fresh** — no prior D-02. Proceed to Stage 2.
    - **Resume** — partial D-02 found (`lastStep` < `complete`). Show summary, offer resume or restart.
    - **Update** — complete D-02 exists. Show what to update, load as baseline.
+
+**Brownfield-suspected nudge:** if `brownfield_suspected` (existing code, no project-context.md), ask whether the feature touches the existing system; if yes, recommend `hbc-project-init` [PI] / `bmad-document-project` first so requirements ground against AS-IS — don't go greenfield-style on an existing system. Headless: log it and proceed.
 
 1b. **Source inventory.** Supplement scan results with user-provided inputs (interview notes, descriptions). In headless mode, sources are required via `--sources` arg.
 
@@ -57,7 +59,7 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 - **Scope** — explicit in-scope and out-of-scope boundaries. Out-of-scope is as important as in-scope.
 - **User roles** — actors who interact with the system. Each gets a name and description.
 - **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (sequential within the feature; e.g. `REQ-{feature}-001`), written per **EARS** (English keyword + content in the document output language: `WHEN … THE SYSTEM SHALL …`). Requirements shared across features → `REQ-SHARED-NNN` (defined in the shared D-02, only **referenced** here). Must be specific and testable.
-- **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria.
+- **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria. Brownfield: when an NFR tightens an existing guarantee, state the **current baseline → target** (e.g. "p95 5s → < 2s"), not just the target — so the change is grounded like a functional CHANGE.
 - **Constraints and assumptions** — technical, business, legal constraints.
 
 ### Brownfield grounding (only when the scan reports `brownfield: true`)
@@ -103,11 +105,11 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 - Non-functional requirements have measurable criteria.
 - Scope boundaries are clear.
 
+In `update`, the loaded D-02 carries `project_kind: brownfield`, so grounding re-runs on revised requirements too (a new CHANGE/REMOVE REQ meets the same bar).
+
 **Fix logic:** Interactive — collaborative fix loop. Headless — apply auto-fixable issues, return `blocked` for non-fixable.
 
 **Compaction flush:** Write validation results summary (issue counts, auto-fixed items) to decision log.
-
-**Parallel-lens menu:** `[A]` Advanced (challenge vagueness, find gaps) / `[P]` Party Mode (multi-reviewer perspective) / `[C]` Continue.
 
 ## Stage 4b: Semantic Review (Layer 2)
 
@@ -117,7 +119,7 @@ Structural validation only proves structure. Before saving, run the **semantic r
 
 Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`; set `project_kind: brownfield` when the scan was brownfield, so the grounding checks stay enforced on later validate-only runs). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
 
-Suggest next steps: _"D-02 complete. Recommended: create D-03 Glossary (`hbc-create-glossary` [GLO]), then D-06 Business Flow (`hbc-create-business-flow-diagram` [BFD]). After all three, run Phase 1 gate (`hbc-phase-gate` [PG])."_
+Suggest next steps, seeding [GLO]/[BFD] with the terms/flows captured during Discovery: _"D-02 complete. Next: D-03 Glossary [GLO] (seed terms: {captured terms}) → D-06 Business Flow [BFD] (seed flows: {captured processes}) → Phase 1 gate [PG]."_
 
 Headless: return JSON per `references/headless-contract.md`.
 

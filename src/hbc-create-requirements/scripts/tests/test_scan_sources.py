@@ -117,6 +117,29 @@ def test_no_frontmatter_d02():
         assert out["existing_d02"]["lastStep"] == ""
 
 
+def test_brownfield_suspected_existing_code_no_context():
+    # Existing code marker (package.json) but no project-context.md → suspected
+    # brownfield (the skill nudges to run Phase 0), NOT silently greenfield.
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "package.json").write_text('{"name":"x"}', encoding="utf-8")
+        out = run_scan(tmp)
+        assert out["brownfield"] is False
+        assert out["brownfield_suspected"] is True
+        assert "existing_system" not in out  # no AS-IS catalog without project-context
+
+
+def test_brownfield_suspected_false_when_empty_or_context_present():
+    with tempfile.TemporaryDirectory() as tmp:
+        assert run_scan(tmp)["brownfield_suspected"] is False  # empty dir
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "package.json").write_text("{}", encoding="utf-8")
+        (root / "project-context.md").write_text("# PC\n", encoding="utf-8")
+        out = run_scan(tmp)
+        assert out["brownfield"] is True
+        assert out["brownfield_suspected"] is False  # already brownfield, not "suspected"
+
+
 def test_greenfield_no_existing_system():
     # No project-context.md → not brownfield → no existing_system catalog.
     with tempfile.TemporaryDirectory() as tmp:

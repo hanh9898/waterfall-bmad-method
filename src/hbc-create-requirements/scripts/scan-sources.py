@@ -155,6 +155,21 @@ def existing_system_catalog(root: Path, hbc_output: Path, project_context: str |
     return catalog
 
 
+# Markers of an existing codebase (dependency manifests). Their presence WITHOUT a
+# project-context.md suggests a brownfield project that skipped Phase 0 — surfaced as
+# `brownfield_suspected` so the skill can nudge, rather than silently going greenfield.
+_CODE_MARKERS = (
+    "package.json", "pyproject.toml", "setup.py", "go.mod", "pom.xml", "build.gradle",
+    "composer.json", "Gemfile", "requirements.txt", "Cargo.toml", "pubspec.yaml",
+)
+
+
+def _has_existing_code(root: Path) -> bool:
+    if any((root / m).exists() for m in _CODE_MARKERS):
+        return True
+    return any(root.glob("*.csproj")) or any(root.glob("*.sln"))
+
+
 def scan_sources(project_root: str) -> dict:
     """Scan project for source documents and D-02 state."""
     root = Path(project_root)
@@ -208,6 +223,10 @@ def scan_sources(project_root: str) -> dict:
         "source_count": len(source_docs),
         "project_context": project_context,
         "brownfield": bool(project_context),
+        # Existing codebase but no project-context.md → likely a brownfield project
+        # that skipped Phase 0; the skill nudges to run [PI]/document-project instead
+        # of grounding-less greenfield. Only meaningful when not already brownfield.
+        "brownfield_suspected": (not project_context) and _has_existing_code(root),
     }
     # Brownfield (project-context.md present) → attach the AS-IS anchor catalog the
     # BA uses to ground requirements. Greenfield: omitted (no AS-IS to reconcile).
