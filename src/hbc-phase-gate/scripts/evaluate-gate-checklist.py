@@ -275,6 +275,17 @@ def evaluate_review(pattern: str, project_root: str, variables: dict) -> dict:
     }
 
 
+_DELIVERABLE_RE = re.compile(r"D-\d+")
+
+
+def _item_deliverable(item: dict) -> str | None:
+    """The D-NN deliverable a checklist item targets, parsed from its
+    artifact_pattern (e.g. '.../D-19*' -> 'D-19'). Used to honor per-feature N/A
+    waivers; None if the pattern names no deliverable."""
+    m = _DELIVERABLE_RE.search(item.get("artifact_pattern") or "")
+    return m.group(0) if m else None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Evaluate FILE, CONTENT, METRIC, and REVIEW gate checklist items."
@@ -288,6 +299,14 @@ def main():
         help="Variable substitution as key=value (repeatable)",
     )
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
+    parser.add_argument(
+        "--na",
+        default="",
+        help="Comma-separated deliverables N/A for this feature (e.g. D-19,D-21). "
+             "Their checklist items report NA (waived, not FAIL). Resolve from D-02 "
+             "frontmatter `na_deliverables`. Only applicable-if deliverables (D-19/D-21) "
+             "should be waived — D-02/D-03/D-06 apply to every feature.",
+    )
     parser.add_argument("--verbose", action="store_true", help="Verbose diagnostics")
     args = parser.parse_args()
 
@@ -295,6 +314,8 @@ def main():
     for v in args.var:
         key, _, value = v.partition("=")
         variables[key] = value
+
+    na_deliverables = {d.strip().upper() for d in args.na.split(",") if d.strip()}
 
     if args.verbose:
         print(f"Checklist: {args.checklist}", file=sys.stderr)
@@ -313,6 +334,17 @@ def main():
             "type": item["type"],
             "required": item["required"],
         }
+
+        # Per-feature N/A waiver (DF-STRUCT): a deliverable declared N/A for this
+        # feature passes as NA (not FAIL), so a feature that genuinely has no data
+        # model / API isn't blocked by D-19/D-21. The judgment of WHAT is N/A + the
+        # rationale lives in D-02 frontmatter `na_deliverables`; the gate only honors it.
+        deliverable = _item_deliverable(item)
+        if deliverable and deliverable.upper() in na_deliverables:
+            result["status"] = "NA"
+            result["evidence"] = f"Waived: {deliverable} declared not-applicable for this feature (--na)."
+            results.append(result)
+            continue
 
         if item["type"] == "FILE":
             eval_result = evaluate_file(

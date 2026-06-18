@@ -345,3 +345,46 @@ def test_entry_gate_passes_when_prior_report_present(tmp_path):
     assert data["summary"]["entry_gate_failed"] == 0
     assert data["summary"]["overall_status"] == "PASSED"
     assert code == 0
+
+
+# --- DF-STRUCT: per-feature N/A deliverable waiver ---
+
+_NA_CHECKLIST = """\
+# Phase 2 — Gate Checklist
+
+| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
+|---------|-------------|------|----------|------------------|----------|-----------------|
+| P2-01 | D-19 ERD exists | FILE | yes | {output_folder}/shared/erd/D-19* | | hbc-create-er-diagram |
+| P2-04 | D-12 exists | FILE | yes | {output_folder}/shared/coding-standards/D-12* | | |
+"""
+
+
+def test_item_deliverable_extracts_code():
+    assert mod._item_deliverable({"artifact_pattern": "{output_folder}/shared/erd/D-19*"}) == "D-19"
+    assert mod._item_deliverable({"artifact_pattern": "{output_folder}/features/{feature}/planning-artifacts/D-02-*"}) == "D-02"
+    assert mod._item_deliverable({"artifact_pattern": ""}) is None
+
+
+def _run_engine_na(checklist_path, project_root, na, *vars_):
+    import json
+    import subprocess
+    import sys
+    cmd = [sys.executable,
+           os.path.join(os.path.dirname(__file__), "..", "evaluate-gate-checklist.py"),
+           checklist_path, "--project-root", project_root, "--na", na]
+    for v in vars_:
+        cmd += ["--var", v]
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    return json.loads(r.stdout), r.returncode
+
+
+def test_na_waiver_marks_item_na_not_fail(tmp_path):
+    # DF-STRUCT: --na D-19 on a feature with no D-19 → P2-01 is NA (waived), not a
+    # required FAIL. D-12 (not waived, missing) still FAILs.
+    path = str(tmp_path / "phase-2-gate-checklist.md")
+    _write(path, _NA_CHECKLIST)
+    data, code = _run_engine_na(path, str(tmp_path), "D-19", f"output_folder={tmp_path}")
+    by = {r["item_id"]: r for r in data["results"]}
+    assert by["P2-01"]["status"] == "NA"
+    assert by["P2-04"]["status"] == "FAIL"  # not waived
+    assert data["summary"]["required_failed"] == 1  # only D-12, not the waived D-19

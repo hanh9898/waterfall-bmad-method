@@ -48,10 +48,12 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 3. **Evaluate deterministic items** via script, then judge QUALITY items:
 
    ```
-   python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var output_folder={output_folder} --var feature={feature} --var gate_mode={gate_mode} --var coverage_threshold={coverage_threshold} --var project_name={project_name}
+   python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var output_folder={output_folder} --var feature={feature} --var gate_mode={gate_mode} --var coverage_threshold={coverage_threshold} --var project_name={project_name} [--na D-19,D-21]
    ```
 
    `--var output_folder` **and `--var feature`** are REQUIRED — checklist artifact patterns use `{output_folder}/features/{feature}/...` (and `shared/...`), so both must be passed to resolve the per-feature path correctly. `--var gate_mode` lets the script flag entry-gate failures (see step 4).
+
+   **N/A deliverables (per-feature waiver).** Read the feature's D-02 frontmatter `na_deliverables` (e.g. `[D-19, D-21]`) and pass them as `--na D-19,D-21`. Items targeting a waived deliverable report **`NA`** (waived, not FAIL) — so a feature that genuinely has no data model / API isn't blocked by D-19/D-21. **Only the applicable-if deliverables D-19 / D-21 may be waived** — D-02, D-03, D-06 apply to every feature (each has requirements / terms / a behavior flow) and must NOT be in `na_deliverables`. The D-02 frontmatter should carry a one-line rationale per waiver.
 
    The script evaluates `[FILE]`, `[CONTENT]`, and `[METRIC]` items deterministically and returns JSON with per-item status + evidence. `[QUALITY]` items return as `PENDING_LLM`. Script exit code 1 means required items failed deterministically — this is a partial signal, not the final gate verdict (QUALITY items still need evaluation). If the script fails entirely, evaluate manually following the same JSON schema: `{"summary": {...}, "results": [{"item_id", "status", "evidence", ...}]}` per item.
 
@@ -64,7 +66,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 ### Report and Present
 
 4. **Determine overall status:**
-   - **PASSED** — every `required=yes` item is PASS.
+   - **PASSED** — every `required=yes` item is PASS or `NA` (waived per `na_deliverables`).
    - **FAILED** — any `required=yes` item is FAIL.
    - If `{gate_mode}=lenient` and FAILED → downgrade to **WARNING**, **EXCEPT** when the failure includes an entry-gate item (a `required` CONTENT check that a PRIOR phase gate PASSED — the script reports these as `summary.entry_gate_failed > 0`). Entry-gate failures keep the gate **FAILED** even in lenient mode: a phase must never proceed on top of a failed predecessor gate (B2).
 

@@ -5,6 +5,10 @@ feature: "{feature}"
 title: "{project_name} — Requirements Specification — feature: {feature}"
 version: "1.0"
 project_kind: "greenfield"   # set to "brownfield" when grounded against an existing system (enables --brownfield checks)
+# na_deliverables — OPTIONAL: deliverables not-applicable to THIS feature; the phase
+# gate waives them (reports NA, not FAIL). ONLY D-19 (no data-model change) / D-21 (no
+# API) — D-02/D-03/D-06 always apply. Give a one-line rationale.
+#   na_deliverables: ["D-19"]   # rationale: this feature changes no data model
 status: draft
 stepsCompleted: []
 lastStep: ""
