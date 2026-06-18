@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Scope DUAL + feature (B):** mặc định ghi/đọc baseline `shared/`; truyền `feature=<slug>` để tạo/đọc bản **override per-feature** (path-existence precedence). Resolved in Stage 1·0 below.
+> **Scope DUAL + feature (B):** by default writes/reads the `shared/` baseline; pass `feature=<slug>` to create/read a **per-feature override** (path-existence precedence). Resolved in Stage 1·0 below.
 
 ## Stage 1: Prerequisites
 
@@ -68,9 +68,9 @@ Returns JSON with `state` (fresh/resume/update/skip), `existing_d21` (path + fro
 
 Pre-populate from D-02 requirements and D-19 entities where available. Open with an invitation for the user to share API design decisions. Then identify:
 
-- **API style** — REST hoặc GraphQL. Mặc định auto-detect từ project-context.md; nếu `{workflow.api_style}` được set, dùng giá trị đó làm mặc định.
+- **API style** — REST or GraphQL. Defaults to auto-detect from project-context.md; if `{workflow.api_style}` is set, use that value as the default.
 - **Base configuration** — base URL, API version strategy (path vs header), content type.
-- **Authentication** — strategy (JWT, API key, OAuth2, session), token lifecycle, permission model. Dùng `{workflow.auth_strategy}` làm strategy mặc định khi đã cấu hình.
+- **Authentication** — strategy (JWT, API key, OAuth2, session), token lifecycle, permission model. Use `{workflow.auth_strategy}` as the default strategy when configured.
 - **Endpoints** — derive from D-02 functional requirements. Each endpoint gets: HTTP method, URL pattern, description, linked REQ-xxx IDs.
 - **Request/response schemas** — derive entity shapes from D-19. Define common patterns (pagination, error envelope, list vs detail).
 - **Error handling** — HTTP status codes, error response format, domain-specific error codes.
@@ -120,9 +120,9 @@ Script checks: all endpoints have required fields (method, URL, description), en
 
 **Parallel-lens menu:** `[A]` Advanced (security audit, performance concerns) / `[P]` Party Mode (multi-reviewer) / `[C]` Continue.
 
-## Stage 4b: Semantic Review (Lớp 2)
+## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: when a REQ has an admin/lifecycle/write facet that is deliberately kept out of REST scope, state that explicitly here so downstream D-26/D-27 know to test it elsewhere — do not let the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: when a REQ has an admin/lifecycle/write facet that is deliberately kept out of REST scope, state that explicitly here so downstream D-26/D-27 know to test it elsewhere — do not let the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 5: Save and Handoff
 
@@ -137,5 +137,5 @@ Headless: return JSON per `references/headless-contract.md`.
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest: _"Document updated. Run `hbc-traceability impact` to sync the dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

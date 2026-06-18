@@ -136,13 +136,25 @@ class TestCheckTcIds:
         assert len(no_tc) == 1
 
     def test_duplicate_tc(self):
-        content = "TC-001 first\nTC-001 second\nTC-002 third"
+        # Duplicate detection is over HEADING declarations, not bare mentions —
+        # a real TC legitimately appears in the Summary + Coverage Matrix tables.
+        content = "### TC-001: a\n### TC-001: b\n### TC-002: c\n"
         issues = check_tc_ids(content)
         dups = [i for i in issues if i["type"] == "TC_ID_DUPLICATE"]
         assert len(dups) == 1
 
+    def test_table_mentions_not_duplicates(self):
+        # Bug F2: bare TC mentions in Summary + Coverage Matrix tables (no detail
+        # headings) must NOT be reported as duplicate "heading declarations".
+        content = (
+            "## Test Case Summary\n\n| TC ID | REQ ID |\n|---|---|\n| TC-001 | REQ-001 |\n\n"
+            "## Coverage Matrix\n\n| REQ ID | Test Cases |\n|---|---|\n| REQ-001 | TC-001 |\n"
+        )
+        issues = check_tc_ids(content)
+        assert [i for i in issues if i["type"] == "TC_ID_DUPLICATE"] == []
+
     def test_gap_in_tc_ids(self):
-        content = "TC-001 first\nTC-003 third"
+        content = "### TC-001: first\n### TC-003: third\n"
         issues = check_tc_ids(content)
         gaps = [i for i in issues if i["type"] == "TC_ID_GAP"]
         assert len(gaps) == 1

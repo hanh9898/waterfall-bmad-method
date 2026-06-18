@@ -72,7 +72,7 @@ Before scanning Phase 2 artifacts (after the active feature is resolved), check 
 - If not found or `FAILED` — warn the user: _"Phase 1 gate has not passed. Design work may be premature. Recommend completing Phase 1 with `hbc-agent-ba` first."_ If `gate_mode = lenient` in config, allow the user to continue with a warning.
 
 ### Scan Phase 2 State
-> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+> ℹ️ **Shared** deliverables (D-03/D-12, baseline D-19/D-21) live at `{output_folder}/shared/...` — not per-feature; if a per-feature scan reports them missing, check `shared/`.
 
 
 Run: `python3 {skill-root}/scripts/scan-phase2-state.py {agent.output_path} --feature {feature} --gates-dir {output_folder}/features/{feature}/gates --output-folder {output_folder}`

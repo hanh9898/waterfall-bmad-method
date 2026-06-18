@@ -47,7 +47,11 @@ MERMAID_BLOCK_RE = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
 ENTITY_NAME_RE = re.compile(r"^\s*(\w+)\s*\{", re.MULTILINE)
 RELATIONSHIP_ENTITY_RE = re.compile(
     r"""^\s*(\w+)\s+
-        (?:\|\|--o\{|\}o--\|\||\|\|--\|\||\}o--o\{|\|\|--o\||\|o--\|\||\|o--o\{|\}o--o\||\|o--o\|)\s+
+        # Mermaid ER cardinality (keep in sync with validate-mermaid-er.py):
+        # left-marker (|o || }o }|) + line (-- or ..) + right-marker (o| || o{ |{).
+        # Compositional so one-or-more (}| / |{) and dotted lines are matched too;
+        # an entity that appears only on such a relationship line is captured here.
+        (?:(?:\|o|\|\||\}o|\}\|)(?:--|\.\.)(?:o\||\|\||o\{|\|\{))\s+
         (\w+)\s*:""",
     re.MULTILINE | re.VERBOSE,
 )

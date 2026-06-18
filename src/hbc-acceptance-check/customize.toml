@@ -13,7 +13,7 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# Acceptance report per-feature ({feature} resolved at runtime) — ship 1 feature độc lập.
+# Acceptance report per-feature ({feature} resolved at runtime) — ship one feature independently.
 output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 
 # Validation script.

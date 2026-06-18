@@ -13,9 +13,9 @@ carried through** the design and test documents. This skill reconciles them, so 
 requirement can't silently fall through the cracks between D-02 → D-21/D-26/D-27 →
 matrix. Run it **before closing the Phase 2 gate** (`hbc-phase-gate`).
 
-> Principle: máy lo cấu trúc · người/LLM lo ngữ nghĩa. This skill does the
+> Principle: the machine handles structure · the human/LLM handles semantics. This skill does the
 > deterministic **cross-document structural** reconciliation; semantic adequacy
-> (is each REQ *meaningfully* covered, every facet handled) stays with the Lớp-2
+> (is each REQ *meaningfully* covered, every facet handled) stays with the Layer-2
 > semantic review + the facet rubric (`hbc-shared/references/semantic-review-rubric.md`).
 
 ## Conventions

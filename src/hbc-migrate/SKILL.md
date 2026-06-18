@@ -7,25 +7,25 @@ description: "Migrate (di chuyển output) một dự án HBC v1 (layout flat) s
 
 ## Overview
 
-Chuyển dự án đã chạy **HBC v1** (output flat: `_bmad-output/{planning-artifacts,implementation-artifacts,gates,traceability}/`, id `REQ-NNN`, matrix 7 cột) sang **v2**: per-feature `_bmad-output/features/<feature>/{…}/` + shared `_bmad-output/shared/{coding-standards,glossary,erd,api}/`, id `REQ-<FEAT>-NNN`, matrix 8 cột. Một lần, **destructive** (di chuyển file) → mặc định **dry-run**, chỉ `apply` mới ghi.
+Convert a project that ran **HBC v1** (flat output: `_bmad-output/{planning-artifacts,implementation-artifacts,gates,traceability}/`, id `REQ-NNN`, 7-column matrix) to **v2**: per-feature `_bmad-output/features/<feature>/{…}/` + shared `_bmad-output/shared/{coding-standards,glossary,erd,api}/`, id `REQ-<FEAT>-NNN`, 8-column matrix. A one-time, **destructive** operation (moves files) → defaults to **dry-run**; only `apply` writes.
 
-**Args:** `plan` (default — dry-run preview, không ghi), `apply` (thực thi). Optional: `feature=<slug>`, `--apply`, `--force`, `-H` / `--headless`.
+**Args:** `plan` (default — dry-run preview, writes nothing), `apply` (execute). Optional: `feature=<slug>`, `--apply`, `--force`, `-H` / `--headless`.
 
-Orchestrate engine: `{project-root}/_bmad/scripts/migrate-to-feature-layout.py` (dry-run default, `--apply`, `--feature`, `--reprefix`, `--json`, `--timestamp`, `--force`). Determinism (move/re-prefix/rebuild matrix/backup) sống trong script; phán đoán (feature nào? shared hay per-feature? tách multi-feature?) sống ở skill.
+Orchestrated engine: `{project-root}/_bmad/scripts/migrate-to-feature-layout.py` (dry-run default, `--apply`, `--feature`, `--reprefix`, `--json`, `--timestamp`, `--force`). Determinism (move/re-prefix/rebuild matrix/backup) lives in the script; judgment (which feature? shared or per-feature? split multi-feature?) lives in the skill.
 
 ## Conventions
 
-- Bare paths resolve from the skill root. `{skill-root}` = installed dir. `{project-root}`-prefixed from project. `{skill-name}` = basename. Output viết bằng `{document_output_language}`, giao tiếp bằng `{communication_language}`.
+- Bare paths resolve from the skill root. `{skill-root}` = installed dir. `{project-root}`-prefixed from project. `{skill-name}` = basename. Output written in `{document_output_language}`, communicate in `{communication_language}`.
 
 ## On Activation
 
 Resolve customization, load persistent facts + config per standard BMad activation.
 
-> Không namespacing `feature` ở output — skill **rewrite `_bmad-output/` tại chỗ**. `feature=<slug>` chỉ dùng để gán prefix REQ/TC + route per-feature.
+> No `feature` namespacing on the output — the skill **rewrites `_bmad-output/` in place**. `feature=<slug>` is used only to assign the REQ/TC prefix + route per-feature.
 
 ## Headless Mode
 
-`-H` runs `plan` (default) / `apply` non-interactively. Full I/O contract — args, return schema, blocked reasons: `references/headless-contract.md`. `apply` headless cần `feature=<slug>` + `--apply`; mặc định headless = plan JSON (`--json`). Idempotent.
+`-H` runs `plan` (default) / `apply` non-interactively. Full I/O contract — args, return schema, blocked reasons: `references/headless-contract.md`. Headless `apply` requires `feature=<slug>` + `--apply`; the headless default = plan JSON (`--json`). Idempotent.
 
 Blocked reasons (closed set): `feature_required` · `multi_feature_ambiguous` · `nothing_to_migrate` · `dirty_worktree`.
 
@@ -33,9 +33,9 @@ Blocked reasons (closed set): `feature_required` · `multi_feature_ambiguous` ·
 
 ### Stage 1: Detect & Classify
 
-Chạy engine ở chế độ scan (dry-run, `--json`). Phát hiện layout flat hợp lệ: `planning-artifacts/D-*`, flat `implementation-artifacts/`, `gates/`, `traceability/matrix*` (7 cột), id `REQ-NNN`. Classify mỗi artifact → **shared** vs **per-feature**.
+Run the engine in scan mode (dry-run, `--json`). Detect a valid flat layout: `planning-artifacts/D-*`, flat `implementation-artifacts/`, `gates/`, `traceability/matrix*` (7 columns), id `REQ-NNN`. Classify each artifact → **shared** vs **per-feature**.
 
-**Idempotent:** nếu đã v2 (hoặc không có gì legacy) → report "nothing to migrate" và **dừng** (headless: `blocked: nothing_to_migrate`).
+**Idempotent:** if already v2 (or nothing legacy) → report "nothing to migrate" and **stop** (headless: `blocked: nothing_to_migrate`).
 
 ### Stage 2: Plan (judgment)
 
@@ -43,33 +43,33 @@ Route:
 - **shared/** → D-12 (coding-standards), D-03 (glossary), baseline D-19 (erd), D-21 (api).
 - **features/<feature>/** → D-02, D-06, D-26, D-27, task-breakdown, gates, matrix.
 
-**Resolve feature:** single-project flat docs → hỏi user / dùng `feature=<slug>` (headless thiếu → `blocked: feature_required`). **Multi-feature** flat docs (REQ của nhiều feature trong một D-02) → **cảnh báo** + offer tách: v1 yêu cầu một `--feature` mỗi lần chạy (hoặc tách thủ công); headless không tự suy luận được → `blocked: multi_feature_ambiguous`.
+**Resolve feature:** single-project flat docs → ask the user / use `feature=<slug>` (headless missing → `blocked: feature_required`). **Multi-feature** flat docs (REQs of several features in one D-02) → **warn** + offer to split: v1 requires one `--feature` per run (or a manual split); headless cannot infer it → `blocked: multi_feature_ambiguous`.
 
-Không double-create: nếu `shared/` đã có (PI đã chạy) → giữ nguyên, không ghi đè.
+No double-create: if `shared/` already exists (PI has run) → leave it as is, never overwrite.
 
 ### Stage 3: Dry-run preview (default)
 
-Với action `plan`: gọi engine `--json` (không `--apply`) → in **toàn bộ plan**: từng `src → dst`, bản đồ re-prefix `REQ-NNN → REQ-<FEAT>-NNN` **và** `TC-NNN`, plan rebuild matrix 7→8 cột (chèn cột `feature`). **Không ghi.** User review rồi xác nhận để sang `apply`.
+For the `plan` action: call the engine with `--json` (no `--apply`) → print the **full plan**: each `src → dst`, the re-prefix map `REQ-NNN → REQ-<FEAT>-NNN` **and** `TC-NNN`, the planned 7→8 column matrix rebuild (insert the `feature` column). **Writes nothing.** The user reviews, then confirms to proceed to `apply`.
 
 ### Stage 4: Apply (`apply` / `--apply`)
 
-Chỉ chạy khi action `apply` (hoặc `--apply`). Engine:
-1. **Dirty-guard:** worktree git có thay đổi chưa commit → từ chối (headless: `blocked: dirty_worktree`), trừ khi `--force`.
-2. **Backup** trước khi move (`.archive/<ts>/`, `--timestamp`).
-3. Move file theo plan; **re-prefix REQ và TC** trong D-02/D-26/D-27/matrix đã move (`--reprefix`).
-4. **Rebuild matrix 8 cột** (chèn cột `feature`).
-5. Ghi **decision-log** mọi thay đổi.
+Only runs for the `apply` action (or `--apply`). The engine:
+1. **Dirty-guard:** if the git worktree has uncommitted changes → refuse (headless: `blocked: dirty_worktree`), unless `--force`.
+2. **Backup** before any move (`.archive/<ts>/`, `--timestamp`).
+3. Move files per the plan; **re-prefix REQ and TC** in the moved D-02/D-26/D-27/matrix (`--reprefix`).
+4. **Rebuild the 8-column matrix** (insert the `feature` column).
+5. Write a **decision-log** of every change.
 
-Idempotent: artifact đã v2 → skip.
+Idempotent: an artifact already at v2 → skip.
 
 ### Stage 5: Verify & Handoff
 
-Chạy validators trên artifact đã migrate + `trace-report.py --d02` (d02-sync) + readiness `[IR]` (`hbc-check-implementation-readiness`). Report pass/gaps.
+Run the validators on the migrated artifacts + `trace-report.py --d02` (d02-sync) + readiness `[IR]` (`hbc-check-implementation-readiness`). Report pass/gaps.
 
-> **Gap ma trận sau migrate.** Migration **giữ trung thực** ma trận v1 — KHÔNG bịa thêm row. Nếu ma trận v1 vốn thiếu REQ (vd D-02 có `REQ-AUTH-003` nhưng ma trận không có dòng đó), `trace-report --d02` sau migrate sẽ báo `missing_from_matrix: [REQ-AUTH-003]`. Đây KHÔNG phải lỗi migrate — **báo rõ REQ thiếu** cho user và **gợi ý chạy `[TRU]`** (`hbc-traceability update`) để backfill cho khớp D-02. Tương tự, orphan (REQ không còn trong D-02) → gợi ý dọn.
+> **Matrix gap after migrate.** Migration **stays faithful** to the v1 matrix — it does NOT fabricate rows. If the v1 matrix was already missing a REQ (e.g. D-02 has `REQ-AUTH-003` but the matrix has no such row), `trace-report --d02` after migrate will report `missing_from_matrix: [REQ-AUTH-003]`. This is NOT a migrate bug — **surface the missing REQ clearly** to the user and **suggest running `[TRU]`** (`hbc-traceability update`) to backfill it so it matches D-02. Likewise, an orphan (a REQ no longer in D-02) → suggest cleanup.
 
-Handoff:
+Handoff (communicate in `{communication_language}`):
 
-_"Migrate xong → layout v2. Nếu shared còn thiếu, chạy `[PI]` (`hbc-project-init`). Sau đó tiếp tục per-feature: `[BA]` / `hbc-create-requirements` với `feature=<slug>`."_
+_"Migrate done → v2 layout. If shared is still missing, run `[PI]` (`hbc-project-init`). Then continue per-feature: `[BA]` / `hbc-create-requirements` with `feature=<slug>`."_
 
-Headless: trả JSON theo `references/headless-contract.md` (`status`, `moves`, `reprefix`, `matrix`, `validation`, hoặc `blocked` + `reason`).
+Headless: return JSON per `references/headless-contract.md` (`status`, `moves`, `reprefix`, `matrix`, `validation`, or `blocked` + `reason`).

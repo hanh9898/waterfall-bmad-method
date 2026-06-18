@@ -137,6 +137,32 @@ def test_section_recognized_in_vietnamese():
     assert missing == [], f"Vietnamese sections not recognized: {missing}"
 
 
+def test_abbrev_empty_definition_flagged():
+    # Bug B2: definition was hardcoded to cells[1] (the "Tên đầy đủ"/Full Form
+    # column) for the Abbreviations table, whose definition is cells[2]. An empty
+    # Definition (col 2) with a present Full Form (col 1) therefore passed.
+    doc = VALID_DOC.replace(
+        "| OMS | Order Management System | Hệ thống quản lý đơn hàng |",
+        "| OMS | Order Management System | |",
+    )
+    result, _ = run_script(doc)
+    empty = [i for i in result["issues"] if i["type"] == "EMPTY_DEFINITION"]
+    assert any(i["term"] == "OMS" for i in empty)
+
+
+def test_abbrev_empty_fullform_not_flagged_as_missing_definition():
+    # Bug B2 (other direction): an empty Full Form (col 1) but present Definition
+    # (col 2) was wrongly flagged EMPTY_DEFINITION because col 1 was read as the
+    # definition. Full Form being blank is not a missing-definition defect.
+    doc = VALID_DOC.replace(
+        "| OMS | Order Management System | Hệ thống quản lý đơn hàng |",
+        "| OMS | | Hệ thống quản lý đơn hàng |",
+    )
+    result, _ = run_script(doc)
+    empty = [i for i in result["issues"] if i["type"] == "EMPTY_DEFINITION"]
+    assert not any(i["term"] == "OMS" for i in empty)
+
+
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -179,6 +205,8 @@ if __name__ == "__main__":
         test_valid_document,
         test_duplicate_terms,
         test_empty_definition,
+        test_abbrev_empty_definition_flagged,
+        test_abbrev_empty_fullform_not_flagged_as_missing_definition,
         test_no_terms,
         test_missing_section,
         test_section_recognized_in_vietnamese,

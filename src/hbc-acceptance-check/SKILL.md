@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask (headless: required, if missing → blocked `feature_required`). Substitute `{feature}` in every workflow path.
 
 ## Stage 1: Prerequisites
 

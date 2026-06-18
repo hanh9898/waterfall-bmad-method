@@ -28,6 +28,26 @@ def run(*args, expect_code=0):
     return json.loads(p.stdout) if p.stdout.strip() else {}
 
 
+def test_freeze_task_tier_done(tmp_path):
+    # Bug H1: a DONE task whose refs match a REQ's matrix refs must freeze it via
+    # the task tier. The old space-join + ',;'-only split collapsed the three ref
+    # columns into one token that never matched a task blob, so the tier never fired.
+    mx = tmp_path / "matrix.md"
+    mx.write_text(MATRIX, encoding="utf-8")
+    tb = tmp_path / "task-breakdown.md"
+    tb.write_text(
+        "| task_id | description | design_ref | test_refs | priority | status | dependencies |\n"
+        "|---------|-------------|------------|-----------|----------|--------|--------------|\n"
+        "| TASK-001 | Credit limit | Customer.credit_limit | TC-101 | High | DONE | - |\n",
+        encoding="utf-8",
+    )
+    r = run("freeze", "--matrix", str(mx), "--reqs", "REQ-010",
+            "--task-breakdown", str(tb), "--project-root", str(tmp_path))
+    g = r["results"][0]
+    assert g["decided_by"] == "task", g
+    assert g["frozen"] is True, g
+
+
 def main():
     tmp = Path(tempfile.mkdtemp())
     mx = tmp / "matrix.md"

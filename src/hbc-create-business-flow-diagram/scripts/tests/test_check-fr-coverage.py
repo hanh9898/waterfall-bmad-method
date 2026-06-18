@@ -64,6 +64,21 @@ class CheckFrCoverageTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertEqual(set(result["uncovered"]), {"FR-002", "FR-003"})
 
+    def test_bad_pattern_no_capture_group_exit_2(self) -> None:
+        # Bug F3: a --pattern with no capture group crashed (IndexError) with no
+        # output. It must report bad_pattern + exit 2 and still write the JSON.
+        prd = self.root / "prd.md"
+        prd.write_text("FR-001\n", encoding="utf-8")
+        d06 = self.root / "d06.md"
+        d06.write_text("FR-001\n", encoding="utf-8")
+
+        proc = run_script("--prd", str(prd), "--d06", str(d06), "-o", str(self.out),
+                          "--pattern", "FR-[0-9]+")
+        self.assertEqual(proc.returncode, 2)
+        result = self._result()
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["error"], "bad_pattern")
+
     def test_phantom_fr_flagged(self) -> None:
         prd = self.root / "prd.md"
         prd.write_text("FR-001\n", encoding="utf-8")

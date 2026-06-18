@@ -24,15 +24,13 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
-        find_section,
         parse_table,
-        section_body,
         verdict,
     )
 except ModuleNotFoundError:
@@ -60,6 +58,9 @@ DEFAULT_VAGUE_TERMS = [
 
 # group1 = namespace (feature/SHARED, e.g. AUTH); group2 = number. Legacy REQ-NNN → ns "".
 REQ_ID_PATTERN = re.compile(r"REQ-(?:([A-Z0-9]+)-)?(\d{3,})")
+
+# Namespace-aware NFR id (full-match a single cell): NFR-001 / NFR-AUTH-001 / NFR-SHARED-001.
+NFR_ID_RE = re.compile(r"NFR-(?:[A-Z0-9]+-)?\d{3,}")
 
 
 def functional_req_rows(content: str) -> list[list[str]]:
@@ -142,9 +143,9 @@ def check_req_ids(content: str) -> list[dict]:
 
 
 def check_ears(content: str) -> list[dict]:
-    """ADVISORY (cụm 7=A): mỗi functional requirement nên theo EARS — keyword
-    tiếng Anh 'SHALL' (vd 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'). Chỉ
-    CẢNH BÁO, KHÔNG làm fail structure_ok."""
+    """ADVISORY (cluster 7=A): each functional requirement should follow EARS —
+    English keyword 'SHALL' (e.g. 'WHEN <condition> THE SYSTEM SHALL <behavior>').
+    WARNING only, does NOT fail structure_ok."""
     issues: list[dict] = []
     for cells in functional_req_rows(content):
         rid = ""
@@ -155,7 +156,7 @@ def check_ears(content: str) -> list[dict]:
         if rid and "shall" not in " ".join(cells).lower():
             issues.append({
                 "type": "EARS_ADVISORY",
-                "message": f"{rid}: chưa theo EARS (thiếu 'SHALL'). Gợi ý: 'WHEN <điều kiện> THE SYSTEM SHALL <hành vi>'.",
+                "message": f"{rid}: not in EARS form (missing 'SHALL'). Suggestion: 'WHEN <condition> THE SYSTEM SHALL <behavior>'.",
                 "auto_fixable": False,
                 "advisory": True,
                 "req_id": rid,
@@ -164,11 +165,44 @@ def check_ears(content: str) -> list[dict]:
 
 
 def check_vague_terms(content: str, vague_terms: list[str]) -> list[dict]:
-    """Flag vague terms in requirement descriptions."""
+    """Flag vague terms in requirement descriptions.
+
+    Skips the YAML frontmatter and fenced code blocks: a vague word in
+    ``title: "A simple test"`` or inside a code example is not a requirement defect
+    and would otherwise produce a blocking false-fail. Line numbers are kept
+    accurate by masking those line ranges in place rather than removing them.
+    """
     issues: list[dict] = []
     lines = content.splitlines()
 
+    in_frontmatter = False
+    in_fence = False
+    fence_char: str | None = None
+
     for line_num, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        # YAML frontmatter delimited by `---` at the very top of the file.
+        if line_num == 1 and stripped == "---":
+            in_frontmatter = True
+            continue
+        if in_frontmatter:
+            if stripped == "---":
+                in_frontmatter = False
+            continue
+
+        # Fenced code blocks (``` or ~~~) — content inside is not requirement text.
+        fence = re.match(r"^[ \t]*(`{3,}|~{3,})", line)
+        if not in_fence:
+            if fence:
+                in_fence = True
+                fence_char = fence.group(1)[0]
+                continue
+        else:
+            if fence and fence.group(1)[0] == fence_char:
+                in_fence = False
+            continue
+
         lower_line = line.lower()
         for term in vague_terms:
             if re.search(rf"\b{re.escape(term)}\b", lower_line):
@@ -193,17 +227,22 @@ def check_sections(content: str) -> list[dict]:
 
 
 def check_nfr_measurable(content: str) -> list[dict]:
-    """Check non-functional requirements have measurable criteria."""
+    """Check non-functional requirements have measurable criteria.
+
+    Parses the NFR section's table(s) via the shared parse_table (language-aware,
+    header/separator excluded, multi-sub-table aware) instead of a bespoke
+    3-column regex. The measurable criteria is the LAST column, so the check holds
+    regardless of how many columns the table has; the NFR id is matched with a
+    namespace-aware pattern so NFR-AUTH-001 / NFR-SHARED-001 are not skipped.
+    """
     issues: list[dict] = []
 
-    nfr_match = find_section(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
-    if not nfr_match:
-        return issues
-
-    nfr_body = section_body(content, nfr_match)
-    nfr_rows = re.findall(r"\|\s*(NFR-\d+)\s*\|([^|]*)\|([^|]*)\|", nfr_body)
-    for nfr_id, _, criteria in nfr_rows:
-        criteria_clean = criteria.strip()
+    rows = parse_table(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
+    for cells in rows:
+        nfr_id = next((c.strip() for c in cells if NFR_ID_RE.fullmatch(c.strip())), None)
+        if not nfr_id:
+            continue
+        criteria_clean = cells[-1].strip()
         if not criteria_clean or criteria_clean == "-":
             issues.append({
                 "type": "NFR_NO_CRITERIA",
@@ -216,16 +255,16 @@ def check_nfr_measurable(content: str) -> list[dict]:
 
 
 # Structural checks this validator performs, and the semantic facets it
-# deliberately does NOT judge (deferred to the LLM review layer — Đợt 2).
+# deliberately does NOT judge (deferred to the LLM review layer — Batch 2).
 CHECKED = [
     "REQ ID uniqueness/sequence per namespace (feature/SHARED)",
     "vague terminology",
     "required sections present and non-empty",
     "NFR measurable-criteria presence",
-    "EARS shape (advisory — warning only, không fail)",
+    "EARS shape (advisory — warning only, does not fail)",
 ]
 NOT_CHECKED = [
-    "REQ semantic correctness / đủ-nghĩa (LLM review)",
+    "REQ semantic correctness / completeness (LLM review)",
     "REQ facet coverage: read/write · api/admin (LLM review)",
     "cross-document consistency D-02 ↔ D-03/D-06/... (readiness gate)",
 ]
@@ -247,7 +286,7 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     all_issues.extend(check_nfr_measurable(content))
     all_issues.extend(check_ears(content))
 
-    # Advisory issues (EARS) warn but do NOT fail the structural verdict (cụm 7=A).
+    # Advisory issues (EARS) warn but do NOT fail the structural verdict (cluster 7=A).
     blocking = [i for i in all_issues if not i.get("advisory")]
     advisory = [i for i in all_issues if i.get("advisory")]
     auto_fixable = [i for i in blocking if i.get("auto_fixable")]

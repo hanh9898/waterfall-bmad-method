@@ -19,7 +19,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_validation import (  # noqa: E402
@@ -92,17 +92,22 @@ def check_tc_ids(content: str) -> list[dict]:
     ids = [int(m) for m in heading_matches] if heading_matches else [int(m) for m in all_mentions]
     unique_ids = sorted(set(ids))
 
-    seen_counts: dict[int, int] = {}
-    for tc_num in ids:
-        seen_counts[tc_num] = seen_counts.get(tc_num, 0) + 1
-    for tc_num, count in seen_counts.items():
-        if count > 1:
-            issues.append({
-                "type": "TC_ID_DUPLICATE",
-                "message": f"TC-{tc_num:03d} has {count} heading declarations",
-                "auto_fixable": True,
-                "tc_id": f"TC-{tc_num:03d}",
-            })
+    # Duplicate detection runs ONLY over heading declarations. A TC legitimately
+    # appears in BOTH the Summary and the Coverage Matrix tables, so counting every
+    # text mention (the no-heading fallback) would falsely flag every TC as a
+    # duplicate "heading declaration". The gap check below still uses unique_ids.
+    if heading_matches:
+        seen_counts: dict[int, int] = {}
+        for tc_num in (int(m) for m in heading_matches):
+            seen_counts[tc_num] = seen_counts.get(tc_num, 0) + 1
+        for tc_num, count in seen_counts.items():
+            if count > 1:
+                issues.append({
+                    "type": "TC_ID_DUPLICATE",
+                    "message": f"TC-{tc_num:03d} has {count} heading declarations",
+                    "auto_fixable": True,
+                    "tc_id": f"TC-{tc_num:03d}",
+                })
 
     if unique_ids:
         expected = list(range(1, max(unique_ids) + 1))
@@ -223,7 +228,7 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
         structure_ok,
         semantic_review=SEMANTIC_NA,
         checked=["required sections", "TC id uniqueness", "REQ coverage vs D-02", "required fields per TC"],
-        not_checked=["test-case adequacy / đủ-nghĩa (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
+        not_checked=["test-case adequacy / completeness (LLM review)", "REQ facet coverage read/write·api/admin (LLM review)"],
     )
     result.update({
         "valid": structure_ok,

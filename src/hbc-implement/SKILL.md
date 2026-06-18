@@ -11,7 +11,7 @@ Implement code via TDD cycle (RED → GREEN → REFACTOR) per task from the task
 
 Per-task workflow: Load → RED (write test) → GREEN (implement) → REFACTOR → Update status. Supports batch mode (all tasks) and headless mode. The most interactive workflow — Dev agent pairs with the user throughout.
 
-**Args:** `task <TASK-xxx>` (single task), `all` (batch remaining), `coverage` (check only); **`feature=<slug>`** (bắt buộc ở headless; interactive lấy active feature trong phiên). Optional: `--headless` / `-H`.
+**Args:** `task <TASK-xxx>` (single task), `all` (batch remaining), `coverage` (check only); **`feature=<slug>`** (required in headless; interactive uses the active feature in the session). Optional: `--headless` / `-H`.
 
 ## Conventions
 
@@ -28,7 +28,7 @@ When `--headless`: batch-implement all TODO tasks sequentially per `references/h
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-**Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi. Headless bắt buộc (thiếu → `blocked` `feature_required`). Mọi path (`{workflow.task_breakdown_path}`, `{workflow.tdd_evidence_dir}`) đã namespace theo `{feature}`.
+**Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask. Required in headless (missing → `blocked` `feature_required`). All paths (`{workflow.task_breakdown_path}`, `{workflow.tdd_evidence_dir}`) are namespaced by `{feature}`.
 
 Load `task-breakdown.md` from `{workflow.task_breakdown_path}`. Show task status summary: X TODO, Y IN_PROGRESS, Z DONE. If no task specified, suggest the next TODO task.
 
@@ -44,7 +44,7 @@ Based on D-27 test cases for this task:
 - Write test file(s) following D-12 test organization conventions.
 - Tests must be specific and match D-27 expected results.
 - Run the tests — they should FAIL (RED). If they pass, the test is wrong or the functionality already exists.
-- **Lưu RED-evidence (cưỡng chế quy trình):** ghi lần chạy test FAIL vào `{workflow.tdd_evidence_dir}/<TASK-xxx>.md` (lệnh chạy + output chứa dòng `FAIL`). **HALT — KHÔNG sang GREEN/viết code khi chưa có RED-evidence cho task này.** *(Lưu ý: RED-evidence là **tự khai** — cưỡng chế mềm ở cấp quy trình: gate Phase 3 chỉ kiểm tra evidence **tồn tại/đã được ghi**, KHÔNG phải bằng chứng mật mã chống ngụy tạo. Đây là chủ ý — TDD mềm.)*
+- **Save RED-evidence (process enforcement):** record the FAIL test run into `{workflow.tdd_evidence_dir}/<TASK-xxx>.md` (the command run + output containing a `FAIL` line). **HALT — do NOT move to GREEN / write code until RED-evidence exists for this task.** *(Note: RED-evidence is **self-attested** — a soft enforcement at the process level: the Phase 3 gate only checks that the evidence **exists / has been recorded**, NOT a tamper-proof cryptographic proof. This is intentional — soft TDD.)*
 
 Present test code to user for review before proceeding.
 
@@ -94,5 +94,5 @@ When `coverage` arg: run coverage command and report results without implementin
 Applies when re-implementing due to an upstream change. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop. (hbc-traceability impact invokes this skill as the `code` cascade node per BR-08.)
-- **Hybrid trigger (default):** after a successful implementation change, suggest: _"Code đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ traceability matrix?"_
+- **Hybrid trigger (default):** after a successful implementation change, suggest: _"Code updated. Run `hbc-traceability impact` to sync the traceability matrix?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly. Default is false.

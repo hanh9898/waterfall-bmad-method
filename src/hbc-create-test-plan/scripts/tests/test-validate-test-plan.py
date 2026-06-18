@@ -163,6 +163,74 @@ class TestSchedule:
         assert len(no_sched) == 1
 
 
+# Vietnamese-language sections (the actual generated document_output_language).
+# Risk table empty; schedule has a VN milestone table ("Cột mốc") and NO gantt.
+RISK_VN_EMPTY = """# Kế hoạch kiểm thử
+
+## 9. Quản lý rủi ro
+
+| Rủi ro | Khả năng | Tác động | Giảm thiểu |
+|--------|----------|----------|------------|
+
+## 10. Sản phẩm bàn giao
+"""
+
+RISK_VN_FILLED = """# Kế hoạch kiểm thử
+
+## 9. Quản lý rủi ro
+
+| Rủi ro | Khả năng | Tác động | Giảm thiểu |
+|--------|----------|----------|------------|
+| Thiếu dữ liệu test | Trung bình | Cao | Chuẩn bị mock sớm |
+
+## 10. Sản phẩm bàn giao
+"""
+
+SCHEDULE_VN_TABLE_ONLY = """# Kế hoạch kiểm thử
+
+## 7. Lịch trình
+
+### 7.1 Cột mốc
+
+| Cột mốc | Ngày mục tiêu | Phụ thuộc |
+|---------|---------------|-----------|
+| Xong unit test | 2026-06-15 | Hoàn tất triển khai |
+
+## 8. Đội ngũ
+"""
+
+SCHEDULE_VN_NONE = """# Kế hoạch kiểm thử
+
+## 7. Lịch trình
+
+Chưa xác định.
+
+## 8. Đội ngũ
+"""
+
+
+class TestRiskTableVietnamese:
+    def test_empty_vn_risk_table_flagged(self):
+        # Bug A1: English-only "#+\\s.*Risk" missed the VN heading → empty table passed.
+        issues = check_risk_table(RISK_VN_EMPTY)
+        assert [i for i in issues if i["type"] == "EMPTY_RISK_TABLE"]
+
+    def test_filled_vn_risk_table_ok(self):
+        issues = check_risk_table(RISK_VN_FILLED)
+        assert issues == []
+
+
+class TestScheduleVietnamese:
+    def test_vn_milestone_table_counts(self):
+        # Bug A2: English-only "| Milestone |" missed the VN "Cột mốc" table.
+        issues = check_schedule(SCHEDULE_VN_TABLE_ONLY)
+        assert [i for i in issues if i["type"] == "NO_SCHEDULE"] == []
+
+    def test_vn_no_schedule_flagged(self):
+        issues = check_schedule(SCHEDULE_VN_NONE)
+        assert [i for i in issues if i["type"] == "NO_SCHEDULE"]
+
+
 class TestFullValidation:
     def test_valid_document(self, tmp_path):
         path = str(tmp_path / "d26.md")

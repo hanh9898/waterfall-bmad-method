@@ -106,7 +106,25 @@ def main() -> int:
     args = parser.parse_args()
 
     global FR_RE
-    FR_RE = re.compile(args.pattern)
+    # _extract_ids reads group(1); a pattern that fails to compile or has no
+    # capture group would crash with no output. Validate and report cleanly (exit 2).
+    try:
+        FR_RE = re.compile(args.pattern)
+    except re.error as e:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(
+            json.dumps({"passed": False, "error": "bad_pattern", "detail": str(e)}),
+            encoding="utf-8",
+        )
+        return 2
+    if FR_RE.groups < 1:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(
+            json.dumps({"passed": False, "error": "bad_pattern",
+                        "detail": "--pattern must contain exactly one capture group"}),
+            encoding="utf-8",
+        )
+        return 2
 
     prd_paths = [Path(p) for p in args.prd]
     d06 = Path(args.d06)

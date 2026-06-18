@@ -28,13 +28,13 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask (headless: required, missing → blocked `feature_required`). Substitute `{feature}` in every workflow path.
 
 ## Stage 1: Prerequisites
 
 **Phase-entry gate (enforced, overridable).** This skill opens Phase 3. Before doing anything, verify the **Phase 2 gate PASSED for the active feature** — run `hbc-phase-gate` for phase 2 headless (`-H`) **with `feature={feature}`** and read `overall_status`. If it is not `PASSED` (FAILED / WARNING / never run), **HALT** and tell the user Phase 2 is not closed for this feature, citing the failing items. Proceed only if the user explicitly overrides (e.g. "override gate" / "proceed anyway") — record that an override was used in the task-breakdown intro. In headless mode, a non-PASSED Phase 2 gate returns `blocked` (no override). This is the runtime teeth behind the gated phase ordering — do not silently build tasks on an unclosed design phase.
 
-**Entry check — project-context.md presence (E-2 warn-gate).** Before loading design artifacts, check whether `project-context.md` exists. If it is **absent**, surface this explicitly up front — do NOT silently proceed to produce incomplete infrastructure tasks. Warn: _"Không tìm thấy project-context.md → Infrastructure tasks (project setup, config, CI/CD) sẽ bị bỏ qua, task breakdown có thể thiếu phần hạ tầng. Chạy `bmad-generate-project-context` nếu cần infra coverage."_ This is a warn-gate (not a hard halt) — record the missing-context note in the task-breakdown intro and continue, so the gap is visible rather than implied. Stage 2 Infrastructure handling (E-2) then honors the same fact.
+**Entry check — project-context.md presence (E-2 warn-gate).** Before loading design artifacts, check whether `project-context.md` exists. If it is **absent**, surface this explicitly up front — do NOT silently proceed to produce incomplete infrastructure tasks. Warn: _"project-context.md not found → Infrastructure tasks (project setup, config, CI/CD) will be skipped, the task breakdown may be missing the infrastructure part. Run `bmad-generate-project-context` if you need infra coverage."_ This is a warn-gate (not a hard halt) — record the missing-context note in the task-breakdown intro and continue, so the gap is visible rather than implied. Stage 2 Infrastructure handling (E-2) then honors the same fact.
 
 Load all Phase 2 design artifacts as input, resolving each by its scope:
 - **D-27** (test specification) — test cases to assign to tasks. **Per-feature**: `{d27_path} = {output_folder}/features/{feature}/planning-artifacts/D-27-*.md`.
@@ -42,7 +42,7 @@ Load all Phase 2 design artifacts as input, resolving each by its scope:
 - **D-12** (coding standards) — apply during implementation. **Shared**: `{output_folder}/shared/coding-standards/D-12-*.md`.
 - **D-21** (API spec, optional) — endpoints to implement. **DUAL** (same precedence as D-19): per-feature override `{output_folder}/features/{feature}/planning-artifacts/D-21-{feature}-*.md` else shared baseline `{output_folder}/shared/api/D-21-*.md`.
 
-**Dual-path resolution log (D-19 / D-21).** For each DUAL artifact, after applying path-existence precedence, emit a log line stating which path was chosen so the resolution is auditable — e.g. _"D-19: dùng per-feature override `…/features/{feature}/planning-artifacts/D-19-{feature}-*.md`"_ or _"D-19: override không tồn tại → dùng shared baseline `…/shared/erd/D-19-*.md`"_; likewise for D-21 (note when D-21 is absent in both, since it is optional). Record these lines in the `.decision-log`/task-breakdown intro so a reader can tell which source actually drove the breakdown.
+**Dual-path resolution log (D-19 / D-21).** For each DUAL artifact, after applying path-existence precedence, emit a log line stating which path was chosen so the resolution is auditable — e.g. _"D-19: using per-feature override `…/features/{feature}/planning-artifacts/D-19-{feature}-*.md`"_ or _"D-19: override does not exist → using shared baseline `…/shared/erd/D-19-*.md`"_; likewise for D-21 (note when D-21 is absent in both, since it is optional). Record these lines in the `.decision-log`/task-breakdown intro so a reader can tell which source actually drove the breakdown.
 
 Check if `task-breakdown.md` already exists. If so, offer to regenerate (destructive) or update (additive).
 
@@ -56,9 +56,9 @@ Decompose design artifacts into tasks. The categories below are a **starting che
 - **Behavior / Service tasks** — logic that does not belong to a single entity: background jobs, schedulers, domain services, cross-cutting policies, lifecycle/admin operations (e.g. key rotation, approval gates).
 - **Integration tasks** — cross-entity workflows derived from D-06 business flows.
 - **Infrastructure tasks** — project setup, configuration, CI/CD (from project-context.md).
-  - **E-2 — không fail im lặng:** nếu `project-context.md` không tồn tại, KHÔNG bỏ qua infra một cách im lặng. Báo rõ cho user: _"Không tìm thấy project-context.md → bỏ qua phần Infrastructure tasks. Chạy `bmad-generate-project-context` nếu cần infra coverage."_ rồi mới tiếp tục.
+  - **E-2 — do not fail silently:** if `project-context.md` does not exist, do NOT skip infra silently. Tell the user clearly: _"project-context.md not found → skipping the Infrastructure tasks section. Run `bmad-generate-project-context` if you need infra coverage."_ then continue.
 
-**Taxonomy completeness check:** trước khi chốt, rà từng artifact đầu vào (D-14 screens, D-06 flows, D-19 entities, D-21 endpoints, REQ có mặt admin/lifecycle) và tự hỏi "loại task nào sinh ra từ đây?" — nếu một artifact không map sang task nào, nêu rõ lý do, đừng bỏ sót im lặng.
+**Taxonomy completeness check:** before finalizing, review each input artifact (D-14 screens, D-06 flows, D-19 entities, D-21 endpoints, REQs with an admin/lifecycle facet) and ask yourself "what task type does this produce?" — if an artifact maps to no task, state the reason explicitly, do not drop it silently.
 
 For each task, identify:
 - `design_ref` — which D-19 entity or D-21 endpoint group this implements.
@@ -100,7 +100,7 @@ Run deterministic validator:
 python3 {workflow.validation_script} "{workflow.output_dir}/task-breakdown.md" --d19 "{d19_path}" --d27 "{d27_path}"
 ```
 
-Checks: all entities covered, all test cases assigned, no circular dependencies, task IDs unique and sequential.
+Checks: all entities covered, all test cases assigned, dependency ordering (no task depends on a later-listed one), task IDs unique and sequential.
 
 **LLM judgment checks:**
 - Task descriptions are actionable and specific.
@@ -116,5 +116,5 @@ Finalize document. Suggest next: _"Task breakdown complete with {n} tasks. Start
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Task breakdown đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest: _"Task breakdown updated. Run `hbc-traceability impact` to sync the dependent tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

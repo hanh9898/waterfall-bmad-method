@@ -1,6 +1,6 @@
 ---
 document_id: D-03
-title: "{project_name} — Bảng từ vựng"
+title: "{project_name} — Glossary"
 version: "1.0"
 status: draft
 stepsCompleted: []
@@ -8,20 +8,20 @@ lastStep: ""
 updated: ""
 ---
 
-# {project_name} — Bảng từ vựng (Glossary)
+# {project_name} — Glossary
 
-## Thuật ngữ (Terms)
+## Terms
 
-| Thuật ngữ | Định nghĩa | Phân loại |
-|-----------|------------|-----------|
+| Term | Definition | Category |
+|------|-----------|----------|
 
-## Từ viết tắt (Abbreviations)
+## Abbreviations
 
-| Từ viết tắt | Tên đầy đủ | Định nghĩa |
-|-------------|-----------|------------|
+| Abbreviation | Full Form | Definition |
+|--------------|-----------|------------|
 
-## Lịch sử sửa đổi (Revision History)
+## Revision History
 
-| Phiên bản | Ngày | Người thực hiện | Nội dung sửa đổi |
-|-----------|------|-----------------|------------------|
-| 1.0 | | | Bản đầu (Initial creation) |
+| Version | Date | Author | Scope of Change |
+|---------|------|--------|----------------|
+| 1.0 | | | Initial creation |

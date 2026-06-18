@@ -68,7 +68,7 @@ Resolve the active feature per `hbc-shared/references/establish-active-feature.m
 After the active feature is resolved, check the Phase 2 gate status — the gate path is per-feature at `{output_folder}/features/{feature}/gates/phase-2-gate*.md`. If not passed, warn user. If `gate_mode = lenient` (from project config), allow continuation.
 
 ### Scan Implementation State
-> ℹ️ Deliverable **shared** (D-03/D-12, baseline D-19/D-21) ở `{output_folder}/shared/...` — không per-feature; nếu scan per-feature báo thiếu thì kiểm ở `shared/`.
+> ℹ️ **Shared** deliverables (D-03/D-12, baseline D-19/D-21) live at `{output_folder}/shared/...` — not per-feature; if a per-feature scan reports them missing, check `shared/`.
 
 
 Run: `python3 {skill-root}/scripts/scan-impl-state.py {agent.output_path} --gates-dir {output_folder}/features/{feature}/gates`

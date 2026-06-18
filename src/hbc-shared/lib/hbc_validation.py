@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared validation primitives for HBC validators (Đợt 0 / C-1).
+"""Shared validation primitives for HBC validators (Wave 0 / C-1).
 
 Single source of truth for table parsing, column extraction, language-aware
 section detection (English canonical + configured document language — NO
@@ -12,8 +12,8 @@ Validators import this via a sys.path bootstrap computed relative to skill-root:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
     from hbc_validation import parse_table, extract_column, find_section, verdict
 
-Design boundary: this module only describes STRUCTURE. Semantic / "đủ-nghĩa"
-judgement is out of scope here — that is the LLM review layer (Đợt 2). The
+Design boundary: this module only describes STRUCTURE. Semantic / completeness
+judgement is out of scope here — that is the LLM review layer (Wave 2). The
 `verdict` helper makes that boundary explicit in the output shape.
 """
 from __future__ import annotations

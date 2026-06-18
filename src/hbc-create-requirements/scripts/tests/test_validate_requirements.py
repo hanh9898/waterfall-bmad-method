@@ -205,6 +205,51 @@ def test_nfr_missing_criteria():
     assert nfr_issues[0]["nfr_id"] == "NFR-001"
 
 
+def test_vague_terms_skip_frontmatter_and_code_fence():
+    # Bug A5: check_vague_terms scanned the whole file, so a vague word in the YAML
+    # frontmatter title or inside a fenced code example produced a blocking
+    # false-fail. Those regions must be skipped; only requirement text is scanned.
+    doc = VALID_DOC.replace(
+        'title: "Test Đặc tả yêu cầu"',
+        'title: "A simple and easy system"',
+    ).replace(
+        "System for managing orders.",
+        "System for managing orders.\n\n```python\n# an easy, simple example\nx = 1\n```",
+    )
+    result, code = run_script(doc)
+    vague_issues = [i for i in result["issues"] if i["type"] == "VAGUE_TERM"]
+    assert vague_issues == [], f"frontmatter/code-fence vague terms must be ignored: {vague_issues}"
+
+
+def test_nfr_namespaced_missing_criteria():
+    # Bug B1: `NFR-\\d+` skipped namespaced ids, so NFR-AUTH-001 with empty
+    # criteria was never checked (false pass).
+    doc = VALID_DOC.replace(
+        "| NFR-001 | Response time | < 2 seconds for 95th percentile |",
+        "| NFR-AUTH-001 | Response time | |",
+    )
+    result, _ = run_script(doc)
+    nfr_issues = [i for i in result["issues"] if i["type"] == "NFR_NO_CRITERIA"]
+    assert any(i["nfr_id"] == "NFR-AUTH-001" for i in nfr_issues)
+
+
+def test_nfr_four_column_empty_criteria_flagged():
+    # Bug B1: hardcoded 3-column regex read the wrong cell as "criteria" on a
+    # 4-column NFR table, so an empty Measurable-Criteria column passed. The fix
+    # reads the LAST column.
+    doc = VALID_DOC.replace(
+        "| NFR ID | Requirement | Measurable Criteria |\n"
+        "|--------|-------------|-------------------|\n"
+        "| NFR-001 | Response time | < 2 seconds for 95th percentile |",
+        "| NFR ID | Category | Requirement | Measurable Criteria |\n"
+        "|--------|----------|-------------|-------------------|\n"
+        "| NFR-001 | Perf | Response time | |",
+    )
+    result, _ = run_script(doc)
+    nfr_issues = [i for i in result["issues"] if i["type"] == "NFR_NO_CRITERIA"]
+    assert any(i["nfr_id"] == "NFR-001" for i in nfr_issues)
+
+
 def test_missing_document():
     cmd = [sys.executable, SCRIPT, "/nonexistent/file.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -247,9 +292,12 @@ if __name__ == "__main__":
         test_gap_in_req_ids,
         test_vague_terms_detected,
         test_custom_vague_terms,
+        test_vague_terms_skip_frontmatter_and_code_fence,
         test_missing_section,
         test_empty_section,
         test_nfr_missing_criteria,
+        test_nfr_namespaced_missing_criteria,
+        test_nfr_four_column_empty_criteria_flagged,
         test_missing_document,
         test_output_to_file,
         test_no_req_ids,

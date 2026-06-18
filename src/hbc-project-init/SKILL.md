@@ -7,18 +7,18 @@ description: "Phase 0 — khởi tạo dự án + tạo các deliverable dùng c
 
 ## Overview
 
-Phase 0 chạy **một lần, bắt buộc, TRƯỚC** mọi tính năng (hoặc chạy lại để update trực tiếp). Nó làm hai việc: **(1) hiểu dự án** (đặc biệt khi cài vào codebase có sẵn — brownfield), rồi **(2) tạo các deliverable dùng chung** (shared) làm nền cho mọi feature.
+Phase 0 runs **once, mandatory, BEFORE** any feature (or re-run to update in place). It does two things: **(1) understand the project** (especially when installed into an existing codebase — brownfield), then **(2) create the shared deliverables** that serve as the foundation for every feature.
 
-| Deliverable | Bắt buộc | Vị trí |
+| Deliverable | Mandatory | Location |
 | --- | --- | --- |
 | **D-12 Coding Standards** | ✅ | `{output_folder}/shared/coding-standards/` |
 | **D-03 Glossary** | ✅ | `{output_folder}/shared/glossary/` |
-| **D-19 ERD (baseline)** | tùy chọn | `{output_folder}/shared/erd/` |
-| **D-21 API (baseline)** | tùy chọn | `{output_folder}/shared/api/` |
+| **D-19 ERD (baseline)** | optional | `{output_folder}/shared/erd/` |
+| **D-21 API (baseline)** | optional | `{output_folder}/shared/api/` |
 
-Idempotent: deliverable shared đã tồn tại thì **bỏ qua** (không ghi đè), chỉ tạo phần còn thiếu. Chạy lại để update trực tiếp khi cần.
+Idempotent: a shared deliverable that already exists is **skipped** (never overwritten), only the missing parts are created. Re-run to update in place when needed.
 
-**Args:** `create` (default — hiểu dự án + tạo phần còn thiếu), `status` (chỉ liệt kê shared + project-context đã có/chưa). Optional: `--headless` / `-H`.
+**Args:** `create` (default — understand the project + create the missing parts), `status` (only list which shared deliverables + project-context exist or are missing). Optional: `--headless` / `-H`.
 
 ## Conventions
 
@@ -28,7 +28,7 @@ Idempotent: deliverable shared đã tồn tại thì **bỏ qua** (không ghi đ
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> Phase 0 **không nhận `feature`** — nó tạo artifact shared toàn dự án. Per-feature override D-19/D-21 được tạo sau bằng `hbc-create-er-diagram`/`hbc-create-api-spec` với `feature=<slug>`.
+> Phase 0 **takes no `feature` arg** — it creates project-wide shared artifacts. Per-feature D-19/D-21 overrides are created later via `hbc-create-er-diagram`/`hbc-create-api-spec` with `feature=<slug>`.
 
 ## Headless Mode
 
@@ -42,37 +42,39 @@ Blocked reasons (closed set):
 
 ### Stage 1: Status
 
-Quét trạng thái nền của dự án:
-- **Project context:** `project-context.md` (BMad AI rules/context) đã có chưa? Tài liệu dự án `{project_knowledge}/index.md` (output của `bmad-document-project`) đã có chưa?
+Scan the project's baseline state:
+- **Project context:** does `project-context.md` (BMad AI rules/context) exist yet? Do the project docs `{project_knowledge}/index.md` (output of `bmad-document-project`) exist yet?
 - **Shared deliverables:** D-12 `{output_folder}/shared/coding-standards/D-12-*` · D-03 `{output_folder}/shared/glossary/D-03-*` · D-19 baseline `{output_folder}/shared/erd/D-19-*` · D-21 baseline `{output_folder}/shared/api/D-21-*`.
 
-Trình bảng "đã có / còn thiếu". Nếu `status` arg → dừng ở đây.
+Present a "present / missing" table. If `status` arg → stop here.
 
-**Phát hiện layout LEGACY (v1).** Cũng quét dấu hiệu output HBC v1 (layout phẳng): tồn tại `_bmad-output/planning-artifacts/D-*`, hoặc `_bmad-output/traceability/matrix*` mà KHÔNG có thư mục `_bmad-output/features/`. Nếu phát hiện → **khuyến nghị chạy `hbc-migrate` ([MIG]) TRƯỚC** khi tạo bất kỳ shared deliverable nào: migrate sẽ di chuyển các artifact phẳng sang `shared/` + `features/<feature>/` và re-prefix REQ/TC. Tạo shared ngay bây giờ sẽ gây **trùng lặp** (double-creation) với những gì migrate sắp dựng. Báo cảnh báo này rồi dừng (để user chạy [MIG] xong mới quay lại PI cho phần shared còn thiếu).
+**Detect LEGACY (v1) layout.** Also scan for signs of HBC v1 output (flat layout): the presence of `_bmad-output/planning-artifacts/D-*`, or `_bmad-output/traceability/matrix*` WITHOUT a `_bmad-output/features/` directory. If detected → **recommend running `hbc-migrate` ([MIG]) FIRST** before creating any shared deliverable: migrate moves the flat artifacts into `shared/` + `features/<feature>/` and re-prefixes REQ/TC. Creating shared now would cause **double-creation** with what migrate is about to build. Surface this warning, then stop (so the user runs [MIG] first, then returns to PI for the remaining missing shared parts).
 
-### Stage 2: Hiểu dự án (brownfield-aware)
+### Stage 2: Understand the project (brownfield-aware)
 
-Xác định loại dự án rồi đảm bảo có đủ **context** để seed shared deliverables — thay vì tạo từ con số 0:
+Determine the project type, then ensure there is enough **context** to seed the shared deliverables — instead of creating them from scratch:
 
-1. **Phân loại brownfield vs greenfield.** Brownfield = đã có codebase (mã nguồn ngoài `_bmad/`, `docs/`, `_bmad-output/`). Greenfield = dự án mới, chưa có code.
-2. **Đảm bảo `project-context.md`.** Nếu chưa có, điều phối `bmad-generate-project-context` để tạo (AI rules + bối cảnh dự án). Đây là persistent fact mọi skill HBC dựa vào.
-3. **Brownfield — document dự án trước.** Nếu là brownfield và chưa có tài liệu dự án (`{project_knowledge}/index.md`), điều phối **`bmad-document-project`** để quét codebase (kiến trúc, schema DB, endpoint, convention code) → tài liệu context. Đây là **nguồn** để rút ra shared deliverables: convention code → D-12, schema → baseline D-19, endpoint → baseline D-21.
-4. **Greenfield — lấy context từ nguồn khác.** Dùng PRD/brief/`project-context.md` nếu có; nếu không, hỏi user ngắn gọn về stack + domain.
+1. **Classify brownfield vs greenfield.** Brownfield = a codebase already exists (source code outside `_bmad/`, `docs/`, `_bmad-output/`). Greenfield = a new project, no code yet.
+2. **Ensure `project-context.md`.** If missing, orchestrate `bmad-generate-project-context` to create it (AI rules + project context). This is the persistent fact every HBC skill relies on.
+3. **Brownfield — document the project first.** If brownfield and the project docs (`{project_knowledge}/index.md`) are missing, orchestrate **`bmad-document-project`** to scan the codebase (architecture, DB schema, endpoints, code conventions) → context docs. These are the **source** for deriving the shared deliverables: code conventions → D-12, schema → baseline D-19, endpoints → baseline D-21.
+4. **Greenfield — get context from other sources.** Use PRD/brief/`project-context.md` if available; otherwise ask the user briefly about stack + domain.
 
-Headless: phân loại tự động; nếu brownfield mà thiếu tài liệu dự án, vẫn tiếp tục nhưng ghi chú nguồn hạn chế; thiếu hẳn mọi nguồn cho deliverable bắt buộc → `blocked` (`missing_sources`).
+Headless: classify automatically; if brownfield but project docs are missing, still continue but note the limited sources; missing every source for a mandatory deliverable → `blocked` (`missing_sources`).
 
 ### Stage 3: Create missing (idempotent)
 
-Với mỗi deliverable shared **còn thiếu**, điều phối create-skill tương ứng, **truyền context từ Stage 2** (brownfield: rút từ codebase/tài liệu dự án; greenfield: từ PRD/brief/lựa chọn):
-- D-12 → `hbc-create-coding-standards` (bắt buộc) — brownfield: trích convention từ code hiện có.
-- D-03 → `hbc-create-glossary` (bắt buộc) — từ domain/tài liệu dự án.
-- D-19 baseline → `hbc-create-er-diagram` (tùy chọn) — brownfield: reverse từ schema DB hiện có.
-- D-21 baseline → `hbc-create-api-spec` (tùy chọn) — brownfield: từ endpoint hiện có.
+For each **missing** shared deliverable, orchestrate the corresponding create-skill, **passing the context from Stage 2** (brownfield: derived from the codebase/project docs; greenfield: from PRD/brief/choices):
+- D-12 → `hbc-create-coding-standards` (mandatory) — brownfield: extract conventions from existing code.
+- D-03 → `hbc-create-glossary` (mandatory) — from the domain/project docs.
+- D-19 baseline → `hbc-create-er-diagram` (optional) — brownfield: reverse-engineer from the existing DB schema.
+- D-21 baseline → `hbc-create-api-spec` (optional) — brownfield: from existing endpoints.
 
-**Không ghi đè** deliverable đã tồn tại. Headless: tạo deliverable bắt buộc còn thiếu nếu đủ nguồn, ngược lại `blocked` (`missing_sources`).
+**Never overwrite** a deliverable that already exists. Headless: create the missing mandatory deliverables if sources suffice, otherwise `blocked` (`missing_sources`).
 
 ### Stage 4: Handoff
 
-_"Phase 0 xong — dự án đã có project-context + shared deliverables. Bắt đầu feature đầu tiên: mở `hbc-agent-ba` ([BA]) với một feature slug, rồi `hbc-create-requirements` (feature=<slug>)."_
+Communicate the handoff in `{communication_language}`:
 
-Headless: trả JSON `{status, project_type, project_context, documented, created, skipped, missing}`.
+_"Phase 0 done — the project now has project-context + shared deliverables. Start the first feature: open `hbc-agent-ba` ([BA]) with a feature slug, then `hbc-create-requirements` (feature=<slug>)."_
+
+Headless: return JSON `{status, project_type, project_context, documented, created, skipped, missing}`.

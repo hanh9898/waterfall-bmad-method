@@ -1,63 +1,63 @@
 # Impact — Edge / Boundary Handling
 
-Quy tắc biên cho capability **Impact**. Mỗi dòng = boundary → hành vi bắt buộc. Bất biến: **không âm thầm bỏ sót, không âm thầm làm lệch.** Đồng bộ với `_bmad-output/specs/spec-traceability-impact/edge-handling.md`.
+Boundary rules for the **Impact** capability. Each row = a boundary → the required behavior. Invariant: **never silently drop anything, never silently drift.** Kept in sync with `_bmad-output/specs/spec-traceability-impact/edge-handling.md`.
 
 ## DECLARE (Stage 1)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| Matrix chưa init | Dừng, gợi ý `traceability init`, không phân tích. |
-| Reverse-map không ra REQ cho một thay đổi | Flag "thay đổi chưa được trace", hỏi user — không bỏ qua. |
-| User khai REQ id không có trong matrix | Báo lỗi id sai, không phân tích. |
-| Changed-set rỗng (git sạch + không khai) | Báo no-op "đã đồng bộ", dừng. |
-| `--since <ref>` sai/không tồn tại | Báo lỗi, KHÔNG lặng lẽ lùi HEAD. |
+| Matrix not yet initialized | Stop, suggest `traceability init`, do not analyze. |
+| Reverse-map yields no REQ for a change | Flag "change not yet traced", ask the user — do not skip. |
+| User declares a REQ id absent from the matrix | Report the wrong id, do not analyze. |
+| Changed-set empty (git clean + nothing declared) | Report no-op "already in sync", stop. |
+| `--since <ref>` wrong/nonexistent | Report the error, do NOT silently fall back to HEAD. |
 
 ## IMPACT (Stage 2)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| REQ bị XÓA (req_id biến mất) | Cảnh báo conflict: downstream mồ côi, đề xuất dọn — không coi "không tác động". |
-| Artifact dùng chung vượt ngưỡng N REQ | Nhóm/tóm tắt danh sách verify + cảnh báo scale. |
-| Hàng REQ có ref còn rỗng (phase sớm) | Phân biệt "chưa có hạ nguồn" vs "matrix dở dang"; nêu rõ. |
-| Granularity `design_ref` thô (mức thực thể) | Chấp nhận over-flag (an toàn) hơn bỏ sót. |
+| A REQ is DELETED (req_id disappears) | Warn about the conflict: orphaned downstream, suggest cleanup — do not treat as "no impact". |
+| Shared artifact exceeds the N-REQ threshold | Group/summarize the verify list + warn about scale. |
+| A REQ row with empty refs (early phase) | Distinguish "no downstream yet" vs "matrix incomplete"; state it clearly. |
+| Coarse `design_ref` granularity (entity level) | Accept over-flagging (safe) over dropping. |
 
 ## FREEZE-CHECK (Stage 2b)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| 3 nguồn bất đồng | Ưu tiên **task status > phase-gate > matrix `gate_status`**. |
-| Thiếu `task-breakdown.md` (trước Phase 3) | Fallback gate + matrix; không mặc nhiên coi updatable. |
+| The 3 sources disagree | Prioritize **task status > phase-gate > matrix `gate_status`**. |
+| Missing `task-breakdown.md` (before Phase 3) | Fall back to gate + matrix; do not assume updatable by default. |
 
 ## SUGGEST (Stage 3)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| `design_ref` không khớp `ref_skill_map` | Flag thủ công, KHÔNG bỏ artifact im lặng. |
+| `design_ref` does not match `ref_skill_map` | Flag for manual handling, do NOT silently drop the artifact. |
 
 ## APPLY (Stage 4)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| Owning-skill thiếu update contract | Interactive: flag cập nhật thủ công. Headless: `blocked` reason `skill_no_update_contract`. |
-| Owning-skill lỗi runtime giữa chừng | Branch-stop, giữ trạng thái, báo rõ đã/chưa xong, tiếp nhánh độc lập. |
-| User áp tập con | Hỗ trợ subset; giữ thứ tự; cảnh báo phần bỏ lại có thể lệch. |
+| Owning-skill has no update contract | Interactive: flag for manual update. Headless: `blocked` reason `skill_no_update_contract`. |
+| Owning-skill fails at runtime mid-way | Branch-stop, preserve state, report clearly what is/isn't done, continue independent branches. |
+| User applies a subset | Support the subset; preserve order; warn that the left-out part may drift. |
 
 ## RECONCILE (Stage 5)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| Thiếu validator cho loại artifact | Dựa LLM semantic review + ghi rõ "không validator"; không pass mặc nhiên. |
-| Reconcile fail lặp | Giới hạn re-suggest (mặc định 2) → block + báo human. |
+| No validator for the artifact type | Rely on LLM semantic review + note "no validator"; do not pass by default. |
+| Reconcile fails repeatedly | Limit re-suggest (default 2) → block + notify a human. |
 
 ## ADVISORY non-REQ (CAP-7)
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| Thuật ngữ glossary là từ phổ biến | Lọc theo ranh giới từ/ngữ cảnh, hạ confidence. |
-| Coding-standard đổi nhưng chưa có code task | Nêu rõ "chưa có code task để flag", không im lặng. |
+| A glossary term is a common word | Filter by word boundary/context, lower the confidence. |
+| Coding-standard changed but no code task yet | State clearly "no code task to flag yet", do not stay silent. |
 
 ## Cross-cutting
 
-| Biên | Hành vi |
+| Boundary | Behavior |
 |---|---|
-| Hai lần chạy impact chạm cùng artifact | Nối tiếp/khóa theo artifact, không ghi đè đồng thời. |
+| Two impact runs touch the same artifact | Serialize/lock per artifact, no concurrent overwrite. |

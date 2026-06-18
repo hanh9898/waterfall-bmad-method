@@ -130,6 +130,76 @@ erDiagram
     assert undeclared[0]["auto_fixable"] is True
 
 
+def test_one_or_more_cardinality():
+    # Bug C1: `}|--|{` (one-or-more) was not in the enumerated cardinality list,
+    # so the relationship was not parsed and both entities looked orphaned.
+    content = """# ER
+
+```mermaid
+erDiagram
+  Invoice { int id PK }
+  LineItem { int id PK }
+  Invoice }|--|{ LineItem : contains
+```
+"""
+    data = run_script(content)
+    assert [i for i in data["issues"] if i.get("kind") == "orphan_entity"] == []
+    assert data["passed"] is True
+
+
+def test_dotted_non_identifying_relationship():
+    # Bug C1: non-identifying (dotted `..`) relationships were never matched.
+    content = """# ER
+
+```mermaid
+erDiagram
+  User { int id PK }
+  Session { int id PK }
+  User ||..o{ Session : opens
+```
+"""
+    data = run_script(content)
+    assert [i for i in data["issues"] if i.get("kind") == "orphan_entity"] == []
+
+
+def test_fk_uppercase_entity_not_flagged():
+    # Bug C2: `.title()` produced "User" which never matched declared "USER",
+    # flagging every valid FK as fk_target_missing.
+    content = """# ER
+
+```mermaid
+erDiagram
+  USER { int id PK }
+  ORDER {
+    int id PK
+    int user_id FK
+  }
+  USER ||--o{ ORDER : places
+```
+"""
+    data = run_script(content)
+    assert [i for i in data["issues"] if i.get("kind") == "fk_target_missing"] == []
+
+
+def test_parameterized_type_pk_not_missing():
+    # Bug C4: ATTR_RE dropped attributes with parameterized types, so a PK like
+    # `decimal(10,2) amount PK` was invisible → false missing_pk.
+    content = """# ER
+
+```mermaid
+erDiagram
+  PAYMENT {
+    decimal(10,2) amount PK
+    string note
+  }
+  ORDER { int id PK }
+  ORDER ||--o{ PAYMENT : has
+```
+"""
+    data = run_script(content)
+    assert [i for i in data["issues"] if i.get("kind") == "missing_pk" and i.get("name") == "PAYMENT"] == []
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_diagram,
@@ -139,6 +209,10 @@ if __name__ == "__main__":
         test_empty_file,
         test_auto_fixable_flag_present,
         test_undeclared_entity_in_relationship,
+        test_one_or_more_cardinality,
+        test_dotted_non_identifying_relationship,
+        test_fk_uppercase_entity_not_flagged,
+        test_parameterized_type_pk_not_missing,
     ]
     failed = 0
     for t in tests:

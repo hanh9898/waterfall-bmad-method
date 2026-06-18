@@ -11,7 +11,7 @@ Generate D-02 (Requirements Specification) — structured requirements with uniq
 
 Five-stage workflow: Prerequisites → Discovery → Generation → Validation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation scripts.
 
-**Args:** `create` (default), `update` (revise existing D-02), `validate` (check existing D-02); **`feature=<slug>`** (đơn vị increment — bắt buộc ở headless; interactive lấy active feature trong phiên hoặc hỏi). Optional: `--headless` / `-H`.
+**Args:** `create` (default), `update` (revise existing D-02), `validate` (check existing D-02); **`feature=<slug>`** (increment unit — required in headless; interactive takes the active feature in the session or asks). Optional: `--headless` / `-H`.
 
 ## Conventions
 
@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-**Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi user. Headless: bắt buộc, thiếu → `blocked` (`feature_required`). Validate slug `^[a-z0-9][a-z0-9-]*$`. D-02 của feature lưu tại `{workflow.output_dir}/D-02-{feature}.md` (output_dir đã namespace theo feature).
+**Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask user. Headless: required, missing → `blocked` (`feature_required`). Validate slug `^[a-z0-9][a-z0-9-]*$`. The feature's D-02 is saved at `{workflow.output_dir}/D-02-{feature}.md` (output_dir is already namespaced per feature).
 
 ## Stage 1: Prerequisites
 
@@ -47,7 +47,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 
 1c. **Intent gate.** Confirm user wants to create/update requirements (not a different artifact). If wrong skill: product brief → `hbc-create-prd`, brainstorming → `hbc-brainstorming`, project setup → `hbc-project-setup`.
 
-1d. **Brainstorming suggestion** (interactive only, Fresh state only). If the domain is complex or the user seems uncertain about scope, suggest: _"Domain này có vẻ phức tạp — muốn chạy `bmad-brainstorming` trước để khám phá problem space và phát hiện requirements ẩn không? Kết quả brainstorming sẽ feed trực tiếp vào D-02."_ If declined or in headless mode, proceed to Stage 2. If accepted, pause this workflow — the user runs brainstorming in a separate context window, then resumes here (the resume-state in 1a will detect the partial D-02). If a brainstorming session file exists in `{output_folder}/brainstorming/`, note it as an available source in the source inventory.
+1d. **Brainstorming suggestion** (interactive only, Fresh state only). If the domain is complex or the user seems uncertain about scope, suggest: _"This domain looks complex — want to run `bmad-brainstorming` first to explore the problem space and surface hidden requirements? The brainstorming output will feed directly into D-02."_ If declined or in headless mode, proceed to Stage 2. If accepted, pause this workflow — the user runs brainstorming in a separate context window, then resumes here (the resume-state in 1a will detect the partial D-02). If a brainstorming session file exists in `{output_folder}/brainstorming/`, note it as an available source in the source inventory.
 
 ## Stage 2: Discovery
 
@@ -56,7 +56,7 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 - **Project background** — purpose, stakeholders, timeline constraints.
 - **Scope** — explicit in-scope and out-of-scope boundaries. Out-of-scope is as important as in-scope.
 - **User roles** — actors who interact with the system. Each gets a name and description.
-- **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (tuần tự trong feature; vd `REQ-{feature}-001`), viết theo **EARS** (keyword tiếng Anh + nội dung tiếng Việt: `WHEN … THE SYSTEM SHALL …`). Yêu cầu dùng chung nhiều feature → `REQ-SHARED-NNN` (định nghĩa ở D-02 shared, chỉ **tham chiếu** ở đây). Must be specific and testable.
+- **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (sequential within the feature; e.g. `REQ-{feature}-001`), written per **EARS** (English keyword + content in the document output language: `WHEN … THE SYSTEM SHALL …`). Requirements shared across features → `REQ-SHARED-NNN` (defined in the shared D-02, only **referenced** here). Must be specific and testable.
 - **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria.
 - **Constraints and assumptions** — technical, business, legal constraints.
 
@@ -67,7 +67,7 @@ At each area boundary, soft-gate: _"Anything else on [area], or move to [next]?"
 ## Stage 3: Generation
 
 Populate `{workflow.template_path}` with discovered content. Write to `{workflow.output_dir}/D-02-{feature}.md`. Ensure:
-- Every functional requirement has a unique `REQ-<FEAT>-NNN` ID (tuần tự trong feature) viết theo EARS; tham chiếu `REQ-SHARED-NNN` cho yêu cầu dùng chung.
+- Every functional requirement has a unique `REQ-<FEAT>-NNN` ID (sequential within the feature) written per EARS; reference `REQ-SHARED-NNN` for shared requirements.
 - Scope section explicitly lists out-of-scope items.
 - Non-functional requirements have measurable criteria (not "fast" but "< 2s response time").
 - Cross-reference user roles with requirements that mention them.
@@ -102,9 +102,9 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 
 **Parallel-lens menu:** `[A]` Advanced (challenge vagueness, find gaps) / `[P]` Party Mode (multi-reviewer perspective) / `[C]` Continue.
 
-## Stage 4b: Semantic Review (Lớp 2)
+## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per REQ (read/write · api/admin · lifecycle): flag any REQ with a write/admin/lifecycle facet so downstream D-21/D-26/D-27 know it must be designed and tested — don't let a facet be implied but unowned (the seam). Confirm requirements are testable, unambiguous, non-contradictory; NFRs measurable. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 5: Save and Handoff
 
@@ -119,5 +119,5 @@ Headless: return JSON per `references/headless-contract.md`.
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest: _"Document updated. Run `hbc-traceability impact` to sync the dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

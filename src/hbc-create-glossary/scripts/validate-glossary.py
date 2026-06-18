@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_validation import (  # noqa: E402
@@ -50,15 +50,23 @@ TERMS_LABELS = ("Terms", "Thuật ngữ")
 ABBREV_LABELS = ("Abbreviations", "Từ viết tắt")
 
 
-def _rows_to_entries(rows: list[list[str]]) -> list[dict]:
-    """Map raw table rows to {term, definition}, skipping rows with empty term."""
+def _rows_to_entries(rows: list[list[str]], definition_index: int = 1) -> list[dict]:
+    """Map raw table rows to {term, definition}, skipping rows with empty term.
+
+    The definition column differs per table, so it is explicit:
+      - Terms table        ``Term | Definition | Category``        → index 1
+      - Abbreviations table ``Abbreviation | Full Form | Definition`` → index 2
+    A row too short to have that column yields an empty definition (so a malformed
+    row is flagged EMPTY_DEFINITION rather than silently picking the wrong cell).
+    """
     entries: list[dict] = []
     for cells in rows:
         if not cells or not cells[0]:
             continue
+        definition = cells[definition_index] if len(cells) > definition_index else ""
         entries.append({
             "term": cells[0],
-            "definition": cells[1] if len(cells) > 1 else "",
+            "definition": definition,
         })
     return entries
 
@@ -141,8 +149,8 @@ def validate(doc_path: str) -> dict:
     """Run all structural validation checks and return the honest verdict."""
     content = Path(doc_path).read_text(encoding="utf-8")
 
-    terms_rows = _rows_to_entries(parse_table(content, *TERMS_LABELS))
-    abbrev_rows = _rows_to_entries(parse_table(content, *ABBREV_LABELS))
+    terms_rows = _rows_to_entries(parse_table(content, *TERMS_LABELS), definition_index=1)
+    abbrev_rows = _rows_to_entries(parse_table(content, *ABBREV_LABELS), definition_index=2)
 
     all_issues: list[dict] = []
     all_issues.extend(check_sections(content))

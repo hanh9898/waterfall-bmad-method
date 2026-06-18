@@ -13,7 +13,7 @@ Four phases: Analysis (1), Design (2), Implementation (3), Testing (4). Each che
 
 `gate_mode` config: `strict` blocks next phase on failure, `lenient` warns but allows.
 
-**Args:** Phase number (1-4); **`feature=<slug>`** (gate per-feature — bắt buộc ở headless; interactive lấy active feature trong phiên); or inferred from calling agent context. Optional: `--headless` for non-interactive JSON output. To preview a checklist without evaluation, ask _"show phase N checklist"_.
+**Args:** Phase number (1-4); **`feature=<slug>`** (gate is per-feature — required in headless mode; in interactive mode it takes the active feature from the session); or inferred from calling agent context. Optional: `--headless` for non-interactive JSON output. To preview a checklist without evaluation, ask _"show phase N checklist"_.
 
 ## Conventions
 
@@ -32,7 +32,7 @@ If the script fails, resolve manually: `{skill-root}/customize.toml` → `{proje
 
 ### Load Context and Determine Phase
 
-> **Resolve active feature (B):** `{feature}` từ arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → `blocked` `feature_required`); validate slug. Gate đánh giá **theo feature này** — checklist đã namespace `features/{feature}/...` (và `shared/...` cho D-12/D-03, dual cho D-19/D-21). Vì matrix là per-feature, đọc đúng file matrix của feature đã tự lọc REQ theo feature.
+> **Resolve active feature (B):** `{feature}` from arg `feature=<slug>` → active feature in the session → ask (headless: required, if missing → `blocked` `feature_required`); validate slug. The gate evaluates **this feature** — the checklist is already namespaced to `features/{feature}/...` (and `shared/...` for D-12/D-03, dual for D-19/D-21). Since the matrix is per-feature, reading the correct feature matrix file already filters REQs by feature.
 
 Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}`, then load config from `{project-root}/_bmad/config.yaml` (root and `hbc` section) — resolve `{gate_mode}` (default: `strict`), `{coverage_threshold}` (default: `80`), `{project_name}`, `{output_folder}` (resolved to an absolute path — passed to the evaluator so checklist `{output_folder}/...` patterns resolve), `{communication_language}`, `{document_output_language}`. Execute `{workflow.activation_steps_append}`. Determine target phase:
 - Explicit argument (e.g. "phase gate 2") → use that number.
@@ -51,7 +51,7 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
    python3 scripts/evaluate-gate-checklist.py {checklist_path} --project-root {project-root} --var output_folder={output_folder} --var feature={feature} --var gate_mode={gate_mode} --var coverage_threshold={coverage_threshold} --var project_name={project_name}
    ```
 
-   `--var output_folder` **and `--var feature`** are REQUIRED — checklist artifact patterns use `{output_folder}/features/{feature}/...` (và `shared/...`) nên cả hai phải được truyền để resolve đúng path per-feature. `--var gate_mode` lets the script flag entry-gate failures (see step 4).
+   `--var output_folder` **and `--var feature`** are REQUIRED — checklist artifact patterns use `{output_folder}/features/{feature}/...` (and `shared/...`), so both must be passed to resolve the per-feature path correctly. `--var gate_mode` lets the script flag entry-gate failures (see step 4).
 
    The script evaluates `[FILE]`, `[CONTENT]`, and `[METRIC]` items deterministically and returns JSON with per-item status + evidence. `[QUALITY]` items return as `PENDING_LLM`. Script exit code 1 means required items failed deterministically — this is a partial signal, not the final gate verdict (QUALITY items still need evaluation). If the script fails entirely, evaluate manually following the same JSON schema: `{"summary": {...}, "results": [{"item_id", "status", "evidence", ...}]}` per item.
 

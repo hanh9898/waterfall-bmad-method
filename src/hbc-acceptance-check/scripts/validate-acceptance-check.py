@@ -19,10 +19,16 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
-# --- shared lib bootstrap (Đợt 0 / C-1) ---
+# --- shared lib bootstrap (Wave 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
-    from hbc_validation import SEMANTIC_NA, check_required_sections, verdict  # noqa: E402
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        check_required_sections,
+        find_section,
+        parse_table,
+        verdict,
+    )
 except ModuleNotFoundError:
     print(json.dumps({
         "error": "Shared lib 'hbc_validation' not found.",
@@ -115,24 +121,21 @@ def check_decision(content: str) -> list[dict]:
 def check_criteria_checklist(content: str) -> list[dict]:
     issues: list[dict] = []
 
-    checklist_match = re.search(
-        r"#+\s.*(?:Acceptance Criteria Checklist|Danh sách tiêu chí nghiệm thu)(.*?)(?=\n#|\Z)",
-        content,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if not checklist_match:
+    # Language-aware: match the checklist section by English heading OR its
+    # configured-language alias, then count its table DATA rows via parse_table
+    # (header + separator excluded). The old manual "header_count" subtraction was
+    # English-only ("Criterion"/"Status") and miscounted a VN header as a data row,
+    # so an empty Vietnamese checklist passed.
+    if not find_section(
+        content, "Acceptance Criteria Checklist", "Danh sách tiêu chí nghiệm thu"
+    ):
         return issues
 
-    checklist_body = checklist_match.group(1)
-    criteria_rows = re.findall(
-        r"\|\s*[^|\-][^|]*\|[^|]*\|[^|]*\|", checklist_body
+    data_rows = len(
+        parse_table(
+            content, "Acceptance Criteria Checklist", "Danh sách tiêu chí nghiệm thu"
+        )
     )
-    header_count = sum(
-        1
-        for r in criteria_rows
-        if "Criterion" in r or "Status" in r
-    )
-    data_rows = len(criteria_rows) - header_count
 
     if data_rows < 1:
         issues.append({

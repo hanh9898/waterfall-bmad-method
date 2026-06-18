@@ -73,6 +73,40 @@ def test_matrix_existing_code_file_ok(tmp_path):
     assert not [i for i in issues if i["type"] == "MISSING_CODE_FILE"]
 
 
+def test_matrix_code_ref_with_line_suffix_ok(tmp_path):
+    # Bug E1: `src/login.py:42` (trailing :line) must resolve to src/login.py.
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "login.py").write_text("x = 1\n", encoding="utf-8")
+    matrix = (
+        "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+        "|--------|----------|------------|----------|----------|-------------|-----------|\n"
+        "| REQ-001 | - | D-19 | src/login.py:42 | TC-001 | - | - |\n"
+    )
+    issues = check_matrix(matrix, str(tmp_path))
+    assert not [i for i in issues if i["type"] == "MISSING_CODE_FILE"]
+
+
+def test_matrix_code_ref_windows_sep_ok(tmp_path):
+    # Bug E2: a Windows separator + :line must still resolve (cross-platform).
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "login.py").write_text("x = 1\n", encoding="utf-8")
+    matrix = (
+        "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+        "|--------|----------|------------|----------|----------|-------------|-----------|\n"
+        "| REQ-001 | - | D-19 | src\\login.py:10 | TC-001 | - | - |\n"
+    )
+    issues = check_matrix(matrix, str(tmp_path))
+    assert not [i for i in issues if i["type"] == "MISSING_CODE_FILE"]
+
+
+def test_empty_task_table_flagged(tmp_path):
+    # Bug E3: a tasks file with no parseable rows must not pass as "complete".
+    empty = _w(str(tmp_path), "task-breakdown.md", "# Task Breakdown\n\nNo tasks yet.\n")
+    result = validate(empty)
+    assert result["valid"] is False
+    assert any(i["type"] == "UNPARSEABLE_TASKS" for i in result["issues"])
+
+
 def test_matrix_designed_tested_not_implemented_flagged(tmp_path):
     matrix = (
         "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"

@@ -28,7 +28,7 @@ When `--headless`: all stages run non-interactively per `references/headless-con
 
 Resolve customization, load persistent facts and config per standard BMad activation. Output in `{document_output_language}`, communicate in `{communication_language}`.
 
-> **Resolve active feature (B):** arg `feature=<slug>` → active feature trong phiên → hỏi (headless: bắt buộc, thiếu → blocked `feature_required`). Thay `{feature}` trong mọi path workflow.
+> **Resolve active feature (B):** arg `feature=<slug>` → active feature in the session → ask (headless: required, missing → blocked `feature_required`). Substitute `{feature}` in every workflow path.
 
 ## Open Floor
 
@@ -53,7 +53,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d26`, `d02_path`, `d0
 
 1c. **Intent gate.** Confirm test plan (strategy), not test specification (detailed cases). If user wants cases: redirect to `hbc-create-test-spec`. Once intent is confirmed, initialize `.decision-log.md` alongside the output — create if absent, append session heading if present. Canonical memory for this workflow.
 
-1d. **Brainstorming suggestion** (interactive only, Fresh state only). If D-02 reveals complex business logic or high-risk areas, suggest: _"Requirements có nhiều edge cases — muốn chạy `bmad-brainstorming` trước để brainstorm risk areas và test scenarios không? Kết quả sẽ feed vào D-26 test strategy."_ If declined or in headless mode, proceed. If accepted, pause for separate brainstorming session. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load relevant risk/scenario ideas as input for test strategy.
+1d. **Brainstorming suggestion** (interactive only, Fresh state only). If D-02 reveals complex business logic or high-risk areas, suggest running `bmad-brainstorming` first to brainstorm risk areas and test scenarios, noting the results will feed into the D-26 test strategy. If declined or in headless mode, proceed. If accepted, pause for separate brainstorming session. If a brainstorming session file exists in `{output_folder}/brainstorming/`, load relevant risk/scenario ideas as input for test strategy.
 
 ## Stage 2: Discovery
 
@@ -103,9 +103,9 @@ Script checks: all required sections present and non-empty, entry/exit criteria 
 
 **Parallel-lens menu:** `[A]` Advanced (test strategy completeness) / `[P]` Party Mode / `[C]` Continue.
 
-## Stage 4b: Semantic Review (Lớp 2)
+## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves cấu trúc. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: identify REQs with an admin/lifecycle/write facet (e.g. key rotation, approval) and confirm D-26 fences a test area for each applicable facet — even when D-21 cut it from REST scope — or marks it explicitly out-of-scope. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: identify REQs with an admin/lifecycle/write facet (e.g. key rotation, approval) and confirm D-26 fences a test area for each applicable facet — even when D-21 cut it from REST scope — or marks it explicitly out-of-scope. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty, else `pending` + list). The Phase 2 gate REVIEW item (#5) reads it.
 
 ## Stage 5: Save and Handoff
 
@@ -124,5 +124,5 @@ Headless: return JSON per `references/headless-contract.md`.
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest running `hbc-traceability impact` to sync the dependent documents/tests/code.
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

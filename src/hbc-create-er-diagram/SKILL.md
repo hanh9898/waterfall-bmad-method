@@ -24,7 +24,7 @@ Five stages: prerequisites → discovery → generation → validation → hando
 
 ## On Activation
 
-> **Scope DUAL + feature (B):** mặc định ghi/đọc baseline `shared/erd/` (`{workflow.er_diagram_output_path}`); truyền `feature=<slug>` → tạo/đọc bản **override per-feature** (`{workflow.er_diagram_feature_path}`, path-existence precedence).
+> **Scope DUAL + feature (B):** by default write/read the baseline `shared/erd/` (`{workflow.er_diagram_output_path}`); pass `feature=<slug>` → create/read a **per-feature override** (`{workflow.er_diagram_feature_path}`, path-existence precedence).
 
 Resolve the `{workflow.*}` block: run `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow`. If missing, hand-merge `{skill-root}/customize.toml` → `{project-root}/_bmad/custom/{skill-name}.toml` → `{project-root}/_bmad/custom/{skill-name}.user.toml` (scalars override, arrays append, arrays-of-tables keyed by `code`/`id` replace). Keep the resolved block in memory for the whole session.
 
@@ -98,7 +98,7 @@ python3 {skill-root}/scripts/check-entity-coverage.py --prd <each-prd-path-or-sh
 
 Pass each PRD path/shard as a separate `--prd`; surface `"warn": "prd_entity_extraction_empty"`. Add the LLM judgment checks (normalization, relationship completeness, naming consistency, revision history, language consistency). Fix: interactive collaborative loop; headless applies only `auto_fixable: true` issues (log each via `fix_hint`), else `blocked` `reason: "mermaid_validation_failed"` / `"entity_coverage_gap"`. Mark `stepsCompleted` += `stage-4`, then the Parallel-lens menu (Stage-4 targets: edge cases). See stage-guide §4.
 
-**4b. Semantic Review (Lớp 2).** Before saving, run the semantic review per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with the facet-split discipline (read vs write/admin surface · entity lifecycle · relationship cardinality). Name open facets so downstream D-21 / D-26 / D-27 inherit them. Record `semanticReview` frontmatter (`status: passed` only when `openFacets` empty, else `pending` + list). Headless: same rubric, never block here (Phase 2 gate enforces), never fabricate coverage. See stage-guide §4b.
+**4b. Semantic Review (Layer 2).** Before saving, run the semantic review per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with the facet-split discipline (read vs write/admin surface · entity lifecycle · relationship cardinality). Name open facets so downstream D-21 / D-26 / D-27 inherit them. Record `semanticReview` frontmatter (`status: passed` only when `openFacets` empty, else `pending` + list). Headless: same rubric, never block here (Phase 2 gate enforces), never fabricate coverage. See stage-guide §4b.
 
 ### 5. Save and Handoff
 
@@ -113,5 +113,5 @@ Read `{workflow.on_complete}` from the resolved workflow block. If non-empty, fo
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest: _"Tài liệu đã cập nhật. Chạy `hbc-traceability impact` để đồng bộ các tài liệu/test/code phụ thuộc?"_
+- **Hybrid trigger (default):** after a successful update, suggest: _"The document has been updated. Run `hbc-traceability impact` to sync the dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly. Default is false.

@@ -73,9 +73,9 @@ _REQ_RE = re.compile(r"REQ-(?:[A-Z0-9]+-)?\d{3,}")
 
 
 def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
-    """TDD soft (cụm 1=C / 3): mỗi task DONE phải có RED-evidence — file
-    <evidence_dir>/<TASK>.md ghi lần chạy test FAIL trước khi viết code.
-    Lưu ý: evidence do agent tự khai (self-attested), KHÔNG phải bằng chứng mật mã."""
+    """TDD soft (cluster 1=C / 3): every DONE task must have RED-evidence — a file
+    <evidence_dir>/<TASK>.md recording the FAIL test run before code is written.
+    Note: the evidence is self-attested by the agent, NOT a cryptographic proof."""
     issues: list[dict] = []
     d = Path(evidence_dir)
     for m in _TASK_ROW_RE.finditer(tasks_text):
@@ -98,7 +98,7 @@ def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
         if "fail" not in body:
             issues.append({
                 "type": "RED_EVIDENCE_NO_FAIL",
-                "message": f"{task_id}: RED-evidence không thấy dấu hiệu test FAIL (RED)",
+                "message": f"{task_id}: RED-evidence shows no sign of a failing test (RED)",
                 "task_id": task_id,
                 "auto_fixable": False,
             })
@@ -106,8 +106,8 @@ def check_red_evidence(tasks_text: str, evidence_dir: str) -> list[dict]:
 
 
 def _matrix_table(matrix_text: str) -> tuple[dict, list[list[str]]]:
-    """Parse matrix → (header_map name→index, data rows). Header-name based, nên
-    chịu được cả matrix 7 cột (legacy) lẫn 8 cột (có cột `feature` mới)."""
+    """Parse matrix → (header_map name→index, data rows). Header-name based, so it
+    tolerates both the 7-column matrix (legacy) and the 8-column one (with the new `feature` column)."""
     header: dict = {}
     rows: list[list[str]] = []
     for line in matrix_text.splitlines():
@@ -151,8 +151,13 @@ def check_matrix(matrix_text: str, project_root: str) -> list[dict]:
                 tok = tok.strip().strip("`")
                 if not tok or _blank(tok):
                     continue
-                if "/" in tok or re.search(r"\.\w+$", tok):  # looks like a path
-                    p = Path(tok) if Path(tok).is_absolute() else Path(project_root) / tok
+                # Normalize a Windows separator and strip a trailing :line(:col)
+                # reference, so `src\login.py:42` resolves to src/login.py (the
+                # raw token is still reported in the message for fidelity).
+                norm = tok.replace("\\", "/")
+                norm = re.sub(r":\d+(?::\d+)?$", "", norm)
+                if "/" in norm or re.search(r"\.\w+$", norm):  # looks like a path
+                    p = Path(norm) if Path(norm).is_absolute() else Path(project_root) / norm
                     if not p.exists():
                         issues.append({
                             "type": "MISSING_CODE_FILE",
@@ -177,6 +182,16 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
              tdd_evidence_dir: str | None = None) -> dict:
     issues: list[dict] = []
     tasks_text = Path(tasks_path).read_text(encoding="utf-8")
+    # Guard: a --tasks file with no parseable task row would otherwise validate as
+    # "complete" with nothing examined (every per-row check is a no-op). Surface it
+    # loudly, mirroring validate-task-breakdown's NO_TASKS.
+    if not _TASK_ROW_RE.search(tasks_text):
+        issues.append({
+            "type": "UNPARSEABLE_TASKS",
+            "message": "No task rows parsed from --tasks (empty or malformed table). "
+                       "Expected: | task_id | description | design_ref | test_refs | priority | status | dependencies |",
+            "auto_fixable": False,
+        })
     issues.extend(check_done_tasks(tasks_text))
     checked = ["DONE tasks have an assigned test (test_refs)"]
     if tdd_evidence_dir:
@@ -194,7 +209,7 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         checked=checked,
         not_checked=[
             "whether the code actually fulfils the task (LLM review / acceptance)",
-            "RED-evidence là self-attested — không có bằng chứng git/thời gian chống ngụy tạo (cụm 1=C)",
+            "RED-evidence is self-attested — no git/timestamp proof against tampering (cluster 1=C)",
         ],
     )
     v.update({"valid": structure_ok, "total_issues": len(issues), "issues": issues})

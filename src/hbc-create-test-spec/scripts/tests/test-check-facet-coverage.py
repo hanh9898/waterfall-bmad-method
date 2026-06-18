@@ -46,6 +46,23 @@ D27_NO_FACETS = """\
 """
 
 
+D27_TODO = """\
+# D-27
+
+## Chi tiết test case (Detailed Test Cases)
+
+### TC-001: Login
+**REQ ID:** REQ-013
+**Facets:** TODO
+
+## Ma trận bao phủ (Coverage Matrix)
+
+| REQ ID | Tóm tắt | Test Cases | Facets |
+|--------|---------|------------|--------|
+| REQ-013 | Key mgmt | TC-001 | TODO |
+"""
+
+
 def _w(body: str) -> str:
     d = tempfile.mkdtemp()
     p = Path(d) / "D-27.md"
@@ -87,6 +104,15 @@ def test_no_declared_facets_is_vacuously_covered():
     assert "note" in data
     assert "vacuous" in data["note"].lower()
     assert code == 0
+
+
+def test_placeholder_todo_fails_loudly():
+    # Bug F1: a "TODO" required facet and a "TODO" covered facet cancelled out and
+    # the REQ reported full coverage. Placeholder facets must fail loudly.
+    data, code = run(_w(D27_TODO))
+    assert data["facet_covered"] is False
+    assert data.get("placeholder_facets")
+    assert code == 1
 
 
 def test_d27_unreadable_exit_2():
