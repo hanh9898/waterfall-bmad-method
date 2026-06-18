@@ -133,6 +133,22 @@ class TestEvaluateContent:
         assert result["status"] == "FAIL"
         assert "No files found" in result["evidence"]
 
+    def test_invalid_regex_criteria_falls_back_to_literal(self, tmp_path):
+        # A gate-checklist cell can hold text that is not a valid regex
+        # (e.g. a stray backslash-escape "\q"); under py3.13+ re.findall
+        # raises re.error/PatternError ("bad escape"). It must degrade to a
+        # literal substring match instead of crashing the whole evaluator.
+        _write(str(tmp_path / "D-02-req.md"), "row: P2-03 \\q done")
+        result = evaluate_content("D-02*", "P2-03 \\q", str(tmp_path), {})
+        assert result["status"] == "PASS"
+        assert result["match_count"] >= 1
+
+    def test_invalid_regex_criteria_not_present_fails_cleanly(self, tmp_path):
+        _write(str(tmp_path / "D-02-req.md"), "nothing relevant")
+        result = evaluate_content("D-02*", "P2-03 \\q", str(tmp_path), {})
+        assert result["status"] == "FAIL"
+        assert result["match_count"] == 0
+
     def test_comma_separated_patterns(self, tmp_path):
         _write(str(tmp_path / "D-02-req.md"), "REQ-001")
         _write(str(tmp_path / "D-06-flow.md"), "REQ-002")

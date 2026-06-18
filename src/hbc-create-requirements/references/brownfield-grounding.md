@@ -7,10 +7,13 @@ Runs only when the project is brownfield — the Stage 1a scan reported `brownfi
 For each functional ask, classify and anchor it against AS-IS:
 
 - **Change Type** — `NEW` (no AS-IS), `CHANGE` (alters existing behavior), or `REMOVE`.
-- **Existing System Ref** — the existing feature/flow/entity it touches, picked from the scan's `existing_system` catalog (`entities` / `endpoints`). Read `project-context.md` for tech stack/rules; enrich flows from a `D-06` AS-IS section if one exists.
+- **Existing System Ref** — the existing feature/flow/entity/module/service it touches. Source the anchor pick-list **generically** (any project type, not just DB/API):
+  - (a) the scan's `existing_system` catalog — `entities` (←D-19) / `endpoints` (←D-21), for DB/API products;
+  - (b) the **documented AS-IS** listed in the catalog's `sources_present` — read a named *Components / Modules / Services* section of `project-context.md` or the `bmad-document-project` docs for module/service/component anchors. (Don't read the whole doc — go to the inventory section.)
+  Enrich flows from a `D-06` AS-IS section if one exists.
 - For every `CHANGE` / `REMOVE`, write a `Change Spec — <REQ>` block: `AS-IS → TO-BE · invariants · out-of-scope`. `NEW` needs none.
 
-If the catalog's `hint` is set, the AS-IS is sparse — tell the user and suggest running `bmad-document-project` / creating the Phase 0 baselines (shared D-19/D-21) before eliciting.
+If the catalog's `hint` is set (no structured D-19/D-21 anchors), **don't stop** — derive anchors from the documented AS-IS in `sources_present` (their modules/services/components). **Degraded mode:** if there is no documented AS-IS at all, recommend running `bmad-document-project` and do NOT fabricate anchors (headless: `blocked: brownfield_ungrounded`). Creating D-19/D-21 baselines is one option for DB/API products, not the only path.
 
 **NFRs too.** A non-functional requirement that tightens an existing guarantee is also a CHANGE: state the **current baseline → target** in its measurable criteria (e.g. "p95 5s → < 2s"), not just the target. (NFRs have no Change Type column; the grounding lives in the criteria text.)
 
