@@ -140,6 +140,16 @@ def test_brownfield_suspected_false_when_empty_or_context_present():
         assert out["brownfield_suspected"] is False  # already brownfield, not "suspected"
 
 
+def test_brownfield_grounding_doc_instructs_documented_as_is():
+    # DF-6 / TC-003: the guidance directs the BA to read sources_present + a named
+    # Components/Modules/Services section (generic anchors), and covers degraded mode.
+    ref = Path(__file__).resolve().parents[2] / "references" / "brownfield-grounding.md"
+    text = ref.read_text(encoding="utf-8")
+    assert "sources_present" in text
+    assert "Components / Modules / Services" in text or "Components/Modules/Services" in text
+    assert "brownfield_ungrounded" in text  # degraded mode (REQ-004)
+
+
 def test_greenfield_no_existing_system():
     # No project-context.md → not brownfield → no existing_system catalog.
     with tempfile.TemporaryDirectory() as tmp:
@@ -205,6 +215,20 @@ def test_brownfield_hint_per_baseline_when_one_missing():
         assert cat["entities"] == ["Customer"]
         assert cat["endpoints"] == []
         assert "hint" in cat and "endpoint" in cat["hint"].lower()
+
+
+def test_brownfield_hint_points_at_documented_as_is():
+    # DF-6 / TC-001: when there are no structured D-19/D-21 anchors, the hint must
+    # point the BA at the documented AS-IS (sources_present) as the generic anchor
+    # source — NOT lead with "create D-19/D-21".
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "project-context.md").write_text("# PC\n## Technology Stack & Versions\nX\n", encoding="utf-8")
+        out = run_scan(tmp)
+        hint = out["existing_system"]["hint"].lower()
+        assert "sources_present" in hint or "documented as-is" in hint
+        # the per-baseline detail is kept, but not the lead framing
+        assert not hint.startswith("as-is anchors sparse — missing")
 
 
 def test_brownfield_thin_catalog_sets_hint():

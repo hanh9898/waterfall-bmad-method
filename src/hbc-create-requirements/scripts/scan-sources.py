@@ -143,14 +143,19 @@ def existing_system_catalog(root: Path, hbc_output: Path, project_context: str |
     # so a project with D-19 but no D-21 (a common mid-Phase-0 state) is still told.
     missing = []
     if not entities:
-        missing.append("entities (shared D-19 ERD)")
+        missing.append("entities (D-19 ERD)")
     if not endpoints:
-        missing.append("endpoints (shared D-21 API)")
+        missing.append("endpoints (D-21 API)")
     if missing:
+        # Generic framing (DF-6): point at the documented AS-IS as the anchor source
+        # for ANY project type; structured D-19/D-21 baselines are one option, named
+        # as a sub-note (kept so the BA still sees which is absent).
         catalog["hint"] = (
-            "AS-IS anchors sparse — missing " + "; ".join(missing) + ". Run "
-            "bmad-document-project / create the Phase 0 baseline(s) so requirements "
-            "can be grounded against the existing system."
+            "No structured anchors yet — derive existing-system anchors from the "
+            "documented AS-IS in `sources_present` (the modules/services/components "
+            "named in project-context.md or bmad-document-project docs). If nothing is "
+            "documented, run bmad-document-project. (Structured baselines are one option "
+            "for DB/API products; missing: " + "; ".join(missing) + ".)"
         )
     return catalog
 
