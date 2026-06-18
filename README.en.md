@@ -19,17 +19,17 @@ An **incremental, per-feature** development workflow for HBLAB. The process has 
 
 ## What HBC solves for you
 
-> **Software outlives the people who build it.** The deepest pain isn't *getting it wrong* — it's that **correctness gets anchored to one person's memory, then leaves when they do.**
+> **Software outlives the people who build it.** The deepest pain isn't *getting it wrong* — it's that **the requirements, the design rationale, and how to test them live only in one person's head, then leave when they do.**
 
-Requirements, design, code, tests, and docs each tend to live in a different place, and only *people* hold them together. When teams change and requirements pass through many hands, every handover drops a fragment of the truth — and usually nobody notices what's missing until they hit it. In short, three familiar pains:
+Requirements, design, code, tests, and docs are each created in a different place, at a different time, by a different role — and **the relationships between them** (which requirement drives which design, which test covers which requirement) usually aren't written down anywhere. When teams change or requirements pass through many hands, every handover **loses information** — a design decision no one recorded, a requirement change never reflected in the tests — and usually no one notices until they hit it. Three familiar problems:
 
-- **Truth at the input is fragile** — vague requirements, no one challenging them, mistakes found too late.
-- **Truth between spec–code–test leaks** — code and tests drift apart; gaps no one owns.
-- **Truth leaves with people** — teams rotate, docs are scattered, the project is hard to migrate/onboard.
+- **Input requirements aren't clear** — vague descriptions, no one challenging them, the misunderstanding only surfaces at handover → expensive to fix.
+- **Spec, code, and tests don't match** — code and tests are both derived from the spec but independently; no one owns catching the drift between them.
+- **Knowledge leaves when people do** — docs are scattered and hard to read; newcomers struggle to take over, the project is hard to migrate.
 
-HBC doesn't impose a process. It grew out of **each role's real pain**, and **anchors correctness to the process instead of to memory**:
+HBC doesn't impose a process. It grew out of **each role's real pain**, and **records the relationships between artifacts as checkable data instead of leaving them in memory**:
 
-### 🅐 At the input — requirements with enough meaning, drift caught early
+### At the input — requirements written clearly and verifiably; gaps stopped at the phase gate
 
 - *Requirement owner (Project Owner):* "I'm not afraid of being wrong. I'm afraid of being wrong and only finding out a month later."
 - *BA (Business Analyst):* "I need to ask the *right* questions and *find things again*."
@@ -42,7 +42,7 @@ How HBC handles it:
 - `PG` (`hbc-phase-gate`) + `IR` (`hbc-check-implementation-readiness`) → stop drift right at each phase boundary.
 - Spec is **stored per feature** (`_bmad-output/features/<feature>/`), not all in one pile.
 
-### 🅑 Between spec–code–test — each role guards one gate
+### Spec, code, and tests stay in sync — each role owns one control gate
 
 - *Developer:* "One person guarding two gates means every gate leaks."
 - *Tester:* needs a clear role and anchor for spec↔test quality.
@@ -55,7 +55,7 @@ How HBC handles it:
 
 > ℹ️ *Tooling for the tester role is currently foundational and still maturing.*
 
-### 🅒 Over time — people are replaceable, the system doesn't break
+### Long term — docs sufficient for a newcomer to take over; no dependence on the original author
 
 - *Project sponsor (Sponsor):* "I want something that's still understandable after the people who made it are gone."
 - *Project manager (PM):* "People are replaceable; the system shouldn't break."
