@@ -38,7 +38,7 @@ Resolve customization, load persistent facts and config per standard BMad activa
 python3 {workflow.scan_script} --project-root {project-root}
 ```
 
-Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmatter), `source_docs` list, and `project_context` path. Use this to route:
+Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmatter), `source_docs` list, `project_context` path, a `brownfield` flag (true when a `project_context` was found), and — when brownfield — an `existing_system` catalog (`sources_present`, `entities` from baseline D-19, `endpoints` from baseline D-21, plus a `hint` when thin). Use this to route:
    - **Fresh** — no prior D-02. Proceed to Stage 2.
    - **Resume** — partial D-02 found (`lastStep` < `complete`). Show summary, offer resume or restart.
    - **Update** — complete D-02 exists. Show what to update, load as baseline.
@@ -64,7 +64,7 @@ Pre-populate fields from `project-context.md` where available (stakeholders, tim
 
 If Stage 1a's scan returned a `project_context` path, the project is **brownfield** — a vague customer ask must be reconciled against the **existing system** before it becomes a requirement, otherwise D-02 drifts into greenfield wishful thinking. For each functional ask, run a short **gap-analysis probe**:
 
-1. **Load the AS-IS picture.** Read `project-context.md` (existing modules / features / entities / endpoints) — the primary source. If a `D-06` business flow with an AS-IS section already exists, use it to enrich. (Do not force D-06 to come first.)
+1. **Load the AS-IS picture.** Start from the scan's `existing_system` catalog (baseline `entities` + `endpoints` — a ready pick-list of anchors). Read `project-context.md` for tech stack / implementation rules. If a `D-06` business flow with an AS-IS section already exists, use it to enrich flows. (Do not force D-06 to come first.) If the catalog is thin (its `hint` is set), tell the user the AS-IS is sparse and suggest running `bmad-document-project` / creating the Phase 0 baselines first.
 2. **Probe each ask** against AS-IS: which existing **feature / flow / entity** does it touch? Is it **NEW** (no AS-IS), **CHANGE** (alters existing behavior), or **REMOVE**? What is the current behavior (AS-IS) vs the target (TO-BE)? What invariants must hold? What is explicitly out-of-scope (not changing)?
 3. **Emit a delta requirement.** Fill the D-02 **Change Type** + **Existing System Ref** columns. For every **CHANGE / REMOVE** REQ, add a `Change Spec — <REQ>` block (AS-IS → TO-BE · invariants · out-of-scope). `NEW` REQs need no Change Spec.
 

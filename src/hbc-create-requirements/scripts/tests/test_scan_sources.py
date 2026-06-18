@@ -117,6 +117,54 @@ def test_no_frontmatter_d02():
         assert out["existing_d02"]["lastStep"] == ""
 
 
+def test_greenfield_no_existing_system():
+    # No project-context.md → not brownfield → no existing_system catalog.
+    with tempfile.TemporaryDirectory() as tmp:
+        out = run_scan(tmp)
+        assert out["brownfield"] is False
+        assert "existing_system" not in out
+
+
+def test_brownfield_catalog_from_baselines():
+    # project-context.md + baseline D-19/D-21 → catalog extracts entities + endpoints.
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "project-context.md").write_text(
+            "# Project Context\n## Technology Stack & Versions\nPython 3.12\n", encoding="utf-8")
+        erd = root / "_bmad-output" / "shared" / "erd"
+        erd.mkdir(parents=True)
+        (erd / "D-19-baseline-erd.md").write_text(
+            "# D-19\n\n```mermaid\nerDiagram\n  Customer { int id PK }\n  Order { int id PK }\n"
+            "  Customer ||--o{ Order : places\n```\n", encoding="utf-8")
+        api = root / "_bmad-output" / "shared" / "api"
+        api.mkdir(parents=True)
+        (api / "D-21-baseline-api.md").write_text(
+            "# D-21\n\n## Endpoint List\n\n| # | Method | Endpoint | Description | REQ ID |\n"
+            "|---|--------|----------|-------------|--------|\n"
+            "| 1 | GET | /api/customers | list | REQ-001 |\n"
+            "| 2 | POST | /api/orders | create | REQ-002 |\n", encoding="utf-8")
+        out = run_scan(tmp)
+        assert out["brownfield"] is True
+        cat = out["existing_system"]
+        assert "Customer" in cat["entities"] and "Order" in cat["entities"]
+        assert "GET /api/customers" in cat["endpoints"]
+        assert "POST /api/orders" in cat["endpoints"]
+        assert "hint" not in cat
+
+
+def test_brownfield_thin_catalog_sets_hint():
+    # Brownfield but no baseline D-19/D-21 → empty catalog + hint to run document-project.
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "project-context.md").write_text(
+            "# Project Context\n## Technology Stack & Versions\nPython\n", encoding="utf-8")
+        out = run_scan(tmp)
+        assert out["brownfield"] is True
+        cat = out["existing_system"]
+        assert cat["entities"] == [] and cat["endpoints"] == []
+        assert "hint" in cat
+
+
 def test_output_to_file():
     with tempfile.TemporaryDirectory() as tmp:
         out_path = Path(tmp) / "result.json"
