@@ -134,6 +134,94 @@ def tc_field(block: str, label: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
+_TC_HEADING_CAP_RE = re.compile(r"^#{3,6}[ \t]+(TC-\d{3,})", re.MULTILINE | re.IGNORECASE)
+_REQ_ID_ANY_RE = re.compile(r"REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?\d{3,}")
+
+
+def tc_req_map(text: str) -> dict[str, set[str]]:
+    """REQ id -> set of TC ids bound to it, from a D-27's ``### TC-NNN`` detail
+    blocks (each block's ``**REQ ID:**`` field; a block may name several REQs).
+    Fence-stripped, levels 3-6 — mirrors iter_tc_blocks detection. This is the
+    AUTHORITATIVE D-27 TC↔REQ binding used to detect matrix `test_ref` drift."""
+    clean = strip_code_fences(text)
+    parts = _TC_HEADING_CAP_RE.split(clean)  # [pre, tc1, body1, tc2, body2, ...]
+    out: dict[str, set[str]] = {}
+    it = iter(parts[1:])
+    for tc_id, body in zip(it, it):
+        req_field = tc_field(body, "REQ ID") or ""
+        for req in _REQ_ID_ANY_RE.findall(req_field):
+            out.setdefault(req, set()).add(tc_id.upper())
+    return out
+
+
+_TC_IN_CELL_RE = re.compile(r"TC-\d{3,}", re.IGNORECASE)
+
+
+def matrix_req_tc_map(matrix_text: str) -> dict[str, set[str]]:
+    """REQ id -> set of TC ids found in that REQ's ``test_ref`` cell, parsed from a
+    traceability-matrix markdown table. Header-aware: the ``req_id`` and ``test_ref``
+    columns are located BY NAME from the header row (a fixed positional map would
+    misread a legacy 7-column matrix that has no leading ``feature`` column). A REQ
+    with an empty ``test_ref`` maps to an empty set — present, but untraced."""
+    out: dict[str, set[str]] = {}
+    col_order: list[str] | None = None
+    in_table = False
+    for line in matrix_text.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            in_table = False
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        joined = "".join(cells)
+        if joined and set(joined) <= {"-", " ", ":"}:
+            in_table = True  # separator → data rows follow
+            continue
+        low = [c.lower() for c in cells]
+        if "req_id" in low and "test_ref" in low:
+            col_order = low  # header — map columns by name, not position
+            in_table = True
+            continue
+        if not in_table or col_order is None:
+            continue
+        ri, ti = col_order.index("req_id"), col_order.index("test_ref")
+        if ri >= len(cells):
+            continue
+        m = _REQ_ID_ANY_RE.match(cells[ri])
+        if not m:
+            continue
+        test_ref = cells[ti] if ti < len(cells) else ""
+        tcs = {t.upper() for t in _TC_IN_CELL_RE.findall(test_ref)}
+        out.setdefault(m.group(0), set()).update(tcs)
+    return out
+
+
+def test_ref_drift(d27_text: str, matrix_text: str) -> dict[str, dict[str, list[str]]]:
+    """Detect matrix ``test_ref`` drift against the authoritative D-27 TC↔REQ binding.
+
+    For each REQ that HAS a matrix row, compare its ``test_ref`` TC set against the
+    TCs D-27 binds to that REQ (``tc_req_map``):
+      - ``missing`` — TC bound in D-27 but absent from the matrix row (D-27 grew, the
+        matrix was never back-filled — the DF-9 failure mode).
+      - ``stale``   — TC in the matrix row but no longer bound in D-27 (renumbered or
+        deleted upstream).
+    Returns ``{req: {"missing": [...], "stale": [...]}}`` for drifted REQs only; an
+    empty dict means the matrix ``test_ref`` is in sync with D-27. REQs absent from
+    the matrix are intentionally ignored here — that gap is the matrix↔D-02 check's
+    job (``missing_from_matrix``), not test_ref drift's.
+    """
+    d27_map = tc_req_map(d27_text)
+    drift: dict[str, dict[str, list[str]]] = {}
+    for req, mtx_tcs in matrix_req_tc_map(matrix_text).items():
+        d27_tcs = d27_map.get(req, set())
+        missing = sorted(d27_tcs - mtx_tcs)
+        stale = sorted(mtx_tcs - d27_tcs)
+        if missing or stale:
+            drift[req] = {"missing": missing, "stale": stale}
+    return drift
+
+
 def parse_table(content: str, *labels: str) -> list[list[str]]:
     """Locate the section identified by ``labels`` and return its markdown
     table's DATA rows (header and separator excluded) as lists of cell strings.

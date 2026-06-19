@@ -67,6 +67,8 @@ Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.ma
 
 **Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {output_folder}/features/{feature}/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 by **path-existence precedence (b)**: if `{output_folder}/features/{feature}/planning-artifacts/D-19-*` exists, use it; otherwise fall back to `{output_folder}/shared/erd/D-19-*`. D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`. If the REQ traces to a BMM story, also populate `story_id` with that story ID; otherwise leave it empty.
 
+> **Re-pull `test_ref` when D-27 grows (DF-9).** D-27 is not frozen at Phase 2 — a later cascade (e.g. [Impact] adding TC-044…082) or a test-spec revision appends test cases the matrix never received, so `test_ref` silently under-reports coverage. On EVERY re-run of this phase, re-extract TC↔REQ from the current D-27 and refresh `test_ref` to match — do not assume the first population still holds. The drift detector below is the trigger: if Audit reports `test_ref_drift`, run Phase 2 update again to back-fill the `missing` TCs (and drop the `stale` ones).
+
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
 **Phase 4 — gate_status + timestamp:** Read gate reports from `{workflow.gate_reports_glob}`. Set `gate_status` per REQ. Set `timestamp` to current date.
@@ -106,6 +108,14 @@ Generate coverage summary from current matrix state.
 Find gaps — requirements without coverage in any column.
 
 1. **Run report** (same as above) to get per-column data.
+
+1b. **Detect stale `test_ref` against D-27 (DF-9).** A filled `test_ref` cell is not proof it is current — D-27 may have grown past it. Cross-check:
+
+   ```
+   python3 scripts/trace-report.py --matrix {workflow.matrix_path} --d27 {output_folder}/features/{feature}/planning-artifacts/D-27-*
+   ```
+
+   `d27_sync.test_ref_drift` = `{req: {missing, stale}}` (`missing` = TC bound in D-27 but absent from the matrix; `stale` = TC in the matrix but no longer in D-27). Any drift is **HIGH** — the matrix misrepresents test coverage. Remediate by re-running **Update Phase 2** (re-pulls `test_ref` from D-27). This is the same check `hbc-check-implementation-readiness` runs at the Phase 2 readiness seam.
 
 2. **For each gap:** identify which columns are empty and suggest the remediation skill:
    - Missing `design_ref` → _"REQ-002: no design reference. Update after Phase 2 design completion."_

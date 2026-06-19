@@ -229,6 +229,32 @@ def sync_with_d02(rows: list[dict], d02_path: str) -> dict:
     }
 
 
+def sync_with_d27(matrix_path: str, d27_path: str) -> dict:
+    """Cross-check matrix `test_ref` cells against the D-27 TC↔REQ binding (DF-9).
+
+    Detects a matrix gone STALE relative to D-27 — the failure mode where D-27 grew
+    new test cases (e.g. a cascade appended TC-044…) but the matrix `test_ref` was
+    never back-filled, so the matrix silently under-reports test coverage. Returns
+    `test_ref_drift` = {req: {missing, stale}} and `in_sync` (true when no drift).
+    """
+    try:
+        d27_text = Path(d27_path).read_text(encoding="utf-8")
+        matrix_text = Path(matrix_path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return {"error": f"D-27/matrix not readable: {exc}", "in_sync": False}
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+        from hbc_validation import test_ref_drift  # noqa: E402
+    except Exception:
+        return {"error": "shared lib 'hbc_validation' unavailable", "in_sync": False}
+    drift = test_ref_drift(d27_text, matrix_text)
+    return {
+        "in_sync": not drift,
+        "drifted_reqs": sorted(drift),
+        "test_ref_drift": drift,
+    }
+
+
 def _is_shared(row: dict) -> bool:
     """A shared-scope matrix row (feature column == 'shared', case-insensitive).
     Shared REQs (REQ-SHARED-NNN) are referenced in EVERY feature's matrix, so they
@@ -334,6 +360,9 @@ def main():
     parser.add_argument(
         "--d02", help="Path to D-02 — cross-check matrix REQ ids vs D-02 (A-4)",
     )
+    parser.add_argument(
+        "--d27", help="Path to D-27 — detect matrix test_ref drift vs D-27 TCs (DF-9)",
+    )
     args = parser.parse_args()
 
     if args.rollup:
@@ -369,6 +398,12 @@ def main():
         result["d02_sync"] = sync
         d02_in_sync = sync.get("in_sync", False)
 
+    d27_in_sync = True
+    if args.d27 and not args.detect_phase:
+        sync = sync_with_d27(str(matrix_path), args.d27)
+        result["d27_sync"] = sync
+        d27_in_sync = sync.get("in_sync", False)
+
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
@@ -377,10 +412,10 @@ def main():
         print(text)
 
     if args.validate:
-        sys.exit(0 if result.get("valid") and d02_in_sync else 1)
+        sys.exit(0 if result.get("valid") and d02_in_sync and d27_in_sync else 1)
     if args.detect_phase:
         sys.exit(0)
-    sys.exit(1 if (args.strict and (result.get("gaps") or not d02_in_sync)) else 0)
+    sys.exit(1 if (args.strict and (result.get("gaps") or not d02_in_sync or not d27_in_sync)) else 0)
 
 
 if __name__ == "__main__":

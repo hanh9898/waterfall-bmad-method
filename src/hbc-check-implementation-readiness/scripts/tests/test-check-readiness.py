@@ -364,6 +364,55 @@ def test_feature_namespaced_gap_detected():
         assert code == 1
 
 
+# --- DF-9: matrix test_ref ↔ D-27 drift gates readiness ---
+
+_MATRIX_HDR = (
+    "| feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+    "|---|---|---|---|---|---|---|---|\n"
+)
+
+
+def test_stale_matrix_test_ref_blocks_ready():
+    # The DF-9 seam: D-02/D-27/matrix all list the same REQs (so the existing
+    # uncovered_by_test and missing_from_matrix checks are clean), yet the matrix
+    # test_ref is STALE — D-27 bound TC-044 to REQ-002 but the matrix never got it.
+    # IR must catch the drift and refuse to close Phase 2.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d27 = _w(d, "D-27.md",
+                 "## Detail\n\n### TC-001: a\n**REQ ID:** REQ-001\n\n"
+                 "### TC-002: b\n**REQ ID:** REQ-002\n\n"
+                 "#### TC-044: cascade case\n**REQ ID:** REQ-002\n")
+        matrix = _w(d, "matrix.md",
+                    _MATRIX_HDR
+                    + "| f | REQ-001 | | D | c | TC-001 | | |\n"
+                    + "| f | REQ-002 | | D | c | TC-002 | | |\n")  # missing TC-044
+        data, code = run(["--d02", d02, "--d27", d27, "--matrix", matrix])
+        assert data["uncovered_by_test"] == []          # every REQ has a TC
+        assert data["missing_from_matrix"] == []         # every REQ has a row
+        assert data["test_ref_drift"]["REQ-002"]["missing"] == ["TC-044"]
+        assert data["ready"] is False                    # but the matrix is stale
+        assert code == 1
+
+
+def test_matrix_test_ref_in_sync_is_ready():
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d27 = _w(d, "D-27.md",
+                 "## Detail\n\n### TC-001: a\n**REQ ID:** REQ-001\n\n"
+                 "### TC-002: b\n**REQ ID:** REQ-002\n")
+        matrix = _w(d, "matrix.md",
+                    _MATRIX_HDR
+                    + "| f | REQ-001 | | D | c | TC-001 | | |\n"
+                    + "| f | REQ-002 | | D | c | TC-002 | | |\n")
+        data, code = run(["--d02", d02, "--d27", d27, "--matrix", matrix])
+        assert "test_ref_drift" not in data              # in sync → key absent
+        assert data["ready"] is True
+        assert code == 0
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
