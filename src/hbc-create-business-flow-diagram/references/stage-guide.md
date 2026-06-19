@@ -174,6 +174,7 @@ If compaction drops the conversation mid-stage, the next run resumes from these 
 For each in-scope flow, render one Mermaid block per the resolved diagram type:
 - Use `actor` for human users, `participant` for systems.
 - Label messages with action verbs in `{document_output_language}`; keep Mermaid keywords and code identifiers in English (Language Rules).
+- **No `;` in message or Note text** — Mermaid parses a semicolon as a statement separator, so `A->>B: kiểm tra; khóa` fails to render. Use `,` instead, or split into two message lines. (Stage 4 flags any leftover `;` as auto-fixable.)
 - One flow per Mermaid block — split long flows by sub-process.
 - Migration mode: AS-IS section first, TO-BE section second, with brief delta notes between them.
 - Update mode with `--update-flow=<name>` (or interactive U2): re-render only the specified flow, leaving other Mermaid blocks untouched.
