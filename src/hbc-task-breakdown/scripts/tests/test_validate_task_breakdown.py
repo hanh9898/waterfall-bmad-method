@@ -232,6 +232,9 @@ class TestFullValidation:
         assert result["structure_ok"] is True
         assert result["semantic_review"] == "n/a"
         assert result["passed"] is True
+        # T2.11 anti-churn block present
+        assert result["churn"]["revisions"] == 0
+        assert result["churn"]["high_churn"] is False
 
     def test_invalid_document(self, tmp_path):
         path = str(tmp_path / "tb.md")

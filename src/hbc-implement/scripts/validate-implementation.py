@@ -11,8 +11,12 @@ complete" pass with nothing actually behind it.
 
 Checks:
   - DONE task with no test_refs                      (DONE_TASK_NO_TEST)
+  - DONE task missing structured sanity              (DONE_NO_SANITY)      [--require-sanity]
   - matrix code_ref pointing at a non-existent file  (MISSING_CODE_FILE)   [--matrix]
   - matrix REQ designed + tested but code_ref empty  (REQ_NOT_IMPLEMENTED) [--matrix]
+  - spec id (REQ-/TC-/NFR-) embedded in code/test    (SPEC_REF_LEAK)       [--code-dir]   (T1.2/B5-2)
+  - D-19 model ↔ code drift                          (MODEL_DRIFT)         [--code-dir --design] (T1.1/B5-1)
+  - task-breakdown built on a stale design version   (DESIGN_STALE)        [--design ...] (T2.4/B5-4 — a real block)
 
 Deterministic structural reconciliation only — whether the code actually fulfils
 the task stays with the LLM review layer / acceptance. Exit: 0 clean, 1 gaps,
@@ -36,9 +40,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
+        doc_version,
         model_drift,
         spec_ref_leaks,
         verdict,
+        version_coherence,
     )
 except ModuleNotFoundError:
     print(json.dumps({
@@ -247,9 +253,78 @@ def check_model_drift(design_path: str, code_dir: str) -> list[dict]:
     return issues
 
 
+def check_design_stale(tasks_text: str, design_paths: list[str]) -> list[dict]:
+    """B5-4 — the task-breakdown must be built on the CURRENT design, not a stale
+    one. RCA case: task-breakdown cites `D-19 v1.3` while the live D-19 is v2.3 —
+    code was implemented against a design the requirements had already moved past.
+
+    This is a REAL block (not advisory): if the version the task-breakdown cites
+    for a design doc ≠ that doc's live frontmatter version, implementation must
+    HALT and the breakdown be re-derived. Reuses the shared `version_coherence`
+    primitive (T1.3) — the task-breakdown is the citing text, each design doc the
+    authority. Docs whose version cannot be read are skipped (cannot assert stale)."""
+    authority: dict[str, str] = {}
+    for p in design_paths:
+        try:
+            text = Path(p).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        # Bind by the doc's own id (frontmatter `document_id:` or a D-NN in the
+        # filename) so the task-breakdown's `D-19 vX` citation matches the right
+        # authority. Fall back to scanning every D-NN id the file declares.
+        ver = doc_version(text)
+        if ver is None:
+            continue
+        m = re.search(r"document_id:\s*[\"']?(D-\d{2,})", text)
+        doc_id = m.group(1) if m else None
+        if doc_id is None:
+            fm = re.search(r"\b(D-\d{2,})\b", Path(p).name)
+            doc_id = fm.group(1) if fm else None
+        if doc_id:
+            authority[doc_id] = ver
+
+    issues: list[dict] = []
+    for hit in version_coherence(authority, {"task-breakdown": tasks_text}):
+        issues.append({
+            "type": "DESIGN_STALE",
+            "message": (f"task-breakdown cites {hit['doc']} v{hit['cited']} but the live "
+                        f"{hit['doc']} is v{hit['declared']} — implementing against a stale "
+                        f"design (re-derive the breakdown before continuing)"),
+            "doc": hit["doc"], "cited": hit["cited"], "declared": hit["declared"],
+            "auto_fixable": False,
+        })
+    return issues
+
+
+# A DONE task's structured sanity (B5-9 / T2.9): the row must point at a real test
+# (test_refs, already enforced) AND the assigned test file(s) must exist with at
+# least one structural assertion — a DONE marked with an empty/assertion-less test
+# is a false-green. The test→file mapping is an LLM concern (test_refs are TC ids,
+# not paths); the structural floor we CAN check is "the DONE row names a test".
+def check_done_sanity(tasks_text: str) -> list[dict]:
+    """B5-9 — marking a task DONE requires more than a status flip: it must name a
+    test (test_refs non-blank). This is the structural floor of the DONE-sanity
+    rule; the semantic half (fixture actually activates the business branch,
+    assertions are structural not `assert True`) is the LLM/acceptance layer and is
+    surfaced in `not_checked`. Overlaps DONE_TASK_NO_TEST intentionally as the
+    sanity-specific framing the SKILL.md gate reads."""
+    issues: list[dict] = []
+    for m in _TASK_ROW_RE.finditer(tasks_text):
+        task_id, _desc, _design, test_refs, _prio, status, _deps = (g.strip() for g in m.groups())
+        if status.lower() == "done" and _blank(test_refs):
+            issues.append({
+                "type": "DONE_NO_SANITY",
+                "message": f"{task_id} is DONE without structured sanity (names no test_refs)",
+                "task_id": task_id,
+                "auto_fixable": False,
+            })
+    return issues
+
+
 def validate(tasks_path: str, matrix_path: str | None = None, project_root: str = ".",
              tdd_evidence_dir: str | None = None, code_dir: str | None = None,
-             design_path: str | None = None) -> dict:
+             design_path: str | None = None, stale_designs: list[str] | None = None,
+             require_sanity: bool = False) -> dict:
     issues: list[dict] = []
     tasks_text = Path(tasks_path).read_text(encoding="utf-8")
     # Guard: a --tasks file with no parseable task row would otherwise validate as
@@ -264,6 +339,12 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         })
     issues.extend(check_done_tasks(tasks_text))
     checked = ["DONE tasks have an assigned test (test_refs)"]
+    if require_sanity:
+        issues.extend(check_done_sanity(tasks_text))
+        checked += ["DONE tasks carry structured sanity floor (named test_refs) (B5-9)"]
+    if stale_designs:
+        issues.extend(check_design_stale(tasks_text, stale_designs))
+        checked += ["task-breakdown built on the CURRENT design version, not stale (B5-4)"]
     if tdd_evidence_dir:
         issues.extend(check_red_evidence(tasks_text, tdd_evidence_dir))
         checked += ["DONE tasks have RED-evidence (self-attested failing test)"]
@@ -286,6 +367,8 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         not_checked=[
             "whether the code actually fulfils the task (LLM review / acceptance)",
             "RED-evidence is self-attested — no git/timestamp proof against tampering (cluster 1=C)",
+            "DONE-sanity semantic half: fixture actually activates the business branch & assertions are structural (LLM/acceptance, B5-9)",
+            "coverage % is necessary-but-not-sufficient — a green number does not prove the right branch was exercised (B5-7)",
         ],
     )
     v.update({"valid": structure_ok, "total_issues": len(issues), "issues": issues})
@@ -300,12 +383,17 @@ def main() -> int:
     ap.add_argument("--project-root", default=".", help="Root for resolving code_ref paths")
     ap.add_argument("--code-dir", help="Code dir to scan for spec-ref leaks (T1.2)")
     ap.add_argument("--design", help="D-19 path for MODEL_DRIFT reconciliation (T1.1; needs --code-dir)")
+    ap.add_argument("--stale-design", action="append", default=[], metavar="PATH",
+                    help="Design doc (D-19/D-02/…) the task-breakdown is built on; flags a stale "
+                         "version citation as DESIGN_STALE (B5-4 — a real block). Repeatable.")
+    ap.add_argument("--require-sanity", action="store_true",
+                    help="Require every DONE task to carry the structured-sanity floor (B5-9)")
     ap.add_argument("-o", "--output", help="Output JSON path (default: stdout)")
     args = ap.parse_args()
 
     try:
         result = validate(args.tasks, args.matrix, args.project_root, args.tdd_evidence_dir,
-                          args.code_dir, args.design)
+                          args.code_dir, args.design, args.stale_design, args.require_sanity)
     except (OSError, UnicodeDecodeError) as exc:
         print(json.dumps({"error": f"not readable: {exc}", "valid": False}, ensure_ascii=False))
         return 2

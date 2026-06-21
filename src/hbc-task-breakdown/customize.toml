@@ -16,8 +16,12 @@ persistent_facts = [
 # Task breakdown per-feature ({feature} resolved at runtime).
 output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 
-# Validation script.
+# Validation script (structure: task-id/dependency/entity/TC + churn).
 validation_script = "scripts/validate-task-breakdown.py"
+
+# Coverage advisory (B4-7 every REQ->task / B4-2 input-set declared).
+# Override to use a custom checker with the same CLI interface.
+coverage_script = "scripts/check-task-coverage.py"
 
 # Maximum hours per task (guidance for decomposition).
 max_hours_per_task = 4

@@ -28,5 +28,10 @@
 
 - `"feature_required"` — headless invocation with no resolvable feature.
 - `"phase_2_gate_not_passed"` — the Phase 2 gate for this feature is not PASSED (no override in headless).
+- `"no_requirements"` — D-02 not found (REQ↔task coverage cannot be checked).
 - `"no_design_artifacts"` — D-19 and D-27 not found.
+- `"input_insufficient"` — `--strict`: an input dimension (D-02 / D-06 paths / acceptance criteria / code-reality) is missing before generation (B4-2). `--assumptions-allowed` logs the gap and continues.
+- `"mapping_unconfirmed"` — `--strict`: the source→slice mapping table was not confirmed before generation (B4-6). `--assumptions-allowed` logs the drafted mapping and continues.
 - `"validation_manual_fix"` — circular dependencies or coverage gaps.
+
+> `--strict` vs `--assumptions-allowed`: in `--assumptions-allowed` (CI default) the domain-decision blocks above instead log an `ASSUMPTION` to the decision log and continue, never blocking the first turn. B4-5 overrides are always logged regardless of mode.

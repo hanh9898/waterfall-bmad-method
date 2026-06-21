@@ -36,6 +36,11 @@ decision_log_template = "assets/decision-log-template.md"
 er_diagram_output_path = "{output_folder}/shared/erd/D-19-database-design.md"
 er_diagram_feature_path = "{output_folder}/features/{feature}/planning-artifacts/D-19-{feature}-database-design.md"
 
+# Advisory ER-consistency check (B2-2 entity↔REQ + uncovered-REQ / B2-3 ondelete
+# cue / B2-7 schema-drift log-every-divergence / B2-9 churn). Override to use a
+# custom checker with the same CLI interface (d19 + --sources + --code-dir).
+er_consistency_script = "{skill-root}/scripts/check-er-consistency.py"
+
 # Controls distillate production at Stage 5.
 # "offer" (default): interactive asks, headless skips.
 # "always": produce distillate in both modes.

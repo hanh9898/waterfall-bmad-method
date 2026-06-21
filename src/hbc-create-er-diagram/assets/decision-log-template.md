@@ -29,6 +29,15 @@ This file is a shared peer of the D-* documents in `{planning_artifacts}` (at `{
 - **Relationships:** list with cardinality notation
 - **Key attributes:** summary per entity
 
+### Tier ASK-gate confirmations (B2-1)
+- **Conceptual:** confirmed | ASSUMPTION (what + why, headless `--assumptions-allowed`)
+- **Logical:** confirmed | ASSUMPTION
+- **Physical:** confirmed | ASSUMPTION
+
+### Decision-records (B2-10 → ADR)
+> Each non-trivial DB decision: the decision, options weighed, rationale. Tag `→ ADR` (forward-ref; the ADR engine T2.5 is not built yet).
+- **DR-NN — {ondelete on FK x / normalization trade-off / STORED-vs-view / …}:** options = …; chose = …; rationale = … → ADR
+
 ### Validation findings
 - Mermaid ER syntax: pass | issues — details
 - Entity coverage: pass | gaps — list

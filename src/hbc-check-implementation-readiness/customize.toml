@@ -20,11 +20,15 @@ persistent_facts = [
 # Readiness engine.
 readiness_script = "scripts/check-readiness.py"
 
-# Per-feature inputs ({feature} resolved at runtime). D-02/D-26/D-27 are per-feature;
-# the matrix is the per-feature matrix (NOT the rollup — a rollup carries other
-# features' REQ ids and would surface them as false orphans).
+# Per-feature inputs ({feature} resolved at runtime). D-02/D-26/D-27/D-19 are
+# per-feature; the matrix is the per-feature matrix (NOT the rollup — a rollup
+# carries other features' REQ ids and would surface them as false orphans).
 input_dir = "{output_folder}/features/{feature}/planning-artifacts"
 matrix_path = "{output_folder}/features/{feature}/traceability/matrix.md"
+
+# 3-way reconcile (B13-2) + model-drift (B13-3) inputs.
+task_breakdown_path = "{output_folder}/features/{feature}/implementation-artifacts/task-breakdown.md"
+code_dir = "{output_folder}/features/{feature}/code"
 
 # D-21 API spec is DUAL scope: per-feature override wins if it exists, else the
 # shared baseline. Resolved by path-existence precedence at runtime.

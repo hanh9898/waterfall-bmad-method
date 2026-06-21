@@ -42,7 +42,21 @@ erDiagram
 
 ## 4. Index Definitions
 
-| Table (physical) | Index name | Columns | UNIQUE |
+> [!NOTE]
+> Indexes are PROPOSALS (B2-4) — suggested from access patterns, not imposed. Mark a proposed-but-unconfirmed index in the Status column.
+
+| Table (physical) | Index name | Columns | UNIQUE | Status (proposed / confirmed) |
+|---|---|---|---|---|
+| | | | | |
+
+---
+
+## 5. Grounding-to-code log
+
+> [!NOTE]
+> B2-7 — ground the design against the REAL schema/models/migrations. Log EVERY divergence. Greenfield: a single `N/A — greenfield` row.
+
+| Entity / model | Ground-truth source (code ref / migration) | Divergence | Resolution (follows code / planned / out-of-scope) |
 |---|---|---|---|
 | | | | |
 

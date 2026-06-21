@@ -413,6 +413,268 @@ def test_matrix_test_ref_in_sync_is_ready():
         assert code == 0
 
 
+# --- B13-1: matrix trace-column non-empty ---
+
+def test_matrix_row_present_but_blank_code_ref_blocks_ready():
+    # B13-1: a REQ can have a matrix ROW yet a blank code_ref — still untraced for
+    # that axis. The "39/39 green that hid empty cells" failure.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        matrix = _w(d, "matrix.md",
+                    _MATRIX_HDR
+                    + "| f | REQ-001 | | D | c1 | TC-001 | | |\n"
+                    + "| f | REQ-002 | | D |    | TC-002 | | |\n")  # blank code_ref
+        data, code = run(["--d02", d02, "--matrix", matrix])
+        assert data["missing_from_matrix"] == []          # both have a row
+        assert data["matrix_coverage_gaps"]["REQ-002"] == ["code_ref"]
+        assert data["ready"] is False
+        assert code == 1
+
+
+# --- B13-2: 3-way REQ ↔ TASK ↔ design reconcile ---
+
+_TB_HDR = "| task_id | description | design_ref | test_refs |\n|---|---|---|---|\n"
+
+
+def test_req_without_task_blocks_ready():
+    # B13-2(a): a defined REQ with no task in the task-breakdown.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        tb = _w(d, "tb.md", _TB_HDR + "| TASK-001 | covers REQ-001 | m | TC-001 |\n")
+        data, code = run(["--d02", d02, "--task-breakdown", tb])
+        assert data["reqs_without_task"] == ["REQ-002"]
+        assert "task-breakdown" in data["checked_documents"]
+        assert data["ready"] is False
+        assert code == 1
+
+
+def test_orphan_task_blocks_ready():
+    # B13-2(b): a task for a REQ no longer defined in D-02 (stale slice).
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        tb = _w(d, "tb.md",
+                _TB_HDR
+                + "| TASK-001 | REQ-001 | m | TC-001 |\n"
+                + "| TASK-002 | REQ-002 | m | TC-002 |\n"
+                + "| TASK-003 | REQ-099 stale | m | TC-099 |\n")  # REQ-099 undefined
+        data, code = run(["--d02", d02, "--task-breakdown", tb])
+        assert data["orphan_tasks"] == ["REQ-099"]
+        assert data["ready"] is False
+        assert code == 1
+
+
+def test_task_breakdown_all_reqs_tasked_is_ready():
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        tb = _w(d, "tb.md",
+                _TB_HDR
+                + "| TASK-001 | REQ-001 | m | TC-001 |\n"
+                + "| TASK-002 | REQ-002 | m | TC-002 |\n")
+        data, code = run(["--d02", d02, "--task-breakdown", tb])
+        assert data["reqs_without_task"] == []
+        assert data["orphan_tasks"] == []
+        assert data["ready"] is True
+        assert code == 0
+
+
+# --- B13-2 / B13-4: version-coherence at the seam ---
+
+def test_stale_d02_citation_in_d26_blocks_ready():
+    # B13-4: D-26 cites D-02 v2.2 while D-02 frontmatter declares v2.3.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", "---\nversion: \"2.3\"\n---\n" + D02)
+        d26 = _w(d, "D-26.md", "Scope per D-02 (v2.2).\nREQ-001 REQ-002\n")  # stale cite
+        data, code = run(["--d02", d02, "--d26", d26])
+        assert data["uncovered_by_plan"] == []            # coverage is fine
+        srcs = [s["source"] for s in data["stale_citations"]]
+        assert "D-26" in srcs
+        assert data["stale_citations"][0]["cited"] == "2.2"
+        assert data["stale_citations"][0]["declared"] == "2.3"
+        assert data["ready"] is False
+        assert code == 1
+
+
+def test_stale_d02_citation_in_task_breakdown_blocks_ready():
+    # B13-2(c): the half-failure — task-breakdown sources pin a stale D-02 version.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", "---\nversion: \"2.3\"\n---\n" + D02)
+        tb = _w(d, "tb.md",
+                "sources:\n  - D-02 v1.8 (39 REQ)\n\n"
+                + _TB_HDR
+                + "| TASK-001 | REQ-001 | m | TC-001 |\n"
+                + "| TASK-002 | REQ-002 | m | TC-002 |\n")
+        data, code = run(["--d02", d02, "--task-breakdown", tb])
+        assert data["reqs_without_task"] == []            # both REQs have a task
+        srcs = [s["source"] for s in data["stale_citations"]]
+        assert "task-breakdown" in srcs
+        assert data["ready"] is False                     # but it's built on stale D-02
+        assert code == 1
+
+
+def test_matching_d02_version_citation_is_ready():
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", "---\nversion: \"2.3\"\n---\n" + D02)
+        d26 = _w(d, "D-26.md", "Scope per D-02 (v2.3).\nREQ-001 REQ-002\n")
+        data, code = run(["--d02", d02, "--d26", d26])
+        assert "stale_citations" not in data
+        assert data["ready"] is True
+        assert code == 0
+
+
+# --- B13-3: model-level code ↔ design drift ---
+
+_D19 = """\
+# D-19
+
+- **Tên vật lý (Physical name)**: `widget.request`
+- **Tên vật lý (Physical name)**: `widget_line`
+"""
+
+
+def test_model_drift_design_only_blocks_ready():
+    # B13-3: D-19 declares widget.request but the code never defines it.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d19 = _w(d, "D-19.md", _D19)
+        codedir = d / "code"
+        models = codedir / "models"
+        models.mkdir(parents=True)
+        (models / "widget_line.py").write_text(
+            "class WidgetLine(models.Model):\n    _name = 'widget_line'\n", encoding="utf-8")
+        # NOTE: widget.request is NOT defined in code → drift.
+        data, code = run(["--d02", d02, "--d19", d19, "--code-dir", str(codedir)])
+        assert data["model_drift"]["design_only"] == ["widget.request"]
+        assert "D-19/code" in data["checked_documents"]
+        assert data["ready"] is False
+        assert code == 1
+
+
+def test_model_in_sync_is_ready():
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d19 = _w(d, "D-19.md", _D19)
+        codedir = d / "code"
+        models = codedir / "models"
+        models.mkdir(parents=True)
+        (models / "m.py").write_text(
+            "class A(models.Model):\n    _name = 'widget.request'\n\n"
+            "class B(models.Model):\n    _name = 'widget_line'\n", encoding="utf-8")
+        data, code = run(["--d02", d02, "--d19", d19, "--code-dir", str(codedir)])
+        assert "model_drift" not in data
+        assert data["ready"] is True
+        assert code == 0
+
+
+def test_d19_without_code_dir_skips_drift_no_false_green():
+    # B13-3 half-pair guard: --d19 alone must NOT register a green "D-19/code" check.
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d19 = _w(d, "D-19.md", _D19)
+        d27 = _w(d, "D-27.md", _d27("REQ-001", "REQ-002"))
+        data, code = run(["--d02", d02, "--d27", d27, "--d19", d19])
+        assert "D-19/code" not in data["checked_documents"]  # drift skipped
+        assert "model_drift" not in data
+        assert data["ready"] is True                          # D-27 still gating
+        assert code == 0
+
+
+def test_missing_code_dir_skips_drift():
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02)
+        d19 = _w(d, "D-19.md", _D19)
+        d27 = _w(d, "D-27.md", _d27("REQ-001", "REQ-002"))
+        data, code = run(["--d02", d02, "--d27", d27, "--d19", d19, "--code-dir", str(d / "nope")])
+        assert "D-19/code" not in data["checked_documents"]
+        assert data["ready"] is True
+        assert code == 0
+
+
+# --- masking / false-positive regression (bare vs canonical id form) ---
+
+D02_FEAT = """\
+# D-02
+
+## Yêu cầu chức năng
+
+| REQ ID | Mô tả |
+|--------|-------|
+| REQ-FEAT-001 | Login |
+| REQ-FEAT-002 | Order |
+"""
+
+
+def test_bare_form_downstream_reconciles_with_canonical_d02():
+    # Masking-bug regression: D-02 defines canonical REQ-FEAT-NNN; the matrix/plan
+    # write the SAME requirements in bare form REQ-NNN. They must reconcile by
+    # trailing number, NOT be flagged as uncovered/orphan (exact-string set diff bug).
+    with tempfile.TemporaryDirectory() as t:
+        d = Path(t)
+        d02 = _w(d, "D-02.md", D02_FEAT)
+        d26 = _w(d, "D-26.md", "Plan covers REQ-001 and REQ-002.\n")  # bare form
+        matrix = _w(d, "matrix.md", "| req_id |\n|---|\n| REQ-001 |\n| REQ-002 |\n")  # bare
+        data, code = run(["--d02", d02, "--d26", d26, "--matrix", matrix])
+        assert data["uncovered_by_plan"] == []
+        assert data["missing_from_matrix"] == []
+        assert data["orphan_reqs_downstream"] == []   # not false orphans
+        assert data["ready"] is True
+        assert code == 0
+
+
+# --- TD.0 fixture regression: the gate MUST fail the known-broken case ---
+
+_FIXTURE = (
+    Path(__file__).resolve().parents[4]
+    / "process-review" / "fixtures" / "resource-plan-billable"
+)
+
+
+def test_td0_broken_fixture_is_blocked():
+    """The whole point of the overhaul: the gate must now FAIL the RCA error-state
+    fixture it once let through, surfacing the half-failure with the right reasons.
+    """
+    pa = _FIXTURE / "artifacts" / "planning-artifacts"
+    if not pa.exists():
+        import pytest
+        pytest.skip("TD.0 fixture not present")
+    args = [
+        "--d02", str(pa / "D-02-resource-plan-billable.md"),
+        "--d27", str(pa / "D-27-resource-plan-billable-test-spec.md"),
+        "--d26", str(pa / "D-26-resource-plan-billable-test-plan.md"),
+        "--matrix", str(_FIXTURE / "artifacts" / "traceability" / "matrix.md"),
+        "--task-breakdown", str(_FIXTURE / "artifacts" / "implementation-artifacts" / "task-breakdown.md"),
+        "--d19", str(pa / "D-19-opms" / "D-19-er-diagram.md"),
+        "--code-dir", str(_FIXTURE / "code"),
+    ]
+    data, code = run(args)
+    assert data["ready"] is False
+    assert code == 1
+    # B13-1: REQ-040/041/042 have no matrix row.
+    assert [r[-3:] for r in data["missing_from_matrix"]] == ["040", "041", "042"]
+    # B13-2: the request/snapshot/withdraw slice has no task.
+    assert all(r in {x[-3:] for x in data["reqs_without_task"]} for r in ("040", "041", "042"))
+    # B13-2/B13-4: D-26/D-27/task-breakdown all cite a stale D-02 version.
+    srcs = {s["source"] for s in data["stale_citations"]}
+    assert {"D-26", "D-27", "task-breakdown"} <= srcs
+    # B13-3: code stayed on the old model; the Request+Snapshot models are design-only.
+    assert data["model_drift"]["design_only"] == ["resource.plan.request", "resource.plan.request.line"]
+    # No FALSE positives: bare/canonical forms reconciled, so no false orphans/uncovered.
+    assert data["orphan_tasks"] == []
+    assert data["orphan_reqs_downstream"] == []
+    assert data["uncovered_by_plan"] == []
+    assert data["uncovered_by_test"] == []
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))

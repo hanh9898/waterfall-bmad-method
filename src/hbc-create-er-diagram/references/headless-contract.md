@@ -7,6 +7,8 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-er-dia
 | Flag | Default | Effect |
 |---|---|---|
 | `-H` / `--headless` | off | Skip every interactive prompt; resolve decisions via the defaults table below; emit JSON return contract on completion or block. |
+| `--strict` | off (Autonomy A5) | Block at the first unresolved **domain** decision (tier confirmation B2-1, ondelete behavior B2-3, entity/relationship scope) the flags did not pin down → `blocked` `reason: "tier_unconfirmed"`. |
+| `--assumptions-allowed` | **CI default** (Autonomy A5) | Take the most defensible option for each unresolved domain decision, log it to `.decision-log.md` as an `ASSUMPTION`, and continue. Never blocks on the first question. Mutually exclusive with `--strict`. |
 | `feature=<slug>` | unset (optional) | When set, output resolves to the per-feature override `_bmad-output/features/<feature>/planning-artifacts/`; when absent, the shared baseline `_bmad-output/shared/erd/` — path-existence precedence. |
 | `--prd-path=<path>` | unset | Use this exact PRD location, skip discovery glob. Repeatable for sharded PRDs or multiple sources. |
 | `--scope=single-domain\|multi-domain` | inferred | Force scope; skip scope confirmation. |
@@ -77,6 +79,7 @@ Defined `reason` values (closed set — automators may switch on these):
 | `mermaid_validation_failed` | `validate-mermaid-er.py` returned issues that were not all `auto_fixable: true`. |
 | `entity_coverage_gap` | `check-entity-coverage.py` reported `uncovered` or `phantom` entity ids. |
 | `no_entities_found` | No data entities could be extracted from sources and no interactive input available. |
+| `tier_unconfirmed` | `--strict` and an unresolved domain decision at a tier ASK-gate (B2-1), an ondelete behavior (B2-3), or entity/relationship scope. Under `--assumptions-allowed` this never fires (the decision is logged as an `ASSUMPTION` and the run continues). |
 | `resolver_missing` | The customization resolver script failed AND the SKILL.md hand-merge fallback could not complete. |
 
 Add new reasons only by extending this table — automators rely on the closed-set guarantee.

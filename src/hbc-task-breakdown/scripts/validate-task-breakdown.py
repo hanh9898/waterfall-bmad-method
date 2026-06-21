@@ -22,7 +22,7 @@ from pathlib import Path
 # --- shared lib bootstrap (Batch 0 / C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
-    from hbc_validation import SEMANTIC_NA, verdict  # noqa: E402
+    from hbc_validation import SEMANTIC_NA, churn_assessment, verdict  # noqa: E402
 except ModuleNotFoundError:
     print(json.dumps({
         "error": "Shared lib 'hbc_validation' not found.",
@@ -198,6 +198,10 @@ def validate(
         "valid": structure_ok,
         "total_issues": len(all_issues),
         "total_tasks": len(rows),
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the
+        # cue the skill surfaces to suggest the model isn't frozen (maturity:
+        # exploratory / run [DSC]) instead of bumping the version on every edit.
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result
