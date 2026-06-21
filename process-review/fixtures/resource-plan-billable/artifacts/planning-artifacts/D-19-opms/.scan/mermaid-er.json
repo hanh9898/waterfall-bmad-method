@@ -1,0 +1,142 @@
+{
+  "passed": false,
+  "target": "_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-19-opms\\D-19-er-diagram.md",
+  "er_block_count": 1,
+  "total_block_count": 1,
+  "issues": [
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan.project_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'project_id' may reference undeclared entity 'project'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan.dept_manager_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'dept_manager_id' may reference undeclared entity 'dept_manager'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan.im_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'im_id' may reference undeclared entity 'im'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan.currency_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'currency_id' may reference undeclared entity 'currency'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.plan_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'plan_id' may reference undeclared entity 'plan'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.employee_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'employee_id' may reference undeclared entity 'employee'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.department_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'department_id' may reference undeclared entity 'department'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.project_role_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'project_role_id' may reference undeclared entity 'project_role'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.rate_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'rate_id' may reference undeclared entity 'rate'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.currency_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'currency_id' may reference undeclared entity 'currency'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line.member_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'member_id' may reference undeclared entity 'member'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_line_month.line_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'line_id' may reference undeclared entity 'line'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_summary.plan_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'plan_id' may reference undeclared entity 'plan'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_summary.department_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'department_id' may reference undeclared entity 'department'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_summary.project_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'project_id' may reference undeclared entity 'project'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_summary.employee_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'employee_id' may reference undeclared entity 'employee'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "resource_plan_summary.currency_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'currency_id' may reference undeclared entity 'currency'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "project_invoice_period.project_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'project_id' may reference undeclared entity 'project'"
+    },
+    {
+      "block": 0,
+      "kind": "fk_target_missing",
+      "name": "project_invoice_member.period_id",
+      "auto_fixable": false,
+      "detail": "FK attribute 'period_id' may reference undeclared entity 'period'"
+    }
+  ],
+  "auto_fixable_count": 0
+}

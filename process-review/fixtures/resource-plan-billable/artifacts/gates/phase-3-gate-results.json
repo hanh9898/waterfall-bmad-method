@@ -1,0 +1,21 @@
+{
+  "phase": 3,
+  "feature": "resource-plan-billable",
+  "status": "PASSED",
+  "gate_mode": "strict",
+  "timestamp": "2026-06-19",
+  "summary": { "total": 11, "passed": 9, "failed": 1, "na": 0, "required_failed": 0 },
+  "results": [
+    { "item_id": "P3-00", "status": "PASS", "required": true, "evidence": "Phase 1 + Phase 2 gates PASSED (phase-1-gate / phase-2-gate Status: PASSED)." },
+    { "item_id": "P3-00b", "status": "PASS", "required": true, "evidence": "check-readiness.py --d02 --d27 --d26 --matrix -> ready: True, 0 issues." },
+    { "item_id": "P3-01", "status": "PASS", "required": true, "evidence": "task-breakdown.md exists (18 tasks)." },
+    { "item_id": "P3-02", "status": "PASS", "required": true, "evidence": "18/18 tasks status=done; 0 TODO/IN_PROGRESS. (Deterministic CONTENT grep is a prose-criteria false-negative; verified by count.)" },
+    { "item_id": "P3-02b", "status": "PASS", "required": true, "evidence": "validate-implementation.py valid:True, 0 issues (no DONE_TASK_NO_TEST / MISSING_CODE_FILE / REQ_NOT_IMPLEMENTED)." },
+    { "item_id": "P3-02c", "status": "PASS", "required": true, "evidence": "18 tdd-evidence/TASK-0NN.md present, each with a RED FAIL line (no NO_RED_EVIDENCE / RED_EVIDENCE_NO_FAIL)." },
+    { "item_id": "P3-03", "status": "PASS", "required": true, "evidence": "coverage-report.txt: 94% overall (resource_plan*.py 90-99%) >= 80% threshold." },
+    { "item_id": "P3-04", "status": "PASS", "required": true, "evidence": "test-results.txt: 17 suites / 80 tests, 0 failures, 0 errors (odoo_test, -u project_invoice --test-enable)." },
+    { "item_id": "P3-05", "status": "PASS", "required": false, "evidence": "Code follows D-12 (snake_case, no spec-refs in code, @api.constrains guards, _sql_constraints, Odoo 11 at_install/post_install)." },
+    { "item_id": "P3-06", "status": "FAIL", "required": false, "evidence": "No e2e-* scripts. D-26 references E2E layer; E2E deferred to Phase 4 (Testing). Non-blocking (required=no)." },
+    { "item_id": "P3-07", "status": "PASS", "required": true, "evidence": "matrix.md: 39/39 REQ have code_ref pointing at real source files." }
+  ]
+}

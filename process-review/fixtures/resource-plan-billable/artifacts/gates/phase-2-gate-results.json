@@ -1,0 +1,37 @@
+{
+  "phase": 2,
+  "phase_name": "Phase 2 — Design",
+  "timestamp": "2026-06-19",
+  "gate_mode": "strict",
+  "feature": "resource-plan-billable",
+  "evaluation": "manual (evaluator script crashed: re.PatternError bad escape on P2-03 criteria under Python 3.14; SKILL-sanctioned manual fallback per same JSON schema)",
+  "summary": {
+    "total": 16,
+    "evaluated": 16,
+    "passed": 15,
+    "failed": 1,
+    "skipped": 0,
+    "pending_llm": 0,
+    "required_failed": 0,
+    "entry_gate_failed": 0,
+    "overall_status": "PASSED"
+  },
+  "results": [
+    {"item_id": "P2-00", "description": "Phase 1 gate PASSED", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "phase-1-gate.md Status: PASSED; phase-1-gate-results.json overall_status=PASSED (entry gate)"},
+    {"item_id": "P2-01", "description": "D-19 Database Design document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "features/resource-plan-billable/planning-artifacts/D-19-opms/D-19-er-diagram.md (v1.3)"},
+    {"item_id": "P2-02", "description": "D-19 contains ER diagram", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "1 erDiagram block"},
+    {"item_id": "P2-03", "description": "D-19 contains table definitions", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "5 table-definition section rows (resource_plan / line / line_month / summary)"},
+    {"item_id": "P2-03b", "description": "D-19 covers every entity", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-entity-coverage vacuous (Vietnamese-stopword false-positive); LLM judgment: moi khai niem du lieu D-02 co entity — resource_plan/line/line_month/summary (stored, tai them v1.3) + bang hien huu; khong phantom"},
+    {"item_id": "P2-03c", "description": "D-19 semantic review completed (R-1/#5)", "type": "REVIEW", "required": true, "status": "PASS", "evidence": "D-19 v1.3 reviewed via cascade-sync + adversarial review + verify-code (V1-V9); consistent with D-02 v1.8"},
+    {"item_id": "P2-04", "description": "D-12 Coding Standards document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "shared/coding-standards/D-12-resource-plan-billable-coding-standards.md"},
+    {"item_id": "P2-05", "description": "D-26 Test Plan document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "D-26-resource-plan-billable-test-plan.md (v1.3)"},
+    {"item_id": "P2-06", "description": "D-27 Test Specification document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "D-27-resource-plan-billable-test-spec.md (v1.5)"},
+    {"item_id": "P2-07", "description": "D-27 contains test case IDs", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "TC-001..TC-082 present (82 TC)"},
+    {"item_id": "P2-08", "description": "Test coverage — every REQ facet has a TC (M-1)", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-facet-coverage facet_covered=true, uncovered_facets={}; validate-test-spec req_coverage_pct=100 (82 TC / 39 REQ)"},
+    {"item_id": "P2-09", "description": "D-21 API Specification exists (if applicable)", "type": "FILE", "required": false, "status": "FAIL", "evidence": "Khong co D-21 — chu y bo qua (user xac nhan khong can API spec). Khong bat buoc -> khong chan gate"},
+    {"item_id": "P2-10", "description": "Design references trace to requirements", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "matrix design_ref 39/39; entity moi (resource_plan_summary) phuc vu REQ-028/029; khong orphan"},
+    {"item_id": "P2-11", "description": "Inter-document readiness reconciled (P-1)", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-readiness ready=true: uncovered_by_test=0, missing_from_matrix=0, orphan_reqs_downstream=0"},
+    {"item_id": "P2-12", "description": "D-27 semantic review completed (R-1/#5)", "type": "REVIEW", "required": true, "status": "PASS", "evidence": "D-27 v1.5 reviewed via 3-review (party/edge/adversarial) + verify-code; facet_covered=true"},
+    {"item_id": "P2-13", "description": "Traceability matrix has design_ref + test_ref for every REQ", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "matrix 39/39 in_sync; 0 empty design_ref, 0 empty test_ref (code_ref empty expected — Phase 3 chua bat dau)"}
+  ]
+}

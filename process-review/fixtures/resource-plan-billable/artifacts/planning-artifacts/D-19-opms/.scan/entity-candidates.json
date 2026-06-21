@@ -1,0 +1,247 @@
+{
+  "candidate_entities": [
+    {
+      "entity_name": "một",
+      "method": "data_object_ref",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 49
+    },
+    {
+      "entity_name": "Data",
+      "method": "data_object_ref",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 81
+    },
+    {
+      "entity_name": "cả",
+      "method": "data_object_ref",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 118
+    },
+    {
+      "entity_name": "các",
+      "method": "data_object_ref",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 139
+    }
+  ],
+  "candidate_attributes": [
+    {
+      "attribute_name": "document_id",
+      "type_hint": "D",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 1
+    },
+    {
+      "attribute_name": "status",
+      "type_hint": "final",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 1
+    }
+  ],
+  "candidate_relations": [
+    {
+      "from_entity": "khoảng",
+      "to_entity": "plan",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 89
+    },
+    {
+      "from_entity": "lưu",
+      "to_entity": "tồn",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 90
+    },
+    {
+      "from_entity": "000",
+      "to_entity": "member",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 94
+    },
+    {
+      "from_entity": "5",
+      "to_entity": "175",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 94
+    },
+    {
+      "from_entity": "plan",
+      "to_entity": "member",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 95
+    },
+    {
+      "from_entity": "locked",
+      "to_entity": "tháng",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 97
+    },
+    {
+      "from_entity": "plan",
+      "to_entity": "allocation",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 102
+    },
+    {
+      "from_entity": "lưu",
+      "to_entity": "dòng",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 102
+    },
+    {
+      "from_entity": "Draft",
+      "to_entity": "Submitted",
+      "source_file": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "line": 103
+    },
+    {
+      "from_entity": "Draft",
+      "to_entity": "người",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 30
+    },
+    {
+      "from_entity": "Submitted",
+      "to_entity": "Invoice",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 30
+    },
+    {
+      "from_entity": "Approved",
+      "to_entity": "read",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 30
+    },
+    {
+      "from_entity": "ô",
+      "to_entity": "gõ",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 55
+    },
+    {
+      "from_entity": "approved",
+      "to_entity": "Bộ",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 56
+    },
+    {
+      "from_entity": "dòng",
+      "to_entity": "đánh",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 56
+    },
+    {
+      "from_entity": "nhất",
+      "to_entity": "hiện",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 72
+    },
+    {
+      "from_entity": "submit",
+      "to_entity": "badge",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 73
+    },
+    {
+      "from_entity": "allocation",
+      "to_entity": "empty",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 75
+    },
+    {
+      "from_entity": "plan",
+      "to_entity": "allocation",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 81
+    },
+    {
+      "from_entity": "progress",
+      "to_entity": "report",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 82
+    },
+    {
+      "from_entity": "trái",
+      "to_entity": "phải",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 91
+    },
+    {
+      "from_entity": "trên",
+      "to_entity": "xuống",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 91
+    },
+    {
+      "from_entity": "viên",
+      "to_entity": "dept",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 105
+    },
+    {
+      "from_entity": "đổi",
+      "to_entity": "toast",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 105
+    },
+    {
+      "from_entity": "khớp",
+      "to_entity": "thở",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 106
+    },
+    {
+      "from_entity": "plan",
+      "to_entity": "badge",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 107
+    },
+    {
+      "from_entity": "khóa",
+      "to_entity": "Generate",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 110
+    },
+    {
+      "from_entity": "âm",
+      "to_entity": "ô",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 110
+    },
+    {
+      "from_entity": "Generate",
+      "to_entity": "giao",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 110
+    },
+    {
+      "from_entity": "Draft",
+      "to_entity": "Submitted",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 114
+    },
+    {
+      "from_entity": "rộng",
+      "to_entity": "thêm",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 116
+    },
+    {
+      "from_entity": "hẹp",
+      "to_entity": "cần",
+      "source_file": "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md",
+      "line": 116
+    }
+  ],
+  "warn": null,
+  "files_read": [
+    "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+    "_bmad-output\\planning-artifacts\\ux-designs\\ux-opms-2026-06-11\\EXPERIENCE.md"
+  ],
+  "totals": {
+    "entities": 4,
+    "attributes": 2,
+    "relations": 32,
+    "files": 2
+  }
+}

@@ -1,0 +1,14 @@
+# Coverage Report — resource-plan-billable (2026-06-19, post code-review patches)
+# DB odoo_test, runner: python -m coverage run odoo-bin -u project_invoice --test-enable
+
+Name                                                  Stmts   Miss  Cover
+-------------------------------------------------------------------------
+project_invoice/models/resource_plan.py                 263     22    92%
+project_invoice/models/resource_plan_line.py             85      1    99%
+project_invoice/models/resource_plan_line_month.py       58      7    88%
+project_invoice/models/resource_plan_summary.py          35      1    97%
+project_invoice/wizard/resource_plan_sync_wizard.py      28      1    96%
+-------------------------------------------------------------------------
+TOTAL                                                   469     32    93%
+
+Overall coverage: 93%

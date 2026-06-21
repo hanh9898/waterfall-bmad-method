@@ -252,7 +252,7 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 > **Cách dùng:** implement **TRỌN VẸN từng skill** (không rời theo wave). Mỗi skill = 1 phiên `bmad-workflow-builder` (Edit). **Tick từng `[ ]` B-ID**; skill chỉ KHOÁ khi **mọi ô ✅ + AR + ECH (F-3) + VM 0 + pytest/doc-check xanh + metric đo trên TD.0**. Bundling: gộp T2.1(autonomy)+T2.12(semantic-review)+T2.11(anti-churn) vào chính lượt rewrite (đừng sửa 2 lần). `(✅done)` = đã có, chỉ verify lại; `(spike)` = gated TA.0.
 
 ### Prereq nền (làm TRƯỚC mọi skill — là THƯ VIỆN per-skill gọi tới)
-- [ ] **T0/TD.0** fixture `resource-plan-billable` (git-ref RCA) · [ ] **TF.3** metrics harness
+- [x] **T0/TD.0** fixture `resource-plan-billable` (git-ref RCA) ✅ U0 · [x] **TF.3** metrics harness ✅ U0 — `process-review/fixtures/resource-plan-billable/` (hash-pinned, 6 metric, baseline 13/44/3/2/5/≥4)
 - [ ] T1.5 matrix-coverage-lib · [ ] T1.3 version-coherence-lib · [ ] T1.1 MODEL_DRIFT · [ ] T1.2 spec-ref-lint · [ ] T2.12/RM.2 semantic-review-reference · [ ] T2.1 autonomy-pattern · [ ] T2.11 anti-churn-lib · [ ] T-ENV (tiktoken/python/path) · [ ] T-REINSTALL
 
 ### Phase 1
@@ -337,7 +337,7 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 
 | # | Đơn vị | BMad skill để gọi | Prereq | Done khi |
 |---|--------|-------------------|--------|----------|
-| U0 | TD.0 fixture + TF.3 metrics | (script tay, không builder) | — | fixture lưu + baseline đo được |
+| U0 ✅ | TD.0 fixture + TF.3 metrics | (script tay, không builder) | — | **DONE** — fixture hash-pinned + harness 6 metric, baseline đo được + F-3 sạch |
 | U1 | Primitives (T1.1/1.2/1.3/1.5 · T2.11/T2.12) | `bmad-workflow-builder` Edit | U0 | script + pytest; bắt lỗi fixture |
 | U2 | `hbc-create-glossary` | `bmad-workflow-builder` Edit | U1 | §9 GLO 100% + AR+ECH+VM |
 | U3 | `hbc-create-coding-standards` | `bmad-workflow-builder` Edit | U1 | §9 CS 100% |

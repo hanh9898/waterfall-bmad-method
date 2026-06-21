@@ -1,0 +1,37 @@
+{
+  "passed": false,
+  "warn": null,
+  "prd_paths": [
+    "_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "prd_files_read": [
+    "_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "d19_path": "_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-19-opms\\D-19-er-diagram.md",
+  "covered": [],
+  "uncovered": [
+    "các",
+    "một"
+  ],
+  "phantom": [
+    "hr_department",
+    "hr_employee",
+    "ntq_project_billable_rate",
+    "ntq_project_role_skills",
+    "project_invoice_member",
+    "project_invoice_period",
+    "project_member",
+    "project_project",
+    "resource_plan",
+    "resource_plan_line",
+    "resource_plan_line_month",
+    "resource_plan_summary"
+  ],
+  "totals": {
+    "prd_entities": 2,
+    "d19_entities": 12,
+    "covered": 0,
+    "uncovered": 2,
+    "phantom": 12
+  }
+}

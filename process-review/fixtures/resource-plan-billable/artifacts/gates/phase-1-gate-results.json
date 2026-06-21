@@ -1,0 +1,27 @@
+{
+  "phase": 1,
+  "phase_name": "Phase 1 — Analysis",
+  "timestamp": "2026-06-11",
+  "gate_mode": "strict",
+  "summary": {
+    "total": 8,
+    "evaluated": 8,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "pending_llm": 0,
+    "required_failed": 0,
+    "entry_gate_failed": 0,
+    "overall_status": "PASSED"
+  },
+  "results": [
+    {"item_id": "P1-01", "description": "D-02 Requirements document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "Found: D-02-resource-plan-billable.md"},
+    {"item_id": "P1-02", "description": "D-02 contains requirement IDs", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "REQ-001..REQ-024 present (24 REQ)"},
+    {"item_id": "P1-03", "description": "D-03 Glossary document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "Found: D-03-resource-plan-billable-glossary.md (27 entries)"},
+    {"item_id": "P1-04", "description": "D-06 Business Flow document exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "Found: D-06-opms/D-06-business-flow-diagram.md"},
+    {"item_id": "P1-05", "description": "D-06 contains Mermaid flowcharts", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "4 mermaid blocks (3 sequenceDiagram + 1 flowchart)"},
+    {"item_id": "P1-06", "description": "Requirements traceable to business flows", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "D-06 Muc 4 anh xa REQ->flow; coverage check 24/24 REQ referenced, 0 phantom"},
+    {"item_id": "P1-06b", "description": "D-06 covers every PRD functional requirement (D3)", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-fr-coverage.py passed=true, covered=24, uncovered=0, phantom=0"},
+    {"item_id": "P1-07", "description": "No vague or unmeasurable requirements", "type": "QUALITY", "required": false, "status": "PASS", "evidence": "validate-requirements.py vague-terms check: 0 issues across 24 REQ; NFRs measurable (<3s, <15s, WCAG AA)"}
+  ]
+}

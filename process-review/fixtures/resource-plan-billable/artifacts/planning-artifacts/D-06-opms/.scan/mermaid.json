@@ -1,0 +1,37 @@
+{
+  "passed": false,
+  "target": "_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-06-opms\\D-06-business-flow-diagram.md",
+  "block_count": 7,
+  "render_check": "skipped: mmdc not installed",
+  "issues": [
+    {
+      "block": 3,
+      "kind": "diagram_type_unsupported",
+      "diagram_type": "flowchart",
+      "auto_fixable": false,
+      "detail": "Structural checks only cover sequenceDiagram; flowchart block validated by LLM judgment only"
+    },
+    {
+      "block": 4,
+      "kind": "diagram_type_unsupported",
+      "diagram_type": "stateDiagram-v2",
+      "auto_fixable": false,
+      "detail": "Structural checks only cover sequenceDiagram; stateDiagram-v2 block validated by LLM judgment only"
+    },
+    {
+      "block": 5,
+      "kind": "diagram_type_unsupported",
+      "diagram_type": "stateDiagram-v2",
+      "auto_fixable": false,
+      "detail": "Structural checks only cover sequenceDiagram; stateDiagram-v2 block validated by LLM judgment only"
+    },
+    {
+      "block": 6,
+      "kind": "diagram_type_unsupported",
+      "diagram_type": "flowchart",
+      "auto_fixable": false,
+      "detail": "Structural checks only cover sequenceDiagram; flowchart block validated by LLM judgment only"
+    }
+  ],
+  "auto_fixable_count": 0
+}

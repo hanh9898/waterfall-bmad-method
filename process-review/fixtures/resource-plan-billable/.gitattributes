@@ -1,0 +1,2 @@
+# Frozen regression fixture — never convert line endings, bytes must match manifest.sha256
+* -text

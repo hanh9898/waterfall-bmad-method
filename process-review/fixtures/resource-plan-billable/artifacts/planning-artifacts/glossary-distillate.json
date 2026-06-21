@@ -1,0 +1,33 @@
+{
+  "terms": [
+    {"term": "Allocation (Phân bổ)", "definition": "Bản ghi project.member gắn một nhân viên vào dự án theo % thời gian (effort_ratio), khoảng hiệu lực (start_from/end_at) và project role. Nguồn pre-fill cho resource plan và nơi nhận đồng bộ một chiều từ plan.", "category": "Nghiệp vụ"},
+    {"term": "Allocation (%)", "definition": "Phần trăm thời gian một nhân viên được phân bổ cho dự án, ánh xạ tới project.member.effort_ratio.", "category": "Nghiệp vụ"},
+    {"term": "Billable", "definition": "Doanh thu nội bộ của một dòng nhân sự trong một tháng = MM × đơn giá; lưu ở project.invoice.member.amount.", "category": "Nghiệp vụ"},
+    {"term": "Confirm / Đối soát", "definition": "project.invoice.confirm — đối soát số billable tính được với số sale xuất; state matched khi khớp. Ngoài phạm vi feature resource plan.", "category": "Nghiệp vụ"},
+    {"term": "Cost line", "definition": "project.invoice.cost.line — dòng chi phí phi nhân công trong một period. Không thuộc phạm vi resource plan.", "category": "Kỹ thuật"},
+    {"term": "Customer Invoice (Hóa đơn khách hàng)", "definition": "project.customer.invoice — hóa đơn gửi khách, đa ngôn ngữ, sinh từ period. Ngoài phạm vi feature resource plan.", "category": "Nghiệp vụ"},
+    {"term": "Đơn giá / Rate", "definition": "Giá tính theo MM, chọn từ bảng ntq.project.billable.rate; mỗi rate có price và currency.", "category": "Nghiệp vụ"},
+    {"term": "Generate", "definition": "Hành động sinh hoặc cập nhật, cho mỗi tháng trong khoảng của resource plan, một project.invoice.period và các member line từ dòng plan có MM > 0.", "category": "Kỹ thuật"},
+    {"term": "Lock / Locked (Khóa)", "definition": "Trạng thái period.state = 'locked' — period đã chốt, bất biến; không cho generate lại hay sửa member line.", "category": "Nghiệp vụ"},
+    {"term": "Man-Month (MM)", "definition": "Đơn vị effort theo tháng: 1.0 = trọn tháng, 0.5 = nửa tháng. Nhập riêng cho từng ô tháng của mỗi dòng resource plan.", "category": "Nghiệp vụ"},
+    {"term": "Member line", "definition": "project.invoice.member — dòng effort của một nhân viên trong một period (employee, department, role, effort_mm, rate_id, amount). Đầu ra của Generate.", "category": "Kỹ thuật"},
+    {"term": "Period (Kỳ invoice)", "definition": "project.invoice.period — container theo (dự án × tháng), gom member/cost line, state machine draft → review → submitted → approved → sent → paid → locked. month_date chuẩn hóa về ngày đầu tháng.", "category": "Kỹ thuật"},
+    {"term": "Resource Plan (Kế hoạch nguồn lực)", "definition": "Bản ghi mới lưu theo dự án, dạng lưới nhân sự × cột tháng (from–to tùy ý), nhập trực tiếp trên OPMS thay Google Sheet; nguồn để Generate billable.", "category": "Nghiệp vụ"},
+    {"term": "Số sale xuất", "definition": "Số tiền hóa đơn do Sales phát hành, dùng để đối soát với billable và là tiền đề cho việc chốt/khóa period.", "category": "Nghiệp vụ"}
+  ],
+  "abbreviations": [
+    {"abbr": "BA", "full_name": "Business Analyst", "definition": "Vai trò phân tích nghiệp vụ/yêu cầu trong vòng đời tài liệu."},
+    {"abbr": "BU", "full_name": "Business Unit", "definition": "Đơn vị kinh doanh; BU Account là bộ phận (hr.department) phía BU phụ trách customer."},
+    {"abbr": "DM (Delivery Manager)", "full_name": "Delivery Manager", "definition": "Lead delivery của dự án (delivery_manager_id); được nhập resource plan và Generate."},
+    {"abbr": "DM (Department Manager)", "full_name": "Department Manager", "definition": "Trưởng bộ phận (group_project_department_manager); nhập resource plan và Generate. Trùng viết tắt DM với Delivery Manager — phân biệt theo ngữ cảnh."},
+    {"abbr": "FPM", "full_name": "Front PM", "definition": "Vai trò Front PM (group_project_fpm) trong quản lý dự án."},
+    {"abbr": "HB", "full_name": "HB Account", "definition": "Bộ phận (hr.department) phía HB phụ trách customer (hb_account)."},
+    {"abbr": "IM", "full_name": "Invoice Manager", "definition": "Nhóm group_project_invoice_manager; quản lý invoice, nhập/duyệt resource plan, Generate, khóa/mở khóa period."},
+    {"abbr": "MM", "full_name": "Man-Month", "definition": "Đơn vị effort theo tháng."},
+    {"abbr": "NFR", "full_name": "Non-Functional Requirement", "definition": "Yêu cầu phi chức năng (hiệu năng, bảo mật, khả dụng, khả năng sử dụng)."},
+    {"abbr": "OPMS", "full_name": "OPMS", "definition": "Tên hệ thống quản lý của HBLAB (nền tảng Odoo 11) nơi triển khai feature này."},
+    {"abbr": "PM", "full_name": "Project Manager", "definition": "Quản lý dự án (group_project_pm)."},
+    {"abbr": "QA", "full_name": "Quality Assurance", "definition": "Vai trò đảm bảo chất lượng; không có quyền nhập resource plan trong phạm vi này."},
+    {"abbr": "REQ", "full_name": "Requirement", "definition": "Yêu cầu chức năng có ID dạng REQ-xxx trong D-02."}
+  ]
+}

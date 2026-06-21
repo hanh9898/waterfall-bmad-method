@@ -1,0 +1,24 @@
+# Test Results — resource-plan-billable (2026-06-19)
+# DB odoo_test; runner: docker compose run odoo11 odoo-bin -d odoo_test -u project_invoice --test-enable
+
+17 test suites, 87 test methods — ALL OK, 0 failures, 0 errors (post code-review patches).
+
+test_resource_plan ................. 3 OK
+test_resource_plan_line ............ 5 OK
+test_resource_plan_line_month ...... 4 OK
+test_resource_plan_summary ......... 3 OK
+test_resource_plan_security ........ 5 OK
+test_resource_plan_prefill ......... 4 OK
+test_resource_plan_alloc_sync ...... 7 OK
+test_resource_plan_window .......... 6 OK
+test_resource_plan_lifecycle ....... 8 OK
+test_resource_plan_sync ............ 6 OK
+test_resource_plan_guards .......... 7 OK
+test_resource_plan_committed ....... 5 OK
+test_resource_plan_migration ....... 5 OK
+test_resource_plan_period_flow ..... 3 OK
+test_resource_plan_views ........... 3 OK
+test_resource_plan_sync_wizard ..... 3 OK
+test_resource_plan_summary_views ... 3 OK
+
+TOTAL: 87 passed, 0 failed.

@@ -1,0 +1,34 @@
+{
+  "phase": 2,
+  "phase_name": "Phase 2 — Design",
+  "timestamp": "2026-06-12",
+  "gate_mode": "strict",
+  "summary": {
+    "total": 15,
+    "evaluated": 15,
+    "passed": 12,
+    "failed": 3,
+    "skipped": 0,
+    "pending_llm": 0,
+    "required_failed": 2,
+    "entry_gate_failed": 0,
+    "overall_status": "FAILED"
+  },
+  "results": [
+    {"item_id": "P2-00", "description": "Phase 1 gate PASSED", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "phase-1-gate.md Status: PASSED (entry gate)"},
+    {"item_id": "P2-01", "description": "D-19 exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "D-19-opms/D-19-er-diagram.md"},
+    {"item_id": "P2-02", "description": "D-19 contains ER diagram", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "erDiagram block present"},
+    {"item_id": "P2-03", "description": "D-19 table definitions", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "Section 3 table-definition tables present"},
+    {"item_id": "P2-03b", "description": "D-19 covers every entity", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-entity-coverage vacuous (VN stopword extraction); LLM judgment: tất cả khái niệm dữ liệu D-02 (plan/line/MM/allocation/period/member/rate) đều có entity"},
+    {"item_id": "P2-04", "description": "D-12 Coding Standards exists", "type": "FILE", "required": true, "status": "FAIL", "evidence": "Không tìm thấy D-12-* trong planning-artifacts", "skill_to_create": "hbc-create-coding-standards"},
+    {"item_id": "P2-05", "description": "D-26 Test Plan exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "D-26-resource-plan-billable-test-plan.md"},
+    {"item_id": "P2-06", "description": "D-27 Test Spec exists", "type": "FILE", "required": true, "status": "PASS", "evidence": "D-27-resource-plan-billable-test-spec.md"},
+    {"item_id": "P2-07", "description": "D-27 contains TC ids", "type": "CONTENT", "required": true, "status": "PASS", "evidence": "TC-001..TC-035 present"},
+    {"item_id": "P2-08", "description": "Facet coverage (M-1)", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "check-facet-coverage facet_covered=true, 24 REQ declared, 0 uncovered"},
+    {"item_id": "P2-09", "description": "D-21 API Spec (if applicable)", "type": "FILE", "required": false, "status": "FAIL", "evidence": "Không có D-21 — chủ ý bỏ qua (user xác nhận không cần). Không bắt buộc → không chặn gate"},
+    {"item_id": "P2-10", "description": "Design refs trace to requirements", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "matrix design_ref 24/24; entity mới đều phục vụ REQ, không orphan"},
+    {"item_id": "P2-11", "description": "Inter-document readiness reconciled", "type": "QUALITY", "required": true, "status": "FAIL", "evidence": "check-readiness ready=false: uncovered_by_plan=[REQ-002,003,004,005,006,007,008,012,019] — D-26 dùng dải 'REQ-001..009' thay vì ID literal. uncovered_by_test/missing_from_matrix/orphan đều rỗng", "skill_to_create": "hbc-check-implementation-readiness"},
+    {"item_id": "P2-12", "description": "D-27 semantic review completed", "type": "REVIEW", "required": true, "status": "PASS", "evidence": "D-27 frontmatter semanticReview.status=passed, openFacets=[]"},
+    {"item_id": "P2-13", "description": "Matrix has design_ref + test_ref per REQ", "type": "QUALITY", "required": true, "status": "PASS", "evidence": "trace-report: design_ref 24/24, test_ref 24/24"}
+  ]
+}

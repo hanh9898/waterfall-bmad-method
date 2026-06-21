@@ -1,0 +1,22 @@
+{
+  "strategy": "TDD (RED→GREEN→REFACTOR); Odoo test framework cho unit+integration; Playwright cho E2E UI; performance chỉ spot-check thủ công.",
+  "scope": {
+    "in_scope_reqs": ["REQ-001","REQ-002","REQ-003","REQ-004","REQ-005","REQ-006","REQ-007","REQ-008","REQ-009","REQ-010","REQ-011","REQ-012","REQ-013","REQ-014","REQ-015","REQ-016","REQ-017","REQ-018","REQ-019","REQ-020","REQ-021","REQ-022","REQ-023","REQ-024"],
+    "out_of_scope": ["customer invoice/confirm hiện có", "Excel import wizard (chỉ so khớp REQ-022)", "performance load test tự động (spot-check tay)", "ma trận đa trình duyệt"]
+  },
+  "test_levels": ["unit (Odoo TransactionCase)", "integration (Odoo TransactionCase/HttpCase)", "system", "e2e (Playwright)"],
+  "frameworks": {"unit_integration": "odoo.tests.common", "e2e": "Playwright"},
+  "entry_exit": {
+    "entry": ["D-02 v1.1 + D-19 hoàn tất", "Phase 1 gate PASSED", "D-27 phủ mọi REQ", "môi trường + dữ liệu sẵn sàng"],
+    "exit": ["100% REQ có ≥1 TC đã thực thi", "coverage ≥ 80%", "100% TC Critical/High pass", "0 defect Critical mở", "spot-check performance đạt NFR-001/002", "hồi quy invoice cũ xanh"]
+  },
+  "coverage_threshold": 80,
+  "risks": [
+    {"risk": "Sync một chiều ghi hỏng allocation dùng chung", "likelihood": "High", "impact": "High"},
+    {"risk": "Ghi đè qua tháng đã khóa (lock bypass)", "likelihood": "Medium", "impact": "High"},
+    {"risk": "Mất dữ liệu do replace khi generate lại", "likelihood": "Medium", "impact": "Medium"},
+    {"risk": "Vòng đời cấp plan REQ-024 mới, logic trạng thái hỗn hợp sai", "likelihood": "Medium", "impact": "High"},
+    {"risk": "Hồi quy luồng billable hiện có do dùng chung model", "likelihood": "Medium", "impact": "High"},
+    {"risk": "Lưới 200x12 chậm/timeout", "likelihood": "Low", "impact": "Medium"}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "planning_artifacts": "_bmad-output\\planning-artifacts",
+  "template_path": ".claude\\skills\\hbc-create-business-flow-diagram\\assets\\D-06_business-flow-diagram_template.md",
+  "template_exists": true,
+  "artifacts_dir_exists": true,
+  "prd": [
+    {
+      "path": "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md",
+      "is_symlink": false,
+      "is_sharded": false,
+      "shard_paths": []
+    }
+  ],
+  "ux": [],
+  "use_case": [],
+  "research": [],
+  "as_is": {
+    "has_as_is": false,
+    "matches": []
+  },
+  "resume_state": {
+    "workspace": "_bmad-output\\planning-artifacts\\D-06-opms",
+    "primary_exists": false,
+    "decision_log_exists": false,
+    "primary_steps_completed": [],
+    "primary_last_step": null,
+    "primary_updated": null,
+    "last_session_summary": null,
+    "mode_from_prior_session": null,
+    "fresh_reason": "no_workspace",
+    "recommended_intent": "Fresh"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "vacuous": false,
+  "prd_paths": [
+    "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "prd_files_read": [
+    "_bmad-output\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "d06_path": "_bmad-output\\planning-artifacts\\D-06-opms\\D-06-business-flow-diagram.md",
+  "covered": [
+    "REQ-001",
+    "REQ-002",
+    "REQ-003",
+    "REQ-004",
+    "REQ-005",
+    "REQ-006",
+    "REQ-007",
+    "REQ-008",
+    "REQ-009",
+    "REQ-010",
+    "REQ-011",
+    "REQ-012",
+    "REQ-013",
+    "REQ-014",
+    "REQ-015",
+    "REQ-016",
+    "REQ-017",
+    "REQ-018",
+    "REQ-019",
+    "REQ-020",
+    "REQ-021",
+    "REQ-022",
+    "REQ-023",
+    "REQ-024"
+  ],
+  "uncovered": [],
+  "phantom": [],
+  "totals": {
+    "prd_ids": 24,
+    "d06_ids": 24,
+    "covered": 24,
+    "uncovered": 0,
+    "phantom": 0
+  }
+}

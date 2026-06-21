@@ -1,0 +1,23 @@
+{
+  "planning_artifacts": "_bmad-output\\planning-artifacts",
+  "template_path": ".claude\\skills\\hbc-create-er-diagram\\assets\\D-19_database-design_template.md",
+  "template_exists": true,
+  "artifacts_dir_exists": true,
+  "prd": [],
+  "architecture": [],
+  "ux": [],
+  "use_case": [],
+  "table_definitions": [],
+  "research": [],
+  "resume_state": {
+    "workspace": "_bmad-output\\planning-artifacts\\D-19-opms",
+    "primary_exists": false,
+    "decision_log_exists": false,
+    "primary_steps_completed": [],
+    "primary_last_step": null,
+    "primary_updated": null,
+    "last_session_summary": null,
+    "fresh_reason": "no_workspace",
+    "recommended_intent": "Fresh"
+  }
+}

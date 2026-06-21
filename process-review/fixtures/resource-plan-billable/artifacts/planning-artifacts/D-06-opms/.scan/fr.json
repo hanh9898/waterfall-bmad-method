@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "vacuous": false,
+  "prd_paths": [
+    "C:\\Users\\HanhNT2\\opms\\_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "prd_files_read": [
+    "C:\\Users\\HanhNT2\\opms\\_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-02-resource-plan-billable.md"
+  ],
+  "d06_path": "C:\\Users\\HanhNT2\\opms\\_bmad-output\\features\\resource-plan-billable\\planning-artifacts\\D-06-opms\\D-06-business-flow-diagram.md",
+  "covered": [
+    "REQ-RESOURCE-PLAN-BILLABLE-001",
+    "REQ-RESOURCE-PLAN-BILLABLE-002",
+    "REQ-RESOURCE-PLAN-BILLABLE-003",
+    "REQ-RESOURCE-PLAN-BILLABLE-004",
+    "REQ-RESOURCE-PLAN-BILLABLE-005",
+    "REQ-RESOURCE-PLAN-BILLABLE-006",
+    "REQ-RESOURCE-PLAN-BILLABLE-007",
+    "REQ-RESOURCE-PLAN-BILLABLE-008",
+    "REQ-RESOURCE-PLAN-BILLABLE-009",
+    "REQ-RESOURCE-PLAN-BILLABLE-010",
+    "REQ-RESOURCE-PLAN-BILLABLE-011",
+    "REQ-RESOURCE-PLAN-BILLABLE-012",
+    "REQ-RESOURCE-PLAN-BILLABLE-013",
+    "REQ-RESOURCE-PLAN-BILLABLE-014",
+    "REQ-RESOURCE-PLAN-BILLABLE-015",
+    "REQ-RESOURCE-PLAN-BILLABLE-016",
+    "REQ-RESOURCE-PLAN-BILLABLE-017",
+    "REQ-RESOURCE-PLAN-BILLABLE-018",
+    "REQ-RESOURCE-PLAN-BILLABLE-019",
+    "REQ-RESOURCE-PLAN-BILLABLE-020",
+    "REQ-RESOURCE-PLAN-BILLABLE-021",
+    "REQ-RESOURCE-PLAN-BILLABLE-022",
+    "REQ-RESOURCE-PLAN-BILLABLE-023",
+    "REQ-RESOURCE-PLAN-BILLABLE-024",
+    "REQ-RESOURCE-PLAN-BILLABLE-025",
+    "REQ-RESOURCE-PLAN-BILLABLE-026",
+    "REQ-RESOURCE-PLAN-BILLABLE-027",
+    "REQ-RESOURCE-PLAN-BILLABLE-028",
+    "REQ-RESOURCE-PLAN-BILLABLE-029",
+    "REQ-RESOURCE-PLAN-BILLABLE-030",
+    "REQ-RESOURCE-PLAN-BILLABLE-031",
+    "REQ-RESOURCE-PLAN-BILLABLE-032",
+    "REQ-RESOURCE-PLAN-BILLABLE-033",
+    "REQ-RESOURCE-PLAN-BILLABLE-034",
+    "REQ-RESOURCE-PLAN-BILLABLE-035",
+    "REQ-RESOURCE-PLAN-BILLABLE-036",
+    "REQ-RESOURCE-PLAN-BILLABLE-037",
+    "REQ-RESOURCE-PLAN-BILLABLE-038"
+  ],
+  "uncovered": [],
+  "phantom": [],
+  "totals": {
+    "prd_ids": 38,
+    "d06_ids": 38,
+    "covered": 38,
+    "uncovered": 0,
+    "phantom": 0
+  }
+}
