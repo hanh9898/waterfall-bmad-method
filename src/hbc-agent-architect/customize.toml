@@ -37,9 +37,24 @@ principles = [
 ]
 
 [[agent.menu]]
+code = "AD"
+description = "Create D-09 Architecture Design (components/layers/integration/NFR-driven decisions) — conditional on has-integration/has-algorithm facet; runs before D-19"
+skill = "hbc-create-architecture"
+
+[[agent.menu]]
 code = "DB"
 description = "Create or update D-19 Database Design (ER diagrams adapted to framework)"
 skill = "hbc-create-er-diagram"
+
+[[agent.menu]]
+code = "BD"
+description = "Create D-16 Behavioral Design (state transitions/decision tables/invariants/sequences) — conditional on a non-CRUD facet; runs after D-19, before D-27"
+skill = "hbc-create-behavioral-design"
+
+[[agent.menu]]
+code = "UX"
+description = "Create D-14 UX/Screen Design (screens/components/states + DESIGN.md tokens, optional Claude Design) — conditional on has-ui facet"
+skill = "hbc-create-ux"
 
 [[agent.menu]]
 code = "CS"

@@ -42,7 +42,6 @@ PRD_GLOBS = ["*prd*.md", "*PRD*.md"]
 ARCH_GLOBS = [
     "*architecture*.md",
     "D-09*.md",
-    "D-08*.md",
 ]
 UX_GLOBS = ["*ux*.md", "*UX*.md", "*ui*.md", "*UI*.md"]
 USE_CASE_GLOBS = [

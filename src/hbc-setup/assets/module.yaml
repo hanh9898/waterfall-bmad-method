@@ -2,9 +2,9 @@ code: hbc
 name: "HBLAB BMad Custom"
 header: "Custom BMad Method workflow variants by HBLAB"
 subheader: "Incremental + TDD lifecycle (per-feature / staged delivery) with D-xx generation, phase gates, and traceability"
-description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB, applied per-feature (staged delivery). Phase 0 project-init for shared deliverables, then 4 gated phases per feature with TDD. 5 agents + 16 workflows. Expansion module — requires BMM."
+description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB, applied per-feature (staged delivery). Phase 0 project-init for shared deliverables, then 4 gated phases per feature with TDD. 5 agents + 20 workflows. Expansion module — requires BMM."
 default_selected: false
-module_version: 2.0.0
+module_version: 2.2.0
 
 agents:
   - code: hbc-agent-ba
@@ -45,8 +45,8 @@ post-install-notes: |
   Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
   Migrating from HBC v1 (flat layout)? Run [MIG] Migrate v1→v2 before Phase 0 (dry-run → apply).
   Phase 0 (once): [PI] Project Init — create shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
-  Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow
-  Phase 2 Design: [ERD] ER Diagram, [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
+  Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow → [DSC] Discovery Spike (conditional: discovery_risk=uncertain — validate model before design)
+  Phase 2 Design: [AD] Architecture (conditional), [ERD] ER Diagram, [BD] Behavioral Design (conditional), [UX] UX Design (conditional), [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
   Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
   Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check
   Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Sync (impact analysis when documents change)

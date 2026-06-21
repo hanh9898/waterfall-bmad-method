@@ -50,7 +50,7 @@ HBC writes output to two places. Grasp this up front and the later steps will be
 
 | Scope | Deliverables | Where |
 | --- | --- | --- |
-| **Per-feature** | D-02, D-06, D-26, D-27 | `features/auth/planning-artifacts/` |
+| **Per-feature** | D-02, D-06, D-26, D-27 + (by facet) D-09, D-14, D-16 | `features/auth/planning-artifacts/` |
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `shared/glossary/`, `shared/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | baseline in `shared/erd|api/` + optional per-feature override in `features/auth/planning-artifacts/` (the override wins if it exists) |
 
@@ -136,9 +136,13 @@ Before moving to Design, check Phase 1 is complete — **always include the phas
 PG 1 feature=auth
 ```
 
-The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass** or **fail** with reasons, written to `features/auth/gates/`. To **pass**, `PG 1` requires: **D-02** with REQ IDs, **D-06 (BFD)** present + valid Mermaid + every REQ mapped to a flow, and an initialized traceability matrix. If **fail**, fix per the suggestions and re-run. Only a **pass** lets you continue.
+The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass** or **fail** with reasons, written to `features/auth/gates/`. To **pass**, `PG 1` requires: **D-02** with REQ IDs, **D-06 (BFD)** present + valid Mermaid + every REQ mapped to a flow, an initialized traceability matrix, and item **`P1-09` — model-validation** (you **sign off** that `auth`'s domain model — entities, states, rules — has been validated; this item is greenfield-adaptive). If **fail**, fix per the suggestions and re-run. Only a **pass** lets you continue.
 
-✅ **Phase 1 done:** you have D-02, D-06 (BFD), and an initialized traceability matrix for `auth`.
+> 📌 **P1-09 prevents a root-cause error.** This item exists so a *wrong* domain model doesn't pass Phase 1 and then drag wrong design/code into later phases — you confirm the model is right *before* closing Analysis.
+>
+> 🔬 **Feature with an uncertain model?** Set `discovery_risk: uncertain` in the D-02 frontmatter → run **[DSC] `hbc-discovery-spike`** to validate the riskiest assumptions against real code/DB/examples, yielding a verdict **VALIDATED/RESHAPE/KILL**. The Phase 1 gate (**P1-11**) then requires a signed-off VALIDATED discovery-note — no bare sign-off accepted. A `known` feature skips this step.
+
+✅ **Phase 1 done:** you have D-02, D-06 (BFD), an initialized traceability matrix, and a signed-off model-validation for `auth`.
 
 ---
 
@@ -151,11 +155,16 @@ The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass**
 ARCH
 ```
 
-Then run:
+The ARCH agent runs the design skills that **match the feature's facets** — the applicability-catalog decides which ones apply (see [Core Concepts · facet-based applicability](../explanation/concepts.md)). For `auth` (which has both a state-machine for account locking and a login screen):
 
 - `ERD` → **D-19 Database Design / ER Diagram** (dual). By default it updates the baseline in `shared/erd/`; if `auth` needs to differ from the baseline, create a per-feature override (e.g. a `users` table with `email`, `password_hash`, `failed_attempts`…). The override wins if it exists.
 - `CS` → **D-12 Coding Standards** (shared — usually already created in Phase 0; re-run to extend if needed).
 - `API` → **D-21 API Specification** (dual, optional — e.g. endpoint `POST /auth/login`).
+- `AD` → **D-09 Architecture Design** ◑ — runs if the feature has **integration / an algorithm**. For `auth`, it records **ADRs** for architectural decisions (e.g. where to store sessions, the password-hashing mechanism).
+- `BD` → **D-16 Behavioral Design** ◑ — runs because `auth` has a **state-machine** (account lock after 5 failed attempts) and **invariants**. It specifies ST/DR/INV/SEQ blocks and feeds QA's unit-test design.
+- `UX` → **D-14 UX / Screen Design** ◑ — runs because `auth` has a **login screen** (`has-ui`): SCR/CMP, error/lock states; optional Claude Design tokens (`DESIGN.md`).
+
+> 📌 **◑ = by facet.** A pure-CRUD, no-UI, no-integration feature **skips** AD/BD/UX (status N/A — does not block the gate). `auth` happens to trigger all three; another feature might need only ERD + tests.
 
 ### Step 2.2 — Test design (QA agent)
 
@@ -271,7 +280,7 @@ PG 4 feature=auth
 ```mermaid
 flowchart LR
     PI["Phase 0 · PI<br/>shared D-12/D-03<br/>baseline D-19/D-21"] --> P1
-    P1["Phase 1<br/>D-02 Requirements + D-06 BFD"] -->|PG 1| P2["Phase 2<br/>Design · Test · IR"]
+    P1["Phase 1<br/>D-02 Requirements + D-06 BFD<br/>+ P1-09 model-validation"] -->|PG 1| P2["Phase 2<br/>Design · Test · IR<br/>◑ by facet: D-09/D-16/D-14"]
     P2 -->|PG 2| P3["Phase 3<br/>Code TDD + RED"] -->|PG 3| P4["Phase 4<br/>Acceptance · ship auth"]
     P4 -->|PG 4| DONE([Ship the auth feature])
     TR["TRI → TRU each phase → TRA"] -.->|traces| P1 & P2 & P3 & P4
@@ -295,6 +304,7 @@ You ran **Phase 0** once, then took the `auth` feature through all 4 phases with
 | Open each phase's agent | `BA` · `ARCH` · `QA` · `DEV` · `TST` |
 | Create requirements (D-02) | `REQ` |
 | Create the business flow diagram (D-06, required in Phase 1) | `BFD` |
+| Facet-driven design (Phase 2, ◑) | `AD` (D-09) · `BD` (D-16) · `UX` (D-14) |
 | Readiness check (Phase 2) | `IR` |
 | TDD implementation (RED first) | `IM all` (or `IM task TASK-001`) |
 | Run tests / acceptance | `TE all` · `AC review` |

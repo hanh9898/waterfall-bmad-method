@@ -147,6 +147,35 @@ def _detect_diagram_type(block: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _semicolon_issues(block: str, idx: int) -> list[dict[str, object]]:
+    """A `;` in a sequenceDiagram message or Note text breaks the Mermaid parse —
+    Mermaid reads `;` as a statement separator, so `A->>B: do x; do y` fails to
+    render (verified against mermaid.parse). The fix is mechanical: use `,` (or
+    split into two lines). Flag every offending message/Note line as auto-fixable.
+
+    Scoped to message/Note lines (those carrying free text after a `:`) so it never
+    touches declarations or control keywords; comment lines (`%%`) are skipped.
+    """
+    issues: list[dict[str, object]] = []
+    for ln, line in enumerate(block.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("%%") or ";" not in stripped:
+            continue
+        if ":" not in stripped:  # only messages / Notes carry free text after a colon
+            continue
+        issues.append({
+            "block": idx,
+            "kind": "semicolon_in_text",
+            "line": ln,
+            "text": stripped,
+            "auto_fixable": True,
+            "fix_hint": "replace ';' with ',' in the message/Note text "
+                        "(Mermaid parses ';' as a statement separator and the block fails to render)",
+            "detail": "Semicolon in a sequenceDiagram message/Note breaks Mermaid parsing",
+        })
+    return issues
+
+
 def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
     issues: list[dict[str, object]] = []
 
@@ -162,6 +191,8 @@ def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
             }
         )
         return issues
+
+    issues.extend(_semicolon_issues(block, idx))
 
     decls = _block_declarations(block)
     declared = set(decls.keys())

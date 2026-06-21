@@ -55,12 +55,13 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 
 Pre-populate fields from `project-context.md` where available (stakeholders, timeline, tech stack) — present as defaults for confirmation. Open with an invitation for the user to share everything else — goals, constraints, concerns, prior art. If source documents already contain structured requirements (tables, numbered lists with IDs), present them for confirmation and skip to gaps. Then identify which areas still need elicitation:
 
-- **Project background** — purpose, stakeholders, timeline constraints.
+- **Overview (folds D-01)** — goal, scope context, stakeholders, timeline → the D-02 *Project Overview* header (no separate D-01), anchoring feasibility.
 - **Scope** — explicit in-scope and out-of-scope boundaries. Out-of-scope is as important as in-scope.
 - **User roles** — actors who interact with the system. Each gets a name and description.
 - **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (sequential within the feature; e.g. `REQ-{feature}-001`), written per **EARS** (English keyword + content in the document output language: `WHEN … THE SYSTEM SHALL …`). Requirements shared across features → `REQ-SHARED-NNN` (defined in the shared D-02, only **referenced** here). Must be specific and testable.
 - **Non-functional requirements** — performance, security, availability, usability. Each with measurable criteria. Brownfield: when an NFR tightens an existing guarantee, state the **current baseline → target** (e.g. "p95 5s → < 2s"), not just the target — so the change is grounded like a functional CHANGE.
 - **Constraints and assumptions** — technical, business, legal constraints.
+- **Discovery-risk + facets** (A5 — suggest, user confirms, never auto-set) — classify `discovery_risk` (known | uncertain), `facets`, `maturity`. `uncertain` → hand to [DSC] `hbc-discovery-spike`; the Phase 1 gate (P1-11) needs a signed-off **VALIDATED** discovery-note before design. Headless: derive + log.
 
 ### Brownfield grounding (only when the scan reports `brownfield: true`)
 
@@ -77,6 +78,7 @@ Populate `{workflow.template_path}` with discovered content. Write to `{workflow
 - Scope section explicitly lists out-of-scope items.
 - Non-functional requirements have measurable criteria (not "fast" but "< 2s response time").
 - Cross-reference user roles with requirements that mention them.
+- Frontmatter records the confirmed `discovery_risk` / `facets` / `maturity` (drive applicability + the P1-11 gate).
 - **Brownfield** (scan `brownfield: true`): use the template's **extended functional table** (`Change Type` + `Existing System Ref`) — NOT the greenfield one — and add a `Change Spec` block per `CHANGE`/`REMOVE` REQ. Greenfield: use the base table.
 
 **Revision history:** If Update mode, detect scope-of-change:
@@ -105,8 +107,6 @@ Script checks: REQ IDs unique and sequential, no vague terms (configurable word 
 - Non-functional requirements have measurable criteria.
 - Scope boundaries are clear.
 
-In `update`, the loaded D-02 carries `project_kind: brownfield`, so grounding re-runs on revised requirements too (a new CHANGE/REMOVE REQ meets the same bar).
-
 **Fix logic:** Interactive — collaborative fix loop. Headless — apply auto-fixable issues, return `blocked` for non-fixable.
 
 **Compaction flush:** Write validation results summary (issue counts, auto-fixed items) to decision log.
@@ -119,7 +119,7 @@ Structural validation only proves structure. Before saving, run the **semantic r
 
 Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`; set `project_kind: brownfield` when the scan was brownfield, so the grounding checks stay enforced on later validate-only runs). Audit decision-log entries against D-02: every logged decision reflected in the document, captured in addendum, or explicitly set aside. Append closing session.
 
-Suggest next steps, seeding [GLO]/[BFD] with the terms/flows captured during Discovery: _"D-02 complete. Next: D-03 Glossary [GLO] (seed terms: {captured terms}) → D-06 Business Flow [BFD] (seed flows: {captured processes}) → Phase 1 gate [PG]."_
+Suggest next steps, seeding [GLO]/[BFD] with the terms/flows captured during Discovery: _"D-02 complete. Next: D-03 Glossary [GLO] (seed terms: {captured terms}) → D-06 Business Flow [BFD] (seed flows: {captured processes}) → Phase 1 gate [PG]."_ When `discovery_risk: uncertain`, insert [DSC] before the gate (P1-11 requires a VALIDATED discovery-note).
 
 Headless: return JSON per `references/headless-contract.md`.
 

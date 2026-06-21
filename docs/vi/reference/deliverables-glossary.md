@@ -4,7 +4,7 @@
 >
 > 📖 **Reference** — tra cứu nhanh mọi deliverable HBC sinh ra. Muốn hiểu *deliverable là gì / vì sao đánh mã*, xem [Khái niệm cốt lõi](../explanation/concepts.md).
 
-Mã `D-xx` thuộc bộ tài liệu chuẩn của HBLAB. HBC hiện sinh **8 tài liệu D-xx** sau, cộng một số artifact không đánh mã D (task breakdown, báo cáo test, gate, ma trận traceability).
+Mã `D-xx` thuộc bộ tài liệu chuẩn của HBLAB. HBC hiện sinh **11 tài liệu D-xx** sau, cộng một số artifact không đánh mã D (task breakdown, báo cáo test, gate, ma trận traceability).
 
 HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗi tính năng đi qua Phase 1→4 rồi ship độc lập. Vì thế mỗi deliverable có một **phạm vi (scope)**:
 
@@ -16,7 +16,7 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 
 ## Tài liệu D-xx
 
-> Cột **Bắt buộc**: ✅ = bắt buộc (điều kiện qua Phase Gate) · `—` = tùy chọn.
+> Cột **Bắt buộc**: ✅ = bắt buộc (điều kiện qua Phase Gate) · ◑ = **bắt buộc theo facet** (applicability-catalog quyết định per-feature — xem ghi chú dưới) · `—` = tùy chọn.
 > Cột **Phạm vi**: per-feature · shared · dual.
 
 | Mã | Tên | Phase | Skill | Bắt buộc | Phạm vi | Nơi lưu |
@@ -24,13 +24,20 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 | **D-02** | Requirements Specification | 1 · Analysis | `REQ` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-03** | Glossary | 1 · Analysis | `GLO` | — | shared | `shared/glossary/` |
 | **D-06** | Business Flow Diagram (AS-IS/TO-BE) | 1 · Analysis | `BFD` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
+| **D-09** | Architecture Design | 2 · Design | `AD` | ◑ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-12** | Coding Standards | 2 · Design | `CS` | ✅ | shared | `shared/coding-standards/` |
+| **D-14** | UX / Screen Design | 2 · Design | `UX` | ◑ | per-feature | `features/<feature>/planning-artifacts/` |
+| **D-16** | Behavioral Design | 2 · Design | `BD` | ◑ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-19** | Database Design / ER Diagram | 2 · Design | `ERD` | ✅ | dual | `shared/erd/` (+ ghi đè per-feature) |
 | **D-21** | API Specification | 2 · Design | `API` | — | dual | `shared/api/` (+ ghi đè per-feature) |
 | **D-26** | Test Plan | 2 · Design | `TP` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 | **D-27** | Test Specification | 2 · Design | `TS` | ✅ | per-feature | `features/<feature>/planning-artifacts/` |
 
-> 📌 Các mã bị "khuyết" (D-01, D-04, D-05…) thuộc bộ chuẩn HBLAB rộng hơn nhưng **không** do HBC sinh ra — đừng nhầm là thiếu sót.
+> 📌 **Applicability theo facet (◑).** D-09, D-14, D-16 là **deliverable thiết kế có điều kiện**: chúng chỉ bắt buộc khi tính năng mang **facet** tương ứng (xem `src/hbc-shared/references/deliverable-catalog.yaml`). Nếu tính năng không có facet đó → deliverable ở trạng thái **N/A** và không chặn gate. Tính năng tối giản (thuần CRUD, không UI, không tích hợp) chỉ bắt buộc D-02 + D-06.
+>
+> 📌 Các mã bị "khuyết" (D-04, D-05, **D-08 基本設計書/Basic Design**, **D-17 シーケンス図/Sequence Diagram**, D-18 Class Diagram…) thuộc **bộ chuẩn HBLAB rộng hơn** (xem `templates/`) nhưng **không** do HBC sinh ra — đừng nhầm là thiếu sót. **D-01 (Feature Overview)** đã được **gập (fold) vào phần header của D-02**, không còn là tài liệu riêng.
+>
+> 📌 **Căn theo numbering canonical HBLAB:** mã HBC bám đúng bộ chuẩn — **D-09 = Architecture** (アーキテクチャ設計書) và **D-16 = Behavioral/Detailed Design** (詳細設計書). (Trước 2026-06-21 HBC từng dùng nhầm D-08/D-17; đã reconcile — xem `process-review/hbc-dcode-reconcile-2026-06-21.md`.)
 
 ## Chi tiết từng tài liệu
 
@@ -43,8 +50,17 @@ Thuật ngữ miền nghiệp vụ thống nhất, tổng hợp từ tài liệu
 ### D-06 — Business Flow Diagram ✅
 Sơ đồ luồng nghiệp vụ AS-IS / TO-BE bằng Mermaid, dựng từ PRD và planning artifacts. Bắt buộc — là điều kiện qua Phase Gate 1. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
 
+### D-09 — Architecture Design ◑
+Thiết kế kiến trúc / giải pháp: component, ranh giới, luồng tích hợp, và **ADR** (Architecture Decision Record — quyết định + lý do). **Bắt buộc theo facet:** required nếu tính năng có `has-integration` (chạm module/hệ thống ngoài) hoặc `has-algorithm` (tính toán không tầm thường); ngược lại optional. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
+
 ### D-12 — Coding Standards ✅
 Quy chuẩn code theo từng dự án — đặt tên, format, xử lý lỗi — điều chỉnh theo framework đang dùng. Phạm vi: shared → `shared/coding-standards/`, **sinh ở Phase 0 (`PI`)**; `CS` duy trì về sau.
+
+### D-14 — UX / Screen Design ◑
+Thiết kế trải nghiệm & màn hình: screen (SCR), component (CMP), trạng thái, điều hướng; tùy chọn dùng **Claude Design** sinh token `DESIGN.md`. **Bắt buộc theo facet:** required nếu tính năng có `has-ui` (màn hình hướng người dùng); ngược lại N/A. Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
+
+### D-16 — Behavioral Design ◑
+Đặc tả hành vi phi-CRUD bằng 4 khối có element-ID: **ST** (state-machine / trạng thái), **DR** (decision-rule / luật quyết định), **INV** (invariant / bất biến), **SEQ** (sequence / trình tự). **Bắt buộc theo facet:** required nếu tính năng "phi-CRUD phức" — có bất kỳ facet `has-state-machine` / `has-cross-entity-sync` / `has-invariant` / `has-algorithm` / `has-concurrency`; ngược lại N/A. Là nguồn để QA thiết kế unit-test (V-pair). Phạm vi: per-feature → `features/<feature>/planning-artifacts/`.
 
 ### D-19 — Database Design / ER Diagram ✅
 Tài liệu thiết kế CSDL kèm ER Diagram (Mermaid), suy ra từ yêu cầu và kiến trúc. Phạm vi: dual — baseline ở `shared/erd/`, có thể ghi đè per-feature tại `features/<feature>/planning-artifacts/` (bản override thắng nếu tồn tại).
@@ -62,6 +78,7 @@ Test case chi tiết với các **`TC-NNN` ID** (đánh số tuần tự **trong
 
 | Artifact | Phase | Skill | Nơi lưu |
 | --- | --- | --- | --- |
+| Discovery Note (kiểm chứng model — pre-freeze, có điều kiện) | 1 · Analysis | `DSC` | `features/<feature>/planning-artifacts/` |
 | Task Breakdown | 3 · Implementation | `TB` | `features/<feature>/implementation-artifacts/` |
 | Code (TDD) | 3 · Implementation | `IM` | `features/<feature>/implementation-artifacts/` |
 | Test Execution Report | 4 · Testing | `TE` | `features/<feature>/implementation-artifacts/` |

@@ -135,6 +135,24 @@ def _analyse_block(block: str, idx: int) -> list[dict[str, object]]:
     if not _is_er_block(block):
         return issues
 
+    # A `;` in an UNQUOTED relationship label breaks the Mermaid parse — `;` is
+    # read as a statement separator, so `A ||--o{ B : tạo;xử lý` fails to render
+    # (verified against mermaid.parse; a quoted `"tạo; xử lý"` renders fine). Fix
+    # mechanically by using `,`. Scanned from the raw label before quote-stripping.
+    for m in RELATIONSHIP_RE.finditer(block):
+        raw_label = m.group("label").strip()
+        quoted = len(raw_label) >= 2 and raw_label.startswith('"') and raw_label.endswith('"')
+        if ";" in raw_label and not quoted:
+            issues.append({
+                "block": idx,
+                "kind": "semicolon_in_relationship_label",
+                "label": raw_label,
+                "auto_fixable": True,
+                "fix_hint": "replace ';' with ',' in the relationship label "
+                            "(an unquoted ';' is parsed as a statement separator and the block fails to render)",
+                "detail": "Semicolon in an unquoted erDiagram relationship label breaks Mermaid parsing",
+            })
+
     entities = _block_entities(block)
     relationships = _block_relationships(block)
     declared = set(entities.keys())

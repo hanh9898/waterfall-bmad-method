@@ -20,7 +20,7 @@ But not everything belongs to a single feature. Some deliverables are **shared**
 
 | Scope | Deliverables | Where |
 | --- | --- | --- |
-| **Per-feature** | D-02, D-06, D-26, D-27 | `_bmad-output/features/<feature>/planning-artifacts/` |
+| **Per-feature** | D-02, D-06, D-26, D-27 + (by facet) D-09, D-14, D-16 | `_bmad-output/features/<feature>/planning-artifacts/` |
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `_bmad-output/shared/glossary/`, `…/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | a shared baseline in `shared/erd\|api/` + an optional per-feature override in `features/<feature>/planning-artifacts/` |
 
@@ -36,6 +36,14 @@ flowchart LR
 ```
 
 > 🔎 **Analogy:** the shared baseline is like a *city map*; the per-feature override is like a *zoomed-in district map*. If the zoom exists, use it; otherwise use the city map. No config flag needed — just "does the file exist".
+
+**Applicability by facet — not every feature needs every deliverable.** Some Phase 2 design deliverables only make sense when the feature has the matching property. HBC encodes this in the **applicability-catalog** (`src/hbc-shared/references/deliverable-catalog.yaml`): each feature is tagged with **facets** (boolean properties — e.g. `has-ui`, `has-integration`, `has-state-machine`), and the facets decide which deliverables are **required / optional / N-A** for that feature:
+
+- **D-09 Architecture** — required if `has-integration` or `has-algorithm`.
+- **D-16 Behavioral Design** — required if the feature is "non-CRUD complex" (state-machine, cross-entity sync, invariant, algorithm, or concurrency).
+- **D-14 UX/Screen** — required if `has-ui`.
+
+A minimal feature (pure CRUD, no UI, no integration) only requires **D-02 + D-06**. **Maturity** is a separate modifier: `exploratory` mode can downgrade some required deliverables → optional and reduce the elicitation question volume, but **never** touches the correctness floor. Thanks to the catalog, "missing D-14" on a non-UI feature is correctly read as **N/A**, not a gap.
 
 ---
 
@@ -97,7 +105,7 @@ flowchart LR
 
 **Why a Gate?** So errors don't leak into later phases. A vague requirement that slips past Phase 1 becomes a wrong design in Phase 2, wrong code in Phase 3 — the later you catch it, the more expensive the fix. The Gate stops errors at the source.
 
-> 📌 Deliverables required to pass a gate: **D-02, D-12, D-19, D-26, D-27**. Optional: D-03, D-06, D-21.
+> 📌 Deliverables required to pass a gate: **D-02, D-12, D-19, D-26, D-27**. Optional: D-03, D-21. **Required by facet** (applicability-catalog): D-09, D-14, D-16 — required when the feature has the matching facet, otherwise N-A. The Phase 1 gate also has a **P1-09 — model-validation** item (USER sign-off that the domain model has been validated; greenfield-adaptive).
 
 > 🔎 **Analogy:** like airport security — fail it and you don't board. A "fail" isn't a punishment; it protects the phases downstream.
 

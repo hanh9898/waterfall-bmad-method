@@ -62,7 +62,7 @@ How HBC handles it:
 
 How HBC handles it:
 
-- **Readable** docs: `BFD` (`hbc-create-business-flow-diagram`, **D-06**) + `ERD` (`hbc-create-er-diagram`, **D-19**) + `API` (`hbc-create-api-spec`, **D-21**).
+- **Readable** docs: `BFD` (`hbc-create-business-flow-diagram`, **D-06**) + `ERD` (`hbc-create-er-diagram`, **D-19**) + `API` (`hbc-create-api-spec`, **D-21**); facet-driven design: `AD` (architecture **D-09**) · `BD` (behavioral **D-16**) · `UX` (screens **D-14**).
 - **Shared deliverables** from `PI` (`hbc-project-init`): `CS` (`hbc-create-coding-standards`, **D-12**) + **D-03** glossary.
 - **5 coordinator agents** (`hbc-agent-ba/architect/qa/dev/tester`) → one shared workflow instead of a separate tool per role.
 - `SYNC` (`hbc-traceability`) → cascades updates when a source document changes.
@@ -118,7 +118,7 @@ flowchart LR
     subgraph FEAT["Repeat per feature"]
         direction LR
         P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
-        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR"]
+        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR<br/>◑ by facet: D-09 · D-16 · D-14"]
         P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD · RED→GREEN)"]
         P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
         P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
@@ -193,8 +193,8 @@ HBC ships **5 coordinator agents** plus workflow skills per phase. Each workflow
 | Phase | Agent | Key skills (deliverable) | Scope |
 | --- | --- | --- | --- |
 | 0 · Project Init | — | `PI` (shared D-12/D-03 + baseline D-19/D-21) | shared · **mandatory, runs first** (once / update) |
-| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) | D-02/D-06 per-feature · D-03 shared |
-| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) | D-12 shared · D-19/D-21 dual |
+| 1 · Analysis | `BA` | `REQ` (D-02 Requirements) · `GLO` (D-03) · `BFD` (D-06) · ◑ `DSC` (Discovery Spike if `discovery_risk=uncertain`) | D-02/D-06 per-feature · D-03 shared · discovery-note per-feature |
+| 2 · Design | `ARCH` | `ERD` (D-19) · `CS` (D-12) · `API` (D-21) · ◑ `AD` (D-09) · `BD` (D-16) · `UX` (D-14) | D-12 shared · D-19/D-21 dual · D-09/D-16/D-14 per-feature by facet |
 | 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) · `IR` (Readiness) | per-feature |
 | 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) | per-feature |
 | 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) | per-feature |

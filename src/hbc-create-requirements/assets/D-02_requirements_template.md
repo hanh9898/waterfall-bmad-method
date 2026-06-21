@@ -9,6 +9,20 @@ project_kind: "greenfield"   # set to "brownfield" when grounded against an exis
 # gate waives them (reports NA, not FAIL). ONLY D-19 (no data-model change) / D-21 (no
 # API) — D-02/D-03/D-06 always apply. Give a one-line rationale.
 #   na_deliverables: ["D-19"]   # rationale: this feature changes no data model
+# maturity — OPTIONAL: exploratory | stable (default stable). Modifier read by the
+# applicability-catalog + phase gate: `exploratory` loosens the required-node-set and
+# ASK-volume; it NEVER loosens the correctness floor. See hbc-shared/references/deliverable-catalog.yaml.
+#   maturity: exploratory
+# facets — OPTIONAL: feature facets that drive applicability + the Behavioral-Design
+# trigger (has-state-machine/has-cross-entity-sync/has-invariant/has-algorithm/
+# has-concurrency/has-integration/has-ui/has-migration).
+#   facets: ["has-state-machine", "has-ui"]
+# discovery_risk — OPTIONAL: known | uncertain (default known). `uncertain` = the
+# domain model / key assumptions are unproven. When `uncertain`, the Phase 1 gate
+# (item P1-11) REQUIRES a signed-off discovery-note with verdict VALIDATED before
+# closing Analysis — run [DSC] hbc-discovery-spike. `known`/absent → N/A. See IMP-09
+# in process-review/hbc-improvement-spec-2026-06-21.md.
+#   discovery_risk: uncertain
 status: draft
 stepsCompleted: []
 lastStep: ""

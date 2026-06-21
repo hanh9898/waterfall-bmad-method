@@ -136,6 +136,7 @@ If compaction drops the conversation mid-stage, the next run resumes from these 
 For each domain area (or single diagram for single-domain scope), render one Mermaid `erDiagram` block:
 - Declare every entity with its key attributes (PK, FK, important columns).
 - Use Mermaid ER relationship notation: `||--o{` (one-to-many), `||--||` (one-to-one), `}o--o{` (many-to-many), with relationship labels.
+- **No `;` in a relationship label** — Mermaid parses an unquoted semicolon as a statement separator, so `A ||--o{ B : tạo;xử lý` fails to render. Use `,` instead. (Stage 4 flags any leftover `;` as auto-fixable.)
 - Physical names for entity and attribute identifiers; logical names as comments or in the table definitions section.
 - Group related entities visually where possible.
 - For large schemas (>15 entities), split into sub-domain diagrams as H2-separated sections within the single primary file, plus a master overview diagram showing only entity names and relationships (no attributes). Keep everything in one file so Stage 4 validation covers all sections.

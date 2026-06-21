@@ -32,12 +32,16 @@ flowchart TD
         REQ["REQ → D-02 Requirements ⭐ (per-feature)"]
         GLO["GLO → D-03 Glossary (shared)"]
         BFD["BFD → D-06 Business Flow (per-feature)"]
+        DSC["DSC → Discovery Note ◑ (nếu discovery_risk=uncertain)"]
     end
 
     subgraph P2["Phase 2 · Design + Test Design 👤 ARCH + QA"]
+        AD["AD → D-09 Architecture ◑ (theo facet)"]
         ERD["ERD → D-19 ER Diagram ⭐ (dual)"]
         CS["CS → D-12 Coding Standards ⭐ (shared)"]
         API["API → D-21 API Spec (dual)"]
+        BD["BD → D-16 Behavioral Design ◑ (theo facet)"]
+        UX["UX → D-14 UX/Screen ◑ (theo facet)"]
         TP["TP → D-26 Test Plan ⭐ (per-feature)"]
         TS["TS → D-27 Test Spec ⭐ (per-feature)"]
         IR["IR → Readiness Gate ✅ (per-feature)"]
@@ -60,7 +64,7 @@ flowchart TD
     SHIP -.->|tính năng tiếp theo| LOOP
 ```
 
-> ⭐ = deliverable **bắt buộc** ở gate. Các skill còn lại là tùy chọn, làm khi cần.
+> ⭐ = deliverable **bắt buộc** ở gate. ◑ = **bắt buộc theo facet** (applicability-catalog quyết định per-feature: D-09 nếu có tích hợp/thuật toán; D-16 nếu phi-CRUD phức; D-14 nếu có UI). Các skill còn lại là tùy chọn, làm khi cần.
 > Mỗi mũi tên `PG <n> ✅` là một **Phase Gate** mang theo `feature=` — phải pass mới qua phase sau.
 > `IR` (readiness gate) là **đường nối Phase 2 → 3**: đối soát D-02 ↔ D-21/D-26/D-27 + ma trận trước khi vào code.
 
@@ -84,7 +88,7 @@ Bố cục mới thay cho thư mục phẳng `planning-artifacts` cũ:
 
 | Phạm vi (scope) | Deliverable | Nơi lưu |
 | --- | --- | --- |
-| **Per-feature** | D-02, D-06, D-26, D-27 | `features/<feature>/planning-artifacts/` |
+| **Per-feature** | D-02, D-06, D-26, D-27 + (theo facet) D-09, D-14, D-16 | `features/<feature>/planning-artifacts/` |
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `shared/glossary/`, `shared/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | baseline `shared/erd|api/` + bản ghi đè per-feature tùy chọn tại `features/<feature>/planning-artifacts/` — **ưu tiên theo path-existence** (bản ghi đè thắng nếu tồn tại) |
 
@@ -125,9 +129,13 @@ flowchart LR
 | **1 · Analysis** | `BA` | `REQ` | D-02 Requirements Specification | per-feature | ✅ |
 | | | `GLO` | D-03 Glossary | shared | — |
 | | | `BFD` | D-06 Business Flow Diagram | per-feature | — |
-| **2 · Design** | `ARCH` | `ERD` | D-19 Database Design / ER Diagram | dual | ✅ |
+| | | `DSC` | Discovery Note (kiểm chứng model; gate P1-11) | per-feature | ◑ nếu uncertain |
+| **2 · Design** | `ARCH` | `AD` | D-09 Architecture Design | per-feature | ◑ theo facet |
+| | | `ERD` | D-19 Database Design / ER Diagram | dual | ✅ |
 | | | `CS` | D-12 Coding Standards | shared | ✅ |
 | | | `API` | D-21 API Specification | dual | — |
+| | | `BD` | D-16 Behavioral Design | per-feature | ◑ theo facet |
+| | | `UX` | D-14 UX / Screen Design | per-feature | ◑ theo facet |
 | **2 · Test Design** | `QA` | `TP` | D-26 Test Plan | per-feature | ✅ |
 | | | `TS` | D-27 Test Specification | per-feature | ✅ |
 | | | `IR` | Readiness gate (đối soát D-02 ↔ D-21/D-26/D-27 + ma trận) | per-feature | ✅ |

@@ -1,0 +1,34 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-create-architecture.
+# Team overrides:     {project-root}/_bmad/custom/hbc-create-architecture.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-create-architecture.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# D-09 template path. Override to use a custom template.
+template_path = "assets/D-09_architecture-design_template.md"
+
+# D-09 Architecture Design is PER-FEATURE (Phase 2).
+output_dir = "{output_folder}/features/{feature}/planning-artifacts"
+
+# Validation script. Override to use a custom validator with the same CLI interface.
+validation_script = "scripts/validate-architecture.py"
+
+# Shell command to run after D-09 is saved. Empty = no hook.
+on_complete = ""
+
+# hbc-traceability impact integration (BR-13). When true, after a successful `update`
+# auto-invoke hbc-traceability impact to cascade downstream. Default false.
+auto_sync_after_update = false

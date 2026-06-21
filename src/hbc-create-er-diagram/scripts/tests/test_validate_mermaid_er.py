@@ -200,6 +200,49 @@ erDiagram
     assert [i for i in data["issues"] if i.get("kind") == "missing_pk" and i.get("name") == "PAYMENT"] == []
 
 
+def test_semicolon_in_unquoted_relationship_label_flagged():
+    # `;` in an UNQUOTED relationship label breaks the real Mermaid parse; the
+    # deterministic check must catch it and mark it auto-fixable (→ `,`).
+    content = """# ER Diagram
+
+```mermaid
+erDiagram
+  A {
+    int id PK
+  }
+  B {
+    int id PK
+  }
+  A ||--o{ B : tạo;xử lý
+```
+"""
+    data = run_script(content)
+    semis = [i for i in data["issues"] if i.get("kind") == "semicolon_in_relationship_label"]
+    assert len(semis) == 1, data["issues"]
+    assert semis[0]["auto_fixable"] is True
+    assert data["passed"] is False
+
+
+def test_semicolon_in_quoted_relationship_label_not_flagged():
+    # A quoted label with `;` renders fine in Mermaid → must NOT be flagged.
+    content = """# ER Diagram
+
+```mermaid
+erDiagram
+  A {
+    int id PK
+  }
+  B {
+    int id PK
+  }
+  A ||--o{ B : "tạo; xử lý"
+```
+"""
+    data = run_script(content)
+    kinds = {i.get("kind") for i in data["issues"]}
+    assert "semicolon_in_relationship_label" not in kinds, data["issues"]
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_diagram,
@@ -213,6 +256,8 @@ if __name__ == "__main__":
         test_dotted_non_identifying_relationship,
         test_fk_uppercase_entity_not_flagged,
         test_parameterized_type_pk_not_missing,
+        test_semicolon_in_unquoted_relationship_label_flagged,
+        test_semicolon_in_quoted_relationship_label_not_flagged,
     ]
     failed = 0
     for t in tests:

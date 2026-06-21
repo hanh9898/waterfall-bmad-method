@@ -196,6 +196,56 @@ sequenceDiagram
         self.assertEqual(missing[0]["name"], "Admin")
         self.assertFalse(missing[0]["auto_fixable"])
 
+    def test_semicolon_in_message_flagged_auto_fixable(self) -> None:
+        # A `;` in a sequenceDiagram message breaks the real Mermaid parse; the
+        # deterministic check must catch it (independent of mmdc) and auto-fix to `,`.
+        body = """```mermaid
+sequenceDiagram
+    actor User as User
+    participant System as System
+    User->>System: Kiểm tra thông tin; khóa tài khoản
+    System-->>User: OK
+```
+"""
+        target = make_md(self.root, body)
+        proc = run_script(str(target), "--no-render", "-o", str(self.out))
+        self.assertEqual(proc.returncode, 1, "semicolon in message should fail")
+        result = self._result()
+        semis = [i for i in result["issues"] if i.get("kind") == "semicolon_in_text"]
+        self.assertEqual(len(semis), 1)
+        self.assertTrue(semis[0]["auto_fixable"])
+        self.assertIn("khóa tài khoản", semis[0]["text"])
+
+    def test_semicolon_in_note_flagged(self) -> None:
+        body = """```mermaid
+sequenceDiagram
+    participant System as System
+    Note over System: bước 1; bước 2
+```
+"""
+        target = make_md(self.root, body)
+        proc = run_script(str(target), "--no-render", "-o", str(self.out))
+        self.assertEqual(proc.returncode, 1)
+        result = self._result()
+        semis = [i for i in result["issues"] if i.get("kind") == "semicolon_in_text"]
+        self.assertEqual(len(semis), 1)
+
+    def test_comma_message_not_flagged(self) -> None:
+        # The corrected form (comma) must pass the semicolon check.
+        body = """```mermaid
+sequenceDiagram
+    actor User as User
+    participant System as System
+    User->>System: Kiểm tra thông tin, khóa tài khoản
+    System-->>User: OK
+```
+"""
+        target = make_md(self.root, body)
+        proc = run_script(str(target), "--no-render", "-o", str(self.out))
+        self.assertEqual(proc.returncode, 0, f"issues: {self._result().get('issues')}")
+        kinds = {i.get("kind") for i in self._result().get("issues", [])}
+        self.assertNotIn("semicolon_in_text", kinds)
+
     def test_no_mermaid_blocks_flagged(self) -> None:
         target = make_md(self.root, "# Doc with no diagrams\n")
         proc = run_script(str(target), "-o", str(self.out))
