@@ -131,7 +131,7 @@ If `artifacts.json` returned zero PRDs AND `--prd-path` was not provided:
 ```
 No PRD found in {planning_artifacts}
 Options:
-[1] Run `bmad-create-prd` first (recommended)
+[1] Run `bmad-prd` first (recommended)
 [2] Provide PRD path
 [3] Continue with interactive elicitation (greenfield, no source)
 [q] Quit

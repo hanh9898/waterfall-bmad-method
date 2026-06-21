@@ -61,7 +61,7 @@ writes ids in bare form (`REQ-040`) reconciles with the canonical D-02 id
 2. Run the deterministic engine:
 
 ```
-python3 {skill-root}/scripts/check-readiness.py \
+python3 {workflow.readiness_script} \
   --d02 <D-02 path> [--d27 <path>] [--d26 <path>] [--d21 <resolved D-21 path>] \
   [--matrix <per-feature matrix>] [--task-breakdown <path>] [--d19 <path> --code-dir <feature code root>] \
   -o {workflow.output_path}

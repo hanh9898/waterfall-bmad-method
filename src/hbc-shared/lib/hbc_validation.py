@@ -351,10 +351,6 @@ def check_required_sections(content: str, sections, empty_check: bool = True) ->
 REQ_ID_RE = _REQ_ID_ANY_RE
 # Any requirement/test/NFR id — the leak signature for the spec-ref lint (T1.2).
 SPEC_REF_RE = re.compile(r"\b(?:REQ|TC|NFR)-[A-Za-z0-9-]+\b")
-# A dated revision-history row "| 2.3 | 2026-06-19 | ..." (version-first), the
-# churn signal (T2.11). The date in the 2nd cell tells a real revision row apart
-# from any other table whose first cell happens to be N.N.
-_REV_ROW_RE = re.compile(r"^\|\s*\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}", re.MULTILINE)
 # A markdown doc id (D-02, D-19, ...) and a version token. The version token
 # REQUIRES a `v` prefix (v2.3 / V2.3) so a section ref (§3.5), a bare decimal, or a
 # date fragment is never misread as a cited version — version citations in the docs
@@ -369,7 +365,8 @@ _VER_TOKEN_RE = re.compile(r"\bv(\d+\.\d+(?:\.\d+)?)\b", re.IGNORECASE)
 # ("| 2026-06-19 | 2.1 |", as D-19 writes it). Such a row narrates a past state,
 # so any version it mentions is history, not a live cross-reference.
 _REV_ROW_ANY_RE = re.compile(
-    r"^\|\s*(?:\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}\s*\|\s*\d+\.\d+)"
+    r"^\|\s*(?:\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}\s*\|\s*\d+\.\d+)",
+    re.MULTILINE,
 )
 # Declared document version from a frontmatter `version:` line.
 _VERSION_FM_RE = re.compile(r"^version:\s*[\"']?(\d+\.\d+)", re.MULTILINE)
@@ -502,9 +499,11 @@ def reqs_without_task(req_ids, tasks_text: str) -> list[str]:
 
 
 def revision_count(text: str) -> int:
-    """Number of dated revision-history rows (``| N.N | YYYY-MM-DD | ...``) — the
-    D-02 churn signal (T2.11). RCA case: 13; target ≤4."""
-    return len(_REV_ROW_RE.findall(text or ""))
+    """Number of dated revision-history rows — the churn signal (T2.11). Counts
+    BOTH orientations: version-first (``| N.N | YYYY-MM-DD |``, as D-02 writes it)
+    and date-first (``| YYYY-MM-DD | N.N |``, as D-06/D-19 write it), so date-first
+    docs are no longer silently un-counted. RCA case (D-02): 13; target ≤4."""
+    return len(_REV_ROW_ANY_RE.findall(text or ""))
 
 
 def churn_assessment(text: str, threshold: int = 4) -> dict:

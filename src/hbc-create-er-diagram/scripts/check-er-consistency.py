@@ -59,6 +59,7 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         REQ_ID_RE,
+        churn_assessment,
         model_drift,
         req_num_map,
         verdict,
@@ -73,14 +74,6 @@ except Exception as exc:  # noqa: BLE001 — any import failure is a structured 
 MERMAID_BLOCK_RE = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
 _DIAGRAM_TYPE_RE = re.compile(r"^\s*(erDiagram)\b", re.MULTILINE)
 DEFAULT_CHURN_THRESHOLD = 4
-
-# An order-robust revision-history row: `| version | date |` OR `| date | version |`.
-# Defined locally (not imported) because the shared `revision_count` matches only the
-# version-first order, while the HBLab D-19 template is date-first — a date-first table
-# would falsely read as zero churn. Structure-only regex, squarely in this script's remit.
-_REV_ROW_RE = re.compile(
-    r"^\|\s*(?:\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}\s*\|\s*\d+\.\d+)"
-)
 
 # A markdown table cell / prose fragment declaring an FK relationship. Used only to
 # count "FK lines" vs "FK lines that also name an ondelete behavior" — a structural
@@ -161,17 +154,6 @@ def ondelete_signal(text: str) -> dict:
             "fk_without_ondelete": fk_lines - fk_with_ondelete}
 
 
-def churn_signal(text: str, threshold: int) -> dict:
-    """Revision-history row count, order-robust (B2-9).
-
-    Counts rows matching EITHER `| version | date |` or `| date | version |` — the
-    HBLab D-19 template is date-first, which the shared version-first
-    `churn_assessment` would miss and falsely report as zero churn.
-    """
-    n = sum(1 for line in text.splitlines() if _REV_ROW_RE.match(line.strip()))
-    return {"revisions": n, "threshold": threshold, "high_churn": n > threshold}
-
-
 def check(d19_path: str, sources: list[str] | None = None,
           code_dir: str | None = None,
           churn_threshold: int = DEFAULT_CHURN_THRESHOLD) -> dict:
@@ -239,7 +221,7 @@ def check(d19_path: str, sources: list[str] | None = None,
     checked.append("FK lines surfaced with/without an ondelete behavior (B2-3 cue; rationale is judgment)")
 
     # --- CHURN (B2-9): advisory, never an issue ---
-    churn = churn_signal(text, churn_threshold)
+    churn = churn_assessment(text, churn_threshold)
     checked.append("revision-history churn surfaced (B2-9 cue; high churn ⇒ freeze the model)")
 
     structure_ok = not issues
