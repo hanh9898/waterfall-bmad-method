@@ -9,6 +9,8 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | Flag | Default | Effect |
 |---|---|---|
 | `-H` / `--headless` | off | Skip every interactive prompt; resolve decisions via the defaults table below; emit JSON return contract on completion or block. |
+| `--strict` | off | Autonomy mode: stop at the first unresolved **domain** decision (scope/flow/actor/path, an unresolved AS-IS divergence, a non-empty `openFacets`) and return `blocked` with the question. |
+| `--assumptions-allowed` | **default in CI** | Autonomy mode: take the most defensible option for each domain decision, log it to `.decision-log.md` as an `ASSUMPTION`, and continue. Never blocks on the first question. Mutually exclusive with `--strict`. |
 | `feature=<slug>` | unset | Required in headless: the active feature slug. Per-feature output paths resolve under `_bmad-output/features/<feature>/...`. Missing → return `blocked` with `reason: "feature_required"`. |
 | `--prd-path=<path>` | unset | Use this exact PRD location, skip discovery glob. Repeatable for sharded PRDs or multiple sources. |
 | `--mode=greenfield\|migration` | inferred | Force mode; skip mode confirmation. |
@@ -33,6 +35,9 @@ Authoritative reference for `--headless` / `-H` invocation of `hbc-create-busine
 | Stage-3 scope-of-change classification | `auto` (diff Stage 2 flush) | unless `--scope-of-change` overrides |
 | Stage-3 update target | every in-scope flow | unless `--update-flow=<name>` narrows it |
 | Stage-4 auto-fix | apply only validator findings with `auto_fixable: true` | from `validate-mermaid.py` per-issue flag |
+| Stage-4 flow-coverage (`check-flow-coverage.py`) | **advisory** — log findings, never block | B8-2/B8-5/B8-6; the blocking gate is [IR]/Phase-1 |
+| Stage-4a mandatory review | run `bmad-review-adversarial-general` + `bmad-review-edge-case-hunter`; if absent, apply lenses inline + record "ran inline" | B8-7 — never hard-block on a missing skill |
+| Domain decisions (scope/AS-IS divergence/openFacets) | `--strict` blocks; `--assumptions-allowed` logs an `ASSUMPTION` + continues | Autonomy A5 |
 
 Every auto-decision is appended to `{planning_artifacts}/.decision-log.md`.
 
@@ -49,7 +54,8 @@ On success:
   "decision_log": "{planning_artifacts}/.decision-log.md",
   "validation": {
     "mermaid": "{planning_artifacts}/.scan/mermaid.json",
-    "fr": "{planning_artifacts}/.scan/fr.json"
+    "fr": "{planning_artifacts}/.scan/fr.json",
+    "flow": "{ws}/.scan/flow.json"
   },
   "review_lenses_run": [],
   "semantic_review": {
@@ -84,6 +90,7 @@ Defined `reason` values (closed set — automators may switch on these):
 | `mermaid_validation_failed` | `validate-mermaid.py` returned issues that were not all `auto_fixable: true`. |
 | `fr_coverage_gap` | `check-fr-coverage.py` reported `uncovered` or `phantom` FR ids. |
 | `migration_without_as_is` | `--mode=migration` requested but no PRD source contains AS-IS / "current state" markers, and `--allow-migration-without-as-is` was not passed. |
+| `scope_unconfirmed` | `--strict` mode and a flow/actor/path scope decision at Stage 1e (B8-4) that the flags did not pin down. (Under `--assumptions-allowed` the scope is assumed + logged, not blocked.) |
 | `resolver_missing` | The customization resolver script failed AND the SKILL.md hand-merge fallback could not complete. |
 | `feature_required` | Headless invocation with no resolvable feature. |
 

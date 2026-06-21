@@ -7,11 +7,11 @@ description: "Generate D-12 Coding Standards adapted to project framework. Use w
 
 ## Overview
 
-Generate D-12 (Coding Standards) — per-project coding conventions adapted to the project's framework, language, and team preferences. The resulting document is the reference standard for all implementation work in Phase 3.
+Generate D-12 (Coding Standards) — per-project coding conventions **derived from the project's real code** (not invented from framework defaults), adapted to the project's framework, language, and team preferences. D-12 is the reference standard for all Phase-3 implementation work; its machine-checkable rules are what the Phase-3 gate enforces.
 
-Four-stage workflow: Prerequisites + Discovery → Generation → Validation → Save, plus a Stage 3b Semantic Review (Layer 2). Supports resume state, headless mode. Requires Python 3.10+ for validation scripts.
+Workflow: Prerequisites + Discovery → Generation → Validation → Code-grounding reconcile → Semantic review → Save. Supports resume state, headless mode. Requires Python 3.10+ for the scripts.
 
-**Args:** `create` (default), `update` (revise existing D-12), `validate` (check existing D-12). Optional: `--headless` / `-H`.
+**Args:** `create` (default), `update` (revise existing D-12), `validate` (check existing D-12). Optional: `--headless` / `-H` with `--strict` or `--assumptions-allowed` (see Autonomy).
 
 ## Conventions
 
@@ -20,9 +20,17 @@ Four-stage workflow: Prerequisites + Discovery → Generation → Validation →
 - `{project-root}`-prefixed paths resolve from the project working directory.
 - `{skill-name}` resolves to the skill directory's basename.
 
+## Autonomy (A5)
+
+Separate **mechanical** decisions from **domain** decisions. Mechanical — section ordering, table formatting, applying a framework's own idiomatic case to its own constructs — decide and proceed. Domain — a **team preference** not derivable from framework convention (indentation width, fail-fast vs defensive, comment language, import ordering), whether to keep a standard that the real code deviates from, how to resolve a contradiction — **ASK; never silently default** (B10-3).
+
+Headless resolves domain decisions two ways:
+- `--strict` — stop at the first unresolved domain decision and return `blocked` with the question.
+- `--assumptions-allowed` (default in CI) — take the most defensible option (framework default), log it to the decision log as an `ASSUMPTION`, and continue. Never block on the first question.
+
 ## Headless Mode
 
-When `--headless`: all stages run non-interactively per `references/headless-contract.md` (input args, return schema, blocked reasons).
+When `--headless`: all stages run non-interactively per `references/headless-contract.md` (input args, return schema, blocked reasons). Domain decisions follow the Autonomy mode above.
 
 ## On Activation
 
@@ -35,87 +43,87 @@ Resolve customization, load persistent facts and config per standard BMad activa
 1a. **Source scan.** Check `{workflow.output_dir}` for existing D-12 artifacts:
 
 ```
-python3 scripts/scan-coding-standards.py --project-root {project-root} --output-dir {workflow.output_dir} --project-knowledge {project_knowledge}
+python3 {workflow.scan_script} --project-root {project-root} --output-dir {workflow.output_dir} --project-knowledge {project_knowledge}
 ```
 
-Returns JSON with `state` (fresh/resume/update), `existing_d12` (path + frontmatter), `framework` (detected from project-context.md), `project_context_path`, and `project_knowledge_docs` (brownfield `bmad-document-project` output — `index.md` + project docs; empty for greenfield). Use this to route:
-   - **Fresh** — no prior D-12. Proceed to discovery.
-   - **Resume** — partial D-12 found (`lastStep` < `complete`). Show summary, offer resume or restart.
-   - **Update** — complete D-12 exists. Show what to update, load as baseline.
+Returns JSON with `state` (fresh/resume/update), `existing_d12`, `framework` (detected from project-context.md), `project_context_path`, and `project_knowledge_docs` (brownfield `bmad-document-project` output; empty for greenfield). Route: **Fresh** → discovery · **Resume** (`lastStep` < `complete`) → show summary, offer resume/restart · **Update** → load as baseline (Update Mode).
 
-1a′. **Brownfield ingest (#7).** When `project_knowledge_docs` is non-empty (existing codebase documented via `bmad-document-project`), treat it as a first-class SOURCE: read `{project_knowledge}/index.md` and the listed project docs for the **real, already-in-use code conventions** (naming, layout, error handling, lint config, import ordering) plus any existing lint/format configs they reference. **Derive D-12 from these actual conventions** so the standard codifies what the codebase already does rather than imposing generic framework defaults — surface real conventions as confirmations in 1c, and only deviate where the team explicitly chooses to. Greenfield (`project_knowledge_docs` empty) keeps the existing framework-default behavior unchanged.
+After routing: initialize `.decision-log.md` as a peer of the output. If the scan script fails or Python is unavailable, ask the user for source paths and proceed.
 
-1b. **Framework detection.** If `{workflow.framework}` is set, use it as the framework override (skip auto-detection). Otherwise read `project-context.md` (loaded via persistent_facts) to detect the primary framework and language. If still not detectable, ask the user. Common stacks: Odoo (Python), Django (Python), Next.js (TypeScript), React (TypeScript/JavaScript), Laravel (PHP), Spring Boot (Java).
+1a′. **Brownfield ingest (#7).** When `project_knowledge_docs` is non-empty, treat it as a first-class SOURCE: read `{project_knowledge}/index.md` and the listed docs for the **real, already-in-use conventions** (naming, layout, error handling, lint/format configs). Derive D-12 from these so it codifies what the codebase already does, surfaced as confirmations in 1c. Greenfield keeps framework-default behavior.
 
-1c. **Team preferences.** Ask the user about preferences not derivable from framework conventions — these vary per team even within the same framework:
-- Indentation style (tabs/spaces, width)
-- Naming convention overrides (if deviating from framework default)
-- Comment language (Japanese, Vietnamese, English) — default to `{workflow.comment_language}` if set, else `{document_output_language}`
-- Error handling philosophy (fail-fast vs defensive)
-- Import ordering preferences
-- Any existing linting config (.eslintrc, .flake8, ruff.toml, etc.) to align with
+1b. **Framework detection.** If `{workflow.framework}` is set, use it (skip auto-detection). Otherwise read `project-context.md` to detect framework + language; if undetectable, ask. Common stacks: Odoo (Python), Django (Python), Next.js/React (TS), Laravel (PHP), Spring Boot (Java).
 
-Pre-populate defaults from framework conventions — present as confirmations, not open questions. In headless mode, use framework defaults for unspecified preferences.
+1c. **Team preferences (B10-3).** These vary per team even within one framework — they are **domain decisions, never silently defaulted**. Ask (pre-populating the framework default as a *confirmation*, not an open question): indentation style + width · naming overrides · comment language (default `{workflow.comment_language}` else `{document_output_language}`) · error-handling philosophy · import ordering · any existing lint config (`.eslintrc`/`.flake8`/`ruff.toml`/…) to align with. In headless, the Autonomy mode governs (strict → block; assumptions → framework default logged as ASSUMPTION).
 
 **Compaction flush:** Write detected framework, language, and key preference decisions to decision log.
 
 ## Stage 2: Generation
 
-Populate `{workflow.template_path}` with discovered content. Write to `{workflow.output_dir}/D-12-{project_name}-coding-standards.md`. Ensure:
+Populate `{workflow.template_path}`, write to `{workflow.output_dir}/D-12-{project_name}-coding-standards.md`. Ensure:
 
-- Every section is populated with framework-specific conventions, not generic platitudes.
-- Naming conventions match the framework's idiomatic style (e.g., `snake_case` for Python/Odoo, `camelCase` for JavaScript/TypeScript).
-- Code examples use the project's actual framework syntax, not abstract pseudocode. Inline comments in code examples use `{workflow.comment_language}` if set, else `{document_output_language}`.
-- Error handling section reflects the framework's patterns (e.g., try/except chains in Python, error boundaries in React).
-- Security section addresses framework-specific risks (e.g., `@api.model` access control in Odoo, CSRF in Django, XSS in React).
+- Every section has framework-specific conventions, not generic platitudes. Naming matches the framework's idiom (`snake_case` Python/Odoo, `camelCase` JS/TS). Code examples use real framework syntax; inline comments in `{workflow.comment_language}` else `{document_output_language}`. Error-handling + Security sections reflect framework patterns/risks (e.g. Odoo `@api.model` access control, Django CSRF, React XSS).
+- **§1.4 Code Derivation & Deviations (B10-1).** Record which conventions were read from the real code, and any DEVIATION where a stated standard differs from current code (filled from the Stage 3a reconcile) with its reason/action.
+- **§10 Machine-checkable Rules (Lint) (B10-2).** Express every rule that *can* be machine-checked as a lint rule, naming the tool/check and the enforcing gate. The "no spec ids (`REQ-`/`TC-`/`NFR-`) in code/tests" rule is mandatory — the Phase-3 gate (`hbc-implement` spec-ref lint, T1.2) blocks on any leak. Do NOT rebuild that lint/gate; D-12 *emits the rule and references the enforcement*.
 
-**Framework-specific adaptation examples:**
-- **Odoo:** `@api.model`/`@api.multi` decorators, `_inherit` patterns, XML view conventions, `ir.model.access.csv` formatting, jQuery widget patterns for older versions.
-- **Django:** PEP 8 base, class-based view patterns, model field ordering, migration naming, template tag conventions.
-- **Next.js/React:** ESLint + Prettier config alignment, hook rules, server component vs client component boundaries, file naming (`kebab-case` files, `PascalCase` components).
-
-**Revision history:** If Update mode, detect scope-of-change:
-- Polish only → append note, no version bump.
-- New/changed conventions → new row, bump version.
+**Revision history (Update mode):** see Update Mode (per-session bump, not per-edit).
 
 **Compaction flush:** Write section count and version to decision log.
 
 ## Stage 3: Validation
 
-Run deterministic validator, then LLM judgment checks:
-
 ```
 python3 {workflow.validation_script} "{workflow.output_dir}/D-12-{project_name}-coding-standards.md" --framework {detected_framework}
 ```
 
-Script checks: all required sections present and non-empty, no internal contradictions (e.g., "use tabs" then "use 2 spaces"), framework-specific conventions present for detected framework. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable, fall back to LLM-only validation and note the limitation in the decision log.
+Script checks required sections present/non-empty, advisory contradiction pairs, framework coverage, code-example count; returns per-issue `auto_fixable` + a `churn` block (see Update Mode). If unavailable, fall back to LLM-only validation and note the limitation.
 
-**LLM judgment checks:**
-- Conventions are actionable and specific, not vague ("write clean code").
-- Code examples match the stated conventions.
-- No contradictions between sections.
-- Framework-specific patterns are accurate for the framework version.
+**LLM judgment checks:** conventions actionable/specific (not "write clean code"); examples match stated conventions; no real contradictions; framework patterns accurate for the version.
 
-**Fix logic:** Interactive — collaborative fix loop. Headless — apply auto-fixable issues, return `blocked` for non-fixable.
+**Fix logic:** Interactive — collaborative fix loop. Headless — apply auto-fixable, return `blocked` for non-fixable.
 
-**Compaction flush:** Write validation results summary to decision log.
+## Stage 3a: Code-grounding reconcile (B10-1 / B10-2)
+
+Reconcile D-12 against the real code so the standard reflects reality — advisory, not a hard gate (the blocking gates are `hbc-check-implementation-readiness` [IR] and the Phase-3 implement gate). If the script/Python is unavailable, skip and proceed. Resolve `--code-dir` (first-party source) from Stage 1/config:
+
+```
+python3 {workflow.consistency_script} "{workflow.output_dir}/D-12-{project_name}-coding-standards.md" --project-root {project-root} --code-dir <source dir>
+```
+
+It returns:
+- **`deviations` (B10-1)** — a stated standard (indentation, naming case) the real code does NOT follow. For each, the standard is wrong or a deliberate migration: **confirm with the user** (domain decision), then record it in §1.4 Deviations. Do not silently overwrite either side.
+- **`spec_ref_leaks` + `spec_ref_leak_count` (B10-2)** — REQ-/TC-/NFR- ids embedded in code/tests. This grounds §10's mandatory lint rule in the real count; the Phase-3 gate is what reduces it to 0.
+
+Headless: include both in the return; `--strict` blocks if either is non-empty, `--assumptions-allowed` logs them and continues.
 
 ## Stage 3b: Semantic Review (Layer 2)
 
-Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm the standards are internally consistent, actually fit the project's framework, and contain no contradictory rules. Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets`/open concerns empty, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with an **independent skeptic lens** — challenge each rule: is it grounded in the real code/framework, actionable, internally consistent, free of contradictory rules? Are the machine-checkable rules actually expressed as lint (§10)? List every unresolved concern in `openFacets`. Set `semanticReview.status: passed` **only when `openFacets` is empty AND the user signs off** (headless follows the Autonomy mode); otherwise `pending`. The shared `semantic_review_status` is the single structural read; the Phase 2 gate REVIEW item (#5) enforces it.
 
 ## Stage 4: Save and Handoff
 
-Finalize document — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). Audit decision-log entries against D-12: every preference decision reflected in the document. Append closing session.
+Finalize — update frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `semanticReview`). On create: fill the blank date in the pre-seeded Revision History row. Audit decision-log entries against D-12: every preference decision reflected. Append closing session.
 
-Suggest next steps: _"D-12 complete. Recommended: create D-21 API Spec (`hbc-create-api-spec` [API]) if project exposes APIs, or proceed to Phase 2 gate (`hbc-phase-gate` [PG]) if all design artifacts are ready."_
+Suggest next steps: _"D-12 complete. Recommended: create D-21 API Spec (`hbc-create-api-spec` [API]) if the project exposes APIs, or proceed to the Phase 2 gate (`hbc-phase-gate` [PG])."_
 
 Headless: return JSON per `references/headless-contract.md`.
+
+## Validate Mode
+
+When invoked with `validate` arg: run Stage 1a scan to locate existing D-12, then run the validation script (and optionally Stage 3a reconcile) against it. Present results (interactive) or return headless JSON. No discovery/generation stages run. If no D-12 found, return `blocked` with `reason: "no_existing_d12"`.
+
+## Update Mode
+
+When `state: update` or `update` arg: load the existing D-12 as baseline. Apply changes; for new/changed conventions add a Revision History row, for polish-only append a note.
+
+**Anti-churn (T2.11).** Bump the version **once per session**, not per edit. The validator returns `churn` (`revisions` vs `threshold`); when `churn.high_churn` is true the conventions aren't settled yet — surface it and suggest `maturity: exploratory` or a `[DSC]` model-spike instead of another bump.
+
+Then proceed to Stage 3 (Validation). Headless: auto-apply non-conflicting changes; return `blocked` with `reason: "preference_conflict"` when a preference change clashes.
 
 ## Sync Handoff (hbc-traceability impact integration)
 
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
-- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
-- **Hybrid trigger (default):** after a successful update, suggest running `hbc-traceability impact` to sync the dependent documents/tests/code.
-- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.
+- **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section (prevents the update→sync→update loop).
+- **Cascade ADVISORY (B10-4).** D-12 is SHARED, so a convention change ripples to every in-flight feature. Enforced cascade is T2.2 (not yet built); until then emit an **advisory note**: after a successful update list the in-flight features and suggest running `hbc-traceability impact` to review whether their code/standards need re-alignment. This is a flag, **not a hard block** (forward-references T2.2 cascade-ENFORCED).
+- **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly. Default false.

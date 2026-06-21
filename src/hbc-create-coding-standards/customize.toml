@@ -26,6 +26,13 @@ output_dir = "{output_folder}/shared/coding-standards"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-coding-standards.py"
 
+# Advisory consistency script — reconciles D-12 against the real code: derive-from-code
+# deviation flag (B10-1) + spec-id leak count the lint rule must forbid (B10-2).
+consistency_script = "scripts/check-coding-standards-consistency.py"
+
+# Scan script — locates existing D-12 + detects framework + ingests brownfield docs.
+scan_script = "scripts/scan-coding-standards.py"
+
 # Detected or overridden framework name. Leave empty for auto-detection from project-context.md.
 framework = ""
 

@@ -121,9 +121,37 @@ def test_missing_document():
     assert result.returncode == 1
 
 
+def test_churn_reported_low():
+    # T2.11: validator surfaces revision-history churn so the skill can warn.
+    result, code = run_script(VALID_DOC)
+    assert "churn" in result
+    assert result["churn"]["high_churn"] is False  # no revision history → 0 revisions
+
+
+def test_high_churn_flagged():
+    # A revision history with more rows than the threshold → high_churn cue.
+    rev = """\
+
+## Revision History
+
+| Version | Date | Author | Change |
+|---------|------|--------|--------|
+| 1.0 | 2026-06-01 | a | c |
+| 1.1 | 2026-06-02 | a | c |
+| 1.2 | 2026-06-03 | a | c |
+| 1.3 | 2026-06-04 | a | c |
+| 1.4 | 2026-06-05 | a | c |
+| 1.5 | 2026-06-06 | a | c |
+"""
+    result, code = run_script(VALID_DOC + rev)
+    assert result["churn"]["revisions"] >= 5
+    assert result["churn"]["high_churn"] is True
+
+
 if __name__ == "__main__":
     tests = [test_valid_document, test_missing_section, test_few_examples,
-             test_vietnamese_sections, test_missing_document]
+             test_vietnamese_sections, test_missing_document,
+             test_churn_reported_low, test_high_churn_flagged]
     failed = 0
     for t in tests:
         try:

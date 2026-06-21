@@ -26,6 +26,16 @@ updated: ""
 
 <!-- Required tools, linters, formatters, and their versions -->
 
+### 1.4 Code Derivation & Deviations
+
+<!-- B10-1: these standards are DERIVED from the project's real code, not invented.
+     Record which conventions were read from the codebase (indentation, naming case,
+     lint config) and list any DEVIATION where a stated standard differs from what the
+     code currently does, with the reason (deliberate migration vs not-yet-aligned). -->
+
+| Aspect | Stated standard | Real code | Deviation reason / action |
+|--------|-----------------|-----------|---------------------------|
+
 ## 2. Naming Conventions
 
 ### 2.1 Files & Directories
@@ -137,13 +147,25 @@ updated: ""
 <!-- Framework-specific conventions, patterns, and anti-patterns -->
 <!-- This section is fully adapted to the project's framework -->
 
-## 10. Git Conventions
+## 10. Machine-checkable Rules (Lint)
 
-### 10.1 Commit Messages
+<!-- B10-2: rules that are machine-checkable MUST be expressed as lint rules so the
+     Phase-3 implementation gate can enforce them. For each, name the tool/check and
+     the enforcing gate. The "no spec ids in code" rule is mandatory — the Phase-3
+     gate (hbc-implement spec-ref lint) blocks on any REQ-/TC-/NFR- id embedded in
+     source or test files. -->
+
+| Rule | Lint tool / check | Enforced at |
+|------|-------------------|-------------|
+| No spec ids (`REQ-`/`TC-`/`NFR-`) embedded in code or tests | spec-ref lint (`hbc-implement`) | Phase-3 gate |
+
+## 11. Git Conventions
+
+### 11.1 Commit Messages
 
 <!-- Format, types, scope, examples -->
 
-### 10.2 Branch Naming
+### 11.2 Branch Naming
 
 <!-- Pattern, prefixes, examples -->
 

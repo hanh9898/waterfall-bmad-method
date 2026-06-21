@@ -29,6 +29,10 @@ output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 # Validation script.
 validation_script = "scripts/validate-test-plan.py"
 
+# Grounding advisory (B9-1 no-fabricated-schedule / B9-4 technique-per-scope-area → D-27).
+# Override to use a custom checker with the same CLI interface.
+grounding_script = "scripts/check-test-plan-grounding.py"
+
 # Minimum test coverage threshold (used in exit criteria).
 coverage_threshold = 80
 

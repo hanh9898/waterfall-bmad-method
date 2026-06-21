@@ -30,6 +30,7 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        churn_assessment,
         find_section,
         parse_table,
         section_body,
@@ -259,6 +260,46 @@ def check_nfr_measurable(content: str) -> list[dict]:
     return issues
 
 
+# A measurable NFR criterion needs a quantity: a number (3, 99.9), a percentile
+# (p95), or a recognised unit token. Pure prose ("fast", "responsive") has none —
+# B1-3 says ASK the number rather than fabricate one. STRUCTURE only: we detect the
+# ABSENCE of any numeric/unit token, not whether the number is the right target.
+_NUMERIC_RE = re.compile(r"\d")
+_UNIT_RE = re.compile(
+    r"\b(?:p\d{1,3}|ms|sec|secs|second|seconds|min|minute|minutes|hour|hours|"
+    r"day|days|kb|mb|gb|tb|rps|qps|tps|percent|percentile|concurrent|uptime)\b",
+    re.IGNORECASE,
+)
+
+
+def check_nfr_has_number(content: str) -> list[dict]:
+    """ADVISORY (B1-3): an NFR whose measurable-criteria cell is non-empty but has
+    no numeric/unit token. WARNING only — does NOT fail structure_ok. The cue the
+    skill uses to ASK the user for the target (then record ASSUMPTION/ADR if
+    unknown), never to fabricate one. Empty criteria are already a blocking
+    NFR_NO_CRITERIA, so only non-empty-yet-numberless cells are reported here."""
+    issues: list[dict] = []
+    rows = parse_table(content, "Non-Functional Requirements", "Yêu cầu phi chức năng")
+    for cells in rows:
+        nfr_id = next((c.strip() for c in cells if NFR_ID_RE.fullmatch(c.strip())), None)
+        if not nfr_id:
+            continue
+        criteria = cells[-1].strip()
+        if not criteria or criteria == "-":
+            continue  # empty → already blocking via check_nfr_measurable
+        if not _NUMERIC_RE.search(criteria) and not _UNIT_RE.search(criteria):
+            issues.append({
+                "type": "NFR_NO_NUMBER",
+                "message": f"{nfr_id}: measurable criteria has no numeric/unit target "
+                           "(B1-3) — ASK the user for the number; if unknown, record an "
+                           "ASSUMPTION/ADR. Do not fabricate.",
+                "nfr_id": nfr_id,
+                "advisory": True,
+                "auto_fixable": False,
+            })
+    return issues
+
+
 # Structural checks this validator performs, and the semantic facets it
 # deliberately does NOT judge (deferred to the LLM review layer — Batch 2).
 CHECKED = [
@@ -266,7 +307,9 @@ CHECKED = [
     "vague terminology",
     "required sections present and non-empty",
     "NFR measurable-criteria presence",
+    "NFR numeric/unit target presence (advisory — B1-3, warning only)",
     "EARS shape (advisory — warning only, does not fail)",
+    "revision churn count vs threshold (advisory cue — T2.11)",
 ]
 NOT_CHECKED = [
     "REQ semantic correctness / completeness (LLM review)",
@@ -388,6 +431,7 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
     all_issues.extend(check_vague_terms(content, vague_terms))
     all_issues.extend(check_sections(content))
     all_issues.extend(check_nfr_measurable(content))
+    all_issues.extend(check_nfr_has_number(content))
     all_issues.extend(check_ears(content))
     if brownfield:
         all_issues.extend(check_brownfield_grounding(content))
@@ -419,6 +463,11 @@ def validate(doc_path: str, project_root: str, vague_terms_override: str | None 
         "manual_fix_count": len(manual_fix),
         "advisory_count": len(advisory),
         "req_count": req_count,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the cue
+        # the skill surfaces to suggest maturity=exploratory / [DSC] instead of bumping
+        # the version on every small edit (per-session bump policy — direct fix for the
+        # RCA "13 versions" symptom).
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result

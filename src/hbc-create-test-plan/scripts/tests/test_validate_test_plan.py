@@ -83,6 +83,29 @@ def test_valid_document():
     assert result["passed"] is True
 
 
+def test_churn_reported():
+    # T2.11: validator exposes revision-history churn (no revision rows here → 0).
+    result, code = run_script(VALID_DOC)
+    assert "churn" in result
+    assert result["churn"]["revisions"] == 0
+    assert result["churn"]["high_churn"] is False
+
+
+def test_high_churn_flagged():
+    # A revision history with >threshold (4) dated rows is high-churn (RCA #1).
+    rows = "".join(
+        f"| 1.{i} | 2026-06-{10 + i:02d} | T | edit {i} |\n" for i in range(6)
+    )
+    doc = VALID_DOC + (
+        "\n## Revision History\n\n"
+        "| Version | Date | Author | Scope of Change |\n"
+        "|---------|------|--------|----------------|\n" + rows
+    )
+    result, code = run_script(doc)
+    assert result["churn"]["revisions"] == 6
+    assert result["churn"]["high_churn"] is True
+
+
 def test_missing_section():
     doc = VALID_DOC.replace("## 9. Risk Management", "## 9. Removed")
     result, code = run_script(doc)
@@ -129,7 +152,8 @@ def test_missing_document():
 
 
 if __name__ == "__main__":
-    tests = [test_valid_document, test_missing_section, test_no_exit_criteria,
+    tests = [test_valid_document, test_churn_reported, test_high_churn_flagged,
+             test_missing_section, test_no_exit_criteria,
              test_empty_risk_table, test_vietnamese_sections, test_missing_document]
     failed = 0
     for t in tests:

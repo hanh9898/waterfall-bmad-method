@@ -25,6 +25,7 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        churn_assessment,
         find_section,
         parse_table,
         verdict,
@@ -137,7 +138,13 @@ def validate(doc_path: str) -> dict:
         structure_ok,
         semantic_review=SEMANTIC_NA,
         checked=["required sections", "entry/exit criteria", "risk table", "schedule presence"],
-        not_checked=["test strategy adequacy (LLM review)", "admin/lifecycle test-area fencing (LLM review)"],
+        not_checked=[
+            "test strategy adequacy (LLM review)",
+            "admin/lifecycle test-area fencing (LLM review)",
+            "risk likelihood/impact realistic + USER-confirmed (B9-2, domain decision)",
+            "schedule grounding + technique-per-scope-area (B9-1/B9-4 — see check-test-plan-grounding.py)",
+            "in/out-scope confirmed with user before generation (B9-3, ASK-before-generate)",
+        ],
     )
     result.update({
         "valid": structure_ok,
@@ -145,6 +152,10 @@ def validate(doc_path: str) -> dict:
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "section_count": section_count,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the
+        # cue the skill surfaces to suggest maturity=exploratory / [DSC] instead of
+        # bumping the version on every small edit (per-session bump policy).
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result

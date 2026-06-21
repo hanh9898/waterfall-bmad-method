@@ -426,6 +426,71 @@ def test_no_req_ids():
     assert len(missing) > 0
 
 
+# --- T2.11 anti-churn + B1-3 NFR-number advisory (U6) ---
+
+def test_churn_reported():
+    # T2.11: validator surfaces a churn assessment so the skill can suggest
+    # maturity=exploratory / [DSC] instead of bumping the version on every edit.
+    result, _ = run_script(VALID_DOC)
+    assert "churn" in result
+    assert result["churn"]["revisions"] == 0  # VALID_DOC has no Revision History rows
+    assert result["churn"]["high_churn"] is False
+
+
+def test_churn_high_when_many_revisions():
+    # A Revision History with > threshold rows flags high_churn (the RCA "13 versions"
+    # symptom). Append a revision-history section with 6 rows.
+    rows = "\n".join(f"| 1.{i} | 2026-06-1{i} | T | edit {i} |" for i in range(1, 7))
+    doc = VALID_DOC + (
+        "\n## Lịch sử sửa đổi\n\n"
+        "| Version | Date | Author | Scope of Change |\n"
+        "|---------|------|--------|----------------|\n"
+        f"{rows}\n"
+    )
+    result, _ = run_script(doc)
+    assert result["churn"]["revisions"] >= 6
+    assert result["churn"]["high_churn"] is True
+    # churn never fails the structural verdict — it is an advisory cue only.
+    assert result["valid"] is True
+
+
+def test_nfr_without_number_is_advisory_not_blocking():
+    # B1-3: an NFR with non-empty but numberless criteria gets an ADVISORY
+    # NFR_NO_NUMBER cue (ASK the target / record ASSUMPTION) — it must NOT fail
+    # the structural verdict.
+    doc = VALID_DOC.replace(
+        "| NFR-001 | Response time | < 2 seconds for 95th percentile |",
+        "| NFR-001 | Response time | The system should feel responsive to users |",
+    )
+    result, code = run_script(doc)
+    nfr_no_num = [i for i in result["issues"] if i["type"] == "NFR_NO_NUMBER"]
+    assert any(i["nfr_id"] == "NFR-001" for i in nfr_no_num)
+    assert all(i.get("advisory") for i in nfr_no_num)
+    # advisory does not flip valid / exit code
+    assert result["valid"] is True
+    assert code == 0
+
+
+def test_nfr_with_number_not_flagged():
+    # A criterion that contains a numeric/unit target must NOT be flagged.
+    result, _ = run_script(VALID_DOC)
+    nfr_no_num = [i for i in result["issues"] if i["type"] == "NFR_NO_NUMBER"]
+    assert nfr_no_num == [], f"numeric NFR wrongly flagged: {nfr_no_num}"
+
+
+def test_nfr_unit_token_not_flagged():
+    # A percentile/unit token (p95) without a bare digit still counts as a target.
+    doc = VALID_DOC.replace(
+        "| NFR-001 | Response time | < 2 seconds for 95th percentile |",
+        "| NFR-001 | Response time | p-ninety-five within an acceptable bound |",
+    )
+    # 'p95' explicitly:
+    doc = doc.replace("p-ninety-five within an acceptable bound", "p95 within bound")
+    result, _ = run_script(doc)
+    nfr_no_num = [i for i in result["issues"] if i["type"] == "NFR_NO_NUMBER"]
+    assert nfr_no_num == [], f"unit-token NFR wrongly flagged: {nfr_no_num}"
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_document,
@@ -450,6 +515,11 @@ if __name__ == "__main__":
         test_missing_document,
         test_output_to_file,
         test_no_req_ids,
+        test_churn_reported,
+        test_churn_high_when_many_revisions,
+        test_nfr_without_number_is_advisory_not_blocking,
+        test_nfr_with_number_not_flagged,
+        test_nfr_unit_token_not_flagged,
     ]
     failed = 0
     for t in tests:

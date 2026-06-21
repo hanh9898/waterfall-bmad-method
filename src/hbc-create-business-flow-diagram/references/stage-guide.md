@@ -139,11 +139,13 @@ Options:
 
 **Headless resolution:** if `--no-prd-ok` is set, take option 3 silently and log it. Otherwise return `blocked` with `reason: "no_prd_and_no_interactive_in_headless"`.
 
-### 1e. Inferred-defaults confirmation (interactive only, unless short-circuited by 1b)
+### 1e. Scope confirmation — HARD gate (interactive only, unless short-circuited by 1b) — B8-4
 
-Present detected sources (PRD, UX, use-case counts), inferred mode/scope/type, and let the user confirm or override any dimension.
+Present detected sources (PRD, UX, use-case counts), inferred mode/scope/type, **and the candidate flow/actor/path inventory**, and let the user confirm or override any dimension. This is a **hard gate**, not a soft "anything to adjust?": which flows, actors, and paths are in scope is a **domain decision** (Autonomy A5) — do not generate any diagram until the scope is confirmed. The previous behavior (infer scope, generate, ask later) is the exact pattern that let an un-scoped flow slip through.
 
 **Migration-vs-AS-IS sanity check** (fires at confirmation): if mode resolves to `migration` (either auto-inferred or via `--mode=migration`) but `artifacts.json` reports `as_is.has_as_is: false`, warn the user and offer to switch to `greenfield`. In headless mode this returns `blocked` with `reason: "migration_without_as_is"` unless the user passes `--allow-migration-without-as-is` to acknowledge.
+
+**Headless resolution (Autonomy):** `--strict` returns `blocked` with `reason: "scope_unconfirmed"` at the first flow/actor/path scope decision that the flags did not pin down. `--assumptions-allowed` (CI default) takes the inferred scope, logs it to `.decision-log.md` as an `ASSUMPTION` (which flows/actors/paths it assumed), and continues — it never blocks on the first question.
 
 Initialize the primary document from `{workflow.business_flow_template}`, translating template prose to `{document_output_language}` per the Language Rules. Append a new session block to `.decision-log.md`. Mark `stepsCompleted` to include `stage-1`. Set primary frontmatter `updated` to today.
 
@@ -170,6 +172,16 @@ If compaction drops the conversation mid-stage, the next run resumes from these 
 
 **Soft gate (interactive only):** Present the actor/flow summary and ask "anything to adjust before I generate diagrams?" before proceeding. Headless: skip, proceed immediately.
 
+## Stage 2b — Grounding-to-code (AS-IS reality check) — B8-3
+
+For a **migration / brownfield** flow, the AS-IS must be grounded in the **real code or observed behavior**, not just the PRD's narration of "how it works today" — the PRD is a description, and descriptions drift from what the system actually does. Read the relevant code (or run/observe the behavior), and for each AS-IS path that the PRD describes, check it against the ground truth.
+
+Record the result in the template's **Grounding-to-code log** table: the AS-IS path (by `PATH-NN`), the ground-truth source (a code reference like `module/file.py:func`, or "observed: …"), and any **divergence** from the PRD with its resolution. A divergence is *not* a silent overwrite — surface it so the user decides whether the diagram follows the code (usual) or the PRD (rare, with a reason).
+
+- **Greenfield** (no existing code/behavior): write a single row `N/A — greenfield, no existing behavior to ground against`. Do not fabricate a code reference.
+- **Headless:** run the same grounding where code is reachable; log divergences to `.decision-log.md`. Under `--strict`, an unresolved divergence blocks (domain decision); under `--assumptions-allowed`, log it as an `ASSUMPTION` (diagram follows code) and continue.
+- This layer does not call a script — code↔diagram grounding is judgment. (The model↔code drift *detector* `model_drift` lives in D-19's reconcile; here the comparison is behavioral, not structural.)
+
 ## Stage 3 — Diagram Generation
 
 For each in-scope flow, render one Mermaid block per the resolved diagram type:
@@ -191,21 +203,31 @@ For each in-scope flow, render one Mermaid block per the resolved diagram type:
   - **Headless override:** `--scope-of-change=polish|semantic|auto` (default `auto`). Polish and semantic skip the diff; `auto` runs the script.
   - Either path: log the chosen scope and the rationale to `.decision-log.md`.
 
+**Anti-churn (T2.11).** Bump the version **once per session**, not once per edit — batch a session's changes into a single revision row. If the revision history is already long (the model keeps churning), the model is not frozen yet: surface it and suggest the user set `maturity: exploratory` or run a `[DSC]` model-spike to stabilize the flow, rather than appending yet another revision row. (The shared `churn_assessment` is the structural read other skills use; here the cue is the visible length of the revision-history table.)
+
 Update primary frontmatter `stepsCompleted` to include `stage-3` and `updated` to today.
 
 Then present the **Parallel-lens menu** (above). Stage-3 lens-targets: stress-test actor coverage, decision-branch completeness, and AS-IS/TO-BE delta clarity.
 
 ## Stage 4 — Validation
 
-Run the two deterministic validators in parallel (they are independent):
+Run the three deterministic validators in parallel (they are independent):
 
 ```
 python3 {skill-root}/scripts/validate-mermaid.py {primary} --expected-actors "<comma-separated stage-2 actors>" -o {ws}/.scan/mermaid.json
 
 python3 {skill-root}/scripts/check-fr-coverage.py --prd <each-prd-path-or-shard> --d06 {primary} --pattern "{workflow.fr_id_pattern}" -o {ws}/.scan/fr.json
+
+python3 {workflow.flow_coverage_script} {primary} --project-root {project-root} --sources "<D-02 path,…>" --path-id-pattern "{workflow.path_id_pattern}" -o {ws}/.scan/flow.json
 ```
 
-If either validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check.
+`check-flow-coverage.py` is **advisory** (B8-2/B8-5/B8-6) — the *blocking* cross-doc gate is `hbc-check-implementation-readiness` [IR] / the Phase-1 gate, and Mermaid *rendering* is `validate-mermaid.py`'s job. It reports, per the honest-verdict contract:
+- `single_path_flows` (B8-2) — Mermaid blocks with no alternate/exception branch (a `sequenceDiagram` with no `alt/opt/par`, a `flowchart` with no decision diamond; `stateDiagram` is exempt). For each, **confirm with the user** the flow is genuinely happy-path-only, or add the missing alternate/exception path. Never auto-add a path.
+- `phantom_flows` (B8-5) — blocks that reference no REQ id: either a phantom (no requirement backs it) or an un-annotated flow (cite the REQ it realizes). Surface each.
+- `uncovered_reqs` (B8-5) — REQs defined in `--sources` (D-02) referenced nowhere in D-06: draw them, or record in the REQ↔flow-facet table why they are not flows (e.g. "traced via test only"). Only computed when `--sources` is supplied.
+- `malformed_path_ids` (B8-6) — `PATH-…` tokens that do not match `{workflow.path_id_pattern}` (e.g. `PATH-1` instead of `PATH-01`). Fix the id.
+
+If any validator fails to execute (not "returns issues" but "cannot run at all"), note in `.decision-log.md` that script validation was unavailable and fall back to LLM-only judgment for that check. The flow-coverage findings are **advisory**: log them and surface to the user, but they do not block the headless run.
 
 **Render check (S-2):** `validate-mermaid.py` now actually renders each block with the Mermaid CLI (`mmdc`) when available. Inspect `mermaid.json` → `render_check`: `"ok"` = every block renders; `"failed"` = a block has a `render_failed` issue (real Mermaid syntax error — fix it); `"skipped: mmdc not installed"` = rendering was **not verified** (structural checks only — do NOT treat a green result as "renders"; install `@mermaid-js/mermaid-cli` for the full check, or pass `--no-render` to silence intentionally).
 
@@ -223,13 +245,26 @@ Present consolidated findings (script issues + LLM findings). Fix issues:
 
 Update primary frontmatter `stepsCompleted` to include `stage-4` and `updated` to today.
 
-Then present the **Parallel-lens menu** (above). Stage-4 lens-targets: challenge edge cases (failure paths, race conditions, hostile inputs) and check the artifact reads cleanly to a fresh reviewer.
+Then run the **Mandatory review (Stage 4a)**, then present the **Parallel-lens menu** (above). Stage-4 lens-targets: challenge edge cases (failure paths, race conditions, hostile inputs) and check the artifact reads cleanly to a fresh reviewer.
+
+## Stage 4a — Mandatory adversarial + edge-case review (B8-7 / T2.8)
+
+Before D-06 reaches the Phase-1 gate it must pass an **independent** review pass — D-06 is one of the documents that enters mandatory review (alongside D-02, D-27):
+
+1. Invoke `bmad-review-adversarial-general` (cynical review: is each flow justified, grounded, internally consistent?) and `bmad-review-edge-case-hunter` (every branch / boundary: missing exception path, unhandled state transition, an actor with no failure handling) against the D-06 flows.
+2. Triage findings: fix structural/path gaps now; record judgment calls in `.decision-log.md`.
+
+**Availability fallback (load-bearing).** `bmad-review-adversarial-general` and `bmad-review-edge-case-hunter` ship in `bmm`/`core`, not HBC. If the consumer does **not** have them installed, do **not** hard-block: apply the same two review lenses **inline** (the adversarial and edge-case perspectives, as in the Parallel-lens party-mode), and record `review: ran inline (skills unavailable)` in `.decision-log.md`. Either way, record which path ran (real skill vs inline) so the gate sees the review happened.
+
+**Headless:** run the review (or inline fallback) non-interactively; record the outcome to `.decision-log.md` and into `review_lenses_run`. This stage does not block the headless run — the Phase-1 gate enforces that the review evidence exists.
 
 ## Stage 4b — Semantic Review (Layer 2)
 
-Script + render validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline** per flow (read vs write/state-change · the surface the flow runs on — UI / admin / back-office / API / batch · lifecycle transitions): a diagram that draws only the happy read path while D-02 implies a write, admin, or exception variant has an open facet — name it so downstream `hbc-create-er-diagram` (D-19) and the test skills (D-26/D-27) know it must be modelled and tested, rather than letting the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` is `passed` only when `openFacets` is empty, else `pending` + the list). The Phase 1 gate REVIEW item reads it.
+Script + render validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with an **independent skeptic lens** (review the flows as an adversary who assumes a facet was cut, not as their author). Apply the **facet-split discipline** per flow (read vs write/state-change · the surface the flow runs on — UI / admin / back-office / API / batch · lifecycle transitions): a diagram that draws only the happy read path while D-02 implies a write, admin, or exception variant has an open facet — name it so downstream `hbc-create-er-diagram` (D-19) and the test skills (D-26/D-27) know it must be modelled and tested, rather than letting the cut-out facet vanish silently (the seam).
 
-**Headless:** run the same rubric and write the frontmatter; if `openFacets` is non-empty, leave `status: pending`, log the open facets to `.decision-log.md`, and proceed (this layer does not block — the Phase 1 gate enforces it). Never fabricate coverage to force `passed`.
+Record `semanticReview` frontmatter: `status` is `passed` **only when `openFacets` is empty AND the user signs off** (T2.12); otherwise `pending` + the facet list. The shared `semantic_review_status` is the single structural read of this block, and the Phase 1 gate REVIEW item enforces it.
+
+**Headless:** run the same rubric and write the frontmatter; the sign-off follows the Autonomy mode (`--strict` blocks on a non-empty `openFacets`; `--assumptions-allowed` leaves `status: pending`, logs the open facets, and proceeds). This layer does not block the interactive→gate handoff — the Phase 1 gate enforces it. Never fabricate coverage to force `passed`.
 
 ## Stage 5 — Save and Handoff
 

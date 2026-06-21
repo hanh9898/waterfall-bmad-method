@@ -46,6 +46,14 @@ business_flow_output_path = "{output_folder}/features/{feature}/planning-artifac
 # Override for projects using UC-01, US-001, etc.
 fr_id_pattern = '\b(REQ-(?:[A-Z0-9]+(?:-[A-Z0-9]+)*-)?[0-9]+(?:\.[0-9]+)*)\b'
 
+# Advisory flow-coverage check (B8-2 all-paths / B8-5 phantom + REQ-facet / B8-6
+# path-ID standard). Override to use a custom checker with the same CLI interface.
+flow_coverage_script = "{skill-root}/scripts/check-flow-coverage.py"
+
+# Path-identifier scheme enforced by check-flow-coverage.py (B8-6). Default PATH-NN
+# (two+ digits). Override for a project that numbers branches differently (e.g. P\d+).
+path_id_pattern = 'PATH-\d{2,}'
+
 # Scalar: executed when the workflow completes after final validation.
 # Common hooks: "invoke bmad-create-architecture", "invoke bmad-create-ux-design".
 on_complete = ""
