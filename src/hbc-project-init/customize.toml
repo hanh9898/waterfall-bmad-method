@@ -19,3 +19,16 @@ persistent_facts = [
 
 # Root for shared (project-global) deliverables created in Phase 0.
 shared_dir = "{output_folder}/shared"
+
+# Phase-0 baseline scan: shared-deliverable presence, brownfield/greenfield,
+# legacy-v1 layout, drift on re-run, and the applicability-catalog load.
+scan_script = "{skill-root}/scripts/scan-project-init.py"
+
+# The canonical applicability-catalog (single source of truth for the deliverable
+# node-set). Shipped by hbc-shared; resolved at runtime under the installed skills.
+applicability_catalog = "{project-root}/.claude/skills/hbc-shared/references/deliverable-catalog.yaml"
+
+# constitution.md (T3.13a) — the cross-phase invariant principles deliverable.
+constitution_template = "{skill-root}/assets/constitution_template.md"
+constitution_output_path = "{output_folder}/shared/constitution.md"
+constitution_validation_script = "{skill-root}/scripts/validate-constitution.py"

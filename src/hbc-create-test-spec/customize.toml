@@ -29,6 +29,10 @@ output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 # Validation script.
 validation_script = "scripts/validate-test-spec.py"
 
+# Grounding reconcile script (advisory): B3-7 TC↔code model_drift, B3-2 test-data
+# grounded in D-19/code schema, B3-1 sensitive-TC sanity-step signal.
+grounding_script = "scripts/check-test-spec-grounding.py"
+
 # Batch size for requirement processing (how many REQs to process per discovery batch, recommended: 5-15).
 req_batch_size = 10
 

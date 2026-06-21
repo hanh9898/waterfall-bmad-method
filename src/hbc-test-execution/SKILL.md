@@ -43,6 +43,15 @@ Then verify test environment readiness:
 - **Interactive** — warn but allow execution (results won't map to TC-xxx IDs); record the warning in the report. The user accepts the lost TC mapping.
 - **Headless** — return `blocked` (reason `no_test_spec`). Do NOT silently run a headless suite with no D-27: with no inventory to reconcile against, a "passed" result would silently hide unrun TCs (the D1 reconciliation in Stage 5 has nothing to check). Headless callers must supply D-27 or accept the block.
 
+**Verify the suite runs against the RIGHT artifacts (B16-1, B16-3).** A green run is worthless if it ran against renamed/missing code, an incomplete matrix, or a stale spec — "87/87 passed" against the OLD model is the cardinal Phase-4 false-green. Before trusting results, run the ref-verifier — it does NOT trust matrix strings; it checks the referenced files exist on disk and reconciles design↔code↔spec-version via the shared primitives (`model_drift`, `missing_from_matrix`, `version_coherence`):
+
+```
+python3 {workflow.verify_refs_script} --matrix <matrix> --d02 <D-02> \
+  [--d19 <D-19> --code-dir <feature code root>] [--d27 <D-27>] [--d26 <D-26>]
+```
+
+Surfaces `missing_code_ref`/`missing_test_ref` (a matrix ref pointing at a file that does not exist — B16-1), `missing_from_matrix` (a D-02 REQ with no row — B16-1), `model_drift` (tests ran against a model the design abandoned — B16-1), `stale_citations` (D-27/D-26 citing a superseded D-02 version — B16-3). Any non-empty set means the run is verifying the wrong thing: record it prominently in the report and treat the suite as **not trustworthy as-is** — do not present a clean PASS over a drifted/incomplete substrate. This is an existing-gate fix, not new ceremony.
+
 ## Stage 2: Execute
 
 Run test suites using project's test runner:
@@ -80,6 +89,8 @@ Classify each failure:
 | `spec_issue` | Requirement unclear/wrong | Escalate to BA (Phase 1) |
 
 For each failed test, suggest classification. User confirms or overrides.
+
+**Anti-false-green sanity (B16-2).** A passing test is not automatically meaningful. When reporting, flag a *suspicious pass* — a test whose fixture may not actually activate the branch it claims to cover (e.g. asserts only on a no-op path, or the model under test drifted per the B16-1 check so the assertion targets the wrong code). You cannot prove a fixture exercises a branch with structure alone (that is an LLM/human judgement, listed in the verifier's `not_checked`), so do not silently upgrade "green" to "verified" — surface the candidates so acceptance ([AC]) can weigh them. Coverage % is necessary-but-not-sufficient.
 
 ## Stage 5: Report
 
@@ -126,4 +137,20 @@ python3 {workflow.validation_script} "{workflow.output_dir}/test-execution-repor
 
 A `TC_UNEXECUTED` issue means a test specified in D-27 has no result here — "all passed" must not hide a test that was never run. `TC_PHANTOM_RESULT` means a result references a TC not in D-27. Resolve both before finalizing.
 
+Also fold the B16-1/B16-3 ref-verification result (from Stage 1) into the report — `missing_code_ref`, `missing_test_ref`, `missing_from_matrix`, `model_drift`, `stale_citations`. A clean coverage number over a drifted/incomplete substrate must NOT read as a trustworthy PASS.
+
 Finalize. Suggest next: _"Execution complete. {passed}/{total} passed ({coverage_pct}% coverage). Next: `hbc-acceptance-check` [AC]."_
+
+## Autonomy (A5)
+
+Separate **mechanical** from **domain** decisions. Mechanical — detecting the test runner, mapping results to TC ids, formatting the report, running the verifier and reconciliation engines, classifying an obvious `environment` failure — decide and proceed. Surfacing a drifted/missing-ref/stale-spec finding is mechanical too: report it, never soft-pedal a real drift into a clean PASS.
+
+Domain — whether a *suspicious pass* truly exercises its branch, or whether a surfaced gap (a missing ref, an unrun TC) is an acceptable deliberate deferral versus a real omission. **ASK; never fabricate that a green is "fine".** TE only *executes and reports*; the accept judgement is [AC]'s.
+
+Headless resolves this two ways:
+- `--strict` — stop at the first finding that needs a human call (suspicious pass, possible deferral) and return `blocked` with the question; do not assume.
+- `--assumptions-allowed` (default in CI) — treat every surfaced finding as real (the safe, non-green default), log that no deferral was confirmed, and return the honest `FAIL`/`PARTIAL` status rather than blocking the first turn. CI never gets a false green.
+
+## Churn / semantic-review (T2.11 / T2.12) — N/A
+
+A test-execution report is an **execution record**, not a versioned D-xx deliverable. It is regenerated each run, not edited over time, so there is no revision-history churn to assess (T2.11 N/A) and no document-semantics to gate via `semanticReview` frontmatter (T2.12 N/A). The meaning layer here is the anti-false-green sanity (B16-2) + the ref/drift/stale reconciliation (B16-1/B16-3), reported for [AC] to weigh — not a churn/semantic-review record.

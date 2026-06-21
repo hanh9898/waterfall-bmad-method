@@ -4,7 +4,7 @@ header: "Custom BMad Method workflow variants by HBLAB"
 subheader: "Incremental + TDD lifecycle (per-feature / staged delivery) with D-xx generation, phase gates, and traceability"
 description: "Framework-agnostic incremental + TDD development lifecycle for HBLAB, applied per-feature (staged delivery). Phase 0 project-init for shared deliverables, then 4 gated phases per feature with TDD. 5 agents + 20 workflows. Expansion module — requires BMM."
 default_selected: false
-module_version: 2.2.0
+module_version: 2.3.0  # BREAKING: D-code reconcile D-08→D-09 / D-17→D-16 — run [MIG] to upgrade existing projects (see CHANGELOG.md).
 
 agents:
   - code: hbc-agent-ba
@@ -43,6 +43,7 @@ post-install-notes: |
   Required: BMM module must be installed first.
   Model: incremental delivery PER FEATURE. Per-feature artifacts in _bmad-output/features/<feature>/; shared deliverables in _bmad-output/shared/.
   Agents: [BA] Business Analyst (Phase 1), [ARCH] Architect (Phase 2), [QA] QA Engineer (Phase 2), [DEV] Developer (Phase 3), [TST] Tester (Phase 4)
+  BREAKING (v2.3.0): design codes reconciled to canonical numbering — D-08→D-09 (Architecture), D-17→D-16 (Behavioral Design). Existing-HBC projects MUST run [MIG] Migrate (dry-run → apply) to renumber per-feature artifacts + matrix design_ref. Migrate is idempotent (re-run safe, mixed-tree aware). See CHANGELOG.md.
   Migrating from HBC v1 (flat layout)? Run [MIG] Migrate v1→v2 before Phase 0 (dry-run → apply).
   Phase 0 (once): [PI] Project Init — create shared D-12 Coding Standards, D-03 Glossary (+ baseline D-19/D-21)
   Phase 1 Analysis: [REQ] Requirements (REQ-<FEAT>-NNN, EARS) → [GLO] Glossary → [BFD] Business Flow → [DSC] Discovery Spike (conditional: discovery_risk=uncertain — validate model before design)

@@ -19,6 +19,10 @@ output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 # Validation script.
 validation_script = "scripts/validate-acceptance-check.py"
 
+# Hard acceptance-guard engine (B16-1/B16-2/B16-3): conditions that FORBID ACCEPT
+# (model drift, untraced REQ, stale D-02 citation). Imports the shared primitives.
+guards_script = "scripts/acceptance-guards.py"
+
 # Who makes the acceptance decision.
 # Examples: "PM", "PO", "Tech Lead", "Client"
 acceptance_owner = "PM"

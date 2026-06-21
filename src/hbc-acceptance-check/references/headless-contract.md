@@ -38,3 +38,7 @@
 - `"phase_gate_failed"` — One or more phase gates not passed.
 - `"insufficient_evidence"` — Cannot determine acceptance criteria.
 - `"feature_required"` — headless invocation with no resolvable feature.
+
+## Hard acceptance guards (B16-1/B16-2/B16-3)
+
+`acceptance-guards.py` runs before any ACCEPT. A non-empty `blocking` array forbids ACCEPTED regardless of the checklist: headless then decides REJECTED (never ACCEPTED, never DEFERRED). Guard keys: `model_drift` (code never built the D-19 model), `missing_from_matrix` (a D-02 REQ with no trace row), `stale_citations` (D-27/D-26 citing a stale D-02 version). Coverage is reported as necessary-but-not-sufficient — meeting threshold does not by itself license ACCEPT.

@@ -53,6 +53,7 @@ applicability_values: [required, optional, n-a]
 # --- Canonical deliverables ---
 deliverables:
   # Phase 0 (shared)
+  - { id: constitution, name: "Constitution (cross-phase invariants)", scope: shared, phase: 0, owner_skill: hbc-project-init, default_applicability: required, applicability_rule: "always", reconcile_seam: null, ground_truth: null, v_pair: null }
   - { id: D-03, name: "Glossary",            scope: shared,      phase: 0, owner_skill: hbc-create-glossary,            default_applicability: required, applicability_rule: "always", reconcile_seam: null,                   ground_truth: null,            v_pair: null }
   - { id: D-12, name: "Coding Standards",    scope: shared,      phase: 0, owner_skill: hbc-create-coding-standards,    default_applicability: required, applicability_rule: "always", reconcile_seam: "code-style",           ground_truth: "code",          v_pair: null }
   - { id: integration-map, name: "Integration Map (inventory)", scope: shared, phase: 0, owner_skill: hbc-project-init, default_applicability: required, applicability_rule: "required if has-integration else optional", reconcile_seam: null, ground_truth: "code", v_pair: null }

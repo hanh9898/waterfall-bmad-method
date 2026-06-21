@@ -25,6 +25,8 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        churn_assessment,
+        req_num_map,
         strip_code_fences,
         tc_field,
         verdict,
@@ -135,11 +137,21 @@ def check_req_coverage(content: str, d02_path: str | None) -> list[dict]:
     except (OSError, UnicodeDecodeError):
         return issues
 
-    d02_req_ids = set(REQ_ID_RE.findall(d02_content))
-    d27_req_ids = set(REQ_ID_RE.findall(content))
+    # Identity = trailing NUMBER, not the exact string (shared req_num_map). This is
+    # the same fix the readiness/ER gates carry: a D-02 that writes a REQ as both the
+    # canonical "REQ-RESOURCE-PLAN-BILLABLE-005" and a bare prose "REQ-005" must
+    # reconcile against a D-27 that uses one spelling — otherwise every mismatched
+    # spelling reads as a false REQ_NO_COVERAGE / ORPHAN_REQ_REF.
+    d02_map, d02_slugs = req_num_map(d02_content)
+    d27_map, d27_slugs = req_num_map(content)
+    # Multi-feature corpora make trailing-number identity collide (two features can
+    # each have a REQ-040). Surface it so the caller doesn't trust the diff blindly,
+    # but still run the check (single-feature is the common case).
+    multi_feature = len(d02_slugs | d27_slugs) > 1
 
-    uncovered = d02_req_ids - d27_req_ids
-    for req_id in sorted(uncovered):
+    uncovered_nums = sorted(set(d02_map) - set(d27_map))
+    for num in uncovered_nums:
+        req_id = d02_map[num]
         issues.append({
             "type": "REQ_NO_COVERAGE",
             "message": f"{req_id} from D-02 has no test case in D-27",
@@ -147,12 +159,21 @@ def check_req_coverage(content: str, d02_path: str | None) -> list[dict]:
             "auto_fixable": False,
         })
 
-    orphans = d27_req_ids - d02_req_ids
-    for req_id in sorted(orphans):
+    orphan_nums = sorted(set(d27_map) - set(d02_map))
+    for num in orphan_nums:
+        req_id = d27_map[num]
         issues.append({
             "type": "ORPHAN_REQ_REF",
             "message": f"{req_id} referenced in D-27 but not found in D-02",
             "req_id": req_id,
+            "auto_fixable": False,
+        })
+
+    if multi_feature and (uncovered_nums or orphan_nums):
+        issues.append({
+            "type": "MULTI_FEATURE_AMBIGUOUS",
+            "message": "D-02/D-27 mention >1 feature slug — trailing-number REQ identity "
+                       "may collide; verify the coverage diff manually",
             "auto_fixable": False,
         })
 
@@ -209,18 +230,18 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
     manual_fix = [i for i in all_issues if not i.get("auto_fixable")]
 
     tc_ids = set(TC_ID_RE.findall(content))
-    d02_req_ids = set()
+    d02_map: dict[int, str] = {}
     if d02_path:
         try:
-            d02_req_ids = set(REQ_ID_RE.findall(
-                Path(d02_path).read_text(encoding="utf-8")
-            ))
+            d02_map = req_num_map(Path(d02_path).read_text(encoding="utf-8"))[0]
         except (OSError, UnicodeDecodeError):
             pass
 
-    d27_req_ids = set(REQ_ID_RE.findall(content))
-    covered = len(d02_req_ids & d27_req_ids) if d02_req_ids else 0
-    total_reqs = len(d02_req_ids) if d02_req_ids else 0
+    # Coverage on trailing-number identity (consistent with check_req_coverage), so a
+    # canonical-vs-bare spelling mismatch no longer deflates the percentage.
+    d27_nums = set(req_num_map(content)[0])
+    total_reqs = len(d02_map)
+    covered = len(set(d02_map) & d27_nums) if total_reqs else 0
     coverage_pct = round(covered / total_reqs * 100) if total_reqs > 0 else 0
 
     structure_ok = len(all_issues) == 0
@@ -237,6 +258,10 @@ def validate(doc_path: str, d02_path: str | None = None) -> dict:
         "manual_fix_count": len(manual_fix),
         "tc_count": len(tc_ids),
         "req_coverage_pct": coverage_pct,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the cue
+        # the skill surfaces to suggest maturity=exploratory / [DSC] instead of bumping
+        # the version on every small edit (per-session bump policy, B3-10).
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result

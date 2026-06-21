@@ -19,6 +19,10 @@ output_dir = "{output_folder}/features/{feature}/implementation-artifacts"
 # Validation script.
 validation_script = "scripts/validate-test-execution.py"
 
+# Ref-verification engine (B16-1/B16-3): matrix refs are real + model not drifted
+# + D-27/D-26 not citing a stale D-02 version. Imports the shared primitives.
+verify_refs_script = "scripts/verify-refs.py"
+
 # Test command (auto-detected from project-context.md if empty).
 # Examples: "pytest --tb=short -v", "npm test", "npx jest --verbose"
 test_command = ""

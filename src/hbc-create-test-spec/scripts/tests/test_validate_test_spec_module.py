@@ -277,3 +277,43 @@ def test_namespaced_req_coverage(tmp_path):
     _write(d02, "REQ-AUTH-001 Login\nREQ-AUTH-009 Extra\n")
     unc = [i for i in check_req_coverage(d27, d02) if i["type"] == "REQ_NO_COVERAGE"]
     assert len(unc) == 1 and unc[0]["req_id"] == "REQ-AUTH-009"
+
+
+# --- U8: coverage reconciles on trailing-NUMBER identity (canonical vs bare) ---
+
+class TestTrailingNumberCoverage:
+    def test_canonical_d27_bare_d02_reconcile(self, tmp_path):
+        # D-02 names a REQ both canonically and as bare prose; D-27 uses canonical.
+        # The bare "REQ-005" must NOT read as an uncovered REQ (false-red the old
+        # exact-string diff produced on the TD.0 fixture).
+        d27 = ("## 3. Detail\n\n### TC-001: a\n"
+               "**REQ ID:** REQ-RESOURCE-PLAN-BILLABLE-005\n**Severity:** High\n")
+        d02 = str(tmp_path / "D-02.md")
+        _write(d02, "REQ-RESOURCE-PLAN-BILLABLE-005 X\n(see also REQ-005 in prose)\n")
+        issues = check_req_coverage(d27, d02)
+        assert [i for i in issues if i["type"] == "REQ_NO_COVERAGE"] == []
+        assert [i for i in issues if i["type"] == "ORPHAN_REQ_REF"] == []
+
+    def test_uncovered_by_number(self, tmp_path):
+        d27 = "### TC-001: a\n**REQ ID:** REQ-FEAT-001\n**Severity:** High\n"
+        d02 = str(tmp_path / "D-02.md")
+        _write(d02, "REQ-FEAT-001\nREQ-FEAT-003\n")
+        unc = [i for i in check_req_coverage(d27, d02) if i["type"] == "REQ_NO_COVERAGE"]
+        assert len(unc) == 1 and unc[0]["req_id"] == "REQ-FEAT-003"
+
+    def test_orphan_by_number(self, tmp_path):
+        d27 = ("### TC-001: a\n**REQ ID:** REQ-FEAT-001\n**Severity:** High\n"
+               "### TC-002: b\n**REQ ID:** REQ-FEAT-099\n**Severity:** Low\n")
+        d02 = str(tmp_path / "D-02.md")
+        _write(d02, "REQ-FEAT-001\n")
+        orph = [i for i in check_req_coverage(d27, d02) if i["type"] == "ORPHAN_REQ_REF"]
+        assert len(orph) == 1 and orph[0]["req_id"] == "REQ-FEAT-099"
+
+
+def test_churn_block_present(tmp_path):
+    # T2.11 / B3-10: validate() surfaces a churn block.
+    path = str(tmp_path / "d27.md")
+    _write(path, MINIMAL_VALID)
+    result = validate(path)
+    assert "churn" in result
+    assert {"revisions", "threshold", "high_churn"} <= set(result["churn"])
