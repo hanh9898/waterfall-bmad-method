@@ -53,7 +53,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02`, `source_docs`, 
 
 1b. **Source inventory.** Supplement scan results with user-provided inputs (interview notes, descriptions). Headless: sources required via `--sources`.
 
-1c. **Intent gate.** Confirm the user wants requirements (not another artifact). Wrong skill: product brief → `hbc-create-prd`, brainstorming → `hbc-brainstorming`, project setup → `hbc-project-setup`.
+1c. **Intent gate.** Confirm the user wants requirements (not another artifact). Wrong skill: product brief → `bmad-product-brief`, brainstorming → `bmad-brainstorming`, project setup → `hbc-project-init`.
 
 ## Stage 2: Intake pipeline (Feasibility → Discovery)
 

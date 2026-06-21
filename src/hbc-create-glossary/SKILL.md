@@ -40,7 +40,7 @@ Resolve customization, load persistent facts and config per standard BMad activa
 
 ## Stage 1: Prerequisites
 
-1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ER], business flows → `hbc-create-business-flow-diagram` [BFD]. Headless: skip — intent is given by invocation.
+1a. **Intent gate.** Confirm user wants to create/update glossary. If wrong skill: requirements → `hbc-create-requirements` [REQ], entity relationships → `hbc-create-er-diagram` [ERD], business flows → `hbc-create-business-flow-diagram` [BFD]. Headless: skip — intent is given by invocation.
 
 1b. **Source scan.** Run pre-pass to discover project state:
 
