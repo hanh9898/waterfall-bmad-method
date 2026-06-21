@@ -335,6 +335,352 @@ def check_required_sections(content: str, sections, empty_check: bool = True) ->
     return issues
 
 
+# ============================================================================
+# Cross-document & code-reconciliation primitives (Wave 1 / U1 — Đợt-1 anti-false-green)
+#
+# Shared detection primitives behind the Đợt-1 checks: T1.1 MODEL_DRIFT,
+# T1.2 spec-ref lint, T1.3 version-coherence, T1.5 matrix-coverage, plus
+# T2.11 anti-churn and the T2.12 semantic-review status read. STRUCTURE-only
+# (regex/parse), language-agnostic; *meaning* stays with the LLM review layer.
+# Each is unit-tested and proven against the TD.0 regression fixture so the
+# detectors agree with the F-6 metrics harness on what each known bug looks like.
+# ============================================================================
+
+# A requirement id, canonical (REQ-RESOURCE-PLAN-BILLABLE-040) or bare-numeric
+# (REQ-040). Reuses the module's existing _REQ_ID_ANY_RE shape.
+REQ_ID_RE = _REQ_ID_ANY_RE
+# Any requirement/test/NFR id — the leak signature for the spec-ref lint (T1.2).
+SPEC_REF_RE = re.compile(r"\b(?:REQ|TC|NFR)-[A-Za-z0-9-]+\b")
+# A dated revision-history row "| 2.3 | 2026-06-19 | ..." (version-first), the
+# churn signal (T2.11). The date in the 2nd cell tells a real revision row apart
+# from any other table whose first cell happens to be N.N.
+_REV_ROW_RE = re.compile(r"^\|\s*\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}", re.MULTILINE)
+# A markdown doc id (D-02, D-19, ...) and a version token. The version token
+# REQUIRES a `v` prefix (v2.3 / V2.3) so a section ref (§3.5), a bare decimal, or a
+# date fragment is never misread as a cited version — version citations in the docs
+# are written "v2.2" / "(v2.2)" / "**v2.2**", section refs are "§3.5".
+_DOC_ID_RE = re.compile(r"\bD-\d{2}\b")
+# Trade-off (documented): the mandatory `v` cuts section-ref/decimal noise at the
+# cost of missing a bare-decimal citation "D-02 2.2" — cross-refs are v-prefixed by
+# convention. The optional 3rd segment keeps a patch version (v2.2.1) whole.
+_VER_TOKEN_RE = re.compile(r"\bv(\d+\.\d+(?:\.\d+)?)\b", re.IGNORECASE)
+# A dated revision-history row in EITHER orientation — version-first
+# ("| 1.0 | 2026-01-01 |", as D-02 writes it) or date-first
+# ("| 2026-06-19 | 2.1 |", as D-19 writes it). Such a row narrates a past state,
+# so any version it mentions is history, not a live cross-reference.
+_REV_ROW_ANY_RE = re.compile(
+    r"^\|\s*(?:\d+\.\d+\s*\|\s*\d{4}-\d{2}-\d{2}|\d{4}-\d{2}-\d{2}\s*\|\s*\d+\.\d+)"
+)
+# Declared document version from a frontmatter `version:` line.
+_VERSION_FM_RE = re.compile(r"^version:\s*[\"']?(\d+\.\d+)", re.MULTILINE)
+# An Odoo model `_name = '...'` declaration in code. The optional `(` + `\s*`
+# (\s spans newlines) also catches a name wrapped onto the next line:
+#   _name = (\n    'resource.plan.request'\n)
+_CODE_NAME_RE = re.compile(r"_name\s*=\s*\(?\s*[\"']([a-z][a-z0-9_.]+)[\"']")
+# The SUBJECT model of a D-19 "Physical name (Tên vật lý): `model`" declaration —
+# the first backtick token after the label's colon. The required ``:`` skips
+# convention prose ("Tên vật lý theo `snake_case`...") that has no colon, and the
+# lazy gap stops before a later "theo mẫu `other.model`" reference on the line.
+_PHYS_LINE_RE = re.compile(
+    r"(?:physical name|tên vật lý)[^\n`]*?:\s*`([a-z][a-z0-9_.]+)`", re.IGNORECASE
+)
+# Empty / placeholder reference-cell values (a matrix cell that traces nothing).
+_EMPTY_REF = {"", "-", "—", "n/a", "none", "tbd", "x", "?"}
+
+
+def _trailing_num(rid: str) -> int | None:
+    m = re.search(r"\d+$", rid)
+    return int(m.group()) if m else None
+
+
+def req_num_map(text: str) -> tuple[dict[int, str], set[str]]:
+    """Map each requirement's trailing number → its longest-seen id, plus the set
+    of distinct feature slugs encountered.
+
+    For a single feature a requirement's identity *is* its trailing number — that
+    is what lets the canonical id (REQ-FEAT-040) and the bare prose form (REQ-040)
+    reconcile across documents. The slug set is returned so callers can detect a
+    multi-feature input where trailing-number identity would collide and refuse to
+    trust the count.
+    """
+    out: dict[int, str] = {}
+    slugs: set[str] = set()
+    for rid in REQ_ID_RE.findall(text or ""):
+        num = _trailing_num(rid)
+        if num is None:
+            continue
+        slug = rid[: rid.rfind("-")]
+        if slug and slug != "REQ":
+            slugs.add(slug)
+        if num not in out or len(rid) > len(out[num]):
+            out[num] = rid
+    return out, slugs
+
+
+def missing_from_matrix(d02_text: str, matrix_text: str) -> list[str]:
+    """REQ ids defined in D-02 but with NO row in the traceability matrix (T1.5).
+
+    Identity = trailing number (sound for a single feature; for multi-feature
+    inputs check ``req_num_map(...)[1]`` for >1 slug and treat the count as
+    unreliable). This is the "39/39 green but 040/041/042 never added" failure.
+    """
+    d02, _ = req_num_map(d02_text)
+    matrix_nums = set(req_num_map(matrix_text)[0])
+    return [d02[n] for n in sorted(d02) if n not in matrix_nums]
+
+
+def parse_matrix(matrix_text: str) -> tuple[dict[str, int], list[list[str]]]:
+    """``(header name→index, data rows)`` for a traceability-matrix markdown table.
+
+    Header-name based (not positional) so both the 7-column legacy matrix and the
+    8-column one (with a leading ``feature`` column) parse correctly. Only rows
+    whose ``req_id`` cell is a real REQ id are returned as data.
+
+    Header cells are normalized (lowercased, spaces→underscores) so a human/localized
+    variant like ``req id`` / ``design ref`` is still recognized — otherwise an
+    unrecognized header would yield zero rows and silently pass the coverage check.
+    """
+    header: dict[str, int] = {}
+    rows: list[list[str]] = []
+    for line in (matrix_text or "").splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        joined = "".join(cells)
+        if joined and set(joined) <= {"-", " ", ":"}:
+            continue  # separator
+        low = [c.strip().lower().replace(" ", "_") for c in cells]
+        if not header:
+            if "req_id" in low:
+                header = {name: i for i, name in enumerate(low)}
+            continue
+        i = header.get("req_id", 0)
+        if i < len(cells) and REQ_ID_RE.match(cells[i]):
+            rows.append(cells)
+    return header, rows
+
+
+def _blank_ref(cell: str) -> bool:
+    return cell.strip().lower() in _EMPTY_REF
+
+
+def matrix_coverage_gaps(
+    matrix_text: str, columns: tuple[str, ...] = ("design_ref", "code_ref", "test_ref")
+) -> dict[str, list[str]]:
+    """Per-REQ list of which trace columns are EMPTY (T1.5).
+
+    A REQ that has a matrix row but a blank ``design_ref``/``code_ref``/``test_ref``
+    is still untraced for that axis. Returns ``{req_id: [empty_columns]}`` for
+    rows with ≥1 gap (a missing column header counts as a gap for every row).
+    """
+    header, rows = parse_matrix(matrix_text)
+    gaps: dict[str, list[str]] = {}
+    for cells in rows:
+        rid = cells[header["req_id"]].strip()
+        empty = [
+            c
+            for c in columns
+            if header.get(c, -1) < 0
+            or header[c] >= len(cells)
+            or _blank_ref(cells[header[c]])
+        ]
+        if empty:
+            gaps[rid] = empty
+    return gaps
+
+
+def reqs_without_task(req_ids, tasks_text: str) -> list[str]:
+    """REQ ids with no mention in the task-breakdown — every REQ needs ≥1 task (T1.5).
+
+    Matched by trailing number so canonical and bare id styles reconcile.
+    """
+    task_nums = {n for n in (_trailing_num(r) for r in REQ_ID_RE.findall(tasks_text or "")) if n is not None}
+    return sorted(
+        r for r in req_ids if (_trailing_num(r) is not None and _trailing_num(r) not in task_nums)
+    )
+
+
+def revision_count(text: str) -> int:
+    """Number of dated revision-history rows (``| N.N | YYYY-MM-DD | ...``) — the
+    D-02 churn signal (T2.11). RCA case: 13; target ≤4."""
+    return len(_REV_ROW_RE.findall(text or ""))
+
+
+def churn_assessment(text: str, threshold: int = 4) -> dict:
+    """``{revisions, threshold, high_churn}`` for a document's revision history (T2.11).
+
+    ``high_churn`` (revisions > threshold) is the cue a create-skill surfaces to
+    suggest the model isn't frozen yet (maturity=exploratory / run [DSC]) instead
+    of bumping the version on every small edit.
+    """
+    n = revision_count(text)
+    return {"revisions": n, "threshold": threshold, "high_churn": n > threshold}
+
+
+def doc_version(text: str) -> str | None:
+    """A document's declared version from its frontmatter ``version:`` line, or None."""
+    m = _VERSION_FM_RE.search(text or "")
+    return m.group(1) if m else None
+
+
+def version_citations(text: str) -> list[tuple[str, str]]:
+    """All ``(doc_id, version)`` version attributions in prose (T1.3).
+
+    On each line, every version token is bound to the NEAREST preceding doc id on
+    that line — so ``D-02 (v2.2), D-19 (v2.3)`` attributes 2.2→D-02 and 2.3→D-19
+    rather than cross-wiring them. Lines that mention no doc id yield nothing (a
+    bare frontmatter ``version:`` is handled by ``doc_version`` instead).
+    """
+    out: list[tuple[str, str]] = []
+    for line in (text or "").splitlines():
+        # A dated revision-history row (either orientation) describes a PAST state,
+        # not a current cross-reference — never a coherence claim about the live
+        # document, so it is skipped.
+        if _REV_ROW_ANY_RE.match(line.strip()):
+            continue
+        tokens: list[tuple[int, str, str]] = []
+        for m in _DOC_ID_RE.finditer(line):
+            tokens.append((m.start(), "doc", m.group(0)))
+        for m in _VER_TOKEN_RE.finditer(line):
+            tokens.append((m.start(), "ver", m.group(1)))
+        tokens.sort()
+        cur: str | None = None
+        for _pos, kind, val in tokens:
+            if kind == "doc":
+                cur = val
+            elif cur is not None:
+                out.append((cur, val))
+    return out
+
+
+def version_coherence(authority_versions: dict[str, str], citing_texts: dict[str, str]) -> list[dict]:
+    """Flag citations whose cited version ≠ the authority doc's declared version (T1.3).
+
+    ``authority_versions``: ``{doc_id: declared_version}`` (build with ``doc_version``).
+    ``citing_texts``: ``{label: text}`` of the downstream docs to scan. This catches
+    "D-26 cites D-02 v2.2 while D-02 is actually v2.3" — the cross-doc staleness the
+    RCA case showed after the v2.0 U-turn. Returns one issue per stale citation.
+    """
+    issues: list[dict] = []
+    for label, text in citing_texts.items():
+        seen: set[tuple[str, str]] = set()
+        for doc, cited in version_citations(text):
+            declared = authority_versions.get(doc)
+            if declared is not None and cited != declared and (doc, cited) not in seen:
+                seen.add((doc, cited))
+                issues.append({"source": label, "doc": doc, "cited": cited, "declared": declared})
+    return issues
+
+
+def spec_ref_leaks(text: str) -> list[str]:
+    """Every REQ-/TC-/NFR- id embedded in a source/test file (T1.2).
+
+    A spec id in code couples the implementation to the spec document — when the
+    spec is renumbered the code silently rots. Returns the raw matches (with
+    duplicates) so a caller can both count and list them.
+    """
+    return SPEC_REF_RE.findall(text or "")
+
+
+def model_tokens_from_design(d19_text: str) -> set[str]:
+    """Odoo model ``_name``s declared in D-19 "Physical name (Tên vật lý)" lines —
+    the unambiguous model-level design tokens (e.g. ``resource.plan.request``).
+
+    Restricted to physical-name lines (not the whole document) to stay high-signal:
+    a model that the design declares as a real table but code never defines is the
+    drift we care about, not an incidental dotted expression in prose.
+    """
+    out: set[str] = set()
+    for line in (d19_text or "").splitlines():
+        m = _PHYS_LINE_RE.search(line)
+        if m:
+            out.add(m.group(1))
+    return out
+
+
+def _model_present(name: str, text: str) -> bool:
+    """Whole-identifier presence of an Odoo model name, tolerant of the dotted
+    (``resource.plan.summary``) vs underscored-table (``resource_plan_summary``)
+    spelling — present if ANY form appears as a whole token. Both directions of the
+    conversion are tried so an underscore-spelled design name still matches a
+    dotted ``_name`` in code and vice-versa.
+
+    The boundary treats ``.`` AND word chars as identifier characters, so a shorter
+    model name does NOT match inside a longer one (``resource.plan`` must not be
+    'present' merely because ``resource.plan.request`` appears — that masking would
+    hide real drift)."""
+    forms = {name, name.replace(".", "_"), name.replace("_", ".")}
+    for f in forms:
+        if re.search(r"(?<![\w.])" + re.escape(f) + r"(?![\w.])", text):
+            return True
+    return False
+
+
+def model_drift(design_text: str, code_text: str, *, extra_tokens=()) -> dict:
+    """Bidirectional model-level drift between the D-19 design and the code (T1.1).
+
+    ``design_only`` — a model declared in D-19 (physical-name ``_name``s, plus any
+      ``extra_tokens`` a caller derives, e.g. field-level tokens) but absent from
+      code: the RCA drift (design moved to Request+Snapshot, code stayed on the old
+      model).
+    ``code_only`` — an Odoo ``_name`` model in code that the design never mentions.
+      Pass only persistent-model code (e.g. ``models/``, not transient wizards) to
+      keep this signal meaningful.
+
+    Presence is whole-identifier and dotted/underscored-tolerant (see
+    ``_model_present``). ``drift`` is True when either list is non-empty.
+    """
+    code_text = code_text or ""
+    design_text = design_text or ""
+    design_tokens = model_tokens_from_design(design_text) | set(extra_tokens)
+    code_names = set(_CODE_NAME_RE.findall(code_text))
+    design_only = sorted(t for t in design_tokens if not _model_present(t, code_text))
+    code_only = sorted(n for n in code_names if not _model_present(n, design_text))
+    return {"design_only": design_only, "code_only": code_only, "drift": bool(design_only or code_only)}
+
+
+# The semanticReview block = consecutive indented OR blank lines after the key,
+# stopping at the next non-indented (dedented) line. Allowing blank lines inside
+# means a block-form openFacets list separated by a blank line is NOT truncated
+# (which would hide an open facet and read as a false pass).
+_SR_BLOCK_RE = re.compile(r"semanticReview:[ \t]*\n((?:(?:[ \t]+\S.*)?\n)*)")
+
+
+def semantic_review_status(text: str) -> dict:
+    """Read the ``semanticReview`` frontmatter block (T2.12 / RM.2).
+
+    Returns ``{status, open_facets_empty, passed}``. ``passed`` is true ONLY when
+    ``status == 'passed'`` AND ``openFacets`` is present-and-empty — the exact
+    condition the phase-gate REVIEW item enforces, kept here as the single
+    structural read so every skill and the gate agree.
+
+    Fail-safe defaults: a missing block, an unreadable status, or an ABSENT
+    ``openFacets`` key all yield ``passed = False`` — you cannot earn a pass by
+    simply omitting the facet list. ``status`` tolerates surrounding quotes.
+    """
+    m = _SR_BLOCK_RE.search(text or "")
+    if not m:
+        return {"status": None, "open_facets_empty": None, "passed": False}
+    block = m.group(1)
+    sm = re.search(r"status:\s*[\"']?([A-Za-z/]+)", block)
+    status = sm.group(1).strip() if sm else None
+    if "openFacets:" not in block:
+        open_empty = None  # key absent → cannot assert emptiness → not a pass
+    else:
+        inline = re.search(r"openFacets:\s*\[(.*?)\]", block, re.DOTALL)
+        if inline is not None:
+            open_empty = not inline.group(1).strip()
+        else:
+            # block-list form: empty unless a "- item" exists (blank lines allowed)
+            open_empty = not re.search(r"openFacets:[ \t]*\n(?:[ \t]*\n)*[ \t]*-\s+\S", block)
+    return {
+        "status": status,
+        "open_facets_empty": open_empty,
+        "passed": status == "passed" and open_empty is True,
+    }
+
+
 def verdict(
     structure_ok: bool,
     *,

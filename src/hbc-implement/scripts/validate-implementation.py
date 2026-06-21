@@ -34,7 +34,12 @@ from pathlib import Path
 # --- shared lib bootstrap (C-1) ---
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
-    from hbc_validation import SEMANTIC_NA, verdict  # noqa: E402
+    from hbc_validation import (  # noqa: E402
+        SEMANTIC_NA,
+        model_drift,
+        spec_ref_leaks,
+        verdict,
+    )
 except ModuleNotFoundError:
     print(json.dumps({
         "error": "Shared lib 'hbc_validation' not found.",
@@ -178,8 +183,73 @@ def check_matrix(matrix_text: str, project_root: str) -> list[dict]:
     return issues
 
 
+_CODE_GLOB = "*.py"
+# Transient/derived code that is not a persistent data model — excluded from the
+# MODEL_DRIFT reconciliation so a wizard/test/controller never reads as a rogue model.
+_NON_MODEL_PARTS = {"wizard", "wizards", "test", "tests", "controllers", "migrations"}
+
+
+def _iter_code_files(code_dir: str, exclude_parts: set[str] | None = None):
+    exclude = exclude_parts or set()
+    for p in sorted(Path(code_dir).rglob(_CODE_GLOB)):
+        if exclude and ({part.lower() for part in p.parts} & exclude):
+            continue
+        yield p
+
+
+def check_spec_ref_leak(code_dir: str) -> list[dict]:
+    """T1.2 — no REQ-/TC-/NFR- id embedded in source/test. A spec id in code couples
+    the implementation to the spec document; when the spec is renumbered, code rots.
+    Scans ALL code (prod + test) — the leak target is the whole feature slice."""
+    issues: list[dict] = []
+    base = Path(code_dir)
+    for p in _iter_code_files(code_dir):
+        leaks = spec_ref_leaks(p.read_text(encoding="utf-8", errors="replace"))
+        if not leaks:
+            continue
+        rel = str(p.relative_to(base)).replace("\\", "/")
+        sample = ", ".join(sorted(set(leaks))[:5])
+        issues.append({
+            "type": "SPEC_REF_LEAK",
+            "message": f"{rel}: {len(leaks)} spec-ref id(s) embedded in source ({sample})",
+            "path": rel,
+            "count": len(leaks),
+            "auto_fixable": False,
+        })
+    return issues
+
+
+def check_model_drift(design_path: str, code_dir: str) -> list[dict]:
+    """T1.1 — a model declared in D-19 must exist in code and vice-versa (MODEL_DRIFT).
+
+    Persistent-model scope only (wizard/test/controller code excluded) so the
+    code↔design reconciliation compares like with like. Catches the RCA case where
+    the design moved to a Request+Snapshot model the code never implemented."""
+    design = Path(design_path).read_text(encoding="utf-8", errors="replace")
+    code_text = "\n".join(
+        p.read_text(encoding="utf-8", errors="replace")
+        for p in _iter_code_files(code_dir, _NON_MODEL_PARTS)
+    )
+    drift = model_drift(design, code_text)
+    issues: list[dict] = []
+    for tok in drift["design_only"]:
+        issues.append({
+            "type": "MODEL_DRIFT",
+            "message": f"model '{tok}' is in the D-19 design but absent from code (design drift)",
+            "token": tok, "direction": "design_only", "auto_fixable": False,
+        })
+    for tok in drift["code_only"]:
+        issues.append({
+            "type": "MODEL_DRIFT",
+            "message": f"code model '{tok}' is not described in the D-19 design (rogue model)",
+            "token": tok, "direction": "code_only", "auto_fixable": False,
+        })
+    return issues
+
+
 def validate(tasks_path: str, matrix_path: str | None = None, project_root: str = ".",
-             tdd_evidence_dir: str | None = None) -> dict:
+             tdd_evidence_dir: str | None = None, code_dir: str | None = None,
+             design_path: str | None = None) -> dict:
     issues: list[dict] = []
     tasks_text = Path(tasks_path).read_text(encoding="utf-8")
     # Guard: a --tasks file with no parseable task row would otherwise validate as
@@ -201,6 +271,12 @@ def validate(tasks_path: str, matrix_path: str | None = None, project_root: str 
         matrix_text = Path(matrix_path).read_text(encoding="utf-8")
         issues.extend(check_matrix(matrix_text, project_root))
         checked += ["matrix code_ref files exist on disk", "REQ designed + tested ⇒ implemented"]
+    if code_dir:
+        issues.extend(check_spec_ref_leak(code_dir))
+        checked += ["no spec-ref id (REQ-/TC-/NFR-) embedded in code/test (T1.2)"]
+        if design_path:
+            issues.extend(check_model_drift(design_path, code_dir))
+            checked += ["D-19 models ↔ code reconciled, no MODEL_DRIFT (T1.1)"]
 
     structure_ok = not issues
     v = verdict(
@@ -222,11 +298,14 @@ def main() -> int:
     ap.add_argument("--matrix", help="Path to traceability matrix")
     ap.add_argument("--tdd-evidence-dir", help="Dir of RED-evidence files (<TASK>.md) — Phase 3 TDD check")
     ap.add_argument("--project-root", default=".", help="Root for resolving code_ref paths")
+    ap.add_argument("--code-dir", help="Code dir to scan for spec-ref leaks (T1.2)")
+    ap.add_argument("--design", help="D-19 path for MODEL_DRIFT reconciliation (T1.1; needs --code-dir)")
     ap.add_argument("-o", "--output", help="Output JSON path (default: stdout)")
     args = ap.parse_args()
 
     try:
-        result = validate(args.tasks, args.matrix, args.project_root, args.tdd_evidence_dir)
+        result = validate(args.tasks, args.matrix, args.project_root, args.tdd_evidence_dir,
+                          args.code_dir, args.design)
     except (OSError, UnicodeDecodeError) as exc:
         print(json.dumps({"error": f"not readable: {exc}", "valid": False}, ensure_ascii=False))
         return 2

@@ -253,7 +253,8 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 
 ### Prereq nền (làm TRƯỚC mọi skill — là THƯ VIỆN per-skill gọi tới)
 - [x] **T0/TD.0** fixture `resource-plan-billable` (git-ref RCA) ✅ U0 · [x] **TF.3** metrics harness ✅ U0 — `process-review/fixtures/resource-plan-billable/` (hash-pinned, 6 metric, baseline 13/44/3/2/5/≥4)
-- [ ] T1.5 matrix-coverage-lib · [ ] T1.3 version-coherence-lib · [ ] T1.1 MODEL_DRIFT · [ ] T1.2 spec-ref-lint · [ ] T2.12/RM.2 semantic-review-reference · [ ] T2.1 autonomy-pattern · [ ] T2.11 anti-churn-lib · [ ] T-ENV (tiktoken/python/path) · [ ] T-REINSTALL
+- [x] T1.5 matrix-coverage-lib ✅ U1 · [x] T1.3 version-coherence-lib ✅ U1 · [x] T1.1 MODEL_DRIFT ✅ U1 · [x] T1.2 spec-ref-lint ✅ U1 · [x] T2.12/RM.2 semantic-review-reference ✅ U1 · [ ] T2.1 autonomy-pattern · [x] T2.11 anti-churn-lib ✅ U1 · [ ] T-ENV (tiktoken/python/path) · [ ] T-REINSTALL
+  - **U1 done (2026-06-22):** primitives in `hbc-shared/lib/hbc_validation.py` (`missing_from_matrix`/`matrix_coverage_gaps`/`reqs_without_task`, `version_coherence`, `model_drift`, `spec_ref_leaks`, `churn_assessment`, `semantic_review_status`) + runnable scripts (`hbc-implement/validate-implementation.py --code-dir/--design`, `hbc-traceability/check-matrix-coverage.py`, `hbc-phase-gate/check-version-coherence.py`). 85 unit/fixture tests; all re-derive the TD.0 baseline (3 missing-rows, 13 churn, v2.2-stale, 2 model-drift, 44 spec-ref). F-3 (adversarial+edge-case) closed: dotted-substring masking, quoted/absent/blank-line `openFacets`, spaced matrix headers, multi-line `_name`, None-safety. *(T2.1 autonomy / T-ENV / T-REINSTALL are separate nền units, not in U1's scope.)*
 
 ### Phase 1
 **`hbc-create-requirements` [REQ]** — DoD: 10/10 B + review + VM
@@ -338,7 +339,7 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 | # | Đơn vị | BMad skill để gọi | Prereq | Done khi |
 |---|--------|-------------------|--------|----------|
 | U0 ✅ | TD.0 fixture + TF.3 metrics | (script tay, không builder) | — | **DONE** — fixture hash-pinned + harness 6 metric, baseline đo được + F-3 sạch |
-| U1 | Primitives (T1.1/1.2/1.3/1.5 · T2.11/T2.12) | `bmad-workflow-builder` Edit | U0 | script + pytest; bắt lỗi fixture |
+| U1 ✅ | Primitives (T1.1/1.2/1.3/1.5 · T2.11/T2.12) | (script-only → direct + F-3 review per §0.1 RACI) | U0 | **DONE** — libs+scripts+85 tests; bắt đủ lỗi fixture TD.0; F-3 sạch high/critical |
 | U2 | `hbc-create-glossary` | `bmad-workflow-builder` Edit | U1 | §9 GLO 100% + AR+ECH+VM |
 | U3 | `hbc-create-coding-standards` | `bmad-workflow-builder` Edit | U1 | §9 CS 100% |
 | U4 | `hbc-create-business-flow-diagram` | `bmad-workflow-builder` Edit | U1 | §9 BFD 100% |
