@@ -47,6 +47,29 @@ Validators are **3-layer** and deliberately split structure from meaning:
 
 **Language policy (load-bearing):** NO hardcoded Japanese anywhere. Section detection passes the English canonical label *plus* the configured `document_output_language` label, e.g. `find_section(text, "Scope", "Phạm vi")`. Never hardcode language-specific section names in a validator.
 
+## Developing a skill (drive the BMad Builder — don't hand-roll)
+
+To create/edit a skill, run the right Builder instead of writing files blind:
+
+- **`bmad-workflow-builder`** — *workflow skills* (stages → discovery → validation → artifact); the default for HBC `hbc-create-*`. Intents: **Build** (new) / **Edit** (revise) / **Analyze** (quality-check + token-budget lint).
+- **`bmad-agent-builder`** — *agent skills* (named persona, e.g. the `hbc-agent-*` coordinators).
+- **`bmad-module-builder`** — architect/scaffold/validate a multi-skill module; **`bmad-bmb-setup`** wires the Builder into a project.
+
+**Build is a loop, not a script:** understand intent (open-floor, don't quiz) → harden (one skill or many? real inputs? sibling `update`/`validate` intents? where does it fail?) → scaffold (`init_skill.py`) → **run on REAL input** → hunt determinism (push structure checks into scripts, keep judgment in prose) → wire shared shape → strip ceremony to the token budget → register. The Builder logs decisions to a `.memlog.md` as it goes.
+
+**SKILL.md budget & lean:** target ~2000 tokens, hard budget ~3000. Inline all stages by default; carve a branch to `references/` only when (a) only some branches need it, or (b) it busts the budget — keep the routing map in SKILL.md. Lean test per line: *would a capable model do this right without being told?* If yes, cut it. Non-obvious gotchas stay inline (the model won't load a reference for a situation it doesn't recognize).
+
+**customize.toml is the ONLY customization surface.** Emit it only when the skill genuinely needs end-user-overridable paths/hooks; otherwise hardcode and skip it. When present: header is DO-NOT-EDIT (regenerated on update); team override → `_bmad/custom/<skill>.toml`, personal → `_bmad/custom/<skill>.user.toml` (gitignored). Merge order = base → team → user; scalars override, tables deep-merge, arrays append (never remove). **Load-bearing rule:** SKILL.md must reference a declared path as `{workflow.<name>}` and resolve it via `resolve_customization.py` — a hardcoded path sitting next to a declared scalar is a **silent no-op**. Forbidden in customize.toml: installer questions, boolean toggles, a per-skill `config.yaml`, embedding `module.yaml`.
+
+**Scripts:** determinism test — *identical input → identical output AND unit-testable ⇒ script; needs interpreting meaning ⇒ prose.* Scripts do fetch/parse/validate/count/extract/transform (regex for **structure only**, never meaning), print JSON to stdout, errors to stderr + non-zero exit. stdlib-only runs as `python3 scripts/x.py`; external deps need PEP 723 inline metadata + `uv run`. Tests live in `scripts/tests/test_*.py` and call the script via `subprocess.run` the way SKILL.md will. (3-layer split + `hbc_validation` import: see Validator architecture above.)
+
+**Register a new skill or the installer silently drops it** — three files (HBC source, not `_bmad/`):
+1. `.claude-plugin/marketplace.json` → add `./src/<skill>` to the skills array.
+2. `src/hbc-setup/assets/module.yaml` → module + agent metadata.
+3. `src/hbc-setup/assets/module-help.csv` → one row: `module,skill,display-name,menu-code,description,action(+args),phase,preceded-by,followed-by,required,output-location,outputs`.
+
+**Completion gate (HBC):** structural validator passes → LLM **semantic review** (`hbc-shared/references/semantic-review-rubric.md`, apply the read/write·api/admin·lifecycle facet-split) → record `semanticReview` frontmatter (`status: passed` only when `openFacets` empty). Source is English; runtime output follows `{document_output_language}` (see Language policy above).
+
 ## Commands
 
 ```bash

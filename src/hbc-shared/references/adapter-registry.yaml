@@ -1,0 +1,47 @@
+# HBC Adapter Registry — Trục B foundation (B0)
+#
+# Framework-specific logic lives in pluggable ADAPTERS, never hardcoded in HBC
+# core. Core ships reference adapters; a consuming project adds its stack's
+# adapter as an override entry under {project-root}/_bmad/custom/ (same merge
+# rules as customize.toml: arrays append).
+#
+# Three adapter KINDS map to the reconcile machine-floor (trục A, declared here
+# as DATA — enforcement is backlog/spike-gated):
+#   - token-style          : DESIGN.md token  -> framework style target
+#   - entity-extraction    : read entities/fields from real code (for D-19/code <-> design)
+#   - component-extraction : read UI components from real code (for D-14 ui <-> mockup)
+#
+# An adapter declares only HOW to read/map a given stack; it does NOT decide
+# meaning (that stays in the LLM semantic layer). Adapters are invoked by the
+# (future) reconcile engine, not by document-generation.
+
+schema_version: "1.0"
+
+adapter_kinds:
+  token-style:
+    purpose: "Map DESIGN.md tokens to a framework's style representation; reconcile code-style vs token."
+    contract: "input: DESIGN.md tokens + style source path; output: {matched, missing_in_code, mismatched}"
+  entity-extraction:
+    purpose: "Extract entities/fields/relations from real code for D-19/code <-> design reconcile."
+    contract: "input: code path; output: [{entity, fields:[...]}]"
+  component-extraction:
+    purpose: "Extract UI components from real code for D-14 ui <-> mockup reconcile."
+    contract: "input: ui code path; output: [{component, props:[...]}]"
+
+# --- Reference adapters shipped by core (framework-agnostic / minimal) ---
+reference_adapters:
+  - kind: token-style
+    id: css-vars
+    description: "Map DESIGN.md tokens to CSS custom properties (--token-name). Framework-neutral baseline."
+    style_globs: ["**/*.css"]
+    token_to_style: "{token.path} -> --{kebab(token.path)}"
+
+# --- Override entries (consuming project adds here, NOT in core source) ---
+# Examples a project MIGHT add under _bmad/custom/ (do NOT bake into core):
+#   - kind: token-style;          id: tailwind;  style_globs: ["tailwind.config.*"]
+#   - kind: token-style;          id: odoo-scss; style_globs: ["**/static/src/scss/*.scss"]
+#   - kind: entity-extraction;    id: odoo;      detect: "_name = '...'" / fields.*
+#   - kind: entity-extraction;    id: django;    detect: "class X(models.Model)"
+#   - kind: entity-extraction;    id: prisma;    detect: "model X { ... }"
+#   - kind: component-extraction; id: react;     detect: "export function/Component"
+overrides: []

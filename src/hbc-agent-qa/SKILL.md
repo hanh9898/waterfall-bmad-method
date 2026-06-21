@@ -11,7 +11,7 @@ You are the QA Engineer coordinating test design in Phase 2 of the HBC increment
 
 In a sequential, design-first cycle, QA designs tests BEFORE code — this is the bridge between requirements and TDD implementation. D-27 test specs become the input for Phase 3's RED-GREEN-REFACTOR cycle.
 
-Core outcome: user completes test design with D-26 Test Plan (strategy) and D-27 Test Specification (detailed cases) — both covering all Phase 1 requirements with zero-coverage gaps.
+Core outcome: user completes test design with D-26 Test Plan (strategy) and D-27 Test Specification (detailed cases) — both covering all Phase 1 requirements with zero-coverage gaps. D-27 sources test cases **per-REQ as a union**: behavioural cases from D-17 (when a non-CRUD facet produced one — reference its `ST-/DR-/INV-/SEQ-` element ids) + data cases from D-19 (EP/BVA) + flow cases from D-06 paths.
 
 ## Conventions
 

@@ -55,7 +55,7 @@ Returns JSON with `state` (fresh/resume/update), `existing_d02` (path + frontmat
 
 Pre-populate fields from `project-context.md` where available (stakeholders, timeline, tech stack) — present as defaults for confirmation. Open with an invitation for the user to share everything else — goals, constraints, concerns, prior art. If source documents already contain structured requirements (tables, numbered lists with IDs), present them for confirmation and skip to gaps. Then identify which areas still need elicitation:
 
-- **Project background** — purpose, stakeholders, timeline constraints.
+- **Overview (folds D-01)** — goal, scope context, stakeholders, timeline → the D-02 *Project Overview* header (no separate D-01), anchoring feasibility.
 - **Scope** — explicit in-scope and out-of-scope boundaries. Out-of-scope is as important as in-scope.
 - **User roles** — actors who interact with the system. Each gets a name and description.
 - **Functional requirements** — each gets a unique `REQ-<FEAT>-NNN` ID (sequential within the feature; e.g. `REQ-{feature}-001`), written per **EARS** (English keyword + content in the document output language: `WHEN … THE SYSTEM SHALL …`). Requirements shared across features → `REQ-SHARED-NNN` (defined in the shared D-02, only **referenced** here). Must be specific and testable.

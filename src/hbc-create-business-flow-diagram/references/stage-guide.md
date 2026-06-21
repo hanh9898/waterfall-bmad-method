@@ -155,6 +155,7 @@ From the chosen sources or interactive elicitation, extract:
 - **Steps** — sequence of interactions between actors and the system
 - **Decision points** — conditional branches (for `flowchart` variant)
 - **Outcomes** — success and failure end states
+- **Paths (use-case coverage)** — per flow, enumerate the **main / alternate / exception** paths (actor-goal use-case style; never stop at the happy path). Assign each path a **stable path-ID** (`PATH-NN`) so task-breakdown and test cases can reference it. A flow with no alternate/exception path is surfaced for the user to confirm or fill.
 
 Present extracted actors and flows for confirmation. For migration mode, run discovery twice — once for AS-IS, once for TO-BE — surfacing the deltas explicitly. Capture non-flow insights surfaced during discovery (performance, security, integration constraints) to an `### Addendum` block in `{ws}/.decision-log.md` without pausing the flow.
 
@@ -172,6 +173,8 @@ If compaction drops the conversation mid-stage, the next run resumes from these 
 ## Stage 3 — Diagram Generation
 
 For each in-scope flow, render one Mermaid block per the resolved diagram type:
+- **Swimlane by actor (BPMN-style)** — make each actor's responsibility visible: in `sequenceDiagram` declare one `actor`/`participant` per lane (3–7 lanes) and route every message through them; in `flowchart` group nodes into per-actor `subgraph` lanes. Hand-offs between lanes are the integration seams. Avoid a single-lane "system talks to itself" diagram.
+- Annotate each path with its **path-ID** (`PATH-NN` from Stage 2) — e.g. a `Note over` / `%% PATH-NN` marker — so the alternate/exception branches are traceable to task-breakdown and tests.
 - Use `actor` for human users, `participant` for systems.
 - Label messages with action verbs in `{document_output_language}`; keep Mermaid keywords and code identifiers in English (Language Rules).
 - **No `;` in message or Note text** — Mermaid parses a semicolon as a statement separator, so `A->>B: kiểm tra; khóa` fails to render. Use `,` instead, or split into two message lines. (Stage 4 flags any leftover `;` as auto-fixable.)

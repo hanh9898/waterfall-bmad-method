@@ -9,6 +9,14 @@ project_kind: "greenfield"   # set to "brownfield" when grounded against an exis
 # gate waives them (reports NA, not FAIL). ONLY D-19 (no data-model change) / D-21 (no
 # API) — D-02/D-03/D-06 always apply. Give a one-line rationale.
 #   na_deliverables: ["D-19"]   # rationale: this feature changes no data model
+# maturity — OPTIONAL: exploratory | stable (default stable). Modifier read by the
+# applicability-catalog + phase gate: `exploratory` loosens the required-node-set and
+# ASK-volume; it NEVER loosens the correctness floor. See hbc-shared/references/deliverable-catalog.yaml.
+#   maturity: exploratory
+# facets — OPTIONAL: feature facets that drive applicability + the Behavioral-Design
+# trigger (has-state-machine/has-cross-entity-sync/has-invariant/has-algorithm/
+# has-concurrency/has-integration/has-ui/has-migration).
+#   facets: ["has-state-machine", "has-ui"]
 status: draft
 stepsCompleted: []
 lastStep: ""
