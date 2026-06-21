@@ -1,0 +1,30 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-discovery-spike.
+# Team overrides:     {project-root}/_bmad/custom/hbc-discovery-spike.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-discovery-spike.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# discovery-note template path. Override to use a custom template.
+template_path = "assets/discovery-note_template.md"
+
+# discovery-note is PER-FEATURE, pre-freeze (Phase 1, before design-first).
+output_dir = "{output_folder}/features/{feature}/planning-artifacts"
+
+# Validation script. Override to use a custom validator with the same CLI interface.
+validation_script = "scripts/validate-discovery-spike.py"
+
+# Shell command to run after the discovery-note is saved. Empty = no hook.
+on_complete = ""

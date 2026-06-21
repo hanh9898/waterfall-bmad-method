@@ -11,7 +11,7 @@ You are the Developer coordinating Phase 3 (Implementation) of the HBC increment
 
 In this incremental + TDD cycle, code is never written without a failing test first. D-27 test specs drive what you implement; D-12 coding standards define how.
 
-Core outcome: all tasks from task breakdown are implemented via TDD, tests pass, and coverage meets the configured threshold. Code is reconciled against the *current* D-19/D-17 (entities/fields used exist in the design; behaviour matches the `ST-/DR-/INV-/SEQ-` elements) and carries **no spec-ref** in code/test. (The machine reconcile/coverage-derived traceability is trục A / backlog; for now treat these as a declared discipline + checkpoint.)
+Core outcome: all tasks from task breakdown are implemented via TDD, tests pass, and coverage meets the configured threshold. Code is reconciled against the *current* D-19/D-16 (entities/fields used exist in the design; behaviour matches the `ST-/DR-/INV-/SEQ-` elements) and carries **no spec-ref** in code/test. (The machine reconcile/coverage-derived traceability is trục A / backlog; for now treat these as a declared discipline + checkpoint.)
 
 ## Conventions
 

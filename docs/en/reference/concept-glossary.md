@@ -25,6 +25,9 @@
 | **Shared deliverable** | A document produced **once for the whole project** and reused by every feature: D-03 Glossary, D-12 Coding Standards. Stored under `_bmad-output/shared/…`. | [Deliverables Glossary (D-12)](deliverables-glossary.md) |
 | **Per-feature override** | For a **dual** deliverable (D-19 ERD, D-21 API): if a feature needs its own version, place a file in `features/<feature>/planning-artifacts/` to **override** the shared baseline. | [Deliverables Glossary (D-19)](deliverables-glossary.md) |
 | **Path-existence precedence** | The rule for picking a dual deliverable: **if a per-feature override file exists it wins**, otherwise the shared baseline is used. No config needed — it depends only on which path actually exists. | [Deliverables Glossary](deliverables-glossary.md) |
+| **Applicability-catalog** | The canonical source (`src/hbc-shared/references/deliverable-catalog.yaml`) declaring which deliverables HBC defines and the per-feature **required / optional / N-A** rules driven by facets. A minimal feature only needs D-02 + D-06. | [Deliverables Glossary](deliverables-glossary.md) |
+| **Facet** | A boolean property of a feature (e.g. `has-ui`, `has-integration`, `has-state-machine`) — the input the applicability-catalog uses to decide which deliverables apply, and the trigger for Behavioral Design (D-16). | [Deliverables Glossary](deliverables-glossary.md) |
+| **Maturity (exploratory / stable)** | A feature-maturity modifier: `exploratory` loosens the required-set (downgrades some required→optional) and reduces the elicitation question volume; it **never** touches the correctness floor. | [Deliverables Glossary](deliverables-glossary.md) |
 
 ## Traceability
 
@@ -48,6 +51,12 @@
 | **EARS** | A syntax for clear, conditional requirements; keywords stay in English (`WHEN … THE SYSTEM SHALL …`), prose follows `{document_output_language}`. | [D-02 Requirements](deliverables-glossary.md) |
 | **Readiness check (IR)** | The **Phase-2 seam gate** (skill `IR` / hbc-check-implementation-readiness): reconciles D-02 ↔ D-21/D-26/D-27 + the matrix before Phase 3, to catch gaps between design and implementation. | [Skills Catalog (IR)](skills-catalog.md) |
 | **ERD (ER Diagram)** | Entity-Relationship Diagram — describes data tables and the links between them (deliverable D-19). | [D-19 Database Design](deliverables-glossary.md) |
+| **Architecture Design (D-09)** | Architecture/solution design + **ADRs** (decision with rationale); applies when the feature has integration or an algorithm. | [D-09 Architecture](deliverables-glossary.md) |
+| **Behavioral Design (D-16)** | Non-CRUD behavior spec in 4 ID-tagged blocks: **ST** (state-machine), **DR** (decision-rule), **INV** (invariant), **SEQ** (sequence). | [D-16 Behavioral Design](deliverables-glossary.md) |
+| **UX / Screen Design (D-14)** | Screen & experience design (SCR/CMP, states, navigation); optional **Claude Design** tokens (`DESIGN.md`). Applies when the feature has UI. | [D-14 UX/Screen Design](deliverables-glossary.md) |
+| **Model-validation (P1-09)** | A Phase 1 gate item: USER sign-off that the **domain model has been validated** before closing Analysis (greenfield-adaptive) — prevents a wrong model being "PASSED". | [Run a Phase Gate](../how-to/run-a-phase-gate.md) |
+| **discovery_risk (known / uncertain)** | A flag in the D-02 frontmatter (BA classifies, USER confirms): `uncertain` = the model/assumptions are unvalidated → a cheap validation is required before design. | [D-02 Requirements](deliverables-glossary.md) |
+| **Discovery Spike (DSC — discovery-note)** | The `hbc-discovery-spike` skill: for an `uncertain` feature, it validates the riskiest model assumptions against **ground-truth** then issues a verdict **VALIDATED/RESHAPE/KILL** with USER sign-off; stops building the whole stack on a wrong model. Gate **P1-11** requires VALIDATED. | [Run a Phase Gate](../how-to/run-a-phase-gate.md) |
 | **Triage (defects)** | Classifying and prioritizing the defects found, so the important ones are handled first. | [Deliverables Glossary](deliverables-glossary.md) |
 | **Deterministic** | "Gives a fixed result" — automated checks by hard rules (yes/no), not subjective judgment. | [Core Concepts](../explanation/concepts.md) |
 

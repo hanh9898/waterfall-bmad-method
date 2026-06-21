@@ -174,7 +174,7 @@ Agent sẽ hỏi tên tính năng và phỏng vấn bạn về một yêu cầu.
 
 > 🎉 **Bạn đã hoàn thành Quickstart!** Bạn vừa: cài HBC → khởi tạo dự án (`PI`) → xác nhận chạy → tạo D-02 cho tính năng đầu tiên. Đây là một mốc **dừng được** — bạn đã biết cách dùng HBC ở mức cơ bản.
 >
-> ℹ️ **Lưu ý về `PG 1`:** D-02 chưa đủ để qua phase gate Phase 1. Để pass `PG 1` còn cần **D-03 (từ Phase 0, dùng chung)** và **D-06 (BFD — sơ đồ luồng nghiệp vụ, per-feature, bắt buộc)**. Luồng Phase 1 đầy đủ nằm trong [Bắt đầu với HBC](getting-started-hbc.md).
+> ℹ️ **Lưu ý về `PG 1`:** D-02 chưa đủ để qua phase gate Phase 1. Để pass `PG 1` còn cần **D-03 (từ Phase 0, dùng chung)**, **D-06 (BFD — sơ đồ luồng nghiệp vụ, per-feature, bắt buộc)**, và mục **`P1-09` model-validation** (bạn ký xác nhận domain model đã được kiểm chứng). Luồng Phase 1 đầy đủ nằm trong [Bắt đầu với HBC](getting-started-hbc.md).
 
 ## Bước tiếp theo
 

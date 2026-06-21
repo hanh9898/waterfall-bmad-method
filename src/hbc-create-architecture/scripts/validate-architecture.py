@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Validate a D-08 Architecture Design document (structure only).
+"""Validate a D-09 Architecture Design document (structure only).
 
 Checks required sections present + non-empty (English canonical + configured
 document language — NO hardcoded Japanese), at least one REQ reference, and that
@@ -149,8 +149,8 @@ def validate(doc_path: str) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate D-08 Architecture Design document.")
-    parser.add_argument("document", help="Path to D-08 document")
+    parser = argparse.ArgumentParser(description="Validate D-09 Architecture Design document.")
+    parser.add_argument("document", help="Path to D-09 document")
     parser.add_argument("--project-root", required=True, help="Project root directory")
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
@@ -159,7 +159,7 @@ def main():
     if not doc_path.exists():
         print(json.dumps({
             "error": f"Document not found: {args.document}",
-            "suggestion": "Run 'hbc-create-architecture' first to generate D-08.",
+            "suggestion": "Run 'hbc-create-architecture' first to generate D-09.",
         }, indent=2, ensure_ascii=False))
         sys.exit(1)
 

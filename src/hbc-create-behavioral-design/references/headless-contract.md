@@ -1,4 +1,4 @@
-# Headless Contract — hbc-create-behavioral-design (D-17)
+# Headless Contract — hbc-create-behavioral-design (D-16)
 
 `--headless` / `-H` runs every stage non-interactively. Behaviour is derived from
 D-02/D-06/D-19; every inferred element/decision is logged to the decision log.
@@ -16,7 +16,7 @@ D-02/D-06/D-19; every inferred element/decision is logged to the decision log.
   "status": "complete | blocked",
   "skill": "hbc-create-behavioral-design",
   "feature": "<slug>",
-  "document": "<path to D-17>",
+  "document": "<path to D-16>",
   "validation": { "valid": true, "element_count": 0, "issues": [] },
   "semanticReview": { "status": "passed | pending", "openFacets": [] },
   "assumptions": ["<derived behaviour>", "..."]
@@ -26,7 +26,7 @@ D-02/D-06/D-19; every inferred element/decision is logged to the decision log.
 ## Blocked reasons (closed set)
 
 - `feature_required` — no resolvable feature.
-- `not_applicable` — feature has no non-CRUD facet (D-17 is N/A); not an error.
+- `not_applicable` — feature has no non-CRUD facet (D-16 is N/A); not an error.
 - `sources_missing` — no D-02 for the feature and no `--sources`.
 - `template_missing` — `{workflow.template_path}` not found.
 - `validation_failed` — structural issues not all `auto_fixable`.

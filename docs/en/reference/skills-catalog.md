@@ -17,7 +17,7 @@ HBC delivers **incrementally, per-feature** (incremental per-feature delivery): 
 | Code | Skill | Role |
 | --- | --- | --- |
 | `BA` | `hbc-agent-ba` | Phase 1 Analysis coordinator — guides requirements elicitation, glossary creation, business flow mapping. |
-| `ARCH` | `hbc-agent-architect` | Phase 2 Design coordinator — database design, coding standards, API spec. |
+| `ARCH` | `hbc-agent-architect` | Phase 2 Design coordinator — architecture (D-09), database design (D-19), coding standards, API spec, behavioral design (D-16), UX (D-14). |
 | `QA` | `hbc-agent-qa` | Phase 2 Test Design coordinator — test plan and test cases. |
 | `DEV` | `hbc-agent-dev` | Phase 3 Implementation coordinator — task breakdown and TDD. |
 | `TST` | `hbc-agent-tester` | Phase 4 Testing coordinator — test execution, defect triage, acceptance decision. |
@@ -40,21 +40,31 @@ Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.
 | `REQ` | `hbc-create-requirements` | Generate a requirements spec with REQ-<FEAT>-NNN IDs and scope boundaries | D-02 | per-feature | ✅ |
 | `GLO` | `hbc-create-glossary` | Maintains the **shared D-03** (originated in Phase 0) — unified domain terminology from project docs & requirements | D-03 | shared | — |
 | `BFD` | `hbc-create-business-flow-diagram` | AS-IS/TO-BE business flow diagrams (Mermaid) from the PRD | D-06 | per-feature | ✅ |
+| `DSC` | `hbc-discovery-spike` | Cheaply validates the riskiest model assumptions against ground-truth BEFORE design — verdict VALIDATED/RESHAPE/KILL with USER sign-off | discovery-note | per-feature | ◑ |
+
+> ◑ **`DSC` is conditional:** runs only when D-02 has `discovery_risk: uncertain` (an unvalidated model/assumption). When it does, the Phase 1 gate (**P1-11**) requires a **signed-off VALIDATED** discovery-note. `known`/absent → N/A. It's the remediation for the RCA root cause "a model got PASSED before it was validated".
 
 Per-feature output: `_bmad-output/features/<feature>/planning-artifacts/`. Shared output: `_bmad-output/shared/glossary/`.
 
 ## Phase 2 — Design (ARCH) + Test Design (QA)
 
+> **Required** column: ✅ = always required · ◑ = **required by facet** (the applicability-catalog decides per-feature) · `—` = optional.
+
 | Code | Skill | Description | Deliverable | Scope | Required |
 | --- | --- | --- | --- | --- | :---: |
+| `AD` | `hbc-create-architecture` | Architecture / solution design + ADRs (decision with rationale) | D-09 | per-feature | ◑ |
 | `ERD` | `hbc-create-er-diagram` | DB design + ER Diagram (Mermaid) from requirements & architecture | D-19 | dual | ✅ |
 | `CS` | `hbc-create-coding-standards` | Maintains the **shared D-12** (originated in Phase 0) — per-project coding standards, adapted to the framework | D-12 | shared | ✅ |
 | `API` | `hbc-create-api-spec` | API spec — endpoints and request/response schemas | D-21 | dual | — |
+| `BD` | `hbc-create-behavioral-design` | Non-CRUD behavior spec: state-machine (ST), decision-rule (DR), invariant (INV), sequence (SEQ) | D-16 | per-feature | ◑ |
+| `UX` | `hbc-create-ux` | UX/screen design (SCR/CMP); optional Claude Design tokens (`DESIGN.md`) | D-14 | per-feature | ◑ |
 | `TP` | `hbc-create-test-plan` | Test plan — strategy, scope, schedule, entry/exit criteria, risk | D-26 | per-feature | ✅ |
 | `TS` | `hbc-create-test-spec` | Detailed test cases with TC-xxx IDs, steps & expected results | D-27 | per-feature | ✅ |
 | `IR` | `hbc-check-implementation-readiness` | Readiness seam gate — reconcile D-02 ↔ D-21/D-26/D-27 + traceability matrix before closing Phase 2 | readiness-report | per-feature | ✅ |
 
-Dual output (ERD/API): baseline `shared/erd|api/` + optional override `features/<feature>/planning-artifacts/`. Shared output (CS): `shared/coding-standards/`. Per-feature output (TP/TS/IR): `features/<feature>/planning-artifacts/`.
+> ◑ **By facet:** D-09 required if `has-integration`/`has-algorithm`; D-16 required if a non-CRUD facet (state-machine/cross-entity-sync/invariant/algorithm/concurrency); D-14 required if `has-ui`. Otherwise → optional/N-A, does not block the gate. Source: `src/hbc-shared/references/deliverable-catalog.yaml`.
+
+Per-feature output (AD/BD/UX/TP/TS/IR): `features/<feature>/planning-artifacts/`. Dual output (ERD/API): baseline `shared/erd|api/` + optional override `features/<feature>/planning-artifacts/`. Shared output (CS): `shared/coding-standards/`.
 
 ## Phase 3 — Implementation
 
@@ -93,9 +103,9 @@ Output: `_bmad-output/features/<feature>/implementation-artifacts/`.
 
 ```
 PI                                      (once, first — shared D-12/D-03 + baseline D-19/D-21)
-BA → REQ → GLO → BFD → TRI → PG 1   (GLO shared from Phase 0; BFD/D-06 required for Phase 1)
-ARCH → ERD → CS → (API) ┐
-QA   → TP  → TS         ┘ → IR → TRU → PG 2
+BA → REQ → GLO → BFD → (DSC) → TRI → PG 1   (DSC only when discovery_risk=uncertain; GLO shared from Phase 0)
+ARCH → (AD) → ERD → CS → (API) → (BD) → (UX) ┐   (AD/BD/UX/API by facet — skip if N/A)
+QA   → TP   → TS                             ┘ → IR → TRU → PG 2
 DEV  → TB  → IM         → TRU → PG 3
 TST  → TE  → AC         → TRA → PG 4
 ```

@@ -1,13 +1,13 @@
 ---
 name: hbc-create-behavioral-design
-description: Generate D-17 Behavioral Design — state transitions, decision tables, invariants, and sequences for non-CRUD logic. Use when user says 'behavioral design', 'thiết kế hành vi', 'tạo D-17', or agent menu [BD].
+description: Generate D-16 Behavioral Design — state transitions, decision tables, invariants, and sequences for non-CRUD logic. Use when user says 'behavioral design', 'thiết kế hành vi', 'tạo D-16', or agent menu [BD].
 ---
 
-# Create Behavioral Design (D-17)
+# Create Behavioral Design (D-16)
 
 ## Overview
 
-Generate D-17 (Behavioral Design) — the **behaviour/logic** of non-CRUD requirements, captured BEFORE code so the logic isn't decided implicitly while implementing. One D-17 per feature, with a section per complex requirement; each behaviour is expressed in up to four block types, every element carrying a stable id so D-27 test cases and (later) code can reference it:
+Generate D-16 (Behavioral Design) — the **behaviour/logic** of non-CRUD requirements, captured BEFORE code so the logic isn't decided implicitly while implementing. One D-16 per feature, with a section per complex requirement; each behaviour is expressed in up to four block types, every element carrying a stable id so D-27 test cases and (later) code can reference it:
 
 - **State-transition table** (`ST-NN`) — lifecycle/status changes, including illegal transitions.
 - **Decision table** (`DR-NN`) — condition → action business rules.
@@ -25,13 +25,13 @@ Sits in Phase 2 **after D-19, before D-27** — D-27 derives its behavioural tes
 
 ## On Activation
 
-Resolve customization (`resolve_customization.py --skill {skill-root} --key workflow`; fallback hand-merge). Load persistent facts + config. **Resolve feature (B):** `feature=<slug>` → session → ask (headless: required → blocked `feature_required`); validate slug. Written per-feature at `{workflow.output_dir}/D-17-{feature}-behavioral-design.md`.
+Resolve customization (`resolve_customization.py --skill {skill-root} --key workflow`; fallback hand-merge). Load persistent facts + config. **Resolve feature (B):** `feature=<slug>` → session → ask (headless: required → blocked `feature_required`); validate slug. Written per-feature at `{workflow.output_dir}/D-16-{feature}-behavioral-design.md`.
 
 ## Stage 1: Prerequisites
 
 1a. **Source scan.** Read `D-02` (the REQ set + which have non-CRUD facets), `D-06` (flows — paths feed sequences/transitions), and `D-19` (entities/fields the behaviour references — every entity/field named here must exist in D-19).
 
-1b. **Applicability + REQ selection.** Determine which REQs are complex (facet-triggered). **Ask the user** to confirm the set (suggest from facets); if none, say D-17 is N/A and stop.
+1b. **Applicability + REQ selection.** Determine which REQs are complex (facet-triggered). **Ask the user** to confirm the set (suggest from facets); if none, say D-16 is N/A and stop.
 
 1c. **Intent gate.** Behaviour, not data (→ `hbc-create-er-diagram` [ERD]) and not test cases (→ `hbc-create-test-spec` [TS]).
 
@@ -48,12 +48,12 @@ Every element references the entities/fields it touches (must exist in D-19). So
 
 ## Stage 3: Generation
 
-Populate `{workflow.template_path}` → `{workflow.output_dir}/D-17-{feature}-behavioral-design.md`. Ensure: a section per complex REQ; every element has a unique id (`ST-/DR-/INV-/SEQ-NN`); every section names its `REQ-<FEAT>-NNN`; no empty sections. Element ids are stable across updates (D-27 references them — don't renumber on edit; append).
+Populate `{workflow.template_path}` → `{workflow.output_dir}/D-16-{feature}-behavioral-design.md`. Ensure: a section per complex REQ; every element has a unique id (`ST-/DR-/INV-/SEQ-NN`); every section names its `REQ-<FEAT>-NNN`; no empty sections. Element ids are stable across updates (D-27 references them — don't renumber on edit; append).
 
 ## Stage 4: Validation
 
 ```
-python3 {workflow.validation_script} "{workflow.output_dir}/D-17-{feature}-behavioral-design.md" --project-root {project-root}
+python3 {workflow.validation_script} "{workflow.output_dir}/D-16-{feature}-behavioral-design.md" --project-root {project-root}
 ```
 
 Structural checks: Overview + Revision History present + non-empty; ≥1 behavioural element; element ids well-formed + unique; ≥1 REQ reference. Returns JSON with `auto_fixable`. Fix loop / headless apply+block.

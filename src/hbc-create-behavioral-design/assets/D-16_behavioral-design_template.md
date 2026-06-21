@@ -1,6 +1,6 @@
 <!-- {project_name}: filled by LLM from project context at generation time. -->
 ---
-document_id: D-17
+document_id: D-16
 feature: "{feature}"
 title: "{project_name} — Behavioral Design — feature: {feature}"
 version: "1.0"

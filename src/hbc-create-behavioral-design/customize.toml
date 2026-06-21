@@ -17,16 +17,16 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# D-17 template path. Override to use a custom template.
-template_path = "assets/D-17_behavioral-design_template.md"
+# D-16 template path. Override to use a custom template.
+template_path = "assets/D-16_behavioral-design_template.md"
 
-# D-17 Behavioral Design is PER-FEATURE (Phase 2).
+# D-16 Behavioral Design is PER-FEATURE (Phase 2).
 output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-behavioral-design.py"
 
-# Shell command to run after D-17 is saved. Empty = no hook.
+# Shell command to run after D-16 is saved. Empty = no hook.
 on_complete = ""
 
 # hbc-traceability impact integration (BR-13). Default false.

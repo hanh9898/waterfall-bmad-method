@@ -11,7 +11,7 @@ SCRIPT = str(Path(__file__).resolve().parent.parent / "validate-behavioral-desig
 
 VALID_DOC = """\
 ---
-document_id: D-17
+document_id: D-16
 feature: "demo"
 version: "1.0"
 status: draft
@@ -62,7 +62,7 @@ REQ-DEMO-001 là một state-machine (has-state-machine); REQ-DEMO-002 có invar
 
 def run_script(doc_content: str) -> tuple[dict, int]:
     with tempfile.TemporaryDirectory() as tmpdir:
-        doc_path = Path(tmpdir) / "D-17-demo-behavioral-design.md"
+        doc_path = Path(tmpdir) / "D-16-demo-behavioral-design.md"
         doc_path.write_text(doc_content, encoding="utf-8")
         cmd = [sys.executable, SCRIPT, str(doc_path), "--project-root", tmpdir]
         result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
@@ -120,7 +120,7 @@ def test_vietnamese_sections():
 
 
 def test_missing_document():
-    cmd = [sys.executable, SCRIPT, "/nonexistent/D-17.md", "--project-root", "/tmp"]
+    cmd = [sys.executable, SCRIPT, "/nonexistent/D-16.md", "--project-root", "/tmp"]
     result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     assert result.returncode == 1
     assert "error" in json.loads(result.stdout)

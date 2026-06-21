@@ -17,6 +17,12 @@ project_kind: "greenfield"   # set to "brownfield" when grounded against an exis
 # trigger (has-state-machine/has-cross-entity-sync/has-invariant/has-algorithm/
 # has-concurrency/has-integration/has-ui/has-migration).
 #   facets: ["has-state-machine", "has-ui"]
+# discovery_risk — OPTIONAL: known | uncertain (default known). `uncertain` = the
+# domain model / key assumptions are unproven. When `uncertain`, the Phase 1 gate
+# (item P1-11) REQUIRES a signed-off discovery-note with verdict VALIDATED before
+# closing Analysis — run [DSC] hbc-discovery-spike. `known`/absent → N/A. See IMP-09
+# in process-review/hbc-improvement-spec-2026-06-21.md.
+#   discovery_risk: uncertain
 status: draft
 stepsCompleted: []
 lastStep: ""

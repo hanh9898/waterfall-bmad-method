@@ -44,6 +44,8 @@ For example with `feature=auth`, the Phase 2 gate writes to `_bmad-output/featur
 
 ### Phase-specific conditions
 
+- The **Phase 1 gate** has a **`P1-09` — model-validation** item: the USER **signs off** that the domain model (entities, states, rules) has been validated before closing Analysis. This item is **greenfield-adaptive** (with no code yet to reconcile against, confirm on assumptions/PRD). Its purpose: stop a "wrong model that still got PASSED" error from leaking down into design.
+- The **Phase 1 gate** also has a **`P1-11`** item (only when D-02 sets `discovery_risk: uncertain`): it requires a **discovery-note** with verdict **VALIDATED** + signed off (run `DSC` / `hbc-discovery-spike`). RESHAPE/KILL — or missing/unsigned — means the model is **not ready** → **FAIL** until it is re-spiked to VALIDATED. `known`/absent → N/A. For an uncertain feature, this is the *path* that validates P1-09 (not a bare attestation).
 - The **Phase 2 gate** additionally requires **`IR` (readiness check)** to have PASSED — `IR` reconciles D-02 ↔ D-21/D-26/D-27 and the traceability matrix before allowing advance to Phase 3.
 - The **Phase 3 gate** checks for **RED evidence** — a recorded failing test must exist *before* code was written (test-first, per soft TDD).
 

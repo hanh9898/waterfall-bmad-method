@@ -16,7 +16,7 @@ schema_version: "1.0"
 
 # --- Entry schema (each deliverable entry carries these fields) ---
 entry_schema:
-  id:                    "Deliverable id, e.g. D-08"
+  id:                    "Deliverable id, e.g. D-09"
   name:                  "Human name"
   scope:                 "shared | per-feature | dual"
   phase:                 "0 | 1 | 2 | 3 | 4"
@@ -62,9 +62,9 @@ deliverables:
   - { id: D-06, name: "Business Flow",       scope: per-feature, phase: 1, owner_skill: hbc-create-business-flow-diagram, default_applicability: required, applicability_rule: "always", reconcile_seam: null,                  ground_truth: "code-behavior", v_pair: "acceptance" }
 
   # Phase 2 (per-feature design)
-  - { id: D-08, name: "Architecture Design", scope: per-feature, phase: 2, owner_skill: hbc-create-architecture,         default_applicability: optional, applicability_rule: "required if has-integration or has-algorithm else optional", reconcile_seam: "architecture-vs-code", ground_truth: "code",   v_pair: "integration-test" }
+  - { id: D-09, name: "Architecture Design", scope: per-feature, phase: 2, owner_skill: hbc-create-architecture,         default_applicability: optional, applicability_rule: "required if has-integration or has-algorithm else optional", reconcile_seam: "architecture-vs-code", ground_truth: "code",   v_pair: "integration-test" }
   - { id: D-19, name: "ER / Data Design",    scope: dual,        phase: 2, owner_skill: hbc-create-er-diagram,           default_applicability: optional, applicability_rule: "required if data-model-change else n-a", reconcile_seam: "design-vs-db", ground_truth: "code-db", v_pair: "integration-test" }
-  - { id: D-17, name: "Behavioral Design",   scope: per-feature, phase: 2, owner_skill: hbc-create-behavioral-design,    default_applicability: optional, applicability_rule: "required if behavioral_design_trigger else n-a", reconcile_seam: "behavioral-vs-code", ground_truth: "code", v_pair: "unit-test" }
+  - { id: D-16, name: "Behavioral Design",   scope: per-feature, phase: 2, owner_skill: hbc-create-behavioral-design,    default_applicability: optional, applicability_rule: "required if behavioral_design_trigger else n-a", reconcile_seam: "behavioral-vs-code", ground_truth: "code", v_pair: "unit-test" }
   - { id: D-14, name: "UX / Screen Design",  scope: per-feature, phase: 2, owner_skill: hbc-create-ux,                   default_applicability: optional, applicability_rule: "required if has-ui else n-a", reconcile_seam: "ui-vs-mockup", ground_truth: "code-ui", v_pair: "e2e-test" }
   - { id: D-21, name: "API Spec",            scope: dual,        phase: 2, owner_skill: hbc-create-api-spec,             default_applicability: optional, applicability_rule: "required if exposes-api else n-a", reconcile_seam: "api-vs-code", ground_truth: "code", v_pair: "integration-test" }
   - { id: D-26, name: "Test Plan",           scope: per-feature, phase: 2, owner_skill: hbc-create-test-plan,            default_applicability: required, applicability_rule: "always", reconcile_seam: null,                   ground_truth: null,            v_pair: null }

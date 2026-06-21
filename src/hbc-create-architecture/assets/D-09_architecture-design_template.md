@@ -1,6 +1,6 @@
 <!-- {project_name}: filled by LLM from project context at generation time. -->
 ---
-document_id: D-08
+document_id: D-09
 feature: "{feature}"
 title: "{project_name} — Architecture Design — feature: {feature}"
 version: "1.0"

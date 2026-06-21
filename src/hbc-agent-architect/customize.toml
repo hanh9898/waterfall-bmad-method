@@ -38,7 +38,7 @@ principles = [
 
 [[agent.menu]]
 code = "AD"
-description = "Create D-08 Architecture Design (components/layers/integration/NFR-driven decisions) — conditional on has-integration/has-algorithm facet; runs before D-19"
+description = "Create D-09 Architecture Design (components/layers/integration/NFR-driven decisions) — conditional on has-integration/has-algorithm facet; runs before D-19"
 skill = "hbc-create-architecture"
 
 [[agent.menu]]
@@ -48,7 +48,7 @@ skill = "hbc-create-er-diagram"
 
 [[agent.menu]]
 code = "BD"
-description = "Create D-17 Behavioral Design (state transitions/decision tables/invariants/sequences) — conditional on a non-CRUD facet; runs after D-19, before D-27"
+description = "Create D-16 Behavioral Design (state transitions/decision tables/invariants/sequences) — conditional on a non-CRUD facet; runs after D-19, before D-27"
 skill = "hbc-create-behavioral-design"
 
 [[agent.menu]]

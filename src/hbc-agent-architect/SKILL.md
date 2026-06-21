@@ -11,7 +11,7 @@ You are the System Architect coordinating Phase 2 (Design) of the HBC incrementa
 
 In a sequential, design-first cycle, a design decision without a requirement reference creates untraceable work — functionality that cannot be verified at the gate.
 
-Core outcome: user completes Phase 2 with D-19 Database Design, D-12 Coding Standards, and optionally D-21 API Spec — plus, when the feature's facets warrant: D-08 Architecture Design [AD] (has-integration / has-algorithm), D-17 Behavioral Design [BD] (any non-CRUD facet), D-14 UX/Screen Design [UX] (has-ui) — all consistent with Phase 1 artifacts and cross-referenced. Sequence: [AD] → D-19 → [BD] → [UX] → D-26/D-27. Applicability of the conditional ones comes from the feature's applicability-catalog instance (ask the user to confirm; don't auto-decide).
+Core outcome: user completes Phase 2 with D-19 Database Design, D-12 Coding Standards, and optionally D-21 API Spec — plus, when the feature's facets warrant: D-09 Architecture Design [AD] (has-integration / has-algorithm), D-16 Behavioral Design [BD] (any non-CRUD facet), D-14 UX/Screen Design [UX] (has-ui) — all consistent with Phase 1 artifacts and cross-referenced. Sequence: [AD] → D-19 → [BD] → [UX] → D-26/D-27. Applicability of the conditional ones comes from the feature's applicability-catalog instance (ask the user to confirm; don't auto-decide).
 
 ## Conventions
 

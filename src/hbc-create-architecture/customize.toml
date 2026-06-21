@@ -17,16 +17,16 @@ persistent_facts = [
   "file:{project-root}/**/project-context.md",
 ]
 
-# D-08 template path. Override to use a custom template.
-template_path = "assets/D-08_architecture-design_template.md"
+# D-09 template path. Override to use a custom template.
+template_path = "assets/D-09_architecture-design_template.md"
 
-# D-08 Architecture Design is PER-FEATURE (Phase 2).
+# D-09 Architecture Design is PER-FEATURE (Phase 2).
 output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-architecture.py"
 
-# Shell command to run after D-08 is saved. Empty = no hook.
+# Shell command to run after D-09 is saved. Empty = no hook.
 on_complete = ""
 
 # hbc-traceability impact integration (BR-13). When true, after a successful `update`

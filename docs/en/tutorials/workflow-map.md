@@ -32,12 +32,16 @@ flowchart TD
         REQ["REQ → D-02 Requirements ⭐ (per-feature)"]
         GLO["GLO → D-03 Glossary (shared)"]
         BFD["BFD → D-06 Business Flow (per-feature)"]
+        DSC["DSC → Discovery Note ◑ (if discovery_risk=uncertain)"]
     end
 
     subgraph P2["Phase 2 · Design + Test Design 👤 ARCH + QA"]
+        AD["AD → D-09 Architecture ◑ (by facet)"]
         ERD["ERD → D-19 ER Diagram ⭐ (dual)"]
         CS["CS → D-12 Coding Standards ⭐ (shared)"]
         API["API → D-21 API Spec (dual)"]
+        BD["BD → D-16 Behavioral Design ◑ (by facet)"]
+        UX["UX → D-14 UX/Screen ◑ (by facet)"]
         TP["TP → D-26 Test Plan ⭐ (per-feature)"]
         TS["TS → D-27 Test Spec ⭐ (per-feature)"]
         IR["IR → Readiness Gate ✅ (per-feature)"]
@@ -60,7 +64,7 @@ flowchart TD
     SHIP -.->|next feature| LOOP
 ```
 
-> ⭐ = **required** deliverable at the gate. The rest are optional, used as needed.
+> ⭐ = **required** deliverable at the gate. ◑ = **required by facet** (the applicability-catalog decides per-feature: D-09 if integration/algorithm; D-16 if non-CRUD complex; D-14 if UI). The rest are optional, used as needed.
 > Each `PG <n> ✅` arrow is a **Phase Gate** carrying `feature=` — must pass before the next phase.
 > `IR` (readiness gate) is the **Phase 2 → 3 seam**: it reconciles D-02 ↔ D-21/D-26/D-27 + matrix before code starts.
 
@@ -84,7 +88,7 @@ The new layout replaces the old flat `planning-artifacts` directory:
 
 | Scope | Deliverables | Where |
 | --- | --- | --- |
-| **Per-feature** | D-02, D-06, D-26, D-27 | `features/<feature>/planning-artifacts/` |
+| **Per-feature** | D-02, D-06, D-26, D-27 + (by facet) D-09, D-14, D-16 | `features/<feature>/planning-artifacts/` |
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `shared/glossary/`, `shared/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | baseline `shared/erd|api/` + optional per-feature override at `features/<feature>/planning-artifacts/` — **path-existence precedence** (override wins if it exists) |
 
@@ -125,9 +129,13 @@ Coverage counts `design_ref` / `code_ref` / `test_ref`. The matrix is **per-feat
 | **1 · Analysis** | `BA` | `REQ` | D-02 Requirements Specification | per-feature | ✅ |
 | | | `GLO` | D-03 Glossary | shared | — |
 | | | `BFD` | D-06 Business Flow Diagram | per-feature | — |
-| **2 · Design** | `ARCH` | `ERD` | D-19 Database Design / ER Diagram | dual | ✅ |
+| | | `DSC` | Discovery Note (model validation; gate P1-11) | per-feature | ◑ if uncertain |
+| **2 · Design** | `ARCH` | `AD` | D-09 Architecture Design | per-feature | ◑ by facet |
+| | | `ERD` | D-19 Database Design / ER Diagram | dual | ✅ |
 | | | `CS` | D-12 Coding Standards | shared | ✅ |
 | | | `API` | D-21 API Specification | dual | — |
+| | | `BD` | D-16 Behavioral Design | per-feature | ◑ by facet |
+| | | `UX` | D-14 UX / Screen Design | per-feature | ◑ by facet |
 | **2 · Test Design** | `QA` | `TP` | D-26 Test Plan | per-feature | ✅ |
 | | | `TS` | D-27 Test Specification | per-feature | ✅ |
 | | | `IR` | Readiness gate (reconcile D-02 ↔ D-21/D-26/D-27 + matrix) | per-feature | ✅ |

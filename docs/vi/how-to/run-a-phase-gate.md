@@ -44,6 +44,8 @@ Ví dụ với `feature=auth`, gate Phase 2 ghi vào `_bmad-output/features/auth
 
 ### Điều kiện riêng theo phase
 
+- **Gate Phase 1** có mục **`P1-09` — model-validation**: USER **ký xác nhận** domain model (thực thể, trạng thái, luật) đã được kiểm chứng trước khi đóng Analysis. Mục này **tự điều chỉnh cho greenfield** (chưa có code để đối chiếu thì xác nhận trên giả định/PRD). Mục đích: chặn lỗi "model sai nhưng vẫn được PASSED" trôi xuống thiết kế.
+- **Gate Phase 1** còn có mục **`P1-11`** (chỉ khi D-02 đặt `discovery_risk: uncertain`): phải có **discovery-note** verdict **VALIDATED** + đã ký (chạy `DSC` / `hbc-discovery-spike`). RESHAPE/KILL — hoặc thiếu/chưa ký — nghĩa là model **chưa sẵn** → **FAIL** tới khi spike lại đạt VALIDATED. `known`/vắng → N/A. Với feature uncertain, đây là *đường* kiểm chứng cho P1-09 (không nhận chữ ký chay).
 - **Gate Phase 2** còn yêu cầu **`IR` (kiểm tra sẵn sàng / readiness check)** đã PASSED — `IR` đối soát D-02 ↔ D-21/D-26/D-27 và ma trận truy vết trước khi cho sang Phase 3.
 - **Gate Phase 3** kiểm tra **bằng chứng RED (RED evidence)** — phải có bằng chứng test thất bại được ghi lại *trước khi* viết code (test-first, theo TDD mềm).
 

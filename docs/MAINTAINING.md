@@ -76,9 +76,17 @@ Scope of each deliverable:
 
 | Scope | Deliverables | Location |
 | --- | --- | --- |
-| **Per-feature** | D-02, D-06, D-26, D-27 | `features/<feature>/planning-artifacts/` |
+| **Per-feature** | D-02, D-06, D-26, D-27 + (by facet) D-09, D-14, D-16 | `features/<feature>/planning-artifacts/` |
 | **Shared** | D-03 (glossary), D-12 (coding-standards) | `shared/glossary/`, `shared/coding-standards/` |
 | **Dual** | D-19 (erd), D-21 (api) | shared baseline `shared/erd\|api/` + optional per-feature override — **path-existence precedence** (override wins if it exists) |
+
+**Applicability by facet (applicability-catalog).** `src/hbc-shared/references/deliverable-catalog.yaml`
+is the canonical source for which deliverables HBC defines and their per-feature
+required/optional/N-A resolution. D-09 (Architecture, `AD`) is required if `has-integration`/`has-algorithm`;
+D-16 (Behavioral Design, `BD`) if any non-CRUD facet (state-machine/cross-entity-sync/invariant/algorithm/concurrency);
+D-14 (UX/Screen, `UX`) if `has-ui`. A minimal feature only requires D-02 + D-06. **Maturity**
+(`exploratory`/`stable`) is a separate modifier that may downgrade some required→optional but never the
+correctness floor. D-01 (Feature Overview) is **folded into the D-02 header** (no longer a separate doc).
 
 Implementation artifacts (task-breakdown, code, test-execution-report, acceptance-report)
 → `features/<feature>/implementation-artifacts/`. Gates → `features/<feature>/gates/`.
@@ -113,16 +121,23 @@ Five coordinator agents: `BA` (P1), `ARCH` (P2 Design), `QA` (P2 Test Design),
 | Phase | Codes |
 | --- | --- |
 | **0 · Project Init** | `PI` (hbc-project-init) — shared D-12/D-03 + baseline D-19/D-21, run once |
-| **1 · Analysis** | `REQ` D-02 (per-feature, required) · `GLO` D-03 (shared) · `BFD` D-06 (per-feature) |
-| **2 · Design** | `ERD` D-19 (dual, required) · `CS` D-12 (shared, required) · `API` D-21 (dual) |
+| **1 · Analysis** | `REQ` D-02 (per-feature, required) · `GLO` D-03 (shared) · `BFD` D-06 (per-feature) · `DSC` discovery-note (per-feature, conditional: `discovery_risk=uncertain`) |
+| **2 · Design** | `AD` D-09 (per-feature, by facet) · `ERD` D-19 (dual, required) · `CS` D-12 (shared, required) · `API` D-21 (dual) · `BD` D-16 (per-feature, by facet) · `UX` D-14 (per-feature, by facet) |
 | **2 · Test Design** | `TP` D-26 (per-feature, required) · `TS` D-27 (per-feature, required) · `IR` readiness gate (per-feature, required) |
 | **3 · Implementation** | `TB` task-breakdown (per-feature, required) · `IM` implement TDD/RED (per-feature, required) |
 | **4 · Testing** | `TE` test-execution (per-feature, required) · `AC` acceptance (per-feature, required) |
 | **Cross-cutting** | `PG` phase-gate (per-feature, `feature=`) · `TRI/TRU/TRR/TRA` traceability (8-col) · `SYNC` cascade sync |
 
 New since the first doc pass: **`PI`**, **`IR`** (hbc-check-implementation-readiness — the
-Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + matrix), and **`SYNC`**. Required
-for gates: D-02, D-03, D-06, D-12, D-19, D-26, D-27 (D-03 comes from Phase 0). Optional: D-21.
+Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + matrix), and **`SYNC`**. Added in the
+trục-B framework pass: **`AD`** (hbc-create-architecture, D-09), **`BD`** (hbc-create-behavioral-design,
+D-16), **`UX`** (hbc-create-ux, D-14) — all per-feature, applicability resolved by the
+applicability-catalog. Required for gates: D-02, D-03, D-06, D-12, D-19, D-26, D-27 (D-03 comes from
+Phase 0). Optional: D-21. By facet: D-09, D-14, D-16. The **Phase 1 gate** adds item **P1-09**
+(model-validation — USER sign-off, greenfield-adaptive) and **P1-11** (uncertain feature:
+a signed-off VALIDATED discovery-note is required; conditional on `discovery_risk=uncertain`).
+Added in the IMP-09/IMP-10 pass: **`DSC`** (hbc-discovery-spike, discovery-note) + the
+`discovery_risk` D-02 frontmatter field.
 
 ### 2.6 Headless
 

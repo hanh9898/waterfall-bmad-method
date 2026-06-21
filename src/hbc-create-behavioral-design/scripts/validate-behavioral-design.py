@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""Validate a D-17 Behavioral Design document (structure only).
+"""Validate a D-16 Behavioral Design document (structure only).
 
 Checks required sections (English canonical + configured document language — NO
 hardcoded Japanese), at least one behavioural element with a well-formed id
@@ -133,8 +133,8 @@ def validate(doc_path: str) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate D-17 Behavioral Design document.")
-    parser.add_argument("document", help="Path to D-17 document")
+    parser = argparse.ArgumentParser(description="Validate D-16 Behavioral Design document.")
+    parser.add_argument("document", help="Path to D-16 document")
     parser.add_argument("--project-root", required=True, help="Project root directory")
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
     args = parser.parse_args()
@@ -143,7 +143,7 @@ def main():
     if not doc_path.exists():
         print(json.dumps({
             "error": f"Document not found: {args.document}",
-            "suggestion": "Run 'hbc-create-behavioral-design' first to generate D-17.",
+            "suggestion": "Run 'hbc-create-behavioral-design' first to generate D-16.",
         }, indent=2, ensure_ascii=False))
         sys.exit(1)
 

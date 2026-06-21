@@ -1,4 +1,4 @@
-# Headless Contract — hbc-create-architecture (D-08)
+# Headless Contract — hbc-create-architecture (D-09)
 
 `--headless` / `-H` runs every stage non-interactively. No user prompts: domain
 decisions are derived from sources (D-02, D-06, integration-map) and every
@@ -17,7 +17,7 @@ inferred decision is logged to the decision log.
   "status": "complete | blocked",
   "skill": "hbc-create-architecture",
   "feature": "<slug>",
-  "document": "<path to D-08>",
+  "document": "<path to D-09>",
   "validation": { "valid": true, "issues": [] },
   "semanticReview": { "status": "passed | pending", "openFacets": [] },
   "assumptions": ["<derived decision>", "..."]
