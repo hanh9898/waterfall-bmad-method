@@ -298,6 +298,6 @@ Finalize `{primary}`. Set `stepsCompleted` to the full list (`stage-1..5`), `las
 
 Downstream consumers: `hbc-create-coding-standards`, `hbc-create-api-spec`, `hbc-task-breakdown`.
 
-Check `{workflow.on_complete_distillate}`: if `"always"`, invoke `bmad-distillator` against the primary (headless and interactive). If `"offer"` (default), offer interactively; headless skips. If `"never"`, skip entirely. Skip with a note if distillator is unavailable; never inline a substitute.
+Check `{workflow.on_complete_distillate}`: if `"always"`, invoke `bmad-spec` against the primary (headless and interactive). If `"offer"` (default), offer interactively; headless skips. If `"never"`, skip entirely. Skip with a note if `bmad-spec` is unavailable; never inline a substitute.
 
 **Headless mode:** emit the JSON return contract per [`headless-contract.md`](headless-contract.md), substituting every placeholder with its resolved value before emission.

@@ -277,7 +277,7 @@ Finalize `{primary}`. Set `stepsCompleted` to the full list (`stage-1..5`), `las
 
 Workflow successor (next step): run the Phase 1 gate (`hbc-phase-gate` [PG]) — D-06 is the last Phase 1 artifact before the gate. Data consumers (later, in Phase 2): `hbc-create-er-diagram` (D-19) and `hbc-create-test-plan` (D-26) read this flow.
 
-If the flow will feed downstream LLM consumers, offer to invoke `bmad-distillator` against the primary to produce a token-efficient distillate. Skip with a note if distillator is unavailable; never inline a substitute.
+If the flow will feed downstream LLM consumers, offer to invoke `bmad-spec` against the primary to produce a token-efficient distillate. Skip with a note if `bmad-spec` is unavailable; never inline a substitute.
 
 **Headless mode:** emit the JSON return contract per [`headless-contract.md`](headless-contract.md), substituting every placeholder with its resolved value before emission.
 

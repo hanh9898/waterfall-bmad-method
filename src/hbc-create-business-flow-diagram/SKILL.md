@@ -83,7 +83,7 @@ Before saving, run the semantic review per the shared rubric (`.claude/skills/hb
 
 ### 5. Save and Handoff
 
-Finalize `{primary}` (`stepsCompleted = stage-1..5`, `lastStep = complete`, `updated` = today, `semanticReview` from 4b). Append closing session block to `.decision-log.md`. Successor: Phase 1 gate `hbc-phase-gate` [PG]; later Phase 2 consumers `hbc-create-er-diagram` (D-19), `hbc-create-test-plan` (D-26). Offer `bmad-distillator`. Headless: emit the JSON return contract. Detail: stage-guide § Stage 5.
+Finalize `{primary}` (`stepsCompleted = stage-1..5`, `lastStep = complete`, `updated` = today, `semanticReview` from 4b). Append closing session block to `.decision-log.md`. Successor: Phase 1 gate `hbc-phase-gate` [PG]; later Phase 2 consumers `hbc-create-er-diagram` (D-19), `hbc-create-test-plan` (D-26). Offer `bmad-spec`. Headless: emit the JSON return contract. Detail: stage-guide § Stage 5.
 
 ## On Complete
 
