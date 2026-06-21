@@ -3,7 +3,7 @@ title: "HBC Improvement Spec — chia phase / chia công việc / phân role (t�
 status: draft (chờ triển khai)
 date: 2026-06-21
 author: Hanhnt2 (qua bmad-technical-research → spec)
-source_research: _bmad-output/planning-artifacts/research/technical-hbc-phase-workbreakdown-role-research-2026-06-21.md
+source_research: process-review/technical-hbc-phase-workbreakdown-role-research-2026-06-21.md
 related:
   - process-review/hbc-buildgraph-redesign-2026-06-21.md   # mô hình 3 trục (A=máy, B=khung, C=elicitation)
   - process-review/hbc-trucb-build-plan-2026-06-21.md       # trục B đã build (D-09/D-16/D-14 + catalog + folds)
