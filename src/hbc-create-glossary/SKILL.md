@@ -7,11 +7,11 @@ description: "Generate D-03 Glossary with domain terms and definitions. Use when
 
 ## Overview
 
-Generate D-03 (Glossary) — a living reference of domain terms, abbreviations, and project-specific definitions. Terms extracted from existing artifacts (D-02, project-context.md, interview notes) and user input. The glossary ensures consistent terminology across all downstream documents.
+Generate D-03 (Glossary) — the project's **ubiquitous language** (DDD): domain terms, abbreviations, and project-specific definitions that bridge business vocabulary and the real model names in code. Terms extracted from existing artifacts (D-02, D-06, D-19, project-context.md, code) and user input. The glossary keeps terminology consistent across every downstream document.
 
-Four-stage workflow: Prerequisites → Discovery → Generation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation script.
+Workflow: Prerequisites → Discovery → Generation → Ubiquitous-language reconcile → Semantic review → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for the scripts.
 
-**Args:** `create` (default), `update` (add terms to existing D-03), `validate` (check existing D-03). Optional: `--headless` / `-H`.
+**Args:** `create` (default), `update` (add terms to existing D-03), `validate` (check existing D-03). Optional: `--headless` / `-H` with `--strict` or `--assumptions-allowed` (see Autonomy).
 
 ## Conventions
 
@@ -20,9 +20,17 @@ Four-stage workflow: Prerequisites → Discovery → Generation → Save. Suppor
 - `{project-root}`-prefixed paths resolve from the project working directory.
 - `{skill-name}` resolves to the skill directory's basename.
 
+## Autonomy (A5)
+
+Separate **mechanical** decisions from **domain** decisions. Mechanical — sort terms, dedup, table formatting, which section a row belongs to — decide and proceed. Domain — the *meaning* of a term, a definition not grounded in any source, whether an orphan term should be dropped, how to resolve a duplicate-definition conflict — **ASK; never invent a default**.
+
+Headless resolves domain decisions two ways:
+- `--strict` — stop at the first unresolved domain decision and return `blocked` with the question.
+- `--assumptions-allowed` (default in CI) — take the most defensible option, log it to the decision log as an `ASSUMPTION`, and continue. Never block on the first question.
+
 ## Headless Mode
 
-When `--headless`: all stages run non-interactively. Source documents are required via `--sources` arg. Returns JSON per `references/headless-contract.md`.
+When `--headless`: all stages run non-interactively. Source documents are required via `--sources` arg. Domain decisions follow the Autonomy mode above. Returns JSON per `references/headless-contract.md`.
 
 ## On Activation
 
@@ -42,7 +50,7 @@ python3 {workflow.scan_script} --project-root {project-root} --project-knowledge
 
 Headless: forward `--sources` arg if provided: `python3 {workflow.scan_script} --project-root {project-root} --sources "{sources}"`. (`--sources` skips ALL auto-discovery, including project-knowledge, for back-compat.)
 
-**Brownfield ingest (#7).** `--project-knowledge {project_knowledge}` points at the `bmad-document-project` output dir (typically `{project-root}/docs`). When present, the scan also ingests its domain docs (`index.md` + project docs) as additional glossary sources — `source_docs`/`raw_candidates` will include terms extracted from the **real documented domain**, so D-03 reflects the actual codebase vocabulary, not just project-context.md. Greenfield (dir absent) is a no-op.
+**Brownfield ingest (#7).** `--project-knowledge {project_knowledge}` points at the `bmad-document-project` output (typically `{project-root}/docs`); when present its domain docs are ingested as extra sources so D-03 reflects the **real documented vocabulary**, not just project-context.md. Greenfield (dir absent) is a no-op.
 
 Returns JSON with `state` (fresh/resume/update), `existing_d03`, `source_docs` (D-02, project-context, project-knowledge domain docs, etc.), and `raw_candidates` (each with `term` and `method`: quoted/abbreviation). Candidates are raw structural extractions — filter for domain relevance using LLM judgment in Stage 2. Use `state` to route:
    - **Fresh** — no prior D-03. Proceed to Stage 2.
@@ -54,6 +62,8 @@ After routing: initialize `.decision-log.md` as a peer of `{workflow.glossary_ou
 ## Stage 2: Discovery
 
 Open with an invitation for the user to share domain-specific terms, abbreviations, and jargon they consider essential for this project. Then filter `raw_candidates` from scan for domain relevance — discard common abbreviations (API, SQL, HTML, etc.) and generic terms. Present filtered candidates for confirmation: _"Here's what we also found in your documents — confirm, modify, or discard."_ If `candidate_count == 0` and `source_count > 0`, note that auto-extraction found no marked terms. Capture term, project-specific definition (not generic dictionary definitions), and optional category (e.g., business, technical) for each.
+
+**Ground every definition (B11-1).** A definition must come from a real source — the term's usage in D-02/D-06/D-19, project-context, or code — not a generic dictionary gloss. Note where each definition came from. When no source defines a term and you must **infer** it, do not write it silently: present the inferred definition and **ask the user to confirm or correct it before it goes in** (ASK-before-generate, a domain decision).
 
 At each batch of terms, soft-gate: _"Any more terms, or shall we finalize?"_
 
@@ -77,17 +87,27 @@ python3 {workflow.validation_script} {workflow.glossary_output_path} --project-r
 
 Script checks: no duplicate terms, no empty definitions, minimum term count > 0. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable, fall back to LLM-only validation.
 
-**LLM judgment checks:**
-- Definitions are unambiguous and project-specific.
-- No contradictions between term definitions.
-- Key domain concepts from D-02 are represented.
-- If no abbreviations were collected, add a single row "N/A" to the abbreviations table or omit the section entirely. Do not leave an empty table.
+**LLM judgment checks:** definition quality and cross-doc concept coverage are reviewed in Stage 3b (semantic). Here, only: if no abbreviations were collected, add a single "N/A" row to the abbreviations table or omit the section — never leave an empty table.
 
 **Fix logic:** Interactive — collaborative fix loop. Headless — apply auto-fixable, return `blocked` for non-fixable.
 
 **Compaction flush:** Write term count and validation summary to decision log.
 
-**Parallel-lens menu:** `[A]` Advanced (challenge definitions, find missing D-02 terms) / `[P]` Multi-lens (terminology specialist, domain expert, end user perspectives) / `[C]` Continue. If subagents unavailable, apply lens perspectives directly. Headless: skip to Stage 4.
+**Parallel-lens menu:** `[A]` Advanced (challenge definitions, find missing D-02 terms) / `[P]` Multi-lens (terminology specialist, domain expert, end user perspectives) / `[C]` Continue. If subagents unavailable, apply lens perspectives directly. Headless: skip to Stage 3a.
+
+## Stage 3a: Ubiquitous-language reconcile (B11-2 / B11-3)
+
+Reconcile the glossary against design and code so it speaks the system's names — advisory, not a hard gate (the blocking cross-doc gate is `hbc-check-implementation-readiness` [IR]). If the script/Python is unavailable, skip the reconcile and proceed. Pass whichever inputs exist:
+
+```
+python3 {workflow.consistency_script} {workflow.glossary_output_path} --project-root {project-root} [--design <D-19 path>] [--code-dir <model source dir>] [--sources "<D-02,D-06,…>"]
+```
+
+Resolve `--design` (D-19) and `--code-dir` (model source) from Stage 1b / config. It returns:
+- **`missing_from_glossary` (B11-3)** — D-19 / code model names the glossary does not reflect, the DDD gap. For each, propose adding the term *with its physical name* or recording why it is out of scope. **Do not auto-add** — confirm the business meaning with the user (domain decision).
+- **`orphan_terms` (B11-2)** — glossary terms used in none of the `--sources` business docs. Surface each: keep with rationale, or drop.
+
+The reverse direction (a prose term the glossary lacks) stays an LLM judgment over the Stage 1b candidates — the script does not decide what counts as a domain term. Headless: include both lists in the return; `--strict` blocks if either is non-empty, `--assumptions-allowed` logs them and continues.
 
 ## Validate Mode
 
@@ -97,9 +117,11 @@ When invoked with `validate` arg: run Stage 1b scan to locate existing D-03, the
 
 When `state: update` from scan or `update` arg: read the scan JSON for the existing D-03 path and new candidates. Present diff — candidates not yet in the existing glossary. Merge non-duplicate terms; surface duplicates (same term, different definition) for user resolution. Auto-append a new row to the "Lịch sử sửa đổi" (Revision History) table with today's date and change summary. Then proceed to Stage 3 (Generation) for validation. Headless: auto-merge non-conflicting terms, return `blocked` with `reason: "duplicate_conflict"` when definitions clash.
 
+**Anti-churn (T2.11).** Bump the version **once per session**, not per edit. The validator returns `churn` (`revisions` vs `threshold`); when `churn.high_churn` is true the model isn't frozen yet — surface it and suggest `maturity: exploratory` or a `[DSC]` model-spike instead of another bump.
+
 ## Stage 3b: Semantic Review (Layer 2)
 
-Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`): confirm every definition is unambiguous and project-specific, no contradictions, and key D-02 domain concepts are represented. Record `semanticReview` frontmatter (A-3: `status` passed only when no open concerns, else `pending`). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with an **independent skeptic lens** — challenge each definition: is it grounded in a source, unambiguous, project-specific? Any contradiction between definitions? Any key D-02/D-19 concept unrepresented? List every unresolved concern in `openFacets`. Set `semanticReview.status: passed` **only when `openFacets` is empty AND the user signs off** (headless follows the Autonomy mode); otherwise `pending`. The shared `semantic_review_status` is the single structural read of this block; the Phase 2 gate REVIEW item (#5) enforces it.
 
 ## Stage 4: Save and Handoff
 

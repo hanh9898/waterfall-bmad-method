@@ -29,6 +29,10 @@ glossary_output_path = "{output_folder}/shared/glossary/D-03-glossary.md"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-glossary.py"
 
+# Ubiquitous-language consistency check (B11-2 orphan / B11-3 D-19+code reconcile).
+# Override to use a custom checker with the same CLI interface.
+consistency_script = "scripts/check-glossary-consistency.py"
+
 # Shell command to run after D-03 is saved. Empty = no hook.
 on_complete = ""
 

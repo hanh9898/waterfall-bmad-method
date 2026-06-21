@@ -260,8 +260,9 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 **`hbc-create-requirements` [REQ]** — DoD: 10/10 B + review + VM
 - [ ] B1-1 duyệt REQ-list trước generate (T3.1) · [ ] B1-2 intake pipeline (T3.1) · [ ] B1-3 NFR→ASSUMPTION/ADR (T3.1) · [ ] B1-4 reality-check + nối Model-Spike (T3.1·T3.17) · [ ] B1-5 **Feasibility bắt-buộc** đọc source+framework (T3.1) · [ ] B1-6 Quick-Discovery luôn (T3.1) · [ ] B1-7 2-câu-suggest topic→output (T3.1) · [ ] B1-8 Discovery-bổ-sung sau brainstorm (T3.1) · [ ] B1-9 adversarial+edge-case bắt buộc (T2.8) · [ ] B1-10 grounding đọc source (T3.1) · [ ] A5 autonomy (T2.1) · [ ] discovery_risk classify `(✅done, reposition T3.17)`
 
-**`hbc-create-glossary` [GLO]** — DoD: 3/3
-- [ ] B11-1 definition ground-source + user-confirm-khi-suy-ra (T3.7) · [ ] B11-2 cross-doc consistency + orphan-flag (T3.7) · [ ] B11-3 DDD ubiquitous-language + đối chiếu D-19 **+ code** (T3.7) · [ ] A5 autonomy (T2.1)
+**`hbc-create-glossary` [GLO]** — DoD: 3/3 ✅ U2
+- [x] B11-1 definition ground-source + user-confirm-khi-suy-ra (T3.7) ✅ U2 · [x] B11-2 cross-doc consistency + orphan-flag (T3.7) ✅ U2 · [x] B11-3 DDD ubiquitous-language + đối chiếu D-19 **+ code** (T3.7) ✅ U2 · [x] A5 autonomy (T2.1) ✅ U2
+  - **U2 done (2026-06-22):** new `check-glossary-consistency.py` (B11-2 orphan vs `--sources` business docs · B11-3 `missing_from_glossary` = D-19 physical `_name` + code `_name` not reflected in glossary, via shared `model_drift`) — **advisory**, not a hard gate (blocking cross-doc gate stays at [IR]). SKILL.md: Stage 2 ground-every-definition + **ASK-before-generate** for inferred defs (B11-1); Stage 3a ubiquitous-language reconcile; Autonomy section (A5: mechanical vs domain, headless `--strict`/`--assumptions-allowed`); Stage 3b semantic enhanced to skeptic-lens + sign-off + `openFacets` (T2.12); Update-Mode per-session version bump + high-churn warning via validator `churn` (T2.11). 41 skill tests + 415 repo tests green; SKILL.md 2994 tok; VM 0; real-input eval on TD.0 surfaced the `resource.plan.request`/`.request.line` drift. F-3 closed: **CRITICAL** code-file exclusion was on absolute path (false-green under a `tests/` ancestor) → now relative to `--code-dir`; **HIGH** orphan corpus narrowed to `--sources` (VI labels vs EN code flooded false orphans); `--project-root` now honored; `--code-dir` existence guarded; broadened bootstrap except.
 
 **`hbc-create-business-flow-diagram` [BFD]** — DoD: 7/7
 - [ ] B8-1 swimlane+gateway 3–7 lane `(✅ stage-guide)` · [ ] B8-2 all-paths happy/alt/exception (T3.11) · [ ] B8-3 **AS-IS ground vào CODE** + log lệch (T3.11) · [ ] B8-4 confirm flow/actor/path TRƯỚC generate (cứng) (T3.11) · [ ] B8-5 REQ-flow-facet + phantom-flag (T3.11) · [ ] B8-6 path-ID chuẩn `(✅ partial)` · [ ] B8-7 D-06 vào review bắt buộc (T2.8)
@@ -340,7 +341,7 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 |---|--------|-------------------|--------|----------|
 | U0 ✅ | TD.0 fixture + TF.3 metrics | (script tay, không builder) | — | **DONE** — fixture hash-pinned + harness 6 metric, baseline đo được + F-3 sạch |
 | U1 ✅ | Primitives (T1.1/1.2/1.3/1.5 · T2.11/T2.12) | (script-only → direct + F-3 review per §0.1 RACI) | U0 | **DONE** — libs+scripts+85 tests; bắt đủ lỗi fixture TD.0; F-3 sạch high/critical |
-| U2 | `hbc-create-glossary` | `bmad-workflow-builder` Edit | U1 | §9 GLO 100% + AR+ECH+VM |
+| U2 ✅ | `hbc-create-glossary` | `bmad-workflow-builder` Edit | U1 | **DONE** — §9 GLO 4/4; consistency script + B11-1 ASK + A5 + T2.11/T2.12; AR+ECH closed (1 CRIT + 1 HIGH fixed); VM 0; 41 tests; 2994 tok |
 | U3 | `hbc-create-coding-standards` | `bmad-workflow-builder` Edit | U1 | §9 CS 100% |
 | U4 | `hbc-create-business-flow-diagram` | `bmad-workflow-builder` Edit | U1 | §9 BFD 100% |
 | U5 | `hbc-create-test-plan` | `bmad-workflow-builder` Edit | U1 | §9 TP 100% |

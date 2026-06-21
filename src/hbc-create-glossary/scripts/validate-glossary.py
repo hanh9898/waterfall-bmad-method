@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
+        churn_assessment,
         find_section,
         parse_table,
         verdict,
@@ -183,6 +184,10 @@ def validate(doc_path: str) -> dict:
         "term_count": len(terms_rows),
         "abbreviation_count": len(abbrev_rows),
         "total_entries": total_terms,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the
+        # cue the skill surfaces to suggest maturity=exploratory / [DSC] instead of
+        # bumping the version on every small edit (per-session bump policy).
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result
