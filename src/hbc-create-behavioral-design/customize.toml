@@ -26,6 +26,10 @@ output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-behavioral-design.py"
 
+# Advisory grounding/consistency check (E-2 element↔REQ · T3.13d BDD · behavioral-vs-code
+# drift · churn). Advisory only — the blocking cross-doc gate stays at [IR]/Phase-2.
+grounding_script = "scripts/check-behavioral-grounding.py"
+
 # Shell command to run after D-16 is saved. Empty = no hook.
 on_complete = ""
 

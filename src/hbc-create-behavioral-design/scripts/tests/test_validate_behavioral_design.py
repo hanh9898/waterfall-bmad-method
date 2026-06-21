@@ -126,11 +126,34 @@ def test_missing_document():
     assert "error" in json.loads(result.stdout)
 
 
+def test_churn_low_on_single_revision():
+    result, code = run_script(VALID_DOC)
+    # one revision row → not high churn; advisory never flips valid
+    assert result["churn"]["revisions"] == 1
+    assert result["churn"]["high_churn"] is False
+    assert result["valid"] is True
+
+
+def test_churn_high_flags_many_revisions():
+    extra = "".join(f"| 1.{i} | 2026-06-2{i} | T | edit {i} |\n" for i in range(1, 7))
+    doc = VALID_DOC.replace(
+        "| 1.0 | 2026-06-21 | Test | Bản đầu |",
+        "| 1.0 | 2026-06-21 | Test | Bản đầu |\n" + extra,
+    )
+    result, code = run_script(doc)
+    # 7 revision rows > threshold 4 → high churn, but still structurally valid (advisory)
+    assert result["churn"]["revisions"] == 7, result["churn"]
+    assert result["churn"]["high_churn"] is True
+    assert result["valid"] is True
+    assert code == 0
+
+
 if __name__ == "__main__":
     tests = [
         test_valid_document, test_element_count_counts_unique, test_no_behavior_element,
         test_duplicate_element_id, test_no_req_ref, test_missing_section,
         test_vietnamese_sections, test_missing_document,
+        test_churn_low_on_single_revision, test_churn_high_flags_many_revisions,
     ]
     failed = 0
     for t in tests:

@@ -21,11 +21,18 @@ derived from D-02/D-06; every inferred decision is logged. The Claude Design gat
   "feature": "<slug>",
   "document": "<path to D-14>",
   "uses_claude_design": false,
-  "validation": { "valid": true, "screen_count": 0, "advisories": [] },
+  "design_token_source": "",
+  "validation": { "valid": true, "screen_count": 0, "component_count": 0, "advisories": [], "churn": {"revisions": 1, "high_churn": false} },
+  "consistency": { "advisory": true, "advisory_count": 0, "advisories": [] },
   "semanticReview": { "status": "passed | pending", "openFacets": [] },
   "assumptions": ["<derived screen/component>", "..."]
 }
 ```
+
+`consistency` is the advisory UX-2/3/4/6/7 check (`check-ux-consistency.py`):
+REQ→screen→component→test coverage, component↔token, design-sync (mockup) presence,
+and the component-map↔code reconcile (only when `--code-dir` is supplied). It NEVER
+blocks (the blocking inter-doc gate is [IR]/[PG]); its findings are returned for triage.
 
 ## Blocked reasons (closed set)
 

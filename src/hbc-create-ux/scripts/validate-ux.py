@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
+        churn_assessment,
         find_section,
         section_body,
         section_has_content,
@@ -43,6 +44,7 @@ REQUIRED_SECTIONS = [
     ("Overview", "Tổng quan"),
     ("Screens", "Màn hình"),
     ("Components", "Thành phần"),
+    ("Traceability", "Truy vết"),
     ("Revision History", "Lịch sử sửa đổi"),
 ]
 
@@ -148,6 +150,10 @@ def validate(doc_path: str) -> dict:
         "advisory_count": len(advisories),
         "screen_count": screen_count,
         "component_count": component_count,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the
+        # cue the skill surfaces to suggest maturity=exploratory / [DSC] instead of
+        # bumping the version on every small edit (per-session bump policy).
+        "churn": churn_assessment(content),
         "issues": issues,
         "advisories": advisories,
     })

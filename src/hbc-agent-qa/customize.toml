@@ -47,6 +47,11 @@ description = "Create D-27 Test Specification (detailed test cases with TC-xxx I
 skill = "hbc-create-test-spec"
 
 [[agent.menu]]
+code = "IR"
+description = "Check implementation readiness — reconcile D-02 requirements against D-21/D-26/D-27 and the traceability matrix before closing Phase 2"
+skill = "hbc-check-implementation-readiness"
+
+[[agent.menu]]
 code = "PG"
 description = "Run the shared Phase 2 gate — passes only when BOTH design (architect) and test design (D-26/D-27) are complete"
 skill = "hbc-phase-gate"

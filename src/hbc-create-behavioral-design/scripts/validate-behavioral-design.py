@@ -6,9 +6,11 @@
 
 Checks required sections (English canonical + configured document language — NO
 hardcoded Japanese), at least one behavioural element with a well-formed id
-(ST-/DR-/INV-/SEQ-NN), element-id uniqueness, and at least one REQ reference.
-Semantic adequacy (do transitions cover illegal paths? are decision tables
-complete? do referenced entities exist in D-19?) is the LLM review layer.
+(ST-/DR-/INV-/SEQ-NN), element-id uniqueness, at least one REQ reference, and
+surfaces revision churn (T2.11, advisory). Semantic adequacy (do transitions
+cover illegal paths? are decision tables complete? do referenced entities exist
+in D-19?) is the LLM review layer; cross-doc/code grounding (REQ-per-element,
+BDD presence, model drift) is the advisory check-behavioral-grounding.py.
 """
 
 import argparse
@@ -25,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib
 try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
+        churn_assessment,
         find_section,
         section_body,
         section_has_content,
@@ -102,10 +105,13 @@ CHECKED = [
     "at least one behavioural element (ST/DR/INV/SEQ) with well-formed id",
     "element-id uniqueness",
     "at least one REQ reference",
+    "revision-history churn surfaced (T2.11 cue; advisory, never flips valid)",
 ]
 NOT_CHECKED = [
     "transitions cover illegal paths, not only happy (LLM review)",
     "decision tables complete / invariants enforceable (LLM review)",
+    "every element maps to a REQ and a unit-test v_pair (check-behavioral-grounding.py / readiness gate)",
+    "BDD Given/When/Then scenarios present + behaviour grounded against real code (check-behavioral-grounding.py)",
     "referenced entities/fields exist in D-19 (LLM review / readiness gate)",
 ]
 
@@ -127,6 +133,11 @@ def validate(doc_path: str) -> dict:
         "auto_fixable_count": len([i for i in issues if i.get("auto_fixable")]),
         "manual_fix_count": len([i for i in issues if not i.get("auto_fixable")]),
         "element_count": element_count,
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the
+        # cue the skill surfaces to suggest maturity=exploratory / [DSC] instead of
+        # bumping the version on every small edit (per-session bump policy). The
+        # D-16 template is version-first, so the shared primitive matches directly.
+        "churn": churn_assessment(content),
         "issues": issues,
     })
     return result

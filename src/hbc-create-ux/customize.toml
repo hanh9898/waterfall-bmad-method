@@ -26,6 +26,11 @@ output_dir = "{output_folder}/features/{feature}/planning-artifacts"
 # Validation script. Override to use a custom validator with the same CLI interface.
 validation_script = "scripts/validate-ux.py"
 
+# Advisory UX consistency check (UX-2/3/4/6/7): REQ→screen→component→test coverage,
+# component↔token, design-sync (mockup) presence, component-map↔code reconcile.
+# ADVISORY — never blocks (the blocking inter-doc gate is [IR]/[PG]).
+consistency_script = "scripts/check-ux-consistency.py"
+
 # Shell command to run after D-14 is saved. Empty = no hook.
 on_complete = ""
 

@@ -43,6 +43,18 @@ Thiết kế UX cho REQ-DEMO-001 (màn danh sách đơn). Token tham chiếu DES
 | CMP-01 | default | hiện danh sách |
 | CMP-01 | empty | hiện thông báo trống |
 
+## Traceability
+
+| REQ Ref | Screen | Component(s) | Test Ref (E2E / UI) |
+|---------|--------|--------------|---------------------|
+| REQ-DEMO-001 | SCR-01 | CMP-01 | E2E-DEMO-001 |
+
+## UI Acceptance & Visual Regression
+
+| Screen | Acceptance criteria | Visual-regression baseline | Method (consumer tool) |
+|--------|---------------------|----------------------------|------------------------|
+| SCR-01 | danh sách hiển thị đúng | N/A | Playwright snapshot |
+
 ## Dev Notes
 
 Phân trang server-side.
@@ -72,6 +84,7 @@ def test_valid_document():
     assert result["component_count"] == 1
     assert result["advisory_count"] == 0
     assert result["passed"] is True
+    assert result["churn"]["high_churn"] is False
 
 
 def test_no_screen():
@@ -120,10 +133,23 @@ def test_vietnamese_sections():
            .replace("## Overview", "## Tổng quan")
            .replace("## Screens", "## Màn hình")
            .replace("## Components", "## Thành phần")
+           .replace("## Traceability", "## Truy vết")
            .replace("## Revision History", "## Lịch sử sửa đổi"))
     result, code = run_script(doc)
     missing = [i for i in result["issues"] if i["type"] == "SECTION_MISSING"]
     assert missing == [], f"VI sections not recognized: {missing}"
+
+
+def test_high_churn_flag():
+    # 5 dated revision rows > threshold 4 → high_churn true (T2.11)
+    extra = "\n".join(f"| 1.{n} | 2026-06-2{n} | Test | edit {n} |" for n in range(1, 6))
+    doc = VALID_DOC.replace(
+        "| 1.0 | 2026-06-21 | Test | Bản đầu |",
+        "| 1.0 | 2026-06-21 | Test | Bản đầu |\n" + extra,
+    )
+    result, code = run_script(doc)
+    assert result["churn"]["high_churn"] is True
+    assert result["churn"]["revisions"] >= 5
 
 
 def test_missing_document():
@@ -137,7 +163,7 @@ if __name__ == "__main__":
     tests = [
         test_valid_document, test_no_screen, test_duplicate_element_id, test_no_req_ref,
         test_missing_section, test_inline_visual_advisory_non_blocking,
-        test_vietnamese_sections, test_missing_document,
+        test_vietnamese_sections, test_high_churn_flag, test_missing_document,
     ]
     failed = 0
     for t in tests:

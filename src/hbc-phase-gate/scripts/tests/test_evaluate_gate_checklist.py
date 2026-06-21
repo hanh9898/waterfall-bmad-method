@@ -388,3 +388,241 @@ def test_na_waiver_marks_item_na_not_fail(tmp_path):
     assert by["P2-01"]["status"] == "NA"
     assert by["P2-04"]["status"] == "FAIL"  # not waived
     assert data["summary"]["required_failed"] == 1  # only D-12, not the waived D-19
+
+
+# --- U16: MATRIX completeness (A9 · B6-2 numbers-by-script) ---
+
+def _matrix_checklist(d02_glob, cols="design_ref,code_ref,test_ref"):
+    return (
+        "# Phase — Gate Checklist\n\n"
+        "| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |\n"
+        "|---|---|---|---|---|---|---|\n"
+        f"| M-1 | matrix completeness [correctness] | MATRIX | yes | {{output_folder}}/traceability/matrix* | d02={d02_glob} cols={cols} | hbc-traceability |\n"
+    )
+
+
+def _seed_matrix_and_d02(tmp_path, d02_reqs, matrix_rows):
+    (tmp_path / "traceability").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "planning").mkdir(parents=True, exist_ok=True)
+    d02 = "\n".join(f"| {r} | desc |" for r in d02_reqs)
+    _write(str(tmp_path / "planning" / "D-02-x.md"), "| req_id | text |\n|---|---|\n" + d02)
+    header = "| req_id | design_ref | code_ref | test_ref |\n|---|---|---|---|\n"
+    _write(str(tmp_path / "traceability" / "matrix.md"), header + "\n".join(matrix_rows))
+
+
+def test_matrix_complete_passes(tmp_path):
+    _seed_matrix_and_d02(
+        tmp_path,
+        ["REQ-FEAT-001", "REQ-FEAT-002"],
+        ["| REQ-FEAT-001 | d | c | t |", "| REQ-FEAT-002 | d | c | t |"],
+    )
+    data, code = _run_engine(
+        _write_checklist(tmp_path), str(tmp_path),
+        f"output_folder={tmp_path}", "gate_mode=strict",
+    )
+    by = {r["item_id"]: r for r in data["results"]}
+    assert by["M-1"]["status"] == "PASS", by["M-1"]
+    assert data["summary"]["overall_status"] == "PASSED"
+    assert code == 0
+
+
+def test_matrix_missing_req_fails_as_correctness(tmp_path):
+    # The RCA false pass: D-02 has 3 REQs, matrix only 2 → missing one. Must FAIL,
+    # must register as a correctness failure, must exit non-zero.
+    _seed_matrix_and_d02(
+        tmp_path,
+        ["REQ-FEAT-001", "REQ-FEAT-002", "REQ-FEAT-040"],
+        ["| REQ-FEAT-001 | d | c | t |", "| REQ-FEAT-002 | d | c | t |"],
+    )
+    data, code = _run_engine(
+        _write_checklist(tmp_path), str(tmp_path),
+        f"output_folder={tmp_path}", "gate_mode=strict",
+    )
+    by = {r["item_id"]: r for r in data["results"]}
+    assert by["M-1"]["status"] == "FAIL"
+    assert "REQ-FEAT-040" in by["M-1"]["missing_from_matrix"]
+    assert data["summary"]["correctness_failed"] == 1
+    assert data["summary"]["overall_status"] == "FAILED"
+    assert code == 1
+
+
+def test_matrix_blank_ref_fails(tmp_path):
+    # Row exists but design_ref is blank → still a coverage gap.
+    _seed_matrix_and_d02(
+        tmp_path,
+        ["REQ-FEAT-001"],
+        ["| REQ-FEAT-001 |  | c | t |"],
+    )
+    data, code = _run_engine(
+        _write_checklist(tmp_path), str(tmp_path), f"output_folder={tmp_path}",
+    )
+    by = {r["item_id"]: r for r in data["results"]}
+    assert by["M-1"]["status"] == "FAIL"
+    assert "REQ-FEAT-001" in by["M-1"]["coverage_gaps"]
+
+
+def test_matrix_correctness_not_downgraded_by_lenient(tmp_path):
+    # B6-3 extend: a missing-REQ matrix failure is correctness → stays FAILED even
+    # in lenient mode (lenient relaxes thoroughness, never correctness).
+    _seed_matrix_and_d02(
+        tmp_path,
+        ["REQ-FEAT-001", "REQ-FEAT-002"],
+        ["| REQ-FEAT-001 | d | c | t |"],
+    )
+    data, code = _run_engine(
+        _write_checklist(tmp_path), str(tmp_path),
+        f"output_folder={tmp_path}", "gate_mode=lenient",
+    )
+    assert data["summary"]["overall_status"] == "FAILED"
+    assert data["summary"]["correctness_failed"] == 1
+    assert code == 1
+
+
+def test_matrix_no_d02_is_contested_not_pass(tmp_path):
+    # B6-6 ambiguous→CONTESTED: cannot establish the REQ universe → CONTESTED, never
+    # a silent PASS.
+    (tmp_path / "traceability").mkdir(parents=True, exist_ok=True)
+    _write(str(tmp_path / "traceability" / "matrix.md"),
+           "| req_id | design_ref | code_ref | test_ref |\n|---|---|---|---|\n| REQ-FEAT-001 | d | c | t |")
+    checklist = str(tmp_path / "ck.md")
+    _write(checklist, _matrix_checklist(str(tmp_path / "planning" / "NOPE-*")))
+    data, code = _run_engine(checklist, str(tmp_path), f"output_folder={tmp_path}")
+    by = {r["item_id"]: r for r in data["results"]}
+    assert by["M-1"]["status"] == "CONTESTED"
+    assert data["summary"]["overall_status"] == "CONTESTED"
+
+
+def test_matrix_empty_d02_is_contested_not_pass(tmp_path):
+    # AR+ECH: a D-02 that resolves but has NO REQ ids must NOT pass as "0 missing"
+    # (silent false-green). The REQ universe is unknown → CONTESTED.
+    (tmp_path / "traceability").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "planning").mkdir(parents=True, exist_ok=True)
+    _write(str(tmp_path / "planning" / "D-02-x.md"), "# D-02 with no requirement ids at all\n")
+    _write(str(tmp_path / "traceability" / "matrix.md"),
+           "| req_id | design_ref | code_ref | test_ref |\n|---|---|---|---|\n")
+    data, code = _run_engine(_write_checklist(tmp_path), str(tmp_path), f"output_folder={tmp_path}")
+    assert data["results"][0]["status"] == "CONTESTED"
+
+
+def test_matrix_cols_trailing_prose_not_swallowed(tmp_path):
+    # AR+ECH: `cols=design_ref,test_ref — every REQ…` must parse exactly 2 cols,
+    # not absorb the trailing prose words as phantom (always-missing) columns.
+    _seed_matrix_and_d02(
+        tmp_path,
+        ["REQ-FEAT-001"],
+        ["| REQ-FEAT-001 | d |  | t |"],  # code_ref blank, but we only check design+test
+    )
+    checklist = str(tmp_path / "ck.md")
+    _write(checklist, _matrix_checklist(
+        str(tmp_path / "planning" / "D-02-*"),
+        cols="design_ref,test_ref — every REQ has refs"))
+    data, code = _run_engine(checklist, str(tmp_path), f"output_folder={tmp_path}")
+    # design_ref + test_ref are both present → PASS (code_ref blank is out of scope).
+    assert data["results"][0]["status"] == "PASS", data["results"][0]
+
+
+def _write_checklist(tmp_path):
+    checklist = str(tmp_path / "ck.md")
+    _write(checklist, _matrix_checklist(str(tmp_path / "planning" / "D-02-*")))
+    return checklist
+
+
+# --- U16: waiver may NOT silence a correctness item (B6-4 · T2.7) ---
+
+_CORRECTNESS_WAIVER_CHECKLIST = """\
+# Phase — Gate Checklist
+
+| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |
+|---|---|---|---|---|---|---|
+| W-1 | D-19 model clean [correctness] | CONTENT | yes | {output_folder}/nope/D-19-* | erDiagram | |
+"""
+
+
+def test_waiver_cannot_silence_correctness_item(tmp_path):
+    path = str(tmp_path / "ck.md")
+    _write(path, _CORRECTNESS_WAIVER_CHECKLIST)
+    data, code = _run_engine_na(path, str(tmp_path), "D-19", f"output_folder={tmp_path}")
+    r = data["results"][0]
+    # waiver rejected: item is still evaluated (FAILs — no D-19) and flagged
+    assert r["status"] == "FAIL"
+    assert "waiver_rejected" in r
+    assert data["summary"]["correctness_failed"] == 1
+    assert code == 1
+
+
+def test_waiver_still_works_for_noncorrectness_item(tmp_path):
+    # Regression: a FILE item with NO correctness tag is still waivable as before.
+    checklist = (
+        "# P\n\n| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| P-1 | D-21 API exists | FILE | yes | {output_folder}/nope/D-21-* | | |\n"
+    )
+    path = str(tmp_path / "ck.md")
+    _write(path, checklist)
+    data, code = _run_engine_na(path, str(tmp_path), "D-21", f"output_folder={tmp_path}")
+    assert data["results"][0]["status"] == "NA"
+    assert "waiver_rejected" not in data["results"][0]
+
+
+# --- U16: required METRIC unextractable → CONTESTED, not a silent SKIP/PASS (B6-6) ---
+
+def test_required_metric_unextractable_is_contested(tmp_path):
+    _write(str(tmp_path / "coverage.txt"), "No numbers here at all")
+    checklist = (
+        "# P\n\n| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| P-3 | coverage | METRIC | yes | coverage* | >= 80% | |\n"
+    )
+    path = str(tmp_path / "ck.md")
+    _write(path, checklist)
+    data, code = _run_engine(path, str(tmp_path))
+    assert data["results"][0]["status"] == "CONTESTED"
+    assert data["summary"]["overall_status"] == "CONTESTED"
+
+
+def test_optional_metric_unextractable_still_skips(tmp_path):
+    # An OPTIONAL metric that can't be extracted stays SKIP (no escalation).
+    _write(str(tmp_path / "coverage.txt"), "No numbers here at all")
+    checklist = (
+        "# P\n\n| item_id | description | type | required | artifact_pattern | criteria | skill_to_create |\n"
+        "|---|---|---|---|---|---|---|\n"
+        "| P-3 | coverage | METRIC | no | coverage* | >= 80% | |\n"
+    )
+    path = str(tmp_path / "ck.md")
+    _write(path, checklist)
+    data, code = _run_engine(path, str(tmp_path))
+    assert data["results"][0]["status"] == "SKIP"
+
+
+# --- U16: evaluator crash → BLOCKED, never a silent PASS (B6-6 · T1.6) ---
+
+def test_evaluator_crash_becomes_blocked_not_pass(tmp_path):
+    import json
+    import subprocess
+    import sys
+    missing = str(tmp_path / "does-not-exist.md")
+    r = subprocess.run(
+        [sys.executable,
+         os.path.join(os.path.dirname(__file__), "..", "evaluate-gate-checklist.py"),
+         missing, "--project-root", str(tmp_path)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert r.returncode != 0  # never exit 0 on crash
+    data = json.loads(r.stdout)
+    assert data["status"] == "BLOCKED"
+    assert data["summary"]["overall_status"] == "BLOCKED"
+
+
+def test_is_correctness_item_classification():
+    # entry-gate, required MATRIX, and [correctness]-tagged required items qualify;
+    # a plain required FILE item does not.
+    assert mod._is_correctness_item(
+        {"type": "CONTENT", "required": True, "artifact_pattern": "x/gates/phase-1-gate*"})
+    assert mod._is_correctness_item(
+        {"type": "MATRIX", "required": True, "artifact_pattern": "x/matrix*", "criteria": ""})
+    assert mod._is_correctness_item(
+        {"type": "QUALITY", "required": True, "description": "model clean [correctness]", "criteria": ""})
+    assert not mod._is_correctness_item(
+        {"type": "FILE", "required": True, "artifact_pattern": "x/D-19*", "criteria": ""})
+    assert not mod._is_correctness_item(
+        {"type": "MATRIX", "required": False, "artifact_pattern": "x/matrix*", "criteria": ""})

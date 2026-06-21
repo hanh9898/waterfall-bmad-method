@@ -40,8 +40,10 @@ gate_output_path = "{output_folder}/features/{feature}/gates"
 # policy sourced from _bmad/config.yaml [hbc] section, not a per-skill override.
 # coverage_threshold is also project-level from _bmad/config.yaml [hbc], not per-skill.
 
-# Two-lens evaluation for required QUALITY items (skeptic + acceptance).
-# Default: false (single-pass evaluation). Set true for high-stakes gate decisions.
+# Two-lens evaluation for required QUALITY items (skeptic + acceptance — B6-1).
+# The skeptic+acceptance discipline (disagreement -> CONTESTED) applies to required
+# QUALITY items regardless; this flag only toggles whether the parallel pass is ALSO
+# recorded explicitly in the report. Default false (the discipline still applies).
 quality_parallel_review = false
 
 # Post-gate hook (PASSED only). Triggers after a passing gate so the traceability

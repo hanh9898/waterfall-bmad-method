@@ -21,6 +21,16 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 
+# --- shared lib bootstrap (C-1) --- for MATRIX completeness (A9): the gate
+# computes coverage numbers BY SCRIPT (B6-2) using the same primitives the
+# create/readiness skills use, so "X/Y REQ covered" is never an LLM claim.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+try:
+    from hbc_validation import matrix_coverage_gaps, missing_from_matrix, req_num_map
+    _HAVE_SHARED = True
+except ModuleNotFoundError:
+    _HAVE_SHARED = False
+
 
 def _is_entry_gate(item: dict) -> bool:
     """True for an item that asserts a PRIOR phase gate PASSED — a required CONTENT
@@ -31,6 +41,29 @@ def _is_entry_gate(item: dict) -> bool:
         and item.get("required")
         and "gates/phase-" in item.get("artifact_pattern", "").replace("\\", "/")
     )
+
+
+def _is_correctness_item(item: dict) -> bool:
+    """True for a CORRECTNESS item — one whose FAIL means the artifacts are
+    factually wrong / inconsistent, not merely thin (B6-3 extend · B6-4 · T2.7).
+
+    Correctness items are non-negotiable: lenient mode never downgrades them to
+    WARNING, and an `--na` waiver may never silence them (a waiver may skip an
+    inapplicable deliverable, never a correctness check). Covers:
+      - entry-gate (a prior phase gate must have PASSED), and
+      - MATRIX completeness (every REQ traced — the RCA "39/39 green" false pass).
+    Model-drift checks surface through MATRIX/QUALITY items that carry a
+    `correctness` marker in their criteria cell (`[correctness]`).
+    """
+    if _is_entry_gate(item):
+        return True
+    if item.get("type") == "MATRIX" and item.get("required"):
+        return True
+    # Opt-in tag for QUALITY/CONTENT correctness items (e.g. MODEL_DRIFT clean):
+    # author writes `[correctness]` in the description OR the criteria cell.
+    tagged = "[correctness]" in (item.get("criteria") or "").lower() \
+        or "[correctness]" in (item.get("description") or "").lower()
+    return bool(item.get("required") and tagged)
 
 
 def parse_checklist(checklist_path: str) -> list[dict]:
@@ -275,6 +308,92 @@ def evaluate_review(pattern: str, project_root: str, variables: dict) -> dict:
     }
 
 
+def evaluate_matrix(
+    pattern: str, criteria: str, project_root: str, variables: dict
+) -> dict:
+    """MATRIX completeness (A9 · B6-2 · T1.5): every REQ defined in D-02 has a
+    matrix row, and that row has a non-empty design_ref/code_ref/test_ref.
+
+    Numbers are computed BY SCRIPT via the shared primitives — never LLM-claimed.
+    The `artifact_pattern` is the per-feature traceability matrix; the criteria
+    cell names the D-02 source (`d02=<glob>`) and, optionally, which columns must
+    be non-empty (`cols=design_ref,test_ref`; default all three). This is a
+    CORRECTNESS check — it caught the RCA "39/39 green but REQ-040/041/042 never
+    in the matrix" false pass. FAIL when any REQ is missing or has a blank ref.
+    """
+    if not _HAVE_SHARED:
+        return {
+            "status": "CONTESTED",
+            "evidence": "Cannot compute matrix completeness: shared lib hbc_validation "
+            "not importable. Treated as CONTESTED (not PASS) — a gate must never "
+            "pass when its evidence cannot be computed.",
+            "missing_from_matrix": [], "coverage_gaps": {},
+        }
+    resolved = resolve_pattern(pattern, project_root, variables)
+    matrix_files = _expand_matches(resolved)
+    # Parse `d02=<glob>` and optional `cols=a,b` out of the criteria cell.
+    d02_glob = ""
+    cols = ("design_ref", "code_ref", "test_ref")
+    dm = re.search(r"d02\s*=\s*([^\s;|]+)", criteria)
+    if dm:
+        d02_glob = dm.group(1)
+    # `cols=a,b,c` — only comma-joined identifiers (no spaces). Anchored to stop at
+    # the first non-[word/comma] char so trailing prose ("cols=a,b — every REQ…")
+    # is NOT swallowed as bogus column names (which would mark a phantom column gap
+    # on every row and FAIL the whole matrix for the wrong reason).
+    cm = re.search(r"cols\s*=\s*([A-Za-z0-9_]+(?:,[A-Za-z0-9_]+)*)", criteria)
+    if cm:
+        cols = tuple(c.strip() for c in cm.group(1).split(",") if c.strip())
+    d02_files = _expand_matches(resolve_pattern(d02_glob, project_root, variables)) if d02_glob else []
+
+    if not matrix_files:
+        return {"status": "FAIL", "evidence": f"No traceability matrix at {resolved}",
+                "missing_from_matrix": [], "coverage_gaps": {}}
+    if not d02_files:
+        # Ambiguous: cannot establish the REQ universe → CONTESTED, not a silent pass (B6-6).
+        return {"status": "CONTESTED",
+                "evidence": f"No D-02 source resolvable (criteria d02={d02_glob!r}); "
+                "cannot establish the REQ set to check coverage against.",
+                "missing_from_matrix": [], "coverage_gaps": {}}
+    try:
+        matrix_text = "\n".join(Path(m).read_text(encoding="utf-8") for m in matrix_files)
+        d02_text = "\n".join(Path(d).read_text(encoding="utf-8") for d in d02_files)
+    except (OSError, UnicodeDecodeError) as exc:
+        return {"status": "CONTESTED", "evidence": f"Cannot read matrix/D-02: {exc}",
+                "missing_from_matrix": [], "coverage_gaps": {}}
+
+    # Multi-feature matrix would collide trailing-number identity → don't trust count.
+    d02_nums, d02_slugs = req_num_map(d02_text)
+    total = len(d02_nums)
+    if total == 0:
+        # No REQ ids parsed from the D-02 source → the REQ universe is unknown.
+        # An empty/unparseable D-02 must NOT pass as "0 missing" (silent false-green).
+        return {"status": "CONTESTED",
+                "evidence": "D-02 source resolved but no REQ ids parsed — cannot "
+                "establish the REQ set; treated as CONTESTED, not a pass.",
+                "missing_from_matrix": [], "coverage_gaps": {}}
+    missing = missing_from_matrix(d02_text, matrix_text)
+    gaps = matrix_coverage_gaps(matrix_text, columns=cols)
+    traced = total - len(missing)
+    ok = not missing and not gaps
+    parts = [f"{traced}/{total} D-02 REQs have a matrix row"]
+    if missing:
+        parts.append(f"MISSING rows: {', '.join(missing[:8])}" + (" …" if len(missing) > 8 else ""))
+    if gaps:
+        parts.append(f"{len(gaps)} row(s) with a blank {'/'.join(cols)}: "
+                     + ", ".join(list(gaps)[:8]))
+    if len(d02_slugs) > 1:
+        parts.append(f"WARNING multi-feature matrix ({sorted(d02_slugs)}) — count may be unreliable")
+    return {
+        "status": "PASS" if ok else "FAIL",
+        "evidence": "; ".join(parts),
+        "missing_from_matrix": missing,
+        "coverage_gaps": gaps,
+        "traced": traced,
+        "total": total,
+    }
+
+
 _DELIVERABLE_RE = re.compile(r"D-\d+")
 
 
@@ -339,12 +458,24 @@ def main():
         # feature passes as NA (not FAIL), so a feature that genuinely has no data
         # model / API isn't blocked by D-19/D-21. The judgment of WHAT is N/A + the
         # rationale lives in D-02 frontmatter `na_deliverables`; the gate only honors it.
+        #
+        # B6-4 (T2.7): a waiver may NOT silence a CORRECTNESS item. If a waived
+        # deliverable's item is also a correctness check (entry-gate / matrix /
+        # tagged), the waiver is REJECTED — the item is still evaluated and the
+        # rejection recorded. A waiver skips inapplicable work; it never makes a
+        # factually-broken artifact "pass".
         deliverable = _item_deliverable(item)
         if deliverable and deliverable.upper() in na_deliverables:
-            result["status"] = "NA"
-            result["evidence"] = f"Waived: {deliverable} declared not-applicable for this feature (--na)."
-            results.append(result)
-            continue
+            if _is_correctness_item(item):
+                result["waiver_rejected"] = (
+                    f"--na {deliverable} ignored: this is a correctness item and may "
+                    "not be waived (B6-4). Still evaluated below."
+                )
+            else:
+                result["status"] = "NA"
+                result["evidence"] = f"Waived: {deliverable} declared not-applicable for this feature (--na)."
+                results.append(result)
+                continue
 
         if item["type"] == "FILE":
             eval_result = evaluate_file(
@@ -363,6 +494,23 @@ def main():
             result.update(eval_result)
         elif item["type"] == "METRIC":
             eval_result = evaluate_metric(
+                item["artifact_pattern"],
+                item["criteria"],
+                args.project_root,
+                variables,
+            )
+            result.update(eval_result)
+            # B6-6 ambiguous→CONTESTED: a REQUIRED metric whose number can't be
+            # extracted must NOT silently SKIP into a pass — escalate to CONTESTED
+            # so the gate cannot go green on un-evaluated correctness evidence.
+            if eval_result["status"] == "SKIP" and item["required"]:
+                result["status"] = "CONTESTED"
+                result["evidence"] = (
+                    "Required metric could not be extracted — ambiguous, treated as "
+                    "CONTESTED (not a pass). " + eval_result.get("evidence", "")
+                )
+        elif item["type"] == "MATRIX":
+            eval_result = evaluate_matrix(
                 item["artifact_pattern"],
                 item["criteria"],
                 args.project_root,
@@ -400,13 +548,29 @@ def main():
         1 for item, r in zip(items, results)
         if r["status"] == "FAIL" and r["required"] and _is_entry_gate(item)
     )
+    # B6-3 extend (T2.7): a correctness item (entry-gate + matrix-completeness +
+    # tagged model items) that definitively FAILs is never downgraded by lenient
+    # mode — lenient relaxes thoroughness, never factual correctness.
+    correctness_failed = sum(
+        1 for item, r in zip(items, results)
+        if r["status"] == "FAIL" and r["required"] and _is_correctness_item(item)
+    )
+    # B6-6: a required item the evaluator could not resolve (CONTESTED — ambiguous
+    # evidence, or two lenses disagreeing) is NOT a pass. It blocks (a human must
+    # adjudicate) and is never downgraded. A CONTESTED correctness item counts here,
+    # not as a definitive FAIL — "can't compute" ≠ "proven broken".
+    contested = sum(1 for r in results if r["status"] == "CONTESTED" and r["required"])
     pending_llm = sum(1 for r in results if r["status"] == "PENDING_LLM")
     gate_mode = variables.get("gate_mode", "strict")
 
-    if entry_gate_failed > 0:
-        overall_status = "FAILED"  # prior-gate failure blocks regardless of mode
+    if correctness_failed > 0:
+        overall_status = "FAILED"  # prior-gate / matrix / model correctness blocks regardless of mode
     elif pending_llm > 0:
         overall_status = "PENDING_LLM"
+    elif contested > 0:
+        # An unresolved CONTESTED required item is not a pass — neither strict nor
+        # lenient may go green on un-adjudicated evidence.
+        overall_status = "CONTESTED"
     elif required_failed > 0:
         overall_status = "FAILED" if gate_mode == "strict" else "WARNING"
     else:
@@ -414,13 +578,15 @@ def main():
 
     summary = {
         "total": len(results),
-        "evaluated": sum(1 for r in results if r["status"] != "PENDING_LLM"),
+        "evaluated": sum(1 for r in results if r["status"] not in ("PENDING_LLM", "CONTESTED")),
         "passed": sum(1 for r in results if r["status"] == "PASS"),
         "failed": sum(1 for r in results if r["status"] == "FAIL"),
         "skipped": sum(1 for r in results if r["status"] == "SKIP"),
+        "contested": contested,
         "pending_llm": pending_llm,
         "required_failed": required_failed,
         "entry_gate_failed": entry_gate_failed,
+        "correctness_failed": correctness_failed,
         "gate_mode": gate_mode,
         "overall_status": overall_status,
     }
@@ -434,8 +600,29 @@ def main():
     else:
         print(text)
 
-    sys.exit(1 if summary["required_failed"] > 0 else 0)
+    # Non-zero when any required item failed OR any required item is CONTESTED — so
+    # CI never reads "exit 0" as a clean gate on un-adjudicated/ambiguous evidence.
+    sys.exit(1 if (summary["required_failed"] > 0
+                   or summary["correctness_failed"] > 0
+                   or summary["contested"] > 0) else 0)
 
 
 if __name__ == "__main__":
-    main()
+    # B6-6 (T1.6, gate-robust): an evaluator CRASH must become BLOCKED, never a
+    # silent PASS. Any unhandled exception is caught here, emitted as a BLOCKED
+    # JSON the caller can recognize, and exits non-zero — a crashed gate never
+    # produces exit 0 (which a CI step would read as "passed").
+    try:
+        main()
+    except SystemExit:
+        raise  # main()'s own intentional exit codes pass through unchanged
+    except BaseException as exc:  # noqa: BLE001 — last-resort: must not become a pass
+        import traceback
+        print(json.dumps({
+            "status": "BLOCKED",
+            "reason": "evaluator_crashed",
+            "evidence": f"{type(exc).__name__}: {exc}",
+            "summary": {"overall_status": "BLOCKED"},
+        }, ensure_ascii=False))
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(2)
