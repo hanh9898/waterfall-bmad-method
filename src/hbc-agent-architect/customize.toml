@@ -42,8 +42,8 @@ description = "Create D-09 Architecture Design (components/layers/integration/NF
 skill = "hbc-create-architecture"
 
 [[agent.menu]]
-code = "DB"
-description = "Create or update D-19 Database Design (ER diagrams adapted to framework)"
+code = "ERD"
+description = "Create or update D-19 Database Design / ER Diagram (adapted to framework)"
 skill = "hbc-create-er-diagram"
 
 [[agent.menu]]

@@ -379,5 +379,23 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 | U20 ✅ **GO** | **Spike TA.0** (cổng trục A) | (spike tay) | U0 | **GO** (2026-06-22) — broken **4/4** caught (gate-STALE·matrix-missing-040/041/042·model-drift·slice-missing) ∧ clean **0 FP** (2 feature non-trivial) ∧ deterministic; verified độc-lập (no cheat; 1 disclosed caveat = hardcoded field-hint, model-name drift generic vẫn đứng). Báo cáo: `process-review/spikes/ta0/PILOT-REPORT.md`. **U21 chờ owner greenlight.** |
 | U21 | Trục A (TA.1–TA.8) + `hbc-rebaseline` | `bmad-workflow-builder` Build/Edit | **U20 GO** | §9 ô (spike) ✅ |
 | U22 | Nợ-case TD.1–TD.6 | (tay, feature resource-plan-billable) | — | RCA §6.2 |
+| **U23** | **Cleanup gap (proposal↔plan↔repo) — xem §11** | `bmad-workflow-builder` Edit (+ tay) | U1–U18 | mọi CLN còn-cần ✅ |
 
 **Per-session loop (driver tự làm):** xác định U kế → mở đúng BMad skill → implement theo §9 dossier của nó (bundling T2.1/T2.12/T2.11) → eval input thật → AR+ECH → VM/pytest/doc-check → **tick ô §9 + cập nhật bảng này** → `git commit` → báo "đã xong Ux, kế tiếp Uy".
+
+---
+
+## 11. U23 — Cleanup gap (proposal ↔ plan ↔ repo) · F-3 cross-check 2026-06-22
+
+> Đối chiếu `hbc-improvement-proposal-2026-06-20.md` với repo thực tế (sau U0–U18) + plan. Plan+repo phủ ~96–97%; chỉ vài cái rơi-ngoài. Trạng thái đã **verify trên code** (nhiều flag cũ đã lỗi thời).
+
+| CLN | Nguồn | Trạng thái (verified) | Hành động |
+|-----|-------|------------------------|-----------|
+| **CLN-1** | F-6 metric `recascade` | ❌ **chưa đo được** — harness đánh dấu "historical, not snapshot-derivable". Cần `hbc-traceability` **log số cascade-round runtime** rồi harness đọc → **couple U17**, là task riêng (M·needs-design), KHÔNG phải tweak harness | task riêng (gắn traceability-engine) |
+| **CLN-2** | B7-2 auto-traceability | ◑ **đã covered ở gate** (U17 cascade-ENFORCED: block tới khi impact chạy) + create-skill *suggest* (`auto_sync_after_update`). Auto-call-từ-skill chỉ là tiện-ích → **optional**, không phải correctness-gap | để optional (bật `auto_sync_after_update` nếu muốn) |
+| **CLN-3** | B17-2 menu-code | ⚠️→✅ **CÒN THẬT** rồi đã sửa: `hbc-agent-architect/customize.toml` menu er-diagram `code = "DB"` → **`ERD`** (khớp canonical module-help.csv) | ✅ U23 |
+| **CLN-4** | B2-9 churn order | ✅ **ĐÃ XONG** (commit ad87918) — `churn_assessment` xử lý cả version-first + date-first. *Flag plan cũ đã stale.* | (none) |
+| **CLN-5** | B9 / principle #6 | ⚠️→✅ **CÒN THẬT** rồi đã sửa: cite **ISO/IEC/IEEE 29119-3** + ghi chú IEEE-829-withdrawn vào `hbc-create-test-plan` | ✅ U23 |
+| **CLN-6** | F-2 caveat #4 dep-ngược | ✅ **đã tự gỡ** bởi §10 thứ-tự foundation-first (U0/U1 trước; mọi prereq forward) → chỉ là note | note §8 |
+
+**Còn lại sau U23:** CLN-1 (re-cascade — task riêng) + CLN-2 (optional). Mọi thứ khác đã đóng.

@@ -9,6 +9,8 @@ description: "Generate D-26 Test Plan with strategy, scope, and schedule. Use wh
 
 Generate D-26 (Test Plan) — test strategy, scope, schedule, environment, entry/exit criteria, and risk. The strategic "WHAT to test"; D-27 covers the detailed "HOW." Each in-scope area states a test technique linked to D-27 (B9-4). Risk likelihood/impact is **proposed by the LLM, confirmed by the user** (B9-2). The schedule is never fabricated (B9-1); in/out-scope is **confirmed with the user before the plan body is generated** (B9-3).
 
+**Standard (B9 / principle #6):** the document structure follows **ISO/IEC/IEEE 29119-3** — the current test-documentation standard. (IEEE 829 was **withdrawn in 2013**; use it only as a historical reference for section naming, not as the governing standard.)
+
 Workflow: Prerequisites → Scope confirmation → Discovery → Generation → Grounding → Validation → Semantic review → Save. Supports resume, headless, parallel-lens. Python 3.10+.
 
 **Args:** `create` (default), `update` (revise existing D-26), `validate` (check existing D-26). Optional: `--headless` / `-H` with `--strict` or `--assumptions-allowed` (see Autonomy).

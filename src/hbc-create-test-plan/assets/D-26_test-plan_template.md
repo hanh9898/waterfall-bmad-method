@@ -8,6 +8,8 @@ lastStep: ""
 updated: ""
 ---
 
+<!-- Structure follows ISO/IEC/IEEE 29119-3 (current test-documentation standard;
+     IEEE 829 withdrawn 2013 — historical reference only). -->
 # {project_name} — Test Plan
 
 ## 1. Overview
