@@ -117,8 +117,8 @@ flowchart LR
 
     subgraph FEAT["Repeat per feature"]
         direction LR
-        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
-        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR<br/>◑ by facet: D-09 · D-16 · D-14"]
+        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements · D-06 Business Flow<br/>P1-09 model-validation<br/>◑ DSC Discovery Spike (model uncertain)"]
+        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · D-27 Test Spec · IR<br/>◑ by facet: D-09 · D-16 · D-14"]
         P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD · RED→GREEN)"]
         P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
         P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
@@ -132,6 +132,8 @@ flowchart LR
 
 - **Phase 0 (`PI`)** — **mandatory, runs first**; typically once project-wide (or re-run to update directly). **Brownfield** (existing code): documents the codebase first (`bmad-document-project` + `project-context.md`), then derives the shared deliverables from it; greenfield: creates them from a PRD/choices. Produces D-12, D-03 + baselines D-19/D-21; idempotent, no `feature` arg.
 - **Phase Gate (`PG`)** — a control checkpoint at each phase boundary (deterministic checks + LLM evaluation); carries `feature=`.
+- **Early model validation (`P1-09` + `DSC`)** — Phase 1 requires a **signed-off domain model** (P1-09) before Analysis closes. A feature whose model is uncertain (`discovery_risk: uncertain`) runs a **Discovery Spike (`DSC`)**: validate the riskiest assumptions against ground-truth (real code/DB/examples) → verdict **VALIDATED / RESHAPE / KILL**; gate `P1-11` blocks until VALIDATED. *(Fixes the root cause: "a model gated PASSED before it was validated".)*
+- **Facet-driven design (◑)** — Phase 2 only produces the design deliverables a feature actually needs, decided by the **applicability-catalog**: `D-09` Architecture (integration/algorithm) · `D-16` Behavioral (non-CRUD) · `D-14` UX (has UI). A minimal feature needs only D-02 + D-06.
 - **Readiness check (`IR`)** — the Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + the matrix before implementation.
 - **Traceability (`TRI` → `TRU` → `TRA`)** — a matrix ensuring every requirement (REQ ID) has matching design, code, and tests. **`SYNC`** proposes cascade updates when a source doc changes.
 

@@ -117,8 +117,8 @@ flowchart LR
 
     subgraph FEAT["Lặp cho mỗi feature"]
         direction LR
-        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements"]
-        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · IR<br/>◑ theo facet: D-09 · D-16 · D-14"]
+        P1["Phase 1 · Analysis<br/>👤 BA<br/>D-02 Requirements · D-06 Business Flow<br/>P1-09 model-validation<br/>◑ DSC Discovery Spike (model uncertain)"]
+        P2["Phase 2 · Design + Test Design<br/>👤 ARCH · QA<br/>D-19 ERD · D-26 Test Plan · D-27 Test Spec · IR<br/>◑ theo facet: D-09 · D-16 · D-14"]
         P3["Phase 3 · Implementation<br/>👤 DEV<br/>Code (TDD · RED→GREEN)"]
         P4["Phase 4 · Testing<br/>👤 TST<br/>Acceptance Report"]
         P1 -->|PG| P2 -->|PG| P3 -->|PG| P4
@@ -132,6 +132,8 @@ flowchart LR
 
 - **Phase 0 (`PI`)** — **bắt buộc, chạy trước tiên**; thường đúng một lần cho cả dự án (hoặc chạy lại để update trực tiếp). **Brownfield** (có code sẵn): document codebase trước (`bmad-document-project` + `project-context.md`) rồi rút deliverable dùng chung từ đó; greenfield: tạo từ PRD/lựa chọn. Sinh D-12, D-03 + baseline D-19/D-21; idempotent, không cần `feature`.
 - **Phase Gate (`PG`)** — chốt kiểm soát ở ranh giới mỗi phase (kiểm tra tự động + đánh giá bằng LLM); mang theo `feature=`.
+- **Kiểm chứng model sớm (`P1-09` + `DSC`)** — Phase 1 buộc **ký xác nhận domain model** (P1-09) trước khi đóng Analysis. Feature có model chưa chắc (`discovery_risk: uncertain`) chạy **Discovery Spike (`DSC`)**: kiểm chứng giả định rủi ro nhất so với ground-truth (code/DB/ví dụ thật) → verdict **VALIDATED / RESHAPE / KILL**; gate `P1-11` chặn nếu chưa VALIDATED. *(Vá lỗi gốc: "model bị PASSED trước khi kiểm chứng".)*
+- **Thiết kế theo facet (◑)** — Phase 2 chỉ sinh deliverable thiết kế mà feature thực sự cần, do **applicability-catalog** quyết: `D-09` Architecture (tích hợp/thuật toán) · `D-16` Behavioral (phi-CRUD) · `D-14` UX (có UI). Feature tối giản chỉ cần D-02 + D-06.
 - **Readiness check (`IR`)** — cổng nối ở Phase 2, đối soát D-02 ↔ D-21/D-26/D-27 + ma trận trước khi sang implementation.
 - **Traceability (`TRI` → `TRU` → `TRA`)** — ma trận truy vết, đảm bảo mọi yêu cầu (REQ ID) đều có thiết kế, code và test tương ứng. **`SYNC`** đề xuất cập nhật lan truyền (cascade) khi một tài liệu nguồn thay đổi.
 
