@@ -102,9 +102,9 @@ Phase 0 does **two things**:
 1. **Understand the project.**
    - *Brownfield* (existing codebase): document the code first with `bmad-document-project`, then ensure `project-context.md` exists (via `bmad-generate-project-context`).
    - *Greenfield* (new project): take context from a PRD/brief, or the agent asks you.
-2. **Create the shared deliverables FROM that context:** D-12 Coding Standards (brownfield: derived from existing code conventions), D-03 Glossary (from the domain), baseline D-19 ERD (brownfield: from the existing DB schema), baseline D-21 API (brownfield: from existing endpoints).
+2. **Create the shared deliverables FROM that context:** D-12 Coding Standards (brownfield: derived from existing code conventions), D-03 Glossary (from the domain), constitution.md (the cross-phase invariant principles), baseline D-19 ERD (brownfield: from the existing DB schema), baseline D-21 API (brownfield: from existing endpoints).
 
-> ℹ️ D-12 and D-03 are **Phase 0 shared** deliverables — not "optional steps" of Phase 1/2.
+> ℹ️ D-12, D-03, and constitution.md are **Phase 0 shared** deliverables — not "optional steps" of Phase 1/2.
 
 Still in the agent, type:
 
@@ -118,6 +118,7 @@ PI
 hbc-project-init — created shared deliverables:
   _bmad-output/shared/coding-standards/  (D-12)
   _bmad-output/shared/glossary/          (D-03)
+  _bmad-output/shared/constitution.md    (cross-phase invariant principles)
   _bmad-output/shared/erd/               (D-19 baseline)
   _bmad-output/shared/api/               (D-21 baseline)
 ```

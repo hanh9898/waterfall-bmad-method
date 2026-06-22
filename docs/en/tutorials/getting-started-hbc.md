@@ -71,13 +71,13 @@ PI
 1. **Understand the project** —
    - *Brownfield* (existing code): document the codebase first via `bmad-document-project`, then ensure `project-context.md` exists (`bmad-generate-project-context`).
    - *Greenfield*: derive the context from the PRD / product brief / your ask.
-2. **Create the shared deliverables FROM that context** — **D-12 Coding Standards** (brownfield: from existing conventions), **D-03 Glossary** (domain terms), and **baseline D-19 ERD** (brownfield: from the DB schema) / **baseline D-21 API** (brownfield: from existing endpoints), written under `shared/`.
+2. **Create the shared deliverables FROM that context** — **D-12 Coding Standards** (brownfield: from existing conventions), **D-03 Glossary** (domain terms), **constitution.md** (the cross-phase invariant principles: test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps), and **baseline D-19 ERD** (brownfield: from the DB schema) / **baseline D-21 API** (brownfield: from existing endpoints), written under `shared/`.
 
 `PI` is **idempotent** — re-running skips whatever already exists (or updates it directly), so it's safe to run.
 
 > 📌 Because it isn't tied to any feature, `PI` takes **no** `feature=`. **D-12 and D-03 are Phase 0 shared deliverables**, not optional Phase 1/2 steps. After this step, everything else is per-feature.
 
-✅ **Phase 0 done:** the project is understood and has shared coding standards, a glossary, and baseline ERD/API — all created from that context. Now let's put the `auth` feature through the process.
+✅ **Phase 0 done:** the project is understood and has shared coding standards, a glossary, a constitution, and baseline ERD/API — all created from that context. Now let's put the `auth` feature through the process.
 
 ---
 
@@ -141,6 +141,10 @@ The Phase Gate runs deterministic checks + LLM evaluation, then returns **pass**
 > 📌 **P1-09 prevents a root-cause error.** This item exists so a *wrong* domain model doesn't pass Phase 1 and then drag wrong design/code into later phases — you confirm the model is right *before* closing Analysis.
 >
 > 🔬 **Feature with an uncertain model?** Set `discovery_risk: uncertain` in the D-02 frontmatter → run **[DSC] `hbc-discovery-spike`** to validate the riskiest assumptions against real code/DB/examples, yielding a verdict **VALIDATED/RESHAPE/KILL**. The Phase 1 gate (**P1-11**) then requires a signed-off VALIDATED discovery-note — no bare sign-off accepted. A `known` feature skips this step.
+>
+> 🔁 **A gate is not just "pass/fail".** When the problem is a stale upstream node, the gate can return **RECYCLE → an earlier phase** (earliest-wins) instead of a flat FAIL — you fix it **there** and re-run forward. Repeated recycles hitting the loop-cap hold **BLOCKED** for the USER to decide. See [Run a Phase Gate](../how-to/run-a-phase-gate.md).
+>
+> 🤖 **Agents will ASK at domain decisions.** Under **A5 autonomy**, agents decide MECHANICAL points on their own and move on, but pause to **ask** at **DOMAIN** decisions — never inventing a default.
 
 ✅ **Phase 1 done:** you have D-02, D-06 (BFD), an initialized traceability matrix, and a signed-off model-validation for `auth`.
 
@@ -270,6 +274,8 @@ PG 4 feature=auth
 > 💡 To check coverage anytime (optional), type `TRR`. `TRR` can also roll up coverage **across features** (shared rows counted once).
 
 > 🔁 **When a source doc changes later:** run `SYNC` (Cascade Sync) to analyze the impact and propose cascading updates to the dependent docs/tests/code.
+>
+> 🌐 **When a core/shared model changes across features** (after features have already shipped on the old model): run **`RBL` (`hbc-rebaseline`)** — it computes the **blast-radius** (which features/artifacts are stale), then plans the per-feature re-baseline at the epic/baseline-change level. It's a separate engine, not `MIG` (layout migration).
 
 ✅ **Phase 4 done:** the `auth` feature has gone through its full lifecycle, been accepted and shipped on its own, with complete traceability.
 
@@ -311,3 +317,4 @@ You ran **Phase 0** once, then took the `auth` feature through all 4 phases with
 | Check a phase boundary | `PG 1 feature=auth` … `PG 4 feature=auth` |
 | Traceability | `TRI` (init) → `TRU` (update) → `TRA` (audit) · `TRR` (coverage, can roll up across features) |
 | Sync when a doc changes | `SYNC` |
+| Re-baseline when a core/shared model changes across features | `RBL` |

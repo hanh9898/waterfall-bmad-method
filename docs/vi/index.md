@@ -4,7 +4,7 @@
 
 Tài liệu **HBLAB BMad Custom (HBC)** tổ chức theo mô hình [Divio](https://docs.divio.com/documentation-system/) — chọn theo nhu cầu của bạn.
 
-HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi trọn 4 phase + TDD rồi ship độc lập. Trước tiên chạy **Phase 0 — Project Init** một lần cho cả dự án (`hbc-project-init`) để dựng các deliverable dùng chung.
+HBC giao **tăng dần theo từng tính năng** (incremental per-feature delivery): mỗi tính năng đi trọn 4 phase + TDD rồi ship độc lập. Trước tiên chạy **Phase 0 — Project Init** một lần cho cả dự án (`hbc-project-init`) để dựng các deliverable dùng chung (gồm cả `constitution.md` — nguyên tắc bất biến xuyên phase).
 
 > 💡 Mới hoàn toàn? Bắt đầu từ [Khởi động nhanh 10 phút](tutorials/quickstart.md). Bí lúc nào thì gõ `bmad-help`.
 

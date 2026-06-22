@@ -20,7 +20,7 @@ flowchart TD
 
     subgraph P0["Phase 0 · Project Init 🛠️ một lần / cả dự án"]
         PI["PI → hbc-project-init"]
-        PISHARED["Tạo shared: D-12 Coding Standards ⭐, D-03 Glossary<br/>+ baseline D-19 ERD ⭐, D-21 API"]
+        PISHARED["Tạo shared: D-12 Coding Standards ⭐, D-03 Glossary, constitution.md<br/>+ baseline D-19 ERD ⭐, D-21 API"]
         PI --> PISHARED
     end
 
@@ -57,15 +57,15 @@ flowchart TD
         AC["AC → Acceptance Report ⭐ (per-feature)"]
     end
 
-    P1 ==>|PG 1 ✅| P2
-    P2 ==>|PG 2 ✅| P3
-    P3 ==>|PG 3 ✅| P4
-    P4 ==>|PG 4 ✅| SHIP([Giao tính năng])
+    P1 ==>|PG 1| P2
+    P2 ==>|PG 2| P3
+    P3 ==>|PG 3| P4
+    P4 ==>|PG 4| SHIP([Giao tính năng])
     SHIP -.->|tính năng tiếp theo| LOOP
 ```
 
 > ⭐ = deliverable **bắt buộc** ở gate. ◑ = **bắt buộc theo facet** (applicability-catalog quyết định per-feature: D-09 nếu có tích hợp/thuật toán; D-16 nếu phi-CRUD phức; D-14 nếu có UI). Các skill còn lại là tùy chọn, làm khi cần.
-> Mỗi mũi tên `PG <n> ✅` là một **Phase Gate** mang theo `feature=` — phải pass mới qua phase sau.
+> Mỗi mũi tên `PG <n>` là một **Phase Gate** mang theo `feature=`. Kết quả gate không chỉ là "pass": là một trong **`PASS` / `FAIL` / `RECYCLE→phase-(n−k)` / `BLOCKED`**. Gate **2-tier**: mọi mục **MUST (knockout)** phải đạt, các mục **SHOULD (scorecard)** chỉ chấm điểm. Khi một node thượng nguồn đã lỗi thời, gate **RECYCLE** trả quyền về phase sớm nhất sở hữu nó (earliest-wins) thay vì FAIL phẳng; recycle lặp chạm **loop-cap** (circuit-breaker) thì giữ **BLOCKED** (CI không bao giờ xanh) kèm quyết định re-slice/defer/kill cho USER. Chi tiết: [Cách chạy Phase Gate](../how-to/run-a-phase-gate.md).
 > `IR` (readiness gate) là **đường nối Phase 2 → 3**: đối soát D-02 ↔ D-21/D-26/D-27 + ma trận trước khi vào code.
 
 ## Phase 0 — Project Init (chạy MỘT lần, cả dự án)
@@ -74,6 +74,7 @@ flowchart TD
 
 - **D-12 Coding Standards** (shared ⭐) → `shared/coding-standards/`
 - **D-03 Glossary** (shared) → `shared/glossary/`
+- **constitution.md** — các nguyên tắc bất biến xuyên phase (test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps), viết một lần ở Phase 0.
 - **baseline D-19 ERD** (⭐) → `shared/erd/`
 - **baseline D-21 API** → `shared/api/`
 
@@ -121,11 +122,17 @@ flowchart LR
 
 Độ phủ tính theo `design_ref` / `code_ref` / `test_ref`. Ma trận là **per-feature**; `TRR` có thể rollup qua nhiều tính năng (hàng shared chỉ đếm một lần).
 
+> 🔧 Ma trận là một **VIEW suy ra từ build-graph** (các node + cạnh `sources:` + content-hash), không phải bảng duy trì thủ công: một **dirty-set** được tính lại sống mỗi lần chạy, **cưỡng chế bằng máy** sự lỗi thời (node có source token ≠ hash hiện tại của node thượng nguồn là STALE) — nên không thể âm thầm quên cập nhật. Xem [Bảng khái niệm · Trục-A](../reference/concept-glossary.md).
+
+### Re-baseline xuyên feature (`RBL`)
+
+Khi một **model lõi/shared** đổi *sau* Phase 3 (đã có feature ship trên model cũ), thay đổi đó làm một số feature/artifact trở nên stale. Skill **`RBL` (`hbc-rebaseline`)** tính **blast-radius** — tập feature/artifact bị ảnh hưởng, qua build-graph rollup — rồi lập kế hoạch re-baseline per-feature và ghi nhận ở mức **epic/baseline-change** (một mức layout TRÊN feature). Đây là một engine **RIÊNG**, không phải mở rộng của `MIG` (migrate đổi layout output); chạy `RBL plan` → `RBL apply`, idempotent.
+
 ## Bảng tra: phase → agent → skill → deliverable → scope
 
 | Phase | Agent | Skill | Deliverable | Scope | Bắt buộc |
 | --- | --- | --- | --- | --- | :---: |
-| **0 · Project Init** | — | `PI` | hbc-project-init (D-12/D-03 + baseline D-19/D-21) | shared, chạy một lần | — |
+| **0 · Project Init** | — | `PI` | hbc-project-init (D-12/D-03 + constitution.md + baseline D-19/D-21) | shared, chạy một lần | — |
 | **1 · Analysis** | `BA` | `REQ` | D-02 Requirements Specification | per-feature | ✅ |
 | | | `GLO` | D-03 Glossary | shared | — |
 | | | `BFD` | D-06 Business Flow Diagram | per-feature | — |
@@ -146,8 +153,11 @@ flowchart LR
 | **Xuyên suốt** | — | `PG` | Phase Gate (mang `feature=`) | per-feature | — |
 | | — | `TRI`/`TRU`/`TRR`/`TRA` | Traceability matrix (8 cột) | per-feature + rollup | — |
 | | — | `SYNC` | Cascade Sync (phân tích ảnh hưởng) | xuyên suốt | — |
+| | — | `RBL` | hbc-rebaseline (re-baseline xuyên feature; tính blast-radius khi model lõi/shared đổi sau Phase 3) | cross-feature (baseline-change) | — |
 
 > 💡 Mỗi skill workflow có 3 chế độ: **Create / Update / Validate**, đa số hỗ trợ `--headless` / `-H` để chạy không tương tác. Skill per-feature cần `feature=<slug>` khi chạy headless (thiếu sẽ bị chặn `feature_required`); skill dual (ERD/API) thì `feature` tùy chọn (mặc định baseline shared); skill shared (GLO/CS) và Phase 0 (`PI`) không nhận `feature`.
+>
+> 🤖 Theo **A5 autonomy**, agent tự quyết các điểm **MECHANICAL** rồi đi tiếp, nhưng **HỎI** ở các quyết định **DOMAIN** (không bao giờ bịa default) — bạn sẽ thấy nó dừng lại hỏi đúng ở chỗ cần phán đoán nghiệp vụ.
 >
 > ℹ️ `PG`, `TRI/TRU/TRR/TRA` và `SYNC` không phải *deliverable bắt buộc* (cột để "—"), nhưng là **thực hành xuyên suốt được khuyến nghị mạnh** ở mọi ranh giới phase — bỏ qua sẽ mất khả năng kiểm soát và truy vết.
 
@@ -159,7 +169,7 @@ Phase 3 `IM` chạy RED→GREEN→REFACTOR. **Enforcement mềm:** phải có/gh
 
 - **Phase 0 trước, rồi vòng lặp tính năng.** Chạy `PI` một lần; sau đó lặp lại Phase 1→4 cho từng tính năng, mỗi tính năng giao độc lập.
 - **Đi tuần tự trái → phải trong một tính năng.** Các phase đi tuần tự có cổng — không nhảy cóc. (Áp dụng từng tính năng nên ở cấp dự án là *incremental*, không phải làm một-lượt cả dự án.)
-- **Mỗi ranh giới có Gate.** Gặp `PG <n> ✅` nghĩa là phải dừng kiểm tra trước khi đi tiếp; `IR` là gate readiness ở đường nối Phase 2 → 3.
+- **Mỗi ranh giới có Gate.** Gặp `PG <n>` nghĩa là phải dừng kiểm tra trước khi đi tiếp (kết quả `PASS / FAIL / RECYCLE→phase-(n−k) / BLOCKED`); `IR` là gate readiness ở đường nối Phase 2 → 3.
 - **Traceability + Sync chạy nền.** Cứ cuối phase thì `TRU` một lần; cuối dự án thì `TRA`; khi tài liệu nguồn đổi thì `SYNC` để lan truyền.
 
 ## Bước tiếp theo

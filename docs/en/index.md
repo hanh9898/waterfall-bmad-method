@@ -4,7 +4,7 @@
 
 The **HBLAB BMad Custom (HBC)** docs follow the [Divio](https://docs.divio.com/documentation-system/) model — pick by what you need.
 
-HBC ships **incrementally, per-feature**: each feature goes through all 4 phases + TDD, then ships independently. First run **Phase 0 — Project Init** once for the whole project (`hbc-project-init`) to set up the shared deliverables.
+HBC ships **incrementally, per-feature**: each feature goes through all 4 phases + TDD, then ships independently. First run **Phase 0 — Project Init** once for the whole project (`hbc-project-init`) to set up the shared deliverables (including `constitution.md` — the cross-phase invariant principles).
 
 > 💡 Brand new? Start with the [10-minute Quickstart](tutorials/quickstart.md). Stuck anytime? Type `bmad-help`.
 

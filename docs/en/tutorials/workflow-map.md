@@ -20,7 +20,7 @@ flowchart TD
 
     subgraph P0["Phase 0 · Project Init 🛠️ once / project-wide"]
         PI["PI → hbc-project-init"]
-        PISHARED["Create shared: D-12 Coding Standards ⭐, D-03 Glossary<br/>+ baseline D-19 ERD ⭐, D-21 API"]
+        PISHARED["Create shared: D-12 Coding Standards ⭐, D-03 Glossary, constitution.md<br/>+ baseline D-19 ERD ⭐, D-21 API"]
         PI --> PISHARED
     end
 
@@ -57,15 +57,15 @@ flowchart TD
         AC["AC → Acceptance Report ⭐ (per-feature)"]
     end
 
-    P1 ==>|PG 1 ✅| P2
-    P2 ==>|PG 2 ✅| P3
-    P3 ==>|PG 3 ✅| P4
-    P4 ==>|PG 4 ✅| SHIP([Ship the feature])
+    P1 ==>|PG 1| P2
+    P2 ==>|PG 2| P3
+    P3 ==>|PG 3| P4
+    P4 ==>|PG 4| SHIP([Ship the feature])
     SHIP -.->|next feature| LOOP
 ```
 
 > ⭐ = **required** deliverable at the gate. ◑ = **required by facet** (the applicability-catalog decides per-feature: D-09 if integration/algorithm; D-16 if non-CRUD complex; D-14 if UI). The rest are optional, used as needed.
-> Each `PG <n> ✅` arrow is a **Phase Gate** carrying `feature=` — must pass before the next phase.
+> Each `PG <n>` arrow is a **Phase Gate** carrying `feature=`. A gate outcome is not just "pass": it's one of **`PASS` / `FAIL` / `RECYCLE→phase-(n−k)` / `BLOCKED`**. The gate is **2-tier**: every **MUST (knockout)** item has to pass, while **SHOULD (scorecard)** items are only scored. When an upstream node is stale, the gate **RECYCLEs** control back to the earliest phase that owns it (earliest-wins) instead of a flat FAIL; repeated recycles hitting the **loop-cap** (circuit-breaker) hold **BLOCKED** (CI never goes green) with a re-slice/defer/kill decision for the USER. Details: [Run a Phase Gate](../how-to/run-a-phase-gate.md).
 > `IR` (readiness gate) is the **Phase 2 → 3 seam**: it reconciles D-02 ↔ D-21/D-26/D-27 + matrix before code starts.
 
 ## Phase 0 — Project Init (run ONCE, project-wide)
@@ -74,6 +74,7 @@ flowchart TD
 
 - **D-12 Coding Standards** (shared ⭐) → `shared/coding-standards/`
 - **D-03 Glossary** (shared) → `shared/glossary/`
+- **constitution.md** — the cross-phase invariant principles (test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps), written once in Phase 0.
 - **baseline D-19 ERD** (⭐) → `shared/erd/`
 - **baseline D-21 API** → `shared/api/`
 
@@ -121,11 +122,17 @@ flowchart LR
 
 Coverage counts `design_ref` / `code_ref` / `test_ref`. The matrix is **per-feature**; `TRR` can roll up across features (shared rows counted once).
 
+> 🔧 The matrix is a **VIEW derived from a build-graph** (nodes + `sources:` edges + content-hash), not a hand-maintained table: a **dirty-set** is recomputed live on every run and **machine-enforces** staleness (a node whose source token ≠ the upstream node's current hash is STALE) — so it can't silently fall out of date. See [Concept Glossary · Axis-A](../reference/concept-glossary.md).
+
+### Cross-feature re-baseline (`RBL`)
+
+When a **shared/core model** changes *after* Phase 3 (features have already shipped on the old model), the change makes some features/artifacts stale. The **`RBL` (`hbc-rebaseline`)** skill computes the **blast-radius** — the set of affected features/artifacts, via a build-graph rollup — then plans the per-feature re-baseline and records it at the **epic/baseline-change** level (a layout level above feature). It is a **separate** engine, not an extension of `MIG` (which migrates the output layout); run `RBL plan` → `RBL apply`, idempotent.
+
 ## Lookup: phase → agent → skill → deliverable → scope
 
 | Phase | Agent | Skill | Deliverable | Scope | Required |
 | --- | --- | --- | --- | --- | :---: |
-| **0 · Project Init** | — | `PI` | hbc-project-init (D-12/D-03 + baseline D-19/D-21) | shared, run once | — |
+| **0 · Project Init** | — | `PI` | hbc-project-init (D-12/D-03 + constitution.md + baseline D-19/D-21) | shared, run once | — |
 | **1 · Analysis** | `BA` | `REQ` | D-02 Requirements Specification | per-feature | ✅ |
 | | | `GLO` | D-03 Glossary | shared | — |
 | | | `BFD` | D-06 Business Flow Diagram | per-feature | — |
@@ -146,8 +153,11 @@ Coverage counts `design_ref` / `code_ref` / `test_ref`. The matrix is **per-feat
 | **Cross-cutting** | — | `PG` | Phase Gate (carries `feature=`) | per-feature | — |
 | | — | `TRI`/`TRU`/`TRR`/`TRA` | Traceability matrix (8 columns) | per-feature + rollup | — |
 | | — | `SYNC` | Cascade Sync (impact analysis) | cross-cutting | — |
+| | — | `RBL` | hbc-rebaseline (cross-feature re-baseline; computes blast-radius when a core/shared model changes after Phase 3) | cross-feature (baseline-change) | — |
 
 > 💡 Every workflow skill has 3 modes: **Create / Update / Validate**, and most support `--headless` / `-H` for non-interactive runs. Per-feature skills require `feature=<slug>` in headless (missing it is blocked as `feature_required`); dual skills (ERD/API) make `feature` optional (defaulting to the shared baseline); shared skills (GLO/CS) and Phase 0 (`PI`) take no `feature`.
+>
+> 🤖 Under **A5 autonomy**, agents decide **MECHANICAL** points on their own and move on, but **ASK** at **DOMAIN** decisions (never inventing a default) — you'll see one pause to ask exactly where a business judgment is needed.
 >
 > ℹ️ `PG`, `TRI/TRU/TRR/TRA`, and `SYNC` are not *required deliverables* (the column shows "—"), but they are **strongly recommended cross-cutting practices** at every phase boundary — skipping them loses control and traceability.
 
@@ -159,7 +169,7 @@ Phase 3 `IM` runs RED→GREEN→REFACTOR. **Soft enforcement:** a **failing-test
 
 - **Phase 0 first, then the feature loop.** Run `PI` once; then repeat Phases 1→4 for each feature, shipping each one independently.
 - **Go left → right, in order within a feature.** Phases run sequentially with gates — no skipping. (Applied per feature, so at the project level it's *incremental*, not a one-pass build of the whole project.)
-- **Every boundary has a Gate.** Hitting `PG <n> ✅` means stop and validate before moving on; `IR` is the readiness gate at the Phase 2 → 3 seam.
+- **Every boundary has a Gate.** Hitting `PG <n>` means stop and validate before moving on (outcome `PASS / FAIL / RECYCLE→phase-(n−k) / BLOCKED`); `IR` is the readiness gate at the Phase 2 → 3 seam.
 - **Traceability + Sync run in the background.** Run `TRU` at the end of each phase; run `TRA` at the end of the project; run `SYNC` when a source doc changes to cascade the update.
 
 ## Next steps

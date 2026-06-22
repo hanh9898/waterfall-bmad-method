@@ -102,9 +102,9 @@ Phase 0 làm **hai việc**:
 1. **Hiểu dự án.**
    - *Brownfield* (đã có codebase): lập tài liệu code trước bằng `bmad-document-project`, rồi đảm bảo có `project-context.md` (qua `bmad-generate-project-context`).
    - *Greenfield* (dự án mới): lấy bối cảnh từ PRD/brief, hoặc agent sẽ hỏi bạn.
-2. **Tạo các deliverable dùng chung (shared) TỪ bối cảnh đó:** D-12 Coding Standards (brownfield: rút ra từ quy ước code sẵn có), D-03 Glossary (từ domain), bản nền (baseline) D-19 ERD (brownfield: từ schema DB sẵn có), bản nền D-21 API (brownfield: từ các endpoint sẵn có).
+2. **Tạo các deliverable dùng chung (shared) TỪ bối cảnh đó:** D-12 Coding Standards (brownfield: rút ra từ quy ước code sẵn có), D-03 Glossary (từ domain), constitution.md (các nguyên tắc bất biến xuyên phase), bản nền (baseline) D-19 ERD (brownfield: từ schema DB sẵn có), bản nền D-21 API (brownfield: từ các endpoint sẵn có).
 
-> ℹ️ D-12 và D-03 là deliverable **dùng chung của Phase 0** — không phải "bước tùy chọn" của Phase 1/2.
+> ℹ️ D-12, D-03 và constitution.md là deliverable **dùng chung của Phase 0** — không phải "bước tùy chọn" của Phase 1/2.
 
 Vẫn trong agent, gõ:
 
@@ -118,6 +118,7 @@ PI
 hbc-project-init — đã tạo deliverable dùng chung:
   _bmad-output/shared/coding-standards/  (D-12)
   _bmad-output/shared/glossary/          (D-03)
+  _bmad-output/shared/constitution.md    (nguyên tắc bất biến xuyên phase)
   _bmad-output/shared/erd/               (D-19 baseline)
   _bmad-output/shared/api/               (D-21 baseline)
 ```
