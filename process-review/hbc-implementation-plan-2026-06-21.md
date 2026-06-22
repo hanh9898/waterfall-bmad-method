@@ -376,7 +376,7 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 | U17 ✅ | `hbc-traceability` (B7) | `bmad-workflow-builder` Edit | U1·U16 | **DONE** — §9 TR B7-1..6 + A5 (trừ spike matrix-as-view/v_pair); cascade-precheck blocks untraced_change on TD.0; 44 tests; 2996 tok |
 | U18 ✅ | 5 agent (B17) | `bmad-agent-builder` | skill của phase tương ứng | **DONE** — §9 agents 4/4 mỗi agent + A5; ELICIT persona + orchestrate-new-flow + real-HALT + independent-review; 5 dash-tests renamed; 66 tests; all ≤3000 tok |
 | U19 | **VM toàn module** (checkpoint) | `bmad-module-builder` VM | sau mỗi ~4 U | 0 finding |
-| U20 | **Spike TA.0** (cổng trục A) | (spike tay) | U0 | bar ≥4/4 → GO, else NO-GO+fallback §5 |
+| U20 ✅ **GO** | **Spike TA.0** (cổng trục A) | (spike tay) | U0 | **GO** (2026-06-22) — broken **4/4** caught (gate-STALE·matrix-missing-040/041/042·model-drift·slice-missing) ∧ clean **0 FP** (2 feature non-trivial) ∧ deterministic; verified độc-lập (no cheat; 1 disclosed caveat = hardcoded field-hint, model-name drift generic vẫn đứng). Báo cáo: `process-review/spikes/ta0/PILOT-REPORT.md`. **U21 chờ owner greenlight.** |
 | U21 | Trục A (TA.1–TA.8) + `hbc-rebaseline` | `bmad-workflow-builder` Build/Edit | **U20 GO** | §9 ô (spike) ✅ |
 | U22 | Nợ-case TD.1–TD.6 | (tay, feature resource-plan-billable) | — | RCA §6.2 |
 
