@@ -75,7 +75,7 @@ Before saving, run the semantic review per the shared rubric (`.claude/skills/hb
 
 ### 5. Save and Handoff
 
-Finalize `{primary}` (`stepsCompleted = stage-1..5`, `lastStep = complete`, `updated` = today, `semanticReview` from 4b). Append a closing session block to `.decision-log.md` (sources incl. brownfield `project_knowledge`, scope, tier reached, scope-of-change, decision-records, auto-fixes, lenses, handoff). **B2-6 hand-off note:** the draft logical D-19 is the object the `[DSC]` Model-Spike examines at the P1→P2 seam (T3.17 reposition is a later unit — note the touchpoint, don't reposition). Consumers: `hbc-create-coding-standards`, `hbc-create-api-spec`, `hbc-task-breakdown`. Check `{workflow.on_complete_distillate}` (`always`/`offer`/`never`). Headless: emit the JSON return contract. Detail: stage-guide § Stage 5.
+Finalize `{primary}` (`stepsCompleted = stage-1..5`, `lastStep = complete`, `updated` = today, `semanticReview` from 4b). Append a closing session block to `.decision-log.md` (sources incl. brownfield `project_knowledge`, scope, tier reached, scope-of-change, decision-records, auto-fixes, lenses, handoff). **B2-6:** the draft logical D-19 is the `[DSC]` Model-Spike object at the P1→P2 seam (reposition = T3.17). Consumers: `hbc-create-coding-standards`, `hbc-create-api-spec`, `hbc-task-breakdown`. Check `{workflow.on_complete_distillate}` (`always`/`offer`/`never`). Headless: emit the JSON return contract. Detail: stage-guide § Stage 5.
 
 ## On Complete
 
@@ -83,6 +83,4 @@ Read `{workflow.on_complete}` from the resolved workflow block. If non-empty, fo
 
 ## Sync Handoff (hbc-traceability impact integration)
 
-Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`. Suppression guard (BR-13): `--invoked-by-sync` / `invoked_by_sync=true` → skip. Default: suggest `hbc-traceability impact`; auto-chained when `{workflow.auto_sync_after_update}` is true (default false).
-
-**Matrix column (B7-2):** on save (create or update), run `hbc-traceability update feature={feature}` so this phase self-writes its `design_ref` column — don't defer to a manual step (the Phase-2 gate cascade-precheck blocks if missing). This column-write is distinct from / lighter than the `impact` cascade above.
+`update` mode (full contract: `hbc-traceability/references/impact-capability.md`; BR-13 `--invoked-by-sync` → skip). Suggest `hbc-traceability impact`; auto-chain when `{workflow.auto_sync_after_update}`. **Matrix column (B7-2):** on save run `hbc-traceability update feature={feature}` (self-write `design_ref`; gate blocks if missing).

@@ -137,6 +137,4 @@ Suggest next steps: _"D-27 complete ({tc_count} TCs, {coverage}% coverage). Next
 
 ## Sync Handoff (hbc-traceability impact integration)
 
-`update` mode only. Full contract: `hbc-traceability/references/impact-capability.md`. **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), skip this section (prevents the update→sync→update loop). Otherwise, after a successful update suggest running `hbc-traceability impact` to sync dependent docs/tests/code; if `{workflow.auto_sync_after_update}` is true (default false), invoke it directly.
-
-**Matrix column (B7-2):** on save (create or update), run `hbc-traceability update feature={feature}` so this phase self-writes its `test_ref` column (TC↔REQ) — don't defer to a manual step (the Phase-2 gate cascade-precheck blocks if missing). Distinct from / lighter than the `impact` cascade.
+`update` mode (full contract: `hbc-traceability/references/impact-capability.md`; BR-13 `--invoked-by-sync` → skip, prevents update→sync loop). Suggest `hbc-traceability impact`; auto-chain when `{workflow.auto_sync_after_update}`. **Matrix column (B7-2):** on save run `hbc-traceability update feature={feature}` (self-write `test_ref` TC↔REQ; gate blocks if missing).
