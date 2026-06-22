@@ -26,6 +26,7 @@ Nếu dự án đã ở v2 (hoặc chưa có gì để migrate), `MIG` báo **"n
 | ID yêu cầu | `REQ-NNN` | `REQ-<FEAT>-NNN` (+ `REQ-SHARED-NNN`) |
 | ID test case | `TC-NNN` (phẳng) | `TC-NNN` per-feature |
 | Ma trận truy vết | 7 cột | **8 cột** (thêm cột `feature` ở đầu) |
+| Mã D-code | D-08 (Architecture), D-17 (Behavioral) | **reconcile** về canonical: D-08 → D-09, D-17 → D-16 |
 
 **Cách định tuyến artifact:** D-12 Coding Standards / D-03 Glossary + baseline D-19 ERD / D-21 API → `shared/`; còn D-02, D-06, D-26, D-27, task-breakdown, gates và ma trận → `features/<feature>/`.
 
@@ -43,9 +44,10 @@ MIG plan
 
 - từng phép dịch chuyển `src → dst` (file nào về `shared/`, file nào về `features/<feature>/`);
 - bảng đổi tiền tố `REQ-NNN → REQ-<FEAT>-NNN` **và** `TC-NNN`;
+- danh sách **D-code reconcile** (`dcode_rename`): D-08 → D-09, D-17 → D-16;
 - kế hoạch dựng lại ma trận từ 7 → 8 cột (chèn cột `feature`).
 
-> ⚠️ Ở chế độ headless (`-H`), mặc định cũng là **dry-run** trả về plan JSON. Để thực sự dịch chuyển file, headless cần đủ `feature=<slug>` **và** `--apply`. Thiếu feature → bị chặn với mã `feature_required`; nhiều feature trong tài liệu phẳng → chặn `multi_feature_ambiguous`.
+> ⚠️ Ở chế độ headless (`-H`), mặc định cũng là **dry-run** trả về plan JSON. Để thực sự dịch chuyển file, headless cần đủ `feature=<slug>` **và** `--apply`. Thiếu feature → bị chặn với mã `feature_required`; nhiều feature trong tài liệu phẳng → chặn `multi_feature_ambiguous`. Chọn autonomy `--strict` (dừng ở quyết định domain đầu tiên) hay `--assumptions-allowed` (mặc định CI) — xem [Autonomy (A5)](use-headless-mode.md#autonomy-a5-strict-vs-assumptions-allowed).
 
 ### 2. Duyệt kế hoạch
 
@@ -57,7 +59,7 @@ MIG plan
 MIG apply feature=<slug>
 ```
 
-Khi `apply`, `MIG` sẽ: dịch chuyển file; đổi tiền tố **REQ và TC** trong D-02/D-26/D-27 + ma trận đã chuyển; **dựng lại ma trận 8 cột** (chèn cột `feature`); và ghi **decision-log** mọi thay đổi.
+Khi `apply`, `MIG` sẽ: dịch chuyển file; đổi tiền tố **REQ và TC** trong D-02/D-26/D-27 + ma trận đã chuyển; **reconcile D-code** (đổi tên D-08 → D-09, D-17 → D-16); **dựng lại ma trận 8 cột** (chèn cột `feature`); và ghi **decision-log** mọi thay đổi.
 
 ## Backup & dirty-guard
 
@@ -73,6 +75,12 @@ Trước khi dịch chuyển bất cứ thứ gì, `apply` luôn:
 ## Idempotency (chạy lại an toàn)
 
 `MIG` nhận biết artifact **đã ở v2** và bỏ qua chúng. Chạy lại trên dự án đã migrate (hoặc không có gì để migrate) → báo **"nothing to migrate"**, không ghi đè. Nếu `shared/` đã có nội dung (vì `PI` từng chạy), `MIG` **không ghi đè** — tránh tạo trùng.
+
+**D-code reconcile cũng idempotent:** file đã ở mã canonical (D-09/D-16) **không bị đổi tên lại**.
+
+### Cây D-code lẫn lộn (MIXED) — `dcode_collision`
+
+Nếu cây hiện có **cả mã cũ lẫn mã canonical** cùng tồn tại (vd có cả D-08 *và* D-09), `MIG` không tự ý gộp — nó báo **`dcode_collision`** và **để bạn phân xử** (giữ file nào, gộp nội dung ra sao) trước khi reconcile tiếp.
 
 ## Xác minh & bàn giao
 

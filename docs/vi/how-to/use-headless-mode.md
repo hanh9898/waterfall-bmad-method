@@ -58,6 +58,26 @@ flowchart TD
     C -- "Có" --> D["Chạy: ghi vào features/slug/..."]
 ```
 
+## Autonomy (A5): strict vs assumptions-allowed
+
+Khi chạy headless, agent vẫn gặp những lựa chọn cần quyết. **A5 autonomy** tách quyết định **MECHANICAL** (máy tự quyết & đi tiếp) khỏi quyết định **DOMAIN** (phải hỏi; không bao giờ bịa một default). Hai cờ chuẩn — áp dụng đồng nhất cho mọi skill **và** cho gate — chọn cách xử lý một quyết định domain chưa được giải:
+
+| Cờ | Hành vi |
+| --- | --- |
+| `--strict` | Dừng ở **quyết định DOMAIN chưa giải đầu tiên** và trả về `blocked` kèm câu hỏi. |
+| `--assumptions-allowed` (mặc định CI) | Chọn phương án **dễ-bảo-vệ-nhất**, log một `ASSUMPTION`, rồi đi tiếp; **không bao giờ chặn ngay lượt đầu, không bao giờ bịa một green/PASS**. |
+
+Hai cờ này **trực giao** với `-H`: `-H` quyết định *có hỏi-đáp tương tác không*, còn `--strict`/`--assumptions-allowed` quyết định *khi không có ai để hỏi thì xử lý quyết định domain ra sao*. Mặc định CI là `--assumptions-allowed` để pipeline chạy liền mạch mà vẫn để lại dấu vết `ASSUMPTION` cho người soi lại.
+
+> 💡 Trên một **design gate** sạch nhưng **chưa có chữ ký USER**, `--assumptions-allowed` trả verdict headless **`PASSED_PENDING_SIGNOFF`** (xem [Chạy Phase Gate](run-a-phase-gate.md)) — sạch về máy nhưng vẫn chờ ký, **không** phải một PASS đầy đủ.
+
+Một vài **blocked reason** xuyên-skill thường gặp ở `--strict` (mỗi skill liệt kê tập đóng của riêng nó):
+
+- `untraced_change` — một thay đổi chưa có cạnh truy vết (cascade-precheck).
+- `stale_design` — node thiết kế thượng nguồn đã lỗi thời (dirty-set).
+- `mapping_unconfirmed` — một ánh xạ cần USER xác nhận.
+- `dcode_collision` — cây D-code lẫn lộn (cả mã cũ lẫn mã canonical cùng tồn tại).
+
 ## Khi nào nên dùng
 
 | Tình huống | Vì sao headless hợp |

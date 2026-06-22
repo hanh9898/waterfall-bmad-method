@@ -146,6 +146,22 @@ glossary_output_path = "{output_folder}/shared/glossary/GLOSSARY.md"
 
 The file always writes to a single project-wide location, independent of any feature.
 
+### Example 3 — config for `hbc-rebaseline` (cross-feature re-baseline)
+
+The `hbc-rebaseline` engine (`[RBL]`) records cross-feature re-baselines at the **epic/baseline-change level** — a layout level **above** feature. Its keys:
+
+```toml
+# _bmad/custom/hbc-rebaseline.toml
+[workflow]
+rebaseline_script    = "{skill-root}/scripts/rebaseline.py"
+features_dir         = "{output_folder}/features"
+baseline_change_dir  = "{output_folder}/baseline-change"
+```
+
+`baseline-change/` is a **new top-level** output directory, a sibling of `features/` and `shared/` under `{output_folder}`.
+
+> ℹ️ The gate's `recycle_cap` is **not** a customize key — it is a **CLI flag**, so don't add it here.
+
 ## Tips
 
 - Put **team-wide** values in `custom/config.toml` and `custom/<skill>.toml` (commit them so everyone shares).

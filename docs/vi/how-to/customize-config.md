@@ -146,6 +146,22 @@ glossary_output_path = "{output_folder}/shared/glossary/GLOSSARY.md"
 
 File luôn ghi một chỗ cho cả dự án, không phụ thuộc feature.
 
+### Ví dụ 3 — config cho `hbc-rebaseline` (re-baseline xuyên feature)
+
+Engine `hbc-rebaseline` (`[RBL]`) ghi nhận các re-baseline xuyên feature ở **mức epic/baseline-change** — một mức layout **trên** feature. Các key của nó:
+
+```toml
+# _bmad/custom/hbc-rebaseline.toml
+[workflow]
+rebaseline_script    = "{skill-root}/scripts/rebaseline.py"
+features_dir         = "{output_folder}/features"
+baseline_change_dir  = "{output_folder}/baseline-change"
+```
+
+`baseline-change/` là một thư mục output **top-level mới**, ngang hàng (sibling) với `features/` và `shared/` dưới `{output_folder}`.
+
+> ℹ️ `recycle_cap` của gate **không** phải một key customize — nó là một **cờ dòng lệnh (CLI flag)**, đừng thêm vào đây.
+
 ## Mẹo
 
 - Đặt giá trị **chung cả team** vào `custom/config.toml` và `custom/<skill>.toml` (commit để mọi người dùng chung).

@@ -26,6 +26,7 @@ If the project is already on v2 (or there's nothing to migrate), `MIG` reports *
 | Requirement IDs | `REQ-NNN` | `REQ-<FEAT>-NNN` (+ `REQ-SHARED-NNN`) |
 | Test-case IDs | `TC-NNN` (flat) | `TC-NNN` per-feature |
 | Traceability matrix | 7 columns | **8 columns** (adds a leading `feature` column) |
+| D-codes | D-08 (Architecture), D-17 (Behavioral) | **reconciled** to canonical: D-08 → D-09, D-17 → D-16 |
 
 **Artifact routing:** D-12 Coding Standards / D-03 Glossary + baseline D-19 ERD / D-21 API → `shared/`; while D-02, D-06, D-26, D-27, the task breakdown, gates and the matrix → `features/<feature>/`.
 
@@ -43,9 +44,10 @@ MIG plan
 
 - each `src → dst` move (which files go to `shared/`, which to `features/<feature>/`);
 - the `REQ-NNN → REQ-<FEAT>-NNN` **and** `TC-NNN` re-prefix map;
+- the **D-code reconcile** list (`dcode_rename`): D-08 → D-09, D-17 → D-16;
 - the plan to rebuild the matrix from 7 → 8 columns (injecting the `feature` column).
 
-> ⚠️ In headless mode (`-H`), the default is also **dry-run** returning a plan JSON. To actually move files, headless needs both `feature=<slug>` **and** `--apply`. Missing feature → blocked with `feature_required`; multiple features in a flat doc → blocked with `multi_feature_ambiguous`.
+> ⚠️ In headless mode (`-H`), the default is also **dry-run** returning a plan JSON. To actually move files, headless needs both `feature=<slug>` **and** `--apply`. Missing feature → blocked with `feature_required`; multiple features in a flat doc → blocked with `multi_feature_ambiguous`. Pick the autonomy mode — `--strict` (stop at the first domain decision) or `--assumptions-allowed` (CI default) — see [Autonomy (A5)](use-headless-mode.md#autonomy-a5-strict-vs-assumptions-allowed).
 
 ### 2. Review the plan
 
@@ -57,7 +59,7 @@ Read the preview carefully. In particular check that the **assigned feature is c
 MIG apply feature=<slug>
 ```
 
-On `apply`, `MIG` will: move files; re-prefix **REQ and TC** in the moved D-02/D-26/D-27 + matrix; **rebuild the 8-column matrix** (injecting the `feature` column); and write a **decision-log** of every change.
+On `apply`, `MIG` will: move files; re-prefix **REQ and TC** in the moved D-02/D-26/D-27 + matrix; **reconcile D-codes** (rename D-08 → D-09, D-17 → D-16); **rebuild the 8-column matrix** (injecting the `feature` column); and write a **decision-log** of every change.
 
 ## Backup & dirty-guard
 
@@ -73,6 +75,12 @@ In v1, **each `apply` handles a single feature** — always pass `feature=<slug>
 ## Idempotency (safe to re-run)
 
 `MIG` detects artifacts **already on v2** and skips them. Re-running on an already-migrated project (or one with nothing to migrate) reports **"nothing to migrate"** without overwriting. If `shared/` is already populated (because `PI` ran), `MIG` **won't overwrite** it — avoiding double-creation.
+
+**The D-code reconcile is idempotent too:** a file already on its canonical code (D-09/D-16) is **not re-renamed**.
+
+### A mixed D-code tree (MIXED) — `dcode_collision`
+
+If the tree has **both the legacy and the canonical code** present (e.g. both D-08 *and* D-09 exist), `MIG` won't merge them for you — it reports **`dcode_collision`** and **leaves you to adjudicate** (which file to keep, how to merge content) before reconciling further.
 
 ## Verify & hand off
 

@@ -27,6 +27,14 @@
 
 Ma trận của mỗi feature nằm tại `_bmad-output/features/<feature>/traceability/`.
 
+## build-graph / matrix-as-view
+
+Ma trận **không phải** một bảng bạn duy trì thủ công — nó là một **VIEW (matrix-as-view)** được suy ra từ một **build-graph kernel**: các artifact là node, các cạnh REQ→design→code→test được tính từ trường `sources:` mà mỗi node khai báo. Coverage và drift đến **TỪ đồ thị** (vd `missing_edges` = một REQ định nghĩa trong D-02 nhưng không có dòng nào trong ma trận), không phải từ việc bạn gõ tay đúng các ô.
+
+`TRU` vẫn **ghi nhận mapping** (điền các tham chiếu vào ô), nhưng những con số coverage/drift mà bạn đọc là tính lại sống từ build-graph mỗi lần chạy — nên không thể âm thầm quên mất sự lỗi thời.
+
+> 📐 Đồ thị còn cưỡng chế **v_pair** (mỗi deliverable thiết kế hiện diện phải có cạnh test-level ghép cặp). Còn re-baseline **xuyên feature** theo blast-radius là một engine riêng — `hbc-rebaseline` (`[RBL]`), không phải phần việc của 4 lệnh ở đây.
+
 ## Vòng đời 4 lệnh
 
 ```mermaid
@@ -95,9 +103,13 @@ TRA feature=auth
 
 Liệt kê REQ nào của feature còn thiếu link (thiếu `design_ref` / `code_ref` / `test_ref`) và phân loại mức nghiêm trọng. Mục tiêu: **0 gap** trước khi nghiệm thu (acceptance) feature đó.
 
+> 🔎 **drift-watch:** một `test_ref` *đã điền* vẫn có thể trở nên lỗi thời khi D-27 lớn dần (test case đổi/thêm mà ô không còn khớp). Audit **gắn cờ** trường hợp này; chạy lại **`TRU` Phase-2** để backfill cho khớp.
+
 ## Cascade Sync — khi một tài liệu nguồn thay đổi
 
-Các deliverable không độc lập: đổi D-02 (yêu cầu) có thể kéo theo phải sửa thiết kế (D-19/D-21), test (D-27) và code. `SYNC` là **phân tích tác động lan truyền (cascade sync)**, chỉ đọc (read-only): nó dò ma trận traceability để **đề xuất** những cập nhật cần làm ở các deliverable/test/code hạ nguồn — không tự sửa.
+Các deliverable không độc lập: đổi D-02 (yêu cầu) có thể kéo theo phải sửa thiết kế (D-19/D-21), test (D-27) và code. `SYNC` **đề xuất tác động**: nó dò ma trận traceability để gợi ý những cập nhật cần làm ở các deliverable/test/code hạ nguồn — phần gợi ý này không tự sửa.
+
+> ⚠️ **Nhưng cascade giờ được CƯỠNG CHẾ, không chỉ đề xuất.** Một bước **cascade-precheck** chạy trước khi một tài liệu được coi là "complete": nếu có một **thay đổi chưa truy vết** (untraced change), nó **CHẶN** với mã `untraced_change` / `cascade_required` — tài liệu không thể đạt trạng thái complete cho tới khi bạn **backfill** cạnh truy vết còn thiếu rồi chạy lại. Tóm lại: `SYNC` *đề xuất* việc cần làm hạ nguồn; cascade-precheck *bắt buộc* bạn không bỏ sót một thay đổi nào.
 
 ```mermaid
 flowchart LR

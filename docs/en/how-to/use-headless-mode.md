@@ -58,6 +58,26 @@ flowchart TD
     C -- "Yes" --> D["Run: write to features/slug/..."]
 ```
 
+## Autonomy (A5): strict vs assumptions-allowed
+
+When running headless, the agent still hits choices that need deciding. **A5 autonomy** separates **MECHANICAL** decisions (the machine decides & proceeds) from **DOMAIN** decisions (must ask; never fabricate a default). Two standard flags — applied uniformly across every skill **and** the gate — pick how an unresolved domain decision is handled:
+
+| Flag | Behavior |
+| --- | --- |
+| `--strict` | Stop at the **first unresolved DOMAIN decision** and return `blocked` with the question. |
+| `--assumptions-allowed` (CI default) | Take the **most-defensible** option, log an `ASSUMPTION`, then continue; **never blocks the first turn, never fabricates a green/PASS**. |
+
+The two flags are **orthogonal** to `-H`: `-H` decides *whether there is interactive back-and-forth*, while `--strict`/`--assumptions-allowed` decide *how a domain decision is handled when there is no one to ask*. The CI default is `--assumptions-allowed` so the pipeline runs seamlessly while still leaving an `ASSUMPTION` trail to review later.
+
+> 💡 On a **design gate** that is clean but **has no USER sign-off**, `--assumptions-allowed` returns the headless verdict **`PASSED_PENDING_SIGNOFF`** (see [Run a Phase Gate](run-a-phase-gate.md)) — machine-clean but still awaiting sign-off, **not** a full PASS.
+
+A few common cross-skill **blocked reasons** seen under `--strict` (each skill lists its own closed set):
+
+- `untraced_change` — a change with no traceability edge (cascade-precheck).
+- `stale_design` — an upstream design node is stale (dirty-set).
+- `mapping_unconfirmed` — a mapping needs USER confirmation.
+- `dcode_collision` — a mixed D-code tree (both legacy and canonical codes present).
+
 ## When to use it
 
 | Situation | Why headless fits |

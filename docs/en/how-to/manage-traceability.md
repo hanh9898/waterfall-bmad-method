@@ -27,6 +27,14 @@ In HBC v2, each matrix row has **8 columns**:
 
 Each feature's matrix lives at `_bmad-output/features/<feature>/traceability/`.
 
+## build-graph / matrix-as-view
+
+The matrix is **not** a table you hand-maintain — it is a **VIEW (matrix-as-view)** derived from a **build-graph kernel**: artifacts are nodes, and the REQ→design→code→test edges are computed from the `sources:` field each node declares. Coverage and drift come **FROM the graph** (e.g. `missing_edges` = a REQ defined in D-02 with no matrix row), not from you typing the cells correctly.
+
+`TRU` still **records the mappings** (fills the references into the cells), but the coverage/drift numbers you read are re-derived live from the build-graph each run — so staleness can't be silently forgotten.
+
+> 📐 The graph also enforces **v_pair** (each present design deliverable must carry its paired test-level edge). And the **cross-feature** blast-radius re-baseline is a separate engine — `hbc-rebaseline` (`[RBL]`), not part of the 4 commands here.
+
 ## The 4-command lifecycle
 
 ```mermaid
@@ -95,9 +103,13 @@ TRA feature=auth
 
 Lists which of the feature's REQs still lack links (missing `design_ref` / `code_ref` / `test_ref`) and classifies severity. Target: **0 gaps** before you accept that feature.
 
+> 🔎 **drift-watch:** a *filled* `test_ref` can still go stale as D-27 grows (test cases change/are added and the cell no longer matches). The audit **flags** this; re-run **`TRU` Phase-2** to backfill it back into alignment.
+
 ## Cascade Sync — when a source document changes
 
-Deliverables aren't independent: changing D-02 (requirements) may force edits to design (D-19/D-21), tests (D-27), and code. `SYNC` is a **cascade impact analysis**, read-only: it walks the traceability matrix to **propose** the updates needed in downstream deliverables/tests/code — it doesn't edit anything itself.
+Deliverables aren't independent: changing D-02 (requirements) may force edits to design (D-19/D-21), tests (D-27), and code. `SYNC` **proposes the impact**: it walks the traceability matrix to suggest the updates needed in downstream deliverables/tests/code — that suggestion doesn't edit anything itself.
+
+> ⚠️ **But cascade is now ENFORCED, not just proposed.** A **cascade-precheck** step runs before a document can be considered "complete": if there is an **untraced change**, it **BLOCKS** with the code `untraced_change` / `cascade_required` — the document can't reach complete until you **backfill** the missing traceability edge and re-run. In short: `SYNC` *proposes* the downstream work; cascade-precheck *forces* you not to miss a change.
 
 ```mermaid
 flowchart LR
