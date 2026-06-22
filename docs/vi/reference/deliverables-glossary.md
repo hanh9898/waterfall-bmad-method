@@ -12,7 +12,7 @@ HBC giao **tăng dần theo từng tính năng (incremental per-feature)**: mỗ
 - **shared** — dùng chung toàn dự án, lưu dưới `shared/…`, sinh **một lần** ở Phase 0 (`hbc-project-init`).
 - **dual** — có bản baseline dùng chung ở `shared/…`, kèm tùy chọn **bản ghi đè per-feature**; ưu tiên theo path-existence (bản override thắng nếu tồn tại).
 
-> 📌 **Phase 0 — Project Init** (`PI`): **bắt buộc và chạy đầu tiên**, một lần cho toàn dự án (hoặc chạy lại để cập nhật trực tiếp). **Nhận biết brownfield** — với codebase đã có, tài liệu hoá code trước (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield suy ra từ PRD/lựa chọn. Tạo các deliverable dùng chung — **D-12 Coding Standards, D-03 Glossary** — và baseline D-19 ERD / D-21 API. Không cần tham số `feature`.
+> 📌 **Phase 0 — Project Init** (`PI`): **bắt buộc và chạy đầu tiên**, một lần cho toàn dự án (hoặc chạy lại để cập nhật trực tiếp). **Nhận biết brownfield** — với codebase đã có, tài liệu hoá code trước (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield suy ra từ PRD/lựa chọn. Tạo các deliverable dùng chung — **D-12 Coding Standards, D-03 Glossary, constitution.md** — và baseline D-19 ERD / D-21 API. Không cần tham số `feature`.
 
 ## Tài liệu D-xx
 
@@ -78,6 +78,7 @@ Test case chi tiết với các **`TC-NNN` ID** (đánh số tuần tự **trong
 
 | Artifact | Phase | Skill | Nơi lưu |
 | --- | --- | --- | --- |
+| Constitution (nguyên tắc bất biến xuyên phase — test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps) | 0 · Project Init | `PI` | `shared/` |
 | Discovery Note (kiểm chứng model — pre-freeze, có điều kiện) | 1 · Analysis | `DSC` | `features/<feature>/planning-artifacts/` |
 | Task Breakdown | 3 · Implementation | `TB` | `features/<feature>/implementation-artifacts/` |
 | Code (TDD) | 3 · Implementation | `IM` | `features/<feature>/implementation-artifacts/` |

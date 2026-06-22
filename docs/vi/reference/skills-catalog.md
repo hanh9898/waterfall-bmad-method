@@ -28,7 +28,7 @@ HBC giao **tăng dần theo từng tính năng** (incremental per-feature delive
 
 | Code | Skill | Mô tả | Deliverable | Phạm vi |
 | --- | --- | --- | --- | --- |
-| `PI` | `hbc-project-init` | Bắt buộc, chạy đầu tiên. Brownfield: tài liệu hoá code (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield: suy ra từ PRD/lựa chọn. Tạo các shared deliverable: D-12 Coding Standards, D-03 Glossary, và baseline D-19 ERD / D-21 API | D-12, D-03, baseline D-19/D-21 | shared |
+| `PI` | `hbc-project-init` | Bắt buộc, chạy đầu tiên. Brownfield: tài liệu hoá code (`bmad-document-project` + `project-context.md`) rồi suy ra deliverable dùng chung; greenfield: suy ra từ PRD/lựa chọn. Tạo các shared deliverable: D-12 Coding Standards, D-03 Glossary, constitution.md, và baseline D-19 ERD / D-21 API | D-12, D-03, constitution, baseline D-19/D-21 | shared |
 | `MIG` | `hbc-migrate` | Đưa dự án **HBC v1 (layout phẳng)** lên v2 (per-feature + shared): dịch chuyển file, đổi tiền tố REQ/TC, dựng lại ma trận 8 cột. `MIG plan` = dry-run xem trước → `MIG apply feature=<slug>`. Xem [Migrate từ v1 lên v2](../how-to/migrate-from-v1.md) | layout v2 + ma trận 8 cột | v1→v2 migration, chạy một lần |
 
 Output: `_bmad-output/shared/{coding-standards, glossary, erd, api}/`.

@@ -13,7 +13,8 @@
 | **Incremental (staged delivery)** | **HBC's delivery model**: ship **one feature at a time**, each a gated cycle + TDD, shipped independently of other features. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Feature** | HBC's unit of delivery: one slice of scope that runs through all 4 phases + TDD, then ships on its own. Each feature has a `<slug>` (e.g. `auth`) that keys its folders and IDs. | [Why Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | One of HBC's 4 ordered stages: Analysis → Design → Implementation → Testing. | [Core Concepts](../explanation/concepts.md) |
-| **Phase 0 (Project Init)** | A step run **once, project-wide** before any feature (skill `PI` / hbc-project-init): produces the **shared** deliverables (D-12, D-03) + baseline D-19/D-21. Idempotent (skips what exists), no `feature` arg. | [Skills Catalog (PI)](skills-catalog.md) |
+| **Phase 0 (Project Init)** | A step run **once, project-wide** before any feature (skill `PI` / hbc-project-init): produces the **shared** deliverables (D-12, D-03, constitution) + baseline D-19/D-21. Idempotent (skips what exists), no `feature` arg. | [Skills Catalog (PI)](skills-catalog.md) |
+| **Constitution** | Cross-phase invariant principles written once in Phase 0 (test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps); a phase that violates one is wrong even if its own gate is green. | [Deliverables Glossary (constitution.md)](deliverables-glossary.md) |
 | **Phase Gate** | A control checkpoint at each phase boundary — must "pass" to advance (command `PG <n>`, carrying `feature=`). | [Core Concepts](../explanation/concepts.md) |
 | **Entry/Exit criteria** | The conditions to *start* a phase and to consider it *done*. | [Deliverables Glossary (D-26)](deliverables-glossary.md) |
 
@@ -69,6 +70,39 @@
 | **REJECTED** | Failed — has defects/gaps that must be fixed and re-evaluated. |
 | **DEFERRED** | Postponed — conditionally accepted, the missing part is handled later (by agreement). |
 | **PENDING** | Undecided — waiting on information/results to make the call. |
+
+## Trục-A — machine-enforcement / build-graph
+
+| Term | Short definition |
+| --- | --- |
+| **build-graph kernel** | Artifacts are modeled as a node graph; the traceability matrix is a **VIEW** derived from the graph, not a hand-maintained table. |
+| **`sources:` / content-hash edge** | A node declares what it derives from; the edge carries a **content-hash** (deterministic SHA-256 over normalized text). |
+| **dirty-set** | The set of **STALE** nodes: a node whose recorded source token ≠ the upstream node's current hash/version (direct OR transitive). Re-derived live each run; nothing cached — so staleness can't be silently forgotten. |
+| **ground-truth node** | The first-class `code` (/DB) node; the source-of-record that design nodes reconcile against. |
+| **matrix-as-view** | The REQ→design→code→test matrix computed **FROM** the graph; `missing_edges` = a REQ defined in D-02 with no matrix row. |
+| **reconcile / invariant-FAIL** | A machine-floor RED (model-drift D-19↔code, or a missing matrix REQ-edge) that NO caller can downgrade (frozen verdict, waiver-proof); a hard knockout that blocks a gate PASS. The "is it *meaningfully* wrong" judgment (rename vs real divergence) is the **semantic-ceiling**, deferred to the LLM review layer (`pending`). |
+| **RECYCLE → phase-(n−k)** | A gate outcome that hands control back to the **earliest** phase owning a dirty/failing upstream node (earliest-wins), instead of a flat FAIL. |
+| **loop-cap / circuit-breaker** | A bound on recycle loops; on cap-hit ("blown appetite") the gate surfaces a user decision — **re-slice / defer / kill** (a recommendation, not an auto-action) — and stays BLOCKED (CI never green). |
+| **2-tier gate** | **MUST (knockout)** = every correctness + required item (any FAIL → gate FAILED); **SHOULD (scorecard)** = non-required items scored `passed/total` (a low score warns in lenient mode, never hard-blocks). |
+| **100%-rule** | Machine REQ↔task coverage, **both directions** (every REQ has ≥1 task; no orphan task). |
+| **v_pair** | Design↔test edge enforcement (per the deliverable-catalog `v_pair` field): each present design deliverable must carry its paired test-level edge; a missing pair is a gap with severity. |
+| **blast-radius** | The set of features/artifacts a shared/core-model change makes stale, computed by build-graph rollup (feeds `[RBL]`). |
+| **baseline-change / epic level** | A layout level ABOVE feature, recorded by `hbc-rebaseline` for cross-feature re-baselines. |
+| **constitution** | Cross-phase invariant principles written once in Phase 0 (test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps); a phase that violates one is wrong even if its own gate is green. |
+| **A5 autonomy** | Separate **MECHANICAL** decisions (decide & proceed) from **DOMAIN** decisions (ASK; never fabricate a default); headless `--strict` = stop at the first domain decision (blocked + question), `--assumptions-allowed` (CI default) = take the most-defensible option, log an ASSUMPTION, continue — never block the first turn, never fabricate a PASS. |
+| **semantic-review** | Independent skeptic + acceptance two-lens review; `semanticReview` frontmatter with `status: passed` only when `openFacets` is empty AND the user signs off. |
+| **anti-churn** | Per-session version-bump discipline (bump once per session, not per edit; warn on high churn). |
+
+### Gate verdicts
+
+| Verdict | Meaning |
+| --- | --- |
+| **PASSED** | Passed. |
+| **FAILED** | Failed. |
+| **CONTESTED** | Blocks; a human adjudicates; never auto-pass. |
+| **WARNING** | Lenient-mode downgrade, non-correctness items only. |
+| **BLOCKED** | Evaluator crashed / un-runnable — never a PASS. |
+| **PASSED_PENDING_SIGNOFF** | Headless `--assumptions-allowed` on a clean-but-unsigned design gate. |
 
 ## Related
 

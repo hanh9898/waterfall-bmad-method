@@ -13,7 +13,8 @@
 | **Incremental (bàn giao tăng dần)** | **Mô hình triển khai của HBC**: giao **từng tính năng** một, mỗi feature là một chu trình có cổng + TDD, ship độc lập với các feature khác. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Feature (tính năng)** | Đơn vị giao hàng của HBC: một lát cắt phạm vi đi qua trọn 4 phase + TDD rồi ship riêng. Mỗi feature có một `<slug>` (vd `auth`) làm khóa cho thư mục và ID. | [Vì sao Incremental + TDD](../explanation/why-incremental-tdd.md) |
 | **Phase** | Một trong 4 chặng có thứ tự của HBC: Analysis → Design → Implementation → Testing. | [Khái niệm cốt lõi](../explanation/concepts.md) |
-| **Phase 0 (Project Init)** | Bước chạy **một lần, cho cả dự án** trước mọi feature (skill `PI` / hbc-project-init): sinh các deliverable **dùng chung** (D-12, D-03) + baseline D-19/D-21. Idempotent (bỏ qua cái đã có), không cần arg `feature`. | [Catalog skill (PI)](skills-catalog.md) |
+| **Phase 0 (Project Init)** | Bước chạy **một lần, cho cả dự án** trước mọi feature (skill `PI` / hbc-project-init): sinh các deliverable **dùng chung** (D-12, D-03, constitution) + baseline D-19/D-21. Idempotent (bỏ qua cái đã có), không cần arg `feature`. | [Catalog skill (PI)](skills-catalog.md) |
+| **Constitution (hiến pháp dự án)** | Các nguyên tắc bất biến xuyên phase, viết một lần ở Phase 0 (test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps); một phase vi phạm một nguyên tắc là sai ngay cả khi gate của chính nó xanh. | [Bảng deliverable (constitution.md)](deliverables-glossary.md) |
 | **Phase Gate** | Chốt kiểm soát ở ranh giới mỗi phase — phải "pass" mới được sang phase sau (lệnh `PG <n>`, mang `feature=`). | [Khái niệm cốt lõi](../explanation/concepts.md) |
 | **Entry/Exit criteria** | Điều kiện *vào* và *ra* của một phase — tiêu chí để bắt đầu và để được coi là hoàn thành. | [Bảng deliverable (D-26)](deliverables-glossary.md) |
 
@@ -69,6 +70,39 @@
 | **REJECTED** | Không đạt — có lỗi/thiếu sót phải sửa rồi đánh giá lại. |
 | **DEFERRED** | Tạm hoãn — chấp nhận có điều kiện, phần còn thiếu để lại xử lý sau (đã thống nhất). |
 | **PENDING** | Chưa quyết — còn chờ thông tin/kết quả để ra quyết định. |
+
+## Trục-A — machine-enforcement / build-graph
+
+| Thuật ngữ | Định nghĩa ngắn |
+| --- | --- |
+| **build-graph kernel** | Các artifact được mô hình hoá thành một đồ thị node; ma trận traceability là một **VIEW** suy ra từ đồ thị, không phải bảng duy trì thủ công. |
+| **`sources:` / content-hash edge** | Một node khai báo nó được suy ra từ đâu; cạnh (edge) mang theo một **content-hash** (SHA-256 xác định, tính trên văn bản đã chuẩn hoá). |
+| **dirty-set** | Tập các node **STALE**: node có source token đã ghi ≠ hash/version hiện tại của node thượng nguồn (trực tiếp HOẶC bắc cầu). Được tính lại sống mỗi lần chạy; không cache gì cả — nên không thể âm thầm quên mất sự lỗi thời. |
+| **ground-truth node** | Node `code` (/DB) hạng nhất; nguồn-bản-ghi (source-of-record) mà các node thiết kế phải đối soát lại. |
+| **matrix-as-view** | Ma trận REQ→design→code→test được tính **TỪ** đồ thị; `missing_edges` = một REQ định nghĩa trong D-02 nhưng không có dòng nào trong ma trận. |
+| **reconcile / invariant-FAIL** | Một RED ở **sàn máy** (model-drift D-19↔code, hoặc thiếu một REQ-edge trong ma trận) mà KHÔNG caller nào hạ cấp được (verdict đóng băng, miễn nhiễm waiver); một knockout cứng chặn gate PASS. Phán đoán "sai có *thực chất* không" (đổi tên vs phân kỳ thật) là **trần ngữ nghĩa** (semantic-ceiling), nhường cho tầng review LLM (`pending`). |
+| **RECYCLE → phase-(n−k)** | Kết quả gate trả quyền điều khiển về **phase sớm nhất** sở hữu một node thượng nguồn dirty/fail (earliest-wins), thay vì một FAIL phẳng. |
+| **loop-cap / circuit-breaker** | Giới hạn số vòng recycle; khi chạm cap ("blown appetite") gate đưa ra một quyết định của USER — **re-slice / defer / kill** (là đề xuất, không phải hành động tự động) — và giữ trạng thái BLOCKED (CI không bao giờ xanh). |
+| **2-tier gate** | **MUST (knockout)** = mọi mục đúng-đắn + bắt buộc (bất kỳ FAIL nào → gate FAILED); **SHOULD (scorecard)** = các mục không-bắt-buộc được chấm điểm `passed/total` (điểm thấp chỉ cảnh báo ở chế độ lenient, không bao giờ chặn cứng). |
+| **100%-rule** | Độ phủ REQ↔task bằng máy, **cả hai chiều** (mỗi REQ có ≥1 task; không có task mồ côi). |
+| **v_pair** | Cưỡng chế cạnh design↔test (theo trường `v_pair` của deliverable-catalog): mỗi deliverable thiết kế hiện diện phải mang cạnh test-level ghép cặp của nó; thiếu cặp là một gap có severity. |
+| **blast-radius** | Tập các feature/artifact mà một thay đổi shared/core-model làm trở nên stale, tính bằng build-graph rollup (đầu vào cho `[RBL]`). |
+| **baseline-change / epic level** | Một mức layout TRÊN feature, được `hbc-rebaseline` ghi nhận cho các re-baseline xuyên feature. |
+| **constitution** | Các nguyên tắc bất biến xuyên phase, viết một lần ở Phase 0 (test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps); một phase vi phạm một nguyên tắc là sai ngay cả khi gate của chính nó xanh. |
+| **A5 autonomy** | Tách quyết định **MECHANICAL** (tự quyết & đi tiếp) khỏi quyết định **DOMAIN** (HỎI; không bao giờ bịa một default); headless `--strict` = dừng ở quyết định domain đầu tiên (blocked + câu hỏi), `--assumptions-allowed` (mặc định CI) = chọn phương án dễ-bảo-vệ-nhất, log một ASSUMPTION, đi tiếp — không bao giờ chặn ngay lượt đầu, không bao giờ bịa một PASS. |
+| **semantic-review** | Review hai-lăng-kính: skeptic độc lập + acceptance; frontmatter `semanticReview` với `status: passed` chỉ khi `openFacets` rỗng VÀ USER ký xác nhận. |
+| **anti-churn** | Kỷ luật bump version theo phiên (bump một lần mỗi phiên, không phải mỗi lần sửa; cảnh báo khi churn cao). |
+
+### Verdict của gate
+
+| Verdict | Ý nghĩa |
+| --- | --- |
+| **PASSED** | Đạt. |
+| **FAILED** | Không đạt. |
+| **CONTESTED** | Chặn; một con người phân xử; không bao giờ tự động pass. |
+| **WARNING** | Hạ cấp ở chế độ lenient, chỉ cho các mục không-đúng-đắn (non-correctness). |
+| **BLOCKED** | Evaluator crash / không chạy được — không bao giờ là PASS. |
+| **PASSED_PENDING_SIGNOFF** | Headless `--assumptions-allowed` trên một design gate sạch-nhưng-chưa-ký. |
 
 ## Liên quan
 

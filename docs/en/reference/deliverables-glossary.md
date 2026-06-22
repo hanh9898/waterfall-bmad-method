@@ -12,7 +12,7 @@ HBC ships **incrementally, per feature (incremental per-feature)**: each feature
 - **shared** — project-wide, stored under `shared/…`, produced **once** in Phase 0 (`hbc-project-init`).
 - **dual** — a shared baseline at `shared/…` plus an optional **per-feature override**; resolved by path-existence precedence (the override wins if it exists).
 
-> 📌 **Phase 0 — Project Init** (`PI`): **mandatory and runs first**, once for the whole project (or re-run to update directly). **Brownfield-aware** — for an existing codebase it documents the code first (`bmad-document-project` + `project-context.md`) then derives the shared deliverables; greenfield derives them from the PRD/choices. Creates the shared deliverables — **D-12 Coding Standards, D-03 Glossary** — and baseline D-19 ERD / D-21 API. No `feature` argument.
+> 📌 **Phase 0 — Project Init** (`PI`): **mandatory and runs first**, once for the whole project (or re-run to update directly). **Brownfield-aware** — for an existing codebase it documents the code first (`bmad-document-project` + `project-context.md`) then derives the shared deliverables; greenfield derives them from the PRD/choices. Creates the shared deliverables — **D-12 Coding Standards, D-03 Glossary, constitution.md** — and baseline D-19 ERD / D-21 API. No `feature` argument.
 
 ## D-xx documents
 
@@ -78,6 +78,7 @@ Detailed test cases with **`TC-NNN` IDs** (numbered sequentially **within each f
 
 | Artifact | Phase | Skill | Output location |
 | --- | --- | --- | --- |
+| Constitution (cross-phase invariants — test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps) | 0 · Project Init | `PI` | `shared/` |
 | Discovery Note (model validation — pre-freeze, conditional) | 1 · Analysis | `DSC` | `features/<feature>/planning-artifacts/` |
 | Task Breakdown | 3 · Implementation | `TB` | `features/<feature>/implementation-artifacts/` |
 | Code (TDD) | 3 · Implementation | `IM` | `features/<feature>/implementation-artifacts/` |
