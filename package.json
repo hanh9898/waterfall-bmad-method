@@ -1,6 +1,6 @@
 {
   "name": "hblab-bmad-custom",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "HBLAB custom variants of BMad Method workflows — incremental + TDD lifecycle, per-feature delivery",
   "license": "UNLICENSED",
   "private": true,

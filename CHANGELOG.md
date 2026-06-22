@@ -5,7 +5,7 @@ All notable changes to the **HBLAB BMad Custom (HBC)** module. Versions follow
 under a MINOR bump is, per HBC policy, always accompanied by an automated, idempotent
 `[MIG]` migration path so existing-HBC consumer projects can upgrade without manual edits.
 
-## [2.3.0] — 2026-06-22
+## [2.1.0] — 2026-06-22
 
 ### BREAKING — design D-code reconcile (D-08 → D-09, D-17 → D-16)
 
