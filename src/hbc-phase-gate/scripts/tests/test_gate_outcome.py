@@ -21,9 +21,30 @@ _spec.loader.exec_module(mod)
 
 compose_outcome = mod.compose_outcome
 select_recycle_target = mod.select_recycle_target
+reconcile_invariant_targets = mod.reconcile_invariant_targets
+select_reconcile_recycle = mod.select_reconcile_recycle
 circuit_breaker = mod.circuit_breaker
 run = mod.run
 DEFAULT_RECYCLE_CAP = mod.DEFAULT_RECYCLE_CAP
+
+
+def _report(*nodes):
+    """Build a reconcile_report-shaped dict. Each arg is (node_id, invariant_fail,
+    reasons). Mirrors the keys gate-outcome reads — never hand-builds a verdict object.
+    """
+    verdicts = {}
+    for nid, inv, reasons in nodes:
+        verdicts[nid] = {
+            "machine_floor": "FAIL" if inv else "pass",
+            "invariant_fail": inv,
+            "floor_reasons": reasons or [],
+        }
+    return {
+        "verdicts": verdicts,
+        "any_invariant_fail": any(n[1] for n in nodes),
+        "all_floor_green": not any(n[1] for n in nodes),
+        "semantic_pending": [],
+    }
 
 
 # --- select_recycle_target ------------------------------------------------
@@ -170,15 +191,36 @@ class TestRunStage2:
     def test_missing_feature_dir_degrades_not_crash(self):
         o = run(str(BROKEN / "does-not-exist"), current_phase=3,
                 stage1_status="PASSED", recycle_count=0, recycle_cap=3)
-        # No upstream resolvable → empty dirty-set; stage-1 PASS → PASS (degraded note).
+        # A missing dir loads as an empty graph (no exception) → not a degraded stage-2,
+        # genuinely no nodes to fail → PASS. (The degraded-EXCEPTION path is below.)
         assert o["outcome"] == "PASS"
 
-    def test_broken_fixture_phase3_taskbreakdown_not_upstream(self):
-        # From Phase 3, task-breakdown (owns phase 3) is NOT strictly upstream, so
-        # it does not trigger a recycle; with stage-1 FAILED it's a local FAIL.
+    def test_degraded_stage2_downgrades_pass_to_contested(self, monkeypatch):
+        # F-3 fail-safe fix: if stage-2 (build-graph + reconcile machine-floor) cannot run
+        # (load raises), a would-be PASS is downgraded to CONTESTED — never green on an
+        # un-run correctness floor (the gate's cardinal sin is a false PASS).
+        def _boom(*a, **k):
+            raise RuntimeError("graph load failed")
+        monkeypatch.setattr(mod, "load_corpus", _boom)
+        o = run(str(BROKEN), current_phase=4, stage1_status="PASSED",
+                recycle_count=0, recycle_cap=3)
+        assert o["outcome"] == "CONTESTED"
+        assert o["reason"] == "stage2_degraded_unverified_floor"
+        assert o["stage2_degraded"]
+
+    def test_broken_fixture_phase3_recycles_to_design_root(self):
+        # From Phase 3 the staleness dirty-set ({gate, task-breakdown}) has no node
+        # strictly upstream of phase 3 (task-breakdown OWNS phase 3). Pre-TA.2 this was
+        # a flat FAIL. But the BROKEN fixture's REAL root is the phase-2 D-19↔code drift
+        # + missing matrix coverage, which `dirty_set` cannot see (D-19/matrix are
+        # fresh-by-construction in the loader). The wired reconcile machine-floor catches
+        # it → RECYCLE→2 (fix at the design root), the correct RCA outcome, not a FAIL
+        # that would send the user to patch phase 3 while the phase-2 drift stays.
         o = run(str(BROKEN), current_phase=3, stage1_status="FAILED",
                 recycle_count=0, recycle_cap=3)
-        assert o["outcome"] == "FAIL"
+        assert o["outcome"] == "RECYCLE"
+        assert o["reason"] == "reconcile_invariant_fail_upstream"
+        assert o["recycle_target"]["target_phase"] == 2
 
 
 # --- CLI / crash-safety ---------------------------------------------------
@@ -325,3 +367,189 @@ class TestTierThreading:
             capture_output=True, text=True, encoding="utf-8")
         assert r.returncode != 0
         assert "stage1-status or --tier-json" in r.stderr
+
+
+# --- TA.2 reconcile stage-2 helpers ---------------------------------------
+
+class TestReconcileTargets:
+    def test_no_report_is_empty_none_safe(self):
+        assert reconcile_invariant_targets(None) == []
+        assert reconcile_invariant_targets({}) == []
+
+    def test_clean_report_no_targets(self):
+        rep = _report(("D-19", False, []), ("matrix", False, []))
+        assert reconcile_invariant_targets(rep) == []
+
+    def test_extracts_invariant_fail_with_owning_phase(self):
+        rep = _report(("D-19", True, [{"check": "model_drift"}]), ("matrix", False, []))
+        targets = reconcile_invariant_targets(rep)
+        assert len(targets) == 1
+        assert targets[0]["node"] == "D-19"
+        assert targets[0]["owning_phase"] == 2
+        assert targets[0]["floor_reasons"] == [{"check": "model_drift"}]
+
+    def test_sorted_by_owning_phase_then_node(self):
+        rep = _report(("matrix", True, []), ("D-02", True, []), ("D-19", True, []))
+        targets = reconcile_invariant_targets(rep)
+        # D-02 (phase 1) first, then D-19 then matrix (both phase 2, node id tiebreak)
+        assert [t["node"] for t in targets] == ["D-02", "D-19", "matrix"]
+
+    def test_unmapped_node_sorts_last_none_owning(self):
+        rep = _report(("mystery", True, []), ("D-02", True, []))
+        targets = reconcile_invariant_targets(rep)
+        assert targets[0]["node"] == "D-02"
+        assert targets[-1]["node"] == "mystery"
+        assert targets[-1]["owning_phase"] is None
+
+    def test_select_recycle_picks_earliest_upstream(self):
+        targets = reconcile_invariant_targets(
+            _report(("matrix", True, []), ("D-02", True, [])))
+        rec = select_reconcile_recycle(targets, current_phase=4)
+        assert rec["target_phase"] == 1  # D-02 earliest
+        assert rec["node"] == "D-02"
+        assert rec["k"] == 3
+
+    def test_select_recycle_none_when_local_only(self):
+        # D-19 owns phase 2; from phase 2 it is NOT strictly upstream → local FAIL.
+        targets = reconcile_invariant_targets(_report(("D-19", True, [])))
+        assert select_reconcile_recycle(targets, current_phase=2) is None
+
+    def test_select_recycle_none_when_unmapped_only(self):
+        targets = reconcile_invariant_targets(_report(("mystery", True, [])))
+        assert select_reconcile_recycle(targets, current_phase=4) is None
+
+
+# --- TA.2 reconcile knockout composed into the precedence -----------------
+
+class TestReconcileKnockout:
+    def test_invariant_fail_blocks_pass_even_stage1_passed(self):
+        # THE load-bearing fix: stage-1 PASSED + no staleness + a machine-floor RED
+        # whose root is upstream → NEVER PASS; RECYCLE to the root phase.
+        rep = _report(("D-19", True, [{"check": "model_drift"}]))
+        o = compose_outcome("PASSED", {}, current_phase=4, recycle_count=0,
+                            recycle_cap=3, reconcile=rep)
+        assert o["outcome"] != "PASS"
+        assert o["outcome"] == "RECYCLE"
+        assert o["reason"] == "reconcile_invariant_fail_upstream"
+        assert o["recycle_target"]["target_phase"] == 2
+
+    def test_reconcile_recycle_honors_loop_cap(self):
+        # F-3 fix: the reconcile-invariant RECYCLE path must honor the SAME loop cap as
+        # staleness — it is precisely the path staleness misses (D-19 fresh-by-construction),
+        # so without this it would recycle forever.
+        rep = _report(("D-19", True, [{"check": "model_drift"}]))
+        capped = compose_outcome("PASSED", {}, current_phase=4, recycle_count=3,
+                                 recycle_cap=3, reconcile=rep)
+        assert capped["outcome"] == "BLOCKED"
+        assert capped["reason"] == "recycle_cap_exceeded"
+        assert "circuit_breaker" in capped
+        # below the cap the same case still RECYCLEs
+        below = compose_outcome("PASSED", {}, current_phase=4, recycle_count=2,
+                                recycle_cap=3, reconcile=rep)
+        assert below["outcome"] == "RECYCLE"
+
+    def test_invariant_fail_local_is_fail_not_pass(self):
+        # Machine-floor RED local to the current phase (D-19 owns phase 2) → FAIL.
+        rep = _report(("D-19", True, [{"check": "model_drift"}]))
+        o = compose_outcome("PASSED", {}, current_phase=2, recycle_count=0,
+                            recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "FAIL"
+        assert o["reason"] == "reconcile_invariant_fail"
+        # evidence is surfaced from the verdict's floor_reasons (reused, not re-counted)
+        assert o["invariant_fail_nodes"][0]["floor_reasons"] == [{"check": "model_drift"}]
+
+    def test_clean_reconcile_still_passes(self):
+        rep = _report(("D-19", False, []), ("matrix", False, []))
+        o = compose_outcome("PASSED", {}, current_phase=4, recycle_count=0,
+                            recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "PASS"
+        assert o["reconcile"]["any_invariant_fail"] is False
+
+    def test_staleness_recycle_takes_precedence_over_reconcile(self):
+        # When BOTH a dirty upstream and an invariant-fail exist, staleness RECYCLE
+        # fires first (it owns the same earliest-root rule); the invariant is still
+        # recorded in the `reconcile` surface so nothing is masked.
+        rep = _report(("D-19", True, []))
+        o = compose_outcome("PASSED", {"D-02": ["direct"]}, current_phase=4,
+                            recycle_count=0, recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "RECYCLE"
+        assert o["reason"] == "upstream_dirty"
+        assert o["reconcile"]["any_invariant_fail"] is True  # not lost
+
+    def test_crash_dominates_reconcile(self):
+        rep = _report(("D-19", True, []))
+        o = compose_outcome("BLOCKED", {}, current_phase=4, recycle_count=0,
+                            recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "BLOCKED"
+        assert o["reason"] == "stage1_blocked"
+
+    def test_loop_cap_dominates_reconcile(self):
+        # Cap-hit on a dirty upstream BLOCKS before the reconcile branch.
+        rep = _report(("D-19", True, []))
+        o = compose_outcome("FAILED", {"D-02": ["x"]}, current_phase=4,
+                            recycle_count=3, recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "BLOCKED"
+        assert o["reason"] == "recycle_cap_exceeded"
+
+    def test_invariant_not_downgradable_by_failed_stage1(self):
+        # Even a FAILED stage-1 with an upstream invariant root recycles to the root
+        # (fix upstream), never silently becomes a local FAIL that hides the root.
+        rep = _report(("D-02", True, []))
+        o = compose_outcome("FAILED", {}, current_phase=3, recycle_count=0,
+                            recycle_cap=3, reconcile=rep)
+        assert o["outcome"] == "RECYCLE"
+        assert o["recycle_target"]["target_phase"] == 1
+
+    def test_reconcile_none_when_degraded_no_knockout(self):
+        # reconcile=None (degraded stage-2) → no knockout asserted; stage-1 PASS passes.
+        o = compose_outcome("PASSED", {}, current_phase=4, recycle_count=0,
+                            recycle_cap=3, reconcile=None)
+        assert o["outcome"] == "PASS"
+        assert o["reconcile"] is None
+
+    def test_deterministic_with_reconcile(self):
+        rep = _report(("D-19", True, [{"check": "model_drift"}]), ("matrix", True, []))
+        a = compose_outcome("PASSED", {}, 4, 0, 3, reconcile=rep)
+        b = compose_outcome("PASSED", {}, 4, 0, 3, reconcile=rep)
+        assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
+# --- TA.2 the load-bearing eval on the real corpora -----------------------
+
+class TestReconcileEval:
+    def test_broken_fixture_stage1_passed_never_passes(self):
+        # Force stage-1 = PASSED on the BROKEN fixture. The gate must STILL not PASS:
+        # reconcile invariant-fail on D-19↔code drift + missing matrix rows. This is
+        # the RCA hole `dirty_set` alone left open.
+        o = run(str(BROKEN), current_phase=4, stage1_status="PASSED",
+                recycle_count=0, recycle_cap=3)
+        assert o["outcome"] != "PASS"
+        assert o["reconcile"]["any_invariant_fail"] is True
+
+    def test_broken_fixture_phase2_stage1_passed_fails_on_reconcile(self):
+        # At phase 2, D-19/matrix invariant-fail is LOCAL (no staleness upstream of
+        # phase 2 here) → FAIL on the reconcile machine-floor, not PASS.
+        o = run(str(BROKEN), current_phase=2, stage1_status="PASSED",
+                recycle_count=0, recycle_cap=3)
+        assert o["outcome"] == "FAIL"
+        assert o["reason"] == "reconcile_invariant_fail"
+        nodes = {n["node"] for n in o["invariant_fail_nodes"]}
+        assert {"D-19", "matrix"} <= nodes
+
+    def test_clean_corpus_stage1_passed_passes(self):
+        feats = [p for p in sorted(CLEAN.iterdir()) if p.is_dir()]
+        for fd in feats:
+            o = run(str(fd), current_phase=4, stage1_status="PASSED",
+                    recycle_count=0, recycle_cap=3)
+            assert o["outcome"] == "PASS", f"{fd.name}: clean → PASS, got {o['outcome']}"
+            assert o["reconcile"]["any_invariant_fail"] is False, f"{fd.name}: no spurious invariant-fail"
+
+    def test_cli_broken_stage1_passed_exit_nonzero(self):
+        r = subprocess.run(
+            [sys.executable, str(_SCRIPT), "--feature-dir", str(BROKEN),
+             "--phase", "2", "--stage1-status", "PASSED"],
+            capture_output=True, text=True, encoding="utf-8")
+        assert r.returncode != 0
+        data = json.loads(r.stdout)
+        assert data["outcome"] != "PASS"
+        assert data["reconcile"]["any_invariant_fail"] is True

@@ -80,8 +80,35 @@ WIRED-IN LATER WAVES (same file, sequential)
     RECOMMENDS to the user (it never auto-acts). Built on the
     `recycle_cap_exceeded` reason + `recycle_count`/`recycle_cap` seam.
   * TA.2 reconcile primitive (machine-floor + semantic-ceiling, CONTESTED) lives
-    in hbc-shared; this module uses the build-graph `dirty_set` it exposes and
-    does NOT re-implement reconcile.
+    in hbc-shared. This module now WIRES it in as stage-2's machine-floor knockout
+    (see RECONCILE STAGE-2 below) — it does NOT re-implement reconcile; it calls
+    `reconcile_report(graph)` and reuses the verdicts/`floor_reasons` verbatim.
+
+RECONCILE STAGE-2 — the machine-floor knockout (TA.2 → hot-path)
+================================================================
+Stage-2 has TWO orthogonal signals over the build-graph, NOT one:
+
+  (a) STALENESS — `dirty_set()`: is an upstream artifact stale (recorded token vs
+      current hash/version)? This drives RECYCLE-to-the-owning-phase.
+  (b) RECONCILE machine-floor — `reconcile_report(graph).any_invariant_fail`: did a
+      design node FACTUALLY drift from its ground-truth (D-19↔code model-drift), or
+      is the matrix missing a D-02 REQ row (coverage)? This is the TA.2 INVARIANT:
+      a RED here is a FACT no caller may downgrade.
+
+These are DELIBERATELY different: the corpus loader records D-19/matrix against the
+CURRENT code/D-02 hash, so they are "fresh by construction" and NEVER appear in
+`dirty_set` (the documented F-3 loader nit in hbc_buildgraph). Their real failure
+modes — model-drift and missing matrix edges — are caught ONLY by reconcile. So a
+gate that ran dirty_set alone could go GREEN over a model that drifted from its
+design as long as nothing was "stale" — the exact RCA hole. Wiring reconcile closes it.
+
+`any_invariant_fail` is a HARD knockout: a would-be PASS (or a stage-1 PASSED) is
+forced off green. It composes into the precedence ABOVE the local-FAIL/PASS rungs:
+  * if the invariant-fail's root node owns an EARLIER phase than N → RECYCLE→that
+    phase (fix at the root — same earliest-wins rule as staleness), else
+  * FAIL (a local machine-floor failure the current phase owns).
+The invariant nature is preserved structurally: gate-outcome never downgrades, and
+reconcile's frozen verdict + waiver-refusal mean a RED can't be masked upstream.
 
 Stdlib-only; deterministic (no time/random); None-safe. Run with `python`.
 """
@@ -100,6 +127,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
 try:
     from hbc_buildgraph import load_corpus  # noqa: E402
+    from hbc_reconcile import reconcile_report  # noqa: E402 — TA.2 machine-floor (stage-2b)
     _HAVE_GRAPH = True
 except ModuleNotFoundError:
     _HAVE_GRAPH = False
@@ -159,6 +187,56 @@ def select_recycle_target(dirty: dict, current_phase: int) -> dict | None:
         "owning_phase": target_phase,
         "all_dirty_upstream": [n for _, n in candidates],
     }
+
+
+def reconcile_invariant_targets(report: dict) -> list[dict]:
+    """Extract the invariant-fail evidence from a `reconcile_report` (TA.2), one entry
+    per design node whose machine floor is RED.
+
+    Returns ``[{node, owning_phase, floor_reasons}]`` sorted by (owning_phase, node).
+    ``owning_phase`` is the phase that OWNS the failing design node (``_NODE_PHASE``;
+    None for an unmapped node). This is pure extraction — it REUSES the verdict's
+    ``floor_reasons`` (the drift tokens / missing reqs the machine already counted),
+    never re-derives them, per the TA.2 boundary contract. None-safe: a None/empty
+    report yields ``[]``.
+    """
+    if not report:
+        return []
+    out: list[dict] = []
+    for node_id in sorted(report.get("verdicts", {})):
+        v = report["verdicts"][node_id]
+        if not v.get("invariant_fail"):
+            continue
+        out.append({
+            "node": node_id,
+            "owning_phase": _node_phase(node_id),
+            "floor_reasons": list(v.get("floor_reasons", [])),
+        })
+    out.sort(key=lambda e: (e["owning_phase"] if e["owning_phase"] is not None else 99, e["node"]))
+    return out
+
+
+def select_reconcile_recycle(targets: list[dict], current_phase: int) -> dict | None:
+    """If any invariant-fail's owning phase is strictly EARLIER than ``current_phase``,
+    return a recycle descriptor ``{target_phase, k, node, owning_phase}`` for the
+    EARLIEST such node (root cause first — same earliest-wins rule as staleness). The
+    fix belongs in the phase that owns the drifted/uncovered artifact, not in place.
+
+    Returns None when every invariant-fail is local to (or downstream of, or unmapped
+    for) the current phase — then the caller emits a machine-floor FAIL, not a recycle.
+    Deterministic: targets arrive sorted (owning_phase, node), so the first qualifier
+    is the earliest. None-safe.
+    """
+    for t in targets:
+        owning = t.get("owning_phase")
+        if owning is not None and owning < current_phase:
+            return {
+                "target_phase": owning,
+                "k": current_phase - owning,
+                "node": t["node"],
+                "owning_phase": owning,
+            }
+    return None
 
 
 def circuit_breaker(
@@ -222,16 +300,25 @@ def compose_outcome(
     recycle_count: int,
     recycle_cap: int,
     tier: dict | None = None,
+    reconcile: dict | None = None,
 ) -> dict:
-    """The TA.3 two-stage outcome state-machine (+ TA.4 tier / TA.8 circuit-breaker).
+    """The TA.3 two-stage outcome state-machine (+ TA.4 tier / TA.8 circuit-breaker /
+    TA.2 reconcile machine-floor knockout).
 
     Composes stage-1 (the U16 checklist verdict, passed in as ``stage1_status`` —
     in the wired flow this is the TA.4 tier KNOCKOUT status) with stage-2 (the
-    build-graph ``dirty_set``) into a single outcome. Pure function of its inputs —
-    deterministic and unit-testable, no I/O.
+    build-graph ``dirty_set`` staleness AND the ``reconcile`` machine-floor report)
+    into a single outcome. Pure function of its inputs — deterministic and
+    unit-testable, no I/O.
 
     Precedence (see module docstring): BLOCKED(crash) → loop-cap(+circuit-breaker)
-    → RECYCLE → FAIL(local) → PASS.
+    → RECYCLE(staleness) → RECYCLE/FAIL(reconcile invariant-fail) → FAIL(local) → PASS.
+
+    ``reconcile`` is the dict from ``reconcile_report(graph)``; its
+    ``any_invariant_fail`` is a HARD machine-floor knockout that BLOCKS PASS. A
+    machine-floor RED (D-19↔code drift / missing matrix coverage) can NEVER be a PASS,
+    even when stage-1 PASSED and nothing is stale — the load-bearing RCA fix. None when
+    stage-2 is degraded/unavailable (then this knockout is simply not applied).
 
     TA.4: ``tier`` is the full tier-aware verdict (from ``gate-tier.py``); it is
     attached to the output ``tier`` field for the report. The must/should tiering of
@@ -240,6 +327,8 @@ def compose_outcome(
     """
     s1 = (stage1_status or "").upper()
     recycle = select_recycle_target(dirty, current_phase)
+    inv_targets = reconcile_invariant_targets(reconcile)
+    any_invariant_fail = bool(inv_targets)
 
     base = {
         "stage1_status": s1,
@@ -248,6 +337,10 @@ def compose_outcome(
         "recycle_count": recycle_count,
         "recycle_cap": recycle_cap,
         "tier": tier,  # TA.4 tier-aware verdict (None when not wired)
+        "reconcile": {  # TA.2 stage-2 machine-floor surface (None-safe when degraded)
+            "any_invariant_fail": any_invariant_fail,
+            "invariant_fail_nodes": inv_targets,
+        } if reconcile is not None else None,
     }
 
     # 1. crash dominates — a BLOCKED stage-1 is never anything but BLOCKED.
@@ -276,6 +369,42 @@ def compose_outcome(
                             f"upstream '{recycle['node']}' is dirty/stale — fix belongs "
                             f"there, not in phase {current_phase}."}
 
+    # 3b. TA.2 reconcile machine-floor knockout — a FACTUAL drift/missing-edge RED.
+    #     This BLOCKS any would-be PASS (and a stage-1 PASSED): the gate must never go
+    #     green over a machine-floor RED — the RCA hole `dirty_set` alone leaves open
+    #     (D-19/matrix are fresh-by-construction in the loader, so staleness misses them).
+    #     If the RED's root owns an EARLIER phase → RECYCLE there (fix at root, like
+    #     staleness); else it is a local machine-floor FAIL the current phase owns.
+    #     Invariant: this is never downgradable — gate-outcome does not downgrade, and
+    #     reconcile's frozen verdict + waiver-refusal mean a RED cannot be masked.
+    if any_invariant_fail:
+        rec = select_reconcile_recycle(inv_targets, current_phase)
+        if rec is not None:
+            # Loop-cap parity with staleness (branch 2): a reconcile-invariant RECYCLE is
+            # exactly the case staleness misses (D-19/matrix are fresh-by-construction), so
+            # it must honor the SAME cap — else it recycles forever. Exceed → BLOCKED +
+            # circuit-breaker, never an unbounded loop ("cap the loop" DoD).
+            if recycle_count >= recycle_cap:
+                return {**base, "outcome": "BLOCKED", "reason": "recycle_cap_exceeded",
+                        "recycle_target": rec, "invariant_fail_nodes": inv_targets,
+                        "circuit_breaker": circuit_breaker(rec, current_phase,
+                                                           recycle_count, recycle_cap),
+                        "evidence": f"Reconcile machine-floor RED on '{rec['node']}' still "
+                                    f"unresolved after {recycle_count} recycle(s) (cap "
+                                    f"{recycle_cap}). Appetite blown — gate recommends "
+                                    f"re-slice/defer/kill (user decides); never recycle forever."}
+            return {**base, "outcome": "RECYCLE", "reason": "reconcile_invariant_fail_upstream",
+                    "recycle_target": rec, "invariant_fail_nodes": inv_targets,
+                    "evidence": f"Reconcile machine-floor RED on '{rec['node']}' (owned by "
+                                f"phase {rec['target_phase']}, k={rec['k']}) — design/code "
+                                f"drift or missing matrix coverage. Fix at the root phase; "
+                                f"never a PASS over a machine-floor RED."}
+        return {**base, "outcome": "FAIL", "reason": "reconcile_invariant_fail",
+                "invariant_fail_nodes": inv_targets,
+                "evidence": "Reconcile machine-floor RED (design/code drift or missing "
+                            "matrix coverage) local to this phase — FAIL; an invariant a "
+                            "waiver/lenient path can NEVER downgrade to PASS."}
+
     # 4. no upstream dirty: local failure stays a FAIL (stage-1 owns the verdict).
     if s1 in ("FAILED", "FAIL", "CONTESTED", "WARNING"):
         return {**base, "outcome": "FAIL", "reason": f"stage1_{s1.lower()}",
@@ -301,12 +430,16 @@ def run(
     recycle_cap: int,
     tier: dict | None = None,
 ) -> dict:
-    """Stage 2 (build-graph dirty-set over the feature) + the state-machine.
+    """Stage 2 (build-graph dirty-set + reconcile machine-floor over the feature) +
+    the state-machine.
 
     A missing/unreadable feature dir, or an un-importable build-graph kernel, is
-    treated as an EMPTY dirty-set with a `stage2_degraded` note — stage 2 cannot
-    INVENT a recycle, but it also must not crash the gate. Crash-safety proper is
-    the caller's last-resort catch (parity with the U16 evaluator).
+    treated as an EMPTY dirty-set and a None reconcile report with a `stage2_degraded`
+    note — stage 2 cannot INVENT a recycle or an invariant-fail, but it also must not
+    crash the gate. Crash-safety proper is the caller's last-resort catch (parity with
+    the U16 evaluator). A degraded stage-2 cannot ASSERT a knockout, but it is fail-SAFE,
+    not fail-open: a would-be PASS under a degraded stage-2 is downgraded to CONTESTED
+    (the machine-floor is unverified — never go green on an un-run correctness check).
 
     ``tier`` (TA.4) is the optional tier-aware verdict from ``gate-tier.py``; it is
     threaded into the outcome's ``tier`` field. When supplied, its ``knockout``
@@ -314,19 +447,35 @@ def run(
     """
     degraded = None
     dirty: dict = {}
+    reconcile: dict | None = None
     if not _HAVE_GRAPH:
-        degraded = "build-graph kernel (hbc_buildgraph) not importable; stage-2 skipped"
+        degraded = "build-graph kernel (hbc_buildgraph/hbc_reconcile) not importable; stage-2 skipped"
     else:
         try:
             g = load_corpus(Path(feature_dir))
             dirty = g.dirty_set()
+            # TA.2 machine-floor: reuse reconcile_report's verdicts verbatim (never
+            # hand-build a verdict — the TA.2 provenance contract).
+            reconcile = reconcile_report(g)
         except Exception as exc:  # noqa: BLE001 — stage-2 best-effort, never crash the gate
             degraded = f"stage-2 build-graph failed: {type(exc).__name__}: {exc}"
+            reconcile = None
 
     outcome = compose_outcome(stage1_status, dirty, current_phase, recycle_count,
-                              recycle_cap, tier=tier)
+                              recycle_cap, tier=tier, reconcile=reconcile)
     if degraded:
         outcome["stage2_degraded"] = degraded
+        # Fail-safe (gate cardinal sin = false PASS): a degraded stage-2 could NOT run the
+        # reconcile machine-floor, so it cannot certify "no drift / no missing coverage". A
+        # would-be PASS is downgraded to CONTESTED — a human verifies the floor by hand
+        # rather than the gate going green over an un-run correctness check.
+        if outcome.get("outcome") == "PASS":
+            outcome["outcome"] = "CONTESTED"
+            outcome["reason"] = "stage2_degraded_unverified_floor"
+            outcome["evidence"] = ("Stage-1 PASSED but stage-2 (build-graph + reconcile "
+                                   "machine-floor) could not run — the drift/coverage floor "
+                                   "is unverified. CONTESTED, not PASS: never green on an "
+                                   "un-run correctness check.")
     return outcome
 
 

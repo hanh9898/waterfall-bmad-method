@@ -110,6 +110,53 @@ Spike TA.0 passed (GO), so the RECYCLE outcome is now built in `scripts/gate-out
 - **Outcome state-machine:** `BLOCKED` (stage-1 crash, OR recycle loop-cap hit) → `RECYCLE→phase-(n−k)` (an earlier phase owns the earliest dirty upstream — hand control back there, not a flat FAIL) → `FAIL` (local failure, no dirty upstream) → `PASS` (stage-1 PASS and no dirty upstream). A crash is never a PASS; `--recycle-cap` bounds the loop (exceed → BLOCKED/escalate).
 - Recycle target = the **lowest** owning-phase number among dirty nodes strictly upstream of phase N (earliest = root cause).
 
+## Trục-A: reconcile machine-floor knockout — stage-2b (TA.2 → hot-path — built)
+
+Stage-2 has **two orthogonal signals** over the build-graph, not one. `gate-outcome.py`
+runs BOTH:
+
+- **(a) Staleness** — `dirty_set()`: is an upstream artifact stale (its recorded source
+  token vs the upstream's current hash/version)? Drives RECYCLE-to-the-owning-phase (above).
+- **(b) Reconcile machine-floor** — `reconcile_report(graph).any_invariant_fail` (the TA.2
+  primitive in `hbc-shared/lib/hbc_reconcile.py`): did a design node **factually drift** from
+  its ground-truth (D-19↔code model-drift), or is the matrix **missing a D-02 REQ row**
+  (coverage)? A RED here is the TA.2 **INVARIANT** — a FACT no caller may downgrade.
+
+**Why both are needed (the RCA hole this closes).** The corpus loader records D-19 and the
+matrix against the *current* code/D-02 hash, so they are "fresh by construction" and **never
+appear in `dirty_set`** (the documented F-3 loader nit in `hbc_buildgraph`). Their real failure
+modes — model-drift and missing matrix edges — are caught **only** by reconcile. A gate that
+ran `dirty_set` alone could therefore go GREEN over a model that drifted from its design as
+long as nothing was "stale" — the exact RCA failure the invariant was built to stop. Wiring
+`reconcile_report` into stage-2 closes it.
+
+**Precedence (extends TA.3):** `BLOCKED`(crash) → loop-cap(+circuit-breaker) →
+`RECYCLE`(staleness) → **`RECYCLE`/`FAIL`(reconcile invariant-fail)** → `FAIL`(local) → `PASS`.
+- `any_invariant_fail` is a **hard knockout that BLOCKS PASS**: a would-be PASS — even a
+  stage-1 PASSED — is forced off green. The gate **never goes green over a machine-floor RED**.
+- **RECYCLE vs FAIL** (deterministic, earliest-wins like staleness): map each invariant-fail
+  node to its owning phase (`_NODE_PHASE`: D-02→1, D-19/matrix→2, task-breakdown/code→3). If the
+  **earliest** failing node owns a phase **strictly earlier** than the current phase → **RECYCLE**
+  to that root phase (fix the design drift / coverage gap at its source). Otherwise (the RED is
+  local to, downstream of, or unmapped for the current phase) → **FAIL** (a local machine-floor
+  failure this phase owns).
+- The invariant is **never downgradable**: `gate-outcome.py` does not downgrade, and reconcile's
+  frozen `ReconcileVerdict` + `apply_waiver` refusal mean a RED can't be masked by a lenient flag
+  or waiver. Provenance matters — the gate obtains verdicts via `reconcile_report()`, never
+  hand-builds one (the TA.2 boundary contract).
+
+**Evidence surfacing.** The outcome JSON carries `reconcile: {any_invariant_fail,
+invariant_fail_nodes:[{node, owning_phase, floor_reasons}]}`. `floor_reasons` is **reused
+verbatim** from the verdict (the drift tokens `design_only`/`code_only`, the `missing_reqs`) —
+the gate never re-counts. A `RECYCLE`/`FAIL` on a reconcile RED additionally carries
+`invariant_fail_nodes` at top level for an actionable report.
+
+**Degraded stage-2 (asymmetry).** When the build-graph kernel is un-importable or `load_corpus`
+fails, `reconcile` is `None` (a `stage2_degraded` note is attached) and the knockout is simply
+**not applied** — a degraded reconcile cannot *assert* a RED, so a degraded stage-2 can still
+PASS on a stage-1 PASS. The knockout fires ONLY on a real, computed machine-floor RED. Stage-2
+is best-effort and never crashes the gate.
+
 ## Trục-A: 2-tier verdict (TA.4 — built)
 
 Checklist items split into two **tiers**, computed by `scripts/gate-tier.py` over the
