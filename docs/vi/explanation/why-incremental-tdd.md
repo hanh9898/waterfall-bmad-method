@@ -76,8 +76,9 @@ Có cổng mà không có TDD: tài liệu đẹp nhưng code có thể lệch k
 - **Cô lập đầu ra theo feature:** mỗi tính năng ghi vào `_bmad-output/features/<feature>/{planning-artifacts, implementation-artifacts, gates, traceability}/`; deliverable dùng chung nằm ở `_bmad-output/shared/...`. Hai feature không giẫm lên đầu ra của nhau.
 - **Gate theo feature & nghiệm thu theo feature:** Phase Gate mang `feature=`; bước acceptance (`AC`) đóng *một* feature và cho phép giao nó độc lập — không chờ feature khác.
 - **Không gian ID theo feature:** yêu cầu dùng `REQ-<FEAT>-NNN` (vd `REQ-AUTH-001`), cộng `REQ-SHARED-NNN` cho phần dùng chung; test case `TC-NNN` đánh số trong D-27 *của từng feature*. Nhờ vậy ID không đụng nhau giữa các feature.
+- **Constitution (hiến pháp dự án) — viết một lần ở Phase 0:** chính bài này lập luận cho **test-first**, **SoD (separation of duties)**, **handoff-through-artifact** (bàn giao qua tài liệu, không qua hành lang), và **simplicity-caps**. Constitution **mã hoá** đúng những nguyên tắc đó thành các bất biến xuyên phase: một phase vi phạm một nguyên tắc là sai *ngay cả khi gate của chính nó xanh* — nên các bệ đỡ trên không chỉ là quy ước mà là luật của dự án.
 
-Chính bốn bệ đỡ này biến "incremental" từ ý định thành **bảo đảm cấu trúc**: mỗi feature là một đơn vị có ranh giới riêng, gate riêng, ID riêng, giao được độc lập.
+Chính các bệ đỡ này biến "incremental" từ ý định thành **bảo đảm cấu trúc**: mỗi feature là một đơn vị có ranh giới riêng, gate riêng, ID riêng, giao được độc lập, trên một nền nguyên tắc bất biến chung.
 
 ---
 
@@ -99,7 +100,9 @@ flowchart LR
 
 > 📌 **Ở dự án này:** HBC được triển khai theo **(B) — incremental, từng tính năng**. Sau Phase 0 dựng nền chung, mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao (đầu ra cô lập trong `features/<feature>/...`, gate và nghiệm thu riêng), xong feature này sang feature khác. Nên ở cấp dự án đây là **bàn giao tăng dần (incremental / staged delivery)**, không phải làm một-lượt cả dự án. Cái thứ-tự-có-cổng chỉ mô tả *kỷ luật bên trong một feature* (thiết kế trước, duyệt từng mốc, tài liệu đầy đủ) — không phải mô hình giao hàng cả dự án.
 
-Ngoài ra, ngay *bên trong một feature* kỷ luật tuần tự của HBC cũng đã mềm hơn một quy trình tuần tự giáo khoa: test được **đặc tả sớm (Design) chạy muộn (Testing)** — hình chữ **V**; và có **dung sai phản hồi** (gate `fail → fix → re-run`, chế độ `update`).
+Ngoài ra, ngay *bên trong một feature* kỷ luật tuần tự của HBC cũng đã mềm hơn một quy trình tuần tự giáo khoa: test được **đặc tả sớm (Design) chạy muộn (Testing)** — hình chữ **V**; và có **dung sai phản hồi**. Dung sai đó không chỉ là `fail → fix → re-run` tại chỗ: khi một node thượng nguồn đã lỗi thời, gate có thể ra **RECYCLE → phase sớm hơn** — trả quyền điều khiển về đúng phase sở hữu node dirty (earliest-wins), thay vì bắt sửa quẩn ở phase hiện tại. Một **loop-cap / circuit-breaker** chặn việc recycle lặp vô hạn: chạm giới hạn thì gate đưa quyết định cho USER (**re-slice / defer / kill**) và giữ trạng thái **BLOCKED** thay vì giả vờ pass.
+
+> 🔁 **Còn thay đổi xuyên feature** (sửa shared / core-model) thì do `hbc-rebaseline` xử lý qua **blast-radius** — tính tập feature bị ảnh hưởng. Bài này tập trung vào cô lập *trong* một feature; chi tiết cross-feature xem [Glossary khái niệm](../reference/concept-glossary.md#trục-a--machine-enforcement--build-graph).
 
 ---
 

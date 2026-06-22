@@ -6,7 +6,7 @@
 
 HBC là module mở rộng cho BMad Method. Cách giao hàng của nó là **bàn giao tăng dần theo từng tính năng (incremental per-feature delivery)**: mỗi tính năng đi qua 4 phase có cổng + lõi TDD rồi *ship độc lập*, không cần chờ các tính năng khác.
 
-Để hiểu cả phương pháp, bạn cần nắm các khái niệm sau: **Tính năng & Phạm vi**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD với bằng chứng RED**, và **Traceability + Cascade Sync**.
+Để hiểu cả phương pháp, bạn cần nắm các khái niệm sau: **Tính năng & Phạm vi**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD với bằng chứng RED**, **Traceability + Cascade Sync**, **Trục-A (đồng-bộ ép-bằng-máy / build-graph)**, và **Constitution**.
 
 > 🧭 **Một ý xuyên suốt:** *máy lo cấu trúc · người/LLM lo ngữ nghĩa.* Kiểm tra cứng (đường dẫn, định dạng, ID) do máy lo một cách tất định; còn chất lượng nội dung (rõ ràng, đầy đủ, nhất quán) do người hoặc LLM đánh giá. Mọi khái niệm bên dưới đều bám theo lằn ranh này.
 
@@ -96,12 +96,21 @@ flowchart LR
     A["Kết thúc phase<br/>(feature=X)"] --> B[Kiểm tra tự động<br/>deterministic]
     B --> C[Đánh giá bằng LLM<br/>chất lượng nội dung]
     C --> D{Kết quả}
-    D -->|pass ✅| E[Sang phase sau]
-    D -->|fail ❌| F[Sửa theo gợi ý<br/>→ chạy lại PG]
+    D -->|PASS ✅| E[Sang phase sau]
+    D -->|FAIL ❌| F[Sửa theo gợi ý<br/>→ chạy lại PG]
+    D -->|RECYCLE → phase-n−k| R[Trả quyền về phase<br/>sở hữu node thượng nguồn dirty]
+    D -->|BLOCKED| K[Chạm loop-cap → USER quyết:<br/>re-slice / defer / kill]
 ```
 
 - **Lớp tự động (máy lo cấu trúc):** kiểm tra cứng — deliverable bắt buộc có tồn tại không, định dạng/đường dẫn đúng không.
 - **Lớp LLM (người/LLM lo ngữ nghĩa):** đánh giá mềm — nội dung có rõ ràng, đầy đủ, nhất quán không.
+
+**Tập kết quả gate không chỉ là pass/fail.** Verdict của một gate là một trong **PASS / FAIL / RECYCLE → phase-(n−k) / BLOCKED**, và bản thân phán quyết là **2-tier (2 tầng)**:
+
+- **Tầng MUST (knockout):** mọi mục đúng-đắn + bắt buộc; bất kỳ FAIL nào → gate FAILED ngay.
+- **Tầng SHOULD (scorecard):** các mục không-bắt-buộc được chấm điểm `passed/total`; điểm thấp chỉ cảnh báo ở chế độ lenient, không bao giờ chặn cứng.
+
+Khi một node thượng nguồn đã lỗi thời (xem [Trục-A](#9-trục-a-đồng-bộ-ép-bằng-máy-build-graph)), gate không FAIL phẳng mà ra **RECYCLE → phase-(n−k)**: trả quyền điều khiển về phase *sớm nhất* sở hữu node dirty/fail đó (earliest-wins). Và để recycle không lặp vô hạn, có một **loop-cap / circuit-breaker**: chạm giới hạn số vòng thì gate đưa ra một quyết định của USER — **re-slice / defer / kill** (đề xuất, không tự động) — và giữ trạng thái **BLOCKED** (CI không bao giờ xanh khi còn BLOCKED).
 
 **Vì sao cần Gate?** Để lỗi không trôi sang phase sau. Một yêu cầu mơ hồ lọt qua Phase 1 sẽ thành thiết kế sai ở Phase 2, code sai ở Phase 3 — càng về sau sửa càng đắt. Gate chặn lỗi tại nguồn.
 
@@ -189,6 +198,8 @@ flowchart LR
 
 Ma trận được giữ **theo từng tính năng**; `TRR` có thể **gộp chéo nhiều tính năng (rollup)** để báo cáo toàn dự án (dòng shared chỉ đếm một lần). Vòng đời: `TRI` (khởi tạo từ REQ ID) → `TRU` (cập nhật cuối mỗi phase) → `TRA` (audit gap cuối cùng); `TRR` cho báo cáo coverage bất cứ lúc nào.
 
+**Ma trận là một VIEW, không phải bảng duy trì tay.** Ở Trục-A, ma trận này được **suy ra (matrix-as-view) TỪ build-graph** — không ai gõ tay từng dòng rồi tự nhớ cập nhật. Một REQ định nghĩa trong D-02 mà không có dòng nào trong ma trận là một `missing_edge`, và sự lỗi thời được **ép bằng máy**: **cascade-precheck CHẶN** một thay đổi chưa được truy vết (không có edge tương ứng) ngay tại cổng, thay vì chờ ai đó nhớ ra.
+
 **Cascade Sync (`SYNC`) — khi một tài liệu đổi.** Các deliverable không độc lập: đổi D-02 có thể kéo theo phải sửa thiết kế, test, code. **Cascade Sync** là phân tích *tác động lan truyền*: khi một tài liệu nguồn thay đổi, `SYNC` dò ma trận traceability để **đề xuất** các cập nhật cần làm ở những deliverable/test/code hạ nguồn.
 
 ```mermaid
@@ -199,11 +210,36 @@ flowchart LR
     S --> D3["Code bị ảnh hưởng?"]
 ```
 
-> 📌 `SYNC` **đề xuất**, không tự ý sửa — vẫn theo "máy lo cấu trúc · người/LLM lo ngữ nghĩa": máy chỉ ra *cái gì có thể bị ảnh hưởng*, người quyết định *sửa thế nào*.
+> 📌 `SYNC` **đề xuất** *cách sửa*, không tự ý áp — vẫn theo "máy lo cấu trúc · người/LLM lo ngữ nghĩa". Nhưng "đồng bộ tài liệu" không còn là một **nguyên tắc tự-giác** trông chờ thiện chí: nó tựa trên **build-graph kernel** làm chất nền cưỡng chế — dirty-set lộ ra cái gì lỗi thời, cascade-precheck chặn thay đổi chưa truy vết, còn `SYNC` lo phần phán đoán *sửa thế nào* mà máy không quyết được.
 
 **Vì sao quan trọng?** Traceability trả lời hai câu hỏi mà dự án nào cũng sợ: *"Có yêu cầu nào bị bỏ quên không?"* (gap lộ ra ngay) và *"Code/test này phục vụ yêu cầu nào?"* (truy ngược được, không có code "mồ côi"). Cascade Sync trả lời câu thứ ba: *"Đổi chỗ này thì còn gì phải sửa theo?"*
 
 > 🔎 **Phép loại suy:** ma trận như *danh sách hành lý* — đánh dấu từng món đã xếp; cuối cùng nhìn là biết còn thiếu gì. Cascade Sync như *báo thay đổi lịch bay* — đổi một chuyến, hệ thống nhắc bạn những đặt chỗ liên quan cần xếp lại.
+
+---
+
+## 9. Trục-A: đồng-bộ ép-bằng-máy (build-graph)
+
+Bảy mục trên chủ yếu được canh bởi các **script kiểm tra theo từng skill** (cấu trúc) cộng đánh giá LLM (ngữ nghĩa). **Trục-A** là một tầng đặt **BÊN TRÊN** các kiểm tra rời rạc đó: nó coi mọi artifact của dự án là một **build-graph** — một đồ thị có node — để sự nhất quán giữa các tài liệu được *ép bằng máy*, chứ không trông chờ ai đó nhớ.
+
+- **Artifact = node, `sources:` = cạnh, mang content-hash.** Mỗi tài liệu là một **node**; nó khai báo nó được suy ra từ đâu bằng các cạnh (`sources:`), và mỗi cạnh mang một **content-hash** (SHA-256 xác định, tính trên văn bản đã chuẩn hoá). Nhờ đó "X dựng từ Y" không còn là lời hứa trong văn xuôi — nó là một cạnh máy đọc được.
+- **dirty-set — sự lỗi thời không thể âm thầm bị quên.** Khi một node thượng nguồn đổi, hash của nó lệch khỏi token mà các node hạ nguồn đã ghi. Tập các node lệch đó là **dirty-set** (STALE) — tính lan truyền cả trực tiếp lẫn bắc cầu, **tính lại sống mỗi lần chạy, không cache**. Vì vậy một thay đổi thượng nguồn *không thể* trôi đi mà không kéo theo cảnh báo "cái này giờ đã cũ".
+- **`code` là ground-truth node.** Node `code` (/DB) là **nguồn-bản-ghi (source-of-record)** hạng nhất; các node *thiết kế* phải **đối soát (reconcile)** lại với nó, chứ không phải ngược lại. Thiết kế lệch khỏi code đang chạy là thiết kế sai.
+- **Ma trận là matrix-as-view.** Như đã nói ở [mục 8](#8-traceability--sợi-chỉ-nối-yêu-cầu-đến-test-và-cascade-sync), ma trận traceability được **suy ra TỪ** đồ thị này, không phải bảng duy trì tay.
+
+**reconcile / invariant-FAIL = sàn-máy RED không hạ cấp được.** Khi máy phát hiện model-drift (D-19 ↔ code lệch nhau) hoặc một REQ thiếu edge trong ma trận, đó là một **RED ở sàn máy** mà **không caller nào hạ cấp được** (verdict đóng băng, miễn nhiễm waiver) — một knockout cứng chặn gate PASS. Còn câu hỏi "lệch này có *thực chất* sai không, hay chỉ đổi tên?" là **trần ngữ nghĩa**, nhường cho tầng review LLM (`pending`) — đúng lằn ranh *máy lo cấu trúc · người/LLM lo ngữ nghĩa*.
+
+> 🔎 **Phép loại suy:** như một bảng tính có công thức — sửa một ô nguồn thì mọi ô phụ thuộc tự đánh dấu "cần tính lại", không ai phải nhớ ô nào liên quan. Build-graph làm đúng việc đó cho các tài liệu của dự án.
+>
+> 🧭 Tra nhanh các thuật ngữ Trục-A (build-graph kernel, dirty-set, matrix-as-view, reconcile/invariant-FAIL, RECYCLE, 2-tier gate, circuit-breaker…): [Glossary khái niệm — Trục-A](../reference/concept-glossary.md#trục-a--machine-enforcement--build-graph).
+
+---
+
+## 10. Constitution — nguyên tắc bất biến xuyên phase
+
+Các cổng kiểm tra *từng phase một*. Nhưng có những nguyên tắc đúng-đắn **xuyên suốt mọi phase** mà không gate đơn lẻ nào nắm trọn. HBC viết chúng **một lần ở Phase 0** thành một **constitution (hiến pháp dự án)**: **test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps**.
+
+Điểm mấu chốt: **một phase vi phạm một nguyên tắc của constitution là sai — ngay cả khi gate của chính nó xanh.** Constitution là tầng đúng-đắn nằm trên các gate; gate xanh không "mua" được quyền vi phạm một bất biến đã ký ở Phase 0.
 
 ---
 
@@ -218,15 +254,19 @@ flowchart TD
     D --> IR["Readiness (IR)<br/>đối soát đường may P2→P3"]
     P --> TDD["TDD + bằng chứng RED (Phase 3)"]
     D --> T["Traceability (8 cột) + Cascade Sync"]
+    D --> AX["Trục-A: build-graph<br/>(dirty-set · matrix-as-view · reconcile)"]
+    P0 --> CON["Constitution<br/>(bất biến xuyên phase)"]
+    AX --> G
     G --> SHIP["Ship tính năng độc lập"]
 ```
 
 - **Tính năng & Phạm vi** quyết định đơn vị giao hàng và ai dùng chung cái gì.
-- **Phase 0** dựng phần dùng chung một lần trước.
-- **Phase** chia mỗi tính năng thành chặng; **Gate** chốt từng chặng; **IR** canh đường may giữa thiết kế và code.
+- **Phase 0** dựng phần dùng chung một lần trước, và viết **constitution** (bất biến xuyên phase).
+- **Phase** chia mỗi tính năng thành chặng; **Gate** chốt từng chặng (PASS/FAIL/RECYCLE/BLOCKED, 2-tier); **IR** canh đường may giữa thiết kế và code.
 - **Deliverable** là sản phẩm cụ thể, có mã và phạm vi.
 - **TDD + bằng chứng RED** giữ kỷ luật test-first ở Phase 3.
 - **Traceability + Cascade Sync** xâu chuỗi mọi thứ để không bỏ sót, và lan truyền thay đổi.
+- **Trục-A (build-graph)** ép sự nhất quán đó bằng máy: dirty-set, matrix-as-view, reconcile/invariant-FAIL.
 
 > 💬 Không chắc bước tiếp theo? Hỏi `bmad-help` — trợ lý "làm gì tiếp" luôn sẵn sàng.
 

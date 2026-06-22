@@ -76,8 +76,9 @@ So that "each feature ships independently" isn't just a slogan, v2 sets up concr
 - **Per-feature output isolation:** each feature writes to `_bmad-output/features/<feature>/{planning-artifacts, implementation-artifacts, gates, traceability}/`; shared deliverables live under `_bmad-output/shared/...`. Two features never trample each other's output.
 - **Per-feature gates & per-feature acceptance:** the Phase Gate carries `feature=`; the acceptance step (`AC`) closes *one* feature and lets it ship independently — without waiting on any other feature.
 - **Per-feature ID namespace:** requirements use `REQ-<FEAT>-NNN` (e.g. `REQ-AUTH-001`), plus `REQ-SHARED-NNN` for shared parts; test cases `TC-NNN` are numbered within *each feature's* D-27. So IDs never collide across features.
+- **Constitution — written once in Phase 0:** this very document argues for **test-first**, **SoD (separation of duties)**, **handoff-through-artifact** (hand over via documents, not hallway), and **simplicity-caps**. The constitution **codifies** exactly those into cross-phase invariants: a phase that violates one is wrong *even if its own gate is green* — so the scaffolding above isn't merely convention but the project's law.
 
-These four pieces of scaffolding turn "incremental" from intent into a **structural guarantee**: each feature is a unit with its own boundary, its own gates, its own IDs, shippable on its own.
+These pieces of scaffolding turn "incremental" from intent into a **structural guarantee**: each feature is a unit with its own boundary, its own gates, its own IDs, shippable on its own, on a shared floor of invariant principles.
 
 ---
 
@@ -99,7 +100,9 @@ flowchart LR
 
 > 📌 **In this project:** HBC is delivered as **(B) — incremental, feature by feature**. After Phase 0 lays the shared foundation, each feature goes through all 4 gated stages + TDD, then ships (output isolated in `features/<feature>/...`, with its own gates and acceptance); one feature done, on to the next. So at the project level this is **incremental delivery (staged delivery)**: the *sequential, design-first discipline* (design first, sign off each milestone, full documentation) applies inside a single feature, while the project as a whole ships one feature at a time.
 
-Also, even *within a feature* HBC is softer than a textbook sequential process: tests are **specified early (Design), executed late (Testing)** — a **V** shape; and there's **feedback tolerance** (the gate `fail → fix → re-run`, the `update` mode).
+Also, even *within a feature* HBC is softer than a textbook sequential process: tests are **specified early (Design), executed late (Testing)** — a **V** shape; and there's **feedback tolerance**. That tolerance isn't only `fail → fix → re-run` in place: when an upstream node has gone stale, the gate can return **RECYCLE → an earlier phase** — handing control back to the phase that owns the dirty node (earliest-wins), instead of churning a fix in the current phase. A **loop-cap / circuit-breaker** stops recycle from looping forever: on hitting the bound the gate surfaces a USER decision (**re-slice / defer / kill**) and stays **BLOCKED** rather than faking a pass.
+
+> 🔁 **Cross-feature change** (editing shared / core-model) is instead handled by `hbc-rebaseline` via **blast-radius** — computing the set of affected features. This document focuses on isolation *within* a feature; for the cross-feature detail see the [Concept Glossary](../reference/concept-glossary.md#trục-a--machine-enforcement--build-graph).
 
 ---
 

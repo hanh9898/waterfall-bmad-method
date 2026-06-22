@@ -6,7 +6,7 @@
 
 HBC is an expansion module for the BMad Method. Its delivery model is **incremental, per-feature delivery**: each feature passes through 4 gated phases + a TDD core, then *ships independently* — no need to wait for other features.
 
-To understand the whole method you need these concepts: **Feature & Scope**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD with RED evidence**, and **Traceability + Cascade Sync**.
+To understand the whole method you need these concepts: **Feature & Scope**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD with RED evidence**, **Traceability + Cascade Sync**, **Trục-A (machine-enforced sync / build-graph)**, and **Constitution**.
 
 > 🧭 **One idea running through everything:** *machines handle structure · humans/LLMs handle meaning.* Hard checks (paths, formats, IDs) are done deterministically by machines; content quality (clear, complete, consistent) is judged by humans or an LLM. Every concept below sits along this dividing line.
 
@@ -96,12 +96,21 @@ flowchart LR
     A["End of phase<br/>(feature=X)"] --> B[Automated checks<br/>deterministic]
     B --> C[LLM evaluation<br/>content quality]
     C --> D{Result}
-    D -->|pass ✅| E[Move to next phase]
-    D -->|fail ❌| F[Fix per suggestions<br/>→ re-run PG]
+    D -->|PASS ✅| E[Move to next phase]
+    D -->|FAIL ❌| F[Fix per suggestions<br/>→ re-run PG]
+    D -->|RECYCLE → phase-n−k| R[Hand control back to the phase<br/>owning the dirty upstream node]
+    D -->|BLOCKED| K[Loop-cap hit → USER decides:<br/>re-slice / defer / kill]
 ```
 
 - **Automated layer (machines handle structure):** hard checks — do the required deliverables exist, are the format/paths correct.
 - **LLM layer (humans/LLMs handle meaning):** soft evaluation — is the content clear, complete, consistent.
+
+**The gate outcome set is no longer just pass/fail.** A gate's verdict is one of **PASS / FAIL / RECYCLE → phase-(n−k) / BLOCKED**, and the verdict itself is **2-tier**:
+
+- **MUST tier (knockout):** every correctness + required item; any FAIL → gate FAILED immediately.
+- **SHOULD tier (scorecard):** non-required items scored `passed/total`; a low score only warns in lenient mode, never hard-blocks.
+
+When an upstream node has gone stale (see [Trục-A](#9-trục-a-machine-enforced-sync-build-graph)), the gate doesn't flat-FAIL — it returns **RECYCLE → phase-(n−k)**: it hands control back to the *earliest* phase owning that dirty/failing node (earliest-wins). And so recycle can't loop forever, a **loop-cap / circuit-breaker**: on hitting the bound the gate surfaces a USER decision — **re-slice / defer / kill** (a recommendation, not an auto-action) — and stays **BLOCKED** (CI is never green while BLOCKED).
 
 **Why a Gate?** So errors don't leak into later phases. A vague requirement that slips past Phase 1 becomes a wrong design in Phase 2, wrong code in Phase 3 — the later you catch it, the more expensive the fix. The Gate stops errors at the source.
 
@@ -189,6 +198,8 @@ flowchart LR
 
 The matrix is kept **per feature**; `TRR` can **roll up across features** to report on the whole project (shared rows counted once). Lifecycle: `TRI` (initialize from REQ IDs) → `TRU` (update at the end of each phase) → `TRA` (final gap audit); `TRR` gives a coverage report anytime.
 
+**The matrix is a VIEW, not a hand-maintained table.** Under Trục-A this matrix is **derived (matrix-as-view) FROM the build-graph** — nobody types each row by hand and then has to remember to update it. A REQ defined in D-02 with no matrix row is a `missing_edge`, and staleness is **machine-enforced**: a **cascade-precheck BLOCKS** an untraced change (one with no corresponding edge) right at the gate, instead of waiting for someone to remember.
+
 **Cascade Sync (`SYNC`) — when a document changes.** Deliverables aren't independent: changing D-02 may force edits to design, tests, and code. **Cascade Sync** is *impact analysis*: when a source document changes, `SYNC` walks the traceability matrix to **propose** the updates needed in downstream deliverables/tests/code.
 
 ```mermaid
@@ -199,11 +210,36 @@ flowchart LR
     S --> D3["Code affected?"]
 ```
 
-> 📌 `SYNC` **proposes**, it does not silently edit — still following "machines handle structure · humans/LLMs handle meaning": the machine points out *what may be affected*, the human decides *how to fix it*.
+> 📌 `SYNC` **proposes** *how to fix*, it does not silently apply — still following "machines handle structure · humans/LLMs handle meaning". But "document sync" is no longer a **self-discipline principle** relying on goodwill: it rests on the **build-graph kernel** as its enforcement substrate — the dirty-set exposes what's stale, the cascade-precheck blocks untraced change, and `SYNC` handles the *how to fix* judgment the machine can't make.
 
 **Why it matters?** Traceability answers two questions every project fears: *"Did we forget any requirement?"* (gaps show up immediately) and *"What requirement does this code/test serve?"* (traceable backwards, no "orphan" code). Cascade Sync answers a third: *"If I change this, what else needs to change with it?"*
 
 > 🔎 **Analogy:** the matrix is like a *packing list* — tick off each item as it goes in; at the end the list tells you what's still missing. Cascade Sync is like a *flight-change alert* — change one leg and the system reminds you which connected bookings need rescheduling.
+
+---
+
+## 9. Trục-A: machine-enforced sync (build-graph)
+
+The seven sections above are mostly guarded by **per-skill script checks** (structure) plus LLM evaluation (meaning). **Trục-A** is a layer that sits **ON TOP** of those scattered checks: it treats every project artifact as a **build-graph** — a graph of nodes — so cross-document consistency is *machine-enforced*, not left to anyone remembering.
+
+- **Artifact = node, `sources:` = edge, carrying a content-hash.** Each document is a **node**; it declares what it derives from via edges (`sources:`), and each edge carries a **content-hash** (deterministic SHA-256 over normalized text). So "X is built from Y" is no longer a promise in prose — it's a machine-readable edge.
+- **dirty-set — staleness can't be silently forgotten.** When an upstream node changes, its hash diverges from the token its downstream nodes recorded. The set of those diverged nodes is the **dirty-set** (STALE) — propagated both directly and transitively, **re-derived live each run, nothing cached**. So an upstream change *cannot* drift by without dragging a "this is now stale" flag with it.
+- **`code` is the ground-truth node.** The `code` (/DB) node is the first-class **source-of-record**; the *design* nodes must **reconcile** against it, not the other way around. A design that has drifted from the running code is a wrong design.
+- **The matrix is matrix-as-view.** As noted in [section 8](#8-traceability--the-thread-from-requirement-to-test-and-cascade-sync), the traceability matrix is **derived FROM** this graph, not a hand-maintained table.
+
+**reconcile / invariant-FAIL = a machine-floor RED that can't be downgraded.** When the machine detects model-drift (D-19 ↔ code diverged) or a REQ missing its matrix edge, that is a **machine-floor RED** that **no caller can downgrade** (frozen verdict, waiver-proof) — a hard knockout that blocks a gate PASS. Whereas the question "is this divergence *meaningfully* wrong, or just a rename?" is the **semantic-ceiling**, deferred to the LLM review layer (`pending`) — exactly the *machines handle structure · humans/LLMs handle meaning* line.
+
+> 🔎 **Analogy:** like a spreadsheet with formulas — edit one source cell and every dependent cell auto-marks itself "needs recalculating"; nobody has to remember which cells are related. The build-graph does exactly that for the project's documents.
+>
+> 🧭 Quick-look the Trục-A terms (build-graph kernel, dirty-set, matrix-as-view, reconcile/invariant-FAIL, RECYCLE, 2-tier gate, circuit-breaker…): [Concept Glossary — Trục-A](../reference/concept-glossary.md#trục-a--machine-enforcement--build-graph).
+
+---
+
+## 10. Constitution — cross-phase invariant principles
+
+Gates check *one phase at a time*. But some correctness principles run **across every phase** and no single gate captures them whole. HBC writes them **once in Phase 0** as a **constitution**: **test-first · language-policy · SoD (separation of duties) · handoff-through-artifact · simplicity-caps**.
+
+The crux: **a phase that violates a constitution principle is wrong — even if its own gate is green.** The constitution is a correctness layer sitting above the gates; a green gate doesn't "buy" the right to violate an invariant signed off in Phase 0.
 
 ---
 
@@ -218,15 +254,19 @@ flowchart TD
     D --> IR["Readiness (IR)<br/>reconciles the P2→P3 seam"]
     P --> TDD["TDD + RED evidence (Phase 3)"]
     D --> T["Traceability (8 columns) + Cascade Sync"]
+    D --> AX["Trục-A: build-graph<br/>(dirty-set · matrix-as-view · reconcile)"]
+    P0 --> CON["Constitution<br/>(cross-phase invariants)"]
+    AX --> G
     G --> SHIP["Ship the feature independently"]
 ```
 
 - **Feature & Scope** decide the unit of delivery and who shares what.
-- **Phase 0** builds the shared parts once, up front.
-- **Phase** splits each feature into stages; **Gate** locks each stage; **IR** guards the seam between design and code.
+- **Phase 0** builds the shared parts once, up front, and writes the **constitution** (cross-phase invariants).
+- **Phase** splits each feature into stages; **Gate** locks each stage (PASS/FAIL/RECYCLE/BLOCKED, 2-tier); **IR** guards the seam between design and code.
 - **Deliverable** is the concrete output, with a code and a scope.
 - **TDD + RED evidence** keeps test-first discipline in Phase 3.
 - **Traceability + Cascade Sync** threads everything together so nothing is missed, and propagates change.
+- **Trục-A (build-graph)** machine-enforces that consistency: dirty-set, matrix-as-view, reconcile/invariant-FAIL.
 
 > 💬 Not sure what comes next? Ask `bmad-help` — the always-available "what next" helper.
 
