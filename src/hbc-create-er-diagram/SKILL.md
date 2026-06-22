@@ -84,3 +84,5 @@ Read `{workflow.on_complete}` from the resolved workflow block. If non-empty, fo
 ## Sync Handoff (hbc-traceability impact integration)
 
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`. Suppression guard (BR-13): `--invoked-by-sync` / `invoked_by_sync=true` → skip. Default: suggest `hbc-traceability impact`; auto-chained when `{workflow.auto_sync_after_update}` is true (default false).
+
+**Matrix column (B7-2):** on save (create or update), run `hbc-traceability update feature={feature}` so this phase self-writes its `design_ref` column — don't defer to a manual step (the Phase-2 gate cascade-precheck blocks if missing). This column-write is distinct from / lighter than the `impact` cascade above.

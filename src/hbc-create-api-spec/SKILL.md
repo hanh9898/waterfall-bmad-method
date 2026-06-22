@@ -136,6 +136,8 @@ Headless: return JSON per `references/headless-contract.md`.
 
 Applies only in `update` mode. Full contract: `hbc-traceability/references/impact-capability.md`.
 
+**Matrix column (B7-2):** on save (create or update), run `hbc-traceability update feature={feature}` so this phase self-writes its `design_ref` column — don't defer to a manual step (the Phase-2 gate cascade-precheck blocks if missing). Distinct from / lighter than the `impact` cascade.
+
 - **Suppression guard (BR-13):** if invoked with `--invoked-by-sync` (or `invoked_by_sync=true`), do NOT suggest or trigger sync — skip this whole section. This prevents the update→sync→update loop.
 - **Hybrid trigger (default):** after a successful update, suggest: _"Document updated. Run `hbc-traceability impact` to sync the dependent documents/tests/code?"_
 - **Auto-chained trigger:** if `{workflow.auto_sync_after_update}` is true, invoke `hbc-traceability impact` directly (it will cascade downstream). Default is false.

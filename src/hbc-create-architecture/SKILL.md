@@ -71,3 +71,5 @@ Finalize frontmatter (`stepsCompleted`, `lastStep = complete`, `updated`, `seman
 ## Sync Handoff
 
 Applies in `update` only. Suppression guard: skip if `--invoked-by-sync`. Default: suggest `hbc-traceability impact` to cascade. Full contract: `hbc-traceability/references/impact-capability.md`.
+
+**Matrix column (B7-2):** on save (create or update), run `hbc-traceability update feature={feature}` so this phase self-writes its `design_ref` column — don't defer to a manual step (the Phase-2 gate cascade-precheck blocks if missing). Distinct from / lighter than the `impact` cascade.
