@@ -84,12 +84,15 @@ ADR when it's a load-bearing decision) and mark the criterion as assumed, e.g.
 "p95 < 2s (ASSUMPTION — to confirm with PM)". The validator's `NFR_NO_NUMBER`
 advisory flags any criterion with no numeric/unit token so none slip through.
 
-## ③ Deep brainstorming — OPTIONAL (B1-7)
+## ③ Deep brainstorming — ALWAYS OFFER; running it is optional (B1-7)
 
-A **mandatory stop, not the model's call**: ask the user whether to run a deeper
-`bmad-brainstorming` session, or go straight to generation. Do not decide for them
-based on perceived complexity. When you offer brainstorming, give **two suggestion
-prompts** to seed it:
+**Read the label carefully: it is the *running* that is optional, not the *offer*.**
+Offering brainstorming is a **mandatory stop — not the model's call**: you ALWAYS
+present the choice; the user decides whether to run it. **Never silently skip the
+offer** because discovery "feels sufficient" or the feature "seems simple" — that is
+the exact slip to avoid (deciding for the user based on perceived complexity). Ask the
+user whether to run a deeper `bmad-brainstorming` session, or go straight to
+generation. When you offer it, give **two suggestion prompts** to seed it:
 1. a **topic** suggestion (the weakest/most-uncertain area surfaced in Quick
    Discovery — e.g. "the approval-workflow edge cases");
 2. an **output** suggestion (what the session should produce — e.g. "a list of
