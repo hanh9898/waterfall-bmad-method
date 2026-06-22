@@ -79,7 +79,7 @@ npm run check:mermaid   # validate mermaid diagrams via jsdom + mermaid
 npm run check:docs      # both of the above
 
 # Python tests (pytest; no config file — discovery is path-based, run from repo root)
-python3 -m pytest                     # all ~237 tests
+python3 -m pytest                     # all ~1180 tests
 python3 -m pytest src/hbc-shared      # just the shared validation lib
 python3 -m pytest src/hbc-create-requirements/scripts/tests   # one skill's tests
 python3 -m pytest src/hbc-shared/lib/tests/test_hbc_validation.py::test_extract_column   # single test
@@ -89,12 +89,14 @@ There is no JS/TS build step — `package.json` only carries the doc-check scrip
 
 ## Lifecycle model (context for what the skills do)
 
-Phase 0 (`PI`, run once for the whole project, idempotent, no `feature`) produces **shared** deliverables. Then each feature runs sequentially through 4 gated phases, each producing **per-feature** deliverables under `_bmad-output/features/<feature>/`:
+Phase 0 (`PI`, run once for the whole project, idempotent, no `feature`) produces **shared** deliverables, including the **`constitution`** (cross-phase invariants: test-first · language-policy · SoD · handoff-through-artifact · simplicity-caps). Then each feature runs sequentially through 4 gated phases, each producing **per-feature** deliverables under `_bmad-output/features/<feature>/`:
 
 - Phase 1 Analysis (`BA`): `REQ`, `GLO`, `BFD`
 - Phase 2 Design (`ARCH`) + Test Design (`QA`): `ERD`, `CS`, `API`, `TP`, `TS`, `IR`
 - Phase 3 Implementation (`DEV`): `TB`, `IM` (TDD)
 - Phase 4 Testing (`TST`): `TE`, `AC`
-- Cross-cutting: `PG` (Phase Gate, always carries `feature=`) and `TRI`/`TRU`/`TRR`/`TRA`/`SYNC` (traceability + cascade sync)
+- Cross-cutting: `PG` (Phase Gate, always carries `feature=`), `TRI`/`TRU`/`TRR`/`TRA`/`SYNC` (traceability + cascade sync), and `RBL` (`hbc-rebaseline` — cross-feature blast-radius re-baseline when a shared/core model changes after Phase 3; epic/baseline-change layout level above feature)
 
 Scope of a deliverable is **shared** (whole project), **per-feature**, or **dual** (shared baseline + optional per-feature override) — check the `output_dir` in each skill's `customize.toml`.
+
+**Trục-A enforcement (machine floor):** the build-graph is the ground-truth — artifacts are nodes joined by `sources:` content-hash edges, and the traceability **matrix is a VIEW** derived from the graph (not hand-maintained). A gate can return **RECYCLE → phase-(n−k)** (hand control back to the earliest phase owning a stale/failing upstream node) on top of the 2-tier MUST/SHOULD verdict, and the **reconcile invariant-FAIL** (model drift D-19↔code, or a REQ missing its matrix edge) is a hard knockout **wired into the gate** that no caller can downgrade.

@@ -54,10 +54,12 @@ with the following.
   **Brownfield-aware:** on an existing codebase it documents the project first
   (`bmad-document-project` + `project-context.md` via `bmad-generate-project-context`),
   then derives the SHARED deliverables from that context — D-12 Coding Standards
-  (from existing conventions), D-03 Glossary, baseline D-19 ERD (from the DB schema),
-  baseline D-21 API (from existing endpoints); greenfield creates them from a
-  PRD/choices. Idempotent (skips what exists); takes no `feature` arg. D-12/D-03 are
-  Phase 0 SHARED deliverables, not optional Phase 1/2 steps.
+  (from existing conventions), D-03 Glossary, the **`constitution`** (the project's
+  cross-phase invariants: test-first · language-policy · SoD · handoff-through-artifact ·
+  simplicity-caps), baseline D-19 ERD (from the DB schema), baseline D-21 API (from
+  existing endpoints); greenfield creates them from a PRD/choices. Idempotent (skips what
+  exists); takes no `feature` arg. D-12/D-03/`constitution` are Phase 0 SHARED
+  deliverables, not optional Phase 1/2 steps.
 - Per feature: **Phase 1 Analysis → Phase 2 Design + Test Design → Phase 3
   Implementation → Phase 4 Testing**, each closed by a **Phase Gate** (`PG <n>`) that
   carries `feature=`.
@@ -113,6 +115,28 @@ Matrix → `features/<feature>/traceability/`.
 - **`SYNC` (Cascade Sync)** proposes downstream updates to docs/tests/code when a source
   doc changes — document it as the impact-analysis step, not an auto-edit.
 
+### 2.4a Trục-A enforcement layer (build-graph / machine floor)
+
+The traceability + gate layer is backed by a **machine-enforcement floor** — docs that
+describe gates and traceability must stay consistent with it:
+
+- **Build-graph kernel.** Artifacts are nodes joined by `sources:` edges carrying a
+  content-hash; `code`/DB nodes are first-class **ground-truth**. The 8-column
+  traceability **matrix is a VIEW derived from the graph** (`hbc-traceability` build-graph),
+  not a hand-maintained table — frame it that way.
+- **Gate RECYCLE / 2-tier outcome.** A gate isn't only pass/fail: it can **RECYCLE →
+  phase-(n−k)**, handing control back to the earliest phase owning a stale/failing upstream
+  node. The verdict is **2-tier** — **MUST (knockout)** vs **SHOULD (scorecard)** — and a
+  **loop-cap circuit-breaker** caps recycles, surfacing a USER re-slice/defer/kill decision
+  (stays BLOCKED, never silently green).
+- **Reconcile invariant-floor.** An `invariant-FAIL` (model drift D-19↔code, or a REQ
+  missing its matrix edge) is a hard knockout no caller can downgrade — **wired into the
+  gate**. Judging whether a difference is *meaningful* (rename vs real divergence) is the
+  semantic ceiling, left to the LLM review layer.
+- **`v_pair` and the 100%-rule.** `v_pair` enforces design↔test edges (per the
+  deliverable-catalog `v_pair` field); the **100%-rule** enforces REQ↔task coverage in both
+  directions (every REQ has ≥1 task; no orphan tasks).
+
 ### 2.5 Canonical skill / agent set
 
 Five coordinator agents: `BA` (P1), `ARCH` (P2 Design), `QA` (P2 Test Design),
@@ -126,7 +150,7 @@ Five coordinator agents: `BA` (P1), `ARCH` (P2 Design), `QA` (P2 Test Design),
 | **2 · Test Design** | `TP` D-26 (per-feature, required) · `TS` D-27 (per-feature, required) · `IR` readiness gate (per-feature, required) |
 | **3 · Implementation** | `TB` task-breakdown (per-feature, required) · `IM` implement TDD/RED (per-feature, required) |
 | **4 · Testing** | `TE` test-execution (per-feature, required) · `AC` acceptance (per-feature, required) |
-| **Cross-cutting** | `PG` phase-gate (per-feature, `feature=`) · `TRI/TRU/TRR/TRA` traceability (8-col) · `SYNC` cascade sync |
+| **Cross-cutting** | `PG` phase-gate (per-feature, `feature=`) · `TRI/TRU/TRR/TRA` traceability (8-col) · `SYNC` cascade sync · `RBL` (hbc-rebaseline) — cross-feature blast-radius re-baseline; epic/baseline-change layout level above feature |
 
 New since the first doc pass: **`PI`**, **`IR`** (hbc-check-implementation-readiness — the
 Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + matrix), and **`SYNC`**. Added in the

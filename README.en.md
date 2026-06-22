@@ -113,7 +113,7 @@ Then repeat the loop: open the phase's agent → run its required skills → run
 
 ```mermaid
 flowchart LR
-    P0["Phase 0 · Project Init<br/>👤 PI<br/>shared D-12 · D-03 · baseline D-19 · D-21"]
+    P0["Phase 0 · Project Init<br/>👤 PI<br/>shared D-12 · D-03 · constitution · baseline D-19 · D-21"]
 
     subgraph FEAT["Repeat per feature"]
         direction LR
@@ -126,16 +126,18 @@ flowchart LR
 
     P0 --> P1
 
-    TR["🔗 Traceability (cross-cutting)<br/>TRI → TRU → TRA · SYNC"]
+    TR["🔗 Traceability (cross-cutting)<br/>TRI → TRU → TRA · SYNC · RBL"]
     TR -.->|tracks| P1 & P2 & P3 & P4
 ```
 
-- **Phase 0 (`PI`)** — **mandatory, runs first**; typically once project-wide (or re-run to update directly). **Brownfield** (existing code): documents the codebase first (`bmad-document-project` + `project-context.md`), then derives the shared deliverables from it; greenfield: creates them from a PRD/choices. Produces D-12, D-03 + baselines D-19/D-21; idempotent, no `feature` arg.
-- **Phase Gate (`PG`)** — a control checkpoint at each phase boundary (deterministic checks + LLM evaluation); carries `feature=`.
+- **Phase 0 (`PI`)** — **mandatory, runs first**; typically once project-wide (or re-run to update directly). **Brownfield** (existing code): documents the codebase first (`bmad-document-project` + `project-context.md`), then derives the shared deliverables from it; greenfield: creates them from a PRD/choices. Produces D-12, D-03, **constitution** (the project's cross-phase invariants) + baselines D-19/D-21; idempotent, no `feature` arg.
+- **Phase Gate (`PG`)** — a control checkpoint at each phase boundary (deterministic checks + LLM evaluation); carries `feature=`. A gate isn't only pass/fail: it can **RECYCLE** — hand control back to an earlier phase when an upstream node has gone stale.
 - **Early model validation (`P1-09` + `DSC`)** — Phase 1 requires a **signed-off domain model** (P1-09) before Analysis closes. A feature whose model is uncertain (`discovery_risk: uncertain`) runs a **Discovery Spike (`DSC`)**: validate the riskiest assumptions against ground-truth (real code/DB/examples) → verdict **VALIDATED / RESHAPE / KILL**; gate `P1-11` blocks until VALIDATED. *(Fixes the root cause: "a model gated PASSED before it was validated".)*
 - **Facet-driven design (◑)** — Phase 2 only produces the design deliverables a feature actually needs, decided by the **applicability-catalog**: `D-09` Architecture (integration/algorithm) · `D-16` Behavioral (non-CRUD) · `D-14` UX (has UI). A minimal feature needs only D-02 + D-06.
 - **Readiness check (`IR`)** — the Phase-2 seam gate reconciling D-02 ↔ D-21/D-26/D-27 + the matrix before implementation.
 - **Traceability (`TRI` → `TRU` → `TRA`)** — a matrix ensuring every requirement (REQ ID) has matching design, code, and tests. **`SYNC`** proposes cascade updates when a source doc changes.
+- **`[RBL]` `hbc-rebaseline`** — a cross-feature engine: a **blast-radius** re-baseline when a shared/core model changes after Phase 3 (epic/baseline-change layout level above the feature; dry-run → apply).
+- **Trục-A — the machine enforces sync (facts); the LLM doesn't decide** — a **build-graph** is the ground-truth and the matrix is just a **VIEW** derived from it; the machine hard-catches model drift / missing traceability (reconcile invariant-FAIL), while judging "is the difference *meaningful*" stays in the LLM review layer.
 
 👉 To understand Phase / Gate / Deliverable / Traceability in depth: [Core Concepts](docs/en/explanation/concepts.md).
 
@@ -200,7 +202,7 @@ HBC ships **5 coordinator agents** plus workflow skills per phase. Each workflow
 | 2 · Test Design | `QA` | `TP` (D-26 Test Plan) · `TS` (D-27 Test Spec) · `IR` (Readiness) | per-feature |
 | 3 · Implementation | `DEV` | `TB` (Task Breakdown) · `IM` (Code TDD) | per-feature |
 | 4 · Testing | `TST` | `TE` (Test Execution) · `AC` (Acceptance) | per-feature |
-| Cross-cutting | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) · `SYNC` (Cascade Sync) | per-feature (`PG`/`TR*`) · cross-cutting (`SYNC`) |
+| Cross-cutting | — | `PG` (Phase Gate) · `TRI`/`TRU`/`TRR`/`TRA` (Traceability) · `SYNC` (Cascade Sync) · `RBL` (`hbc-rebaseline`) | per-feature (`PG`/`TR*`) · cross-cutting (`SYNC`/`RBL`) |
 
 📖 Full list with descriptions: [Skills Catalog](docs/en/reference/skills-catalog.md).
 
