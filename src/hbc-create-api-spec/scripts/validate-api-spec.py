@@ -25,6 +25,7 @@ try:
     from hbc_validation import (  # noqa: E402
         SEMANTIC_NA,
         check_required_sections,
+        churn_assessment,
         find_section,
         section_body,
         verdict,
@@ -277,6 +278,11 @@ def validate(
         "auto_fixable_count": len(auto_fixable),
         "manual_fix_count": len(manual_fix),
         "endpoint_count": len(endpoint_rows),
+        # T2.11 anti-churn: revision-history count vs threshold. high_churn is the cue
+        # the skill surfaces to suggest maturity=exploratory / [DSC] instead of bumping
+        # the version on every small edit (per-session bump policy). Advisory — never
+        # flips `valid`.
+        "churn": churn_assessment(content),
         "issues": all_issues,
     })
     return result

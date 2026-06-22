@@ -23,7 +23,7 @@ catch that half-failure.
 > Principle: the machine handles structure · the human/LLM handles semantics. This skill does the
 > deterministic **cross-document structural** reconciliation; semantic adequacy
 > (is each REQ *meaningfully* covered, every facet handled) stays with the Layer-2
-> semantic review + the facet rubric (`hbc-shared/references/semantic-review-rubric.md`).
+> semantic review + the facet rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`).
 
 ## Conventions
 

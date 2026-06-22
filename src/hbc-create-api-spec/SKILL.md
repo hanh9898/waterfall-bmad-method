@@ -11,7 +11,7 @@ Generate D-21 (API Specification) — endpoint definitions, request/response sch
 
 Five-stage workflow: Prerequisites → Discovery → Generation → Validation → Save. Supports resume state, headless mode, and parallel-lens review. Requires Python 3.10+ for validation scripts.
 
-**Args:** `create` (default), `update` (revise existing D-21), `validate` (check existing D-21). Optional: `--headless` / `-H`.
+**Args:** `create` (default), `update` (revise existing D-21), `validate` (check existing D-21). Optional: `--headless` / `-H` with `--strict` or `--assumptions-allowed` (see Autonomy).
 
 ## Conventions
 
@@ -20,9 +20,17 @@ Five-stage workflow: Prerequisites → Discovery → Generation → Validation �
 - `{project-root}`-prefixed paths resolve from the project working directory.
 - `{skill-name}` resolves to the skill directory's basename.
 
+## Autonomy (A5)
+
+Separate **mechanical** decisions from **domain** decisions. Mechanical — section ordering, table formatting, applying RESTful idiom to a clearly-shaped resource, deriving an endpoint's path/method from a CRUD requirement — decide and proceed. Domain — a **design choice not derivable** from the sources (auth scheme, API-version strategy path-vs-header, error-envelope shape, pagination convention, rate-limit policy, which REQ facets are in/out of REST scope) — **ASK; never fabricate a default** (B10-3). A plausible-looking default here silently bakes in an architecture decision.
+
+Headless resolves domain decisions two ways:
+- `--strict` — stop at the first unresolved domain decision and return `blocked` with the question.
+- `--assumptions-allowed` (default in CI) — take the most defensible option (framework/REST convention), log it to the decision log as an `ASSUMPTION`, and continue. Never block on the first question.
+
 ## Headless Mode
 
-When `--headless`: all stages run non-interactively per `references/headless-contract.md` (input args, return schema, blocked reasons).
+When `--headless`: all stages run non-interactively per `references/headless-contract.md` (input args, return schema, blocked reasons). Domain decisions follow the Autonomy mode above.
 
 ## On Activation
 
@@ -94,6 +102,8 @@ Populate `{workflow.template_path}` with discovered content. Write to `{d21_file
 - Same endpoints, polish only → append note, no version bump.
 - New/changed endpoints → new row, bump version.
 
+**Anti-churn (T2.11).** Bump the version **once per session**, not per edit. The validator returns a `churn` block (`revisions` vs `threshold`); when `churn.high_churn` is true the API surface isn't settled yet — surface it and suggest `maturity: exploratory` or a `[DSC]` model-spike instead of another bump. Advisory only — it never flips `valid`.
+
 **Compaction flush:** Write endpoint count and version to decision log.
 
 **Parallel-lens menu:** After generation, offer `[A]` Advanced (deeper review of edge cases, security) / `[P]` Party Mode (multi-agent API review) / `[C]` Continue.
@@ -106,7 +116,7 @@ Run deterministic validator, then LLM judgment checks:
 python3 {workflow.validation_script} "{d21_file}" --d02 "{d02_path}" --d19 "{d19_path}"
 ```
 
-Script checks: all endpoints have required fields (method, URL, description), endpoint IDs are unique, REQ-xxx references exist in D-02, response entity names match D-19 entities. Returns JSON with per-issue `auto_fixable` flag. If the script is unavailable, fall back to LLM-only validation and note the limitation in the decision log.
+Script checks: all endpoints have required fields (method, URL, description), endpoint IDs are unique, REQ-xxx references exist in D-02, response entity names match D-19 entities. Returns JSON with per-issue `auto_fixable` flag plus a `churn` block (see Anti-churn). If the script is unavailable, fall back to LLM-only validation and note the limitation in the decision log.
 
 **LLM judgment checks:**
 - Endpoint naming follows RESTful conventions.
@@ -118,11 +128,9 @@ Script checks: all endpoints have required fields (method, URL, description), en
 
 **Compaction flush:** Write validation results summary to decision log.
 
-**Parallel-lens menu:** `[A]` Advanced (security audit, performance concerns) / `[P]` Party Mode (multi-reviewer) / `[C]` Continue.
-
 ## Stage 4b: Semantic Review (Layer 2)
 
-Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`). Apply the **facet-split discipline**: when a REQ has an admin/lifecycle/write facet that is deliberately kept out of REST scope, state that explicitly here so downstream D-26/D-27 know to test it elsewhere — do not let the cut-out facet vanish silently (the seam). Record `semanticReview` frontmatter (A-3: `status` passed only when `openFacets` empty). The Phase 2 gate REVIEW item (#5) reads it.
+Structural validation only proves structure. Before saving, run the **semantic review** per the shared rubric (`.claude/skills/hbc-shared/references/semantic-review-rubric.md`) with an **independent skeptic lens** — challenge each endpoint: is its method/path/auth grounded in a real REQ, internally consistent with the rest of the surface, free of leaked internals in error bodies, and exhaustive on status codes? Apply the **facet-split discipline**: when a REQ has an admin/lifecycle/write facet that is deliberately kept out of REST scope, state that explicitly here so downstream D-26/D-27 know to test it elsewhere — do not let the cut-out facet vanish silently (the seam). List every unresolved concern in `openFacets`. Set `semanticReview.status: passed` **only when `openFacets` is empty AND the user signs off** (headless follows the Autonomy mode); otherwise `pending`. The shared `semantic_review_status` is the single structural read; the Phase 2 gate REVIEW item (#5) enforces it.
 
 ## Stage 5: Save and Handoff
 

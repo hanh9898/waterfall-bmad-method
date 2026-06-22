@@ -90,7 +90,7 @@ Only when the user acts. For each selected item (a **subset** is supported), cal
 
 Verify "the change propagated correctly" — **2 main pillars + 1 auxiliary**:
 1. **Deterministic validator** pass (e.g. `hbc-implement/scripts/validate-implementation.py`, D-27 facet coverage). No validator for the artifact type → rely on pillar 2, note "no validator".
-2. **LLM semantic review** (rubric: `src/hbc-shared/references/semantic-review-rubric.md`) — read the original change + the updated artifact, judge that the specific change is present; also handle the horizontal verify spread.
+2. **LLM semantic review** (rubric: `.claude/skills/hbc-shared/references/semantic-review-rubric.md`) — read the original change + the updated artifact, judge that the specific change is present; also handle the horizontal verify spread.
 3. (auxiliary) the fresh matrix cell — corroboration only, it does not prove the content changed.
 
 Not-propagated-correctly → push back to SUGGEST (no clear, no rollback). The re-suggest loop is capped at `{workflow.impact_reconcile_max_retries}` → block + notify a human. Finally run `hbc-traceability update` for the related REQ so the matrix reflects the cascade.

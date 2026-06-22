@@ -57,7 +57,10 @@ This module REUSES TA.1's ``ground_truth_drift`` + the shared ``model_drift`` /
 ``version_coherence`` primitives for the floor checks — it does NOT reimplement them.
 It builds the *verdict ladder* the kernel deferred (hbc_buildgraph §3.2 note). It does
 NOT build the gate state-machine (TA.3), the 100%-rule coverage engine (TA.5), or the
-v_pair edge enforcement (TA.6) — those CALL this primitive. stdlib-only; deterministic
+v_pair edge enforcement (TA.6) — those are INTENDED to call this primitive (the
+verdict ladder is built ahead of its consumers; as of trục-A Wave 2/3 they reuse the
+kernel's lower-level `dirty_set`/`missing_edges`/`ground_truth_drift` directly and are
+NOT yet wired through `reconcile()` — wiring is a later step). stdlib-only; deterministic
 (identical graph state → identical verdict); same-dir import like its siblings.
 """
 from __future__ import annotations
@@ -127,7 +130,7 @@ class ReconcileVerdict:
     semantic: str = SEMANTIC_NA
     design_node: str | None = None
     ground_truth_node: str | None = None
-    rubric: str = "hbc-shared/references/semantic-review-rubric.md"
+    rubric: str = ".claude/skills/hbc-shared/references/semantic-review-rubric.md"
     waiver_refused: bool = False
 
     @property
