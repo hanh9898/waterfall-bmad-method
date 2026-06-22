@@ -391,11 +391,11 @@ TF.3 metrics dựng TRƯỚC Đợt 1 (để đo) · TF.1 de-ceremony áp MỖI 
 
 | CLN | Nguồn | Trạng thái (verified) | Hành động |
 |-----|-------|------------------------|-----------|
-| **CLN-1** | F-6 metric `recascade` | ❌ **chưa đo được** — harness đánh dấu "historical, not snapshot-derivable". Cần `hbc-traceability` **log số cascade-round runtime** rồi harness đọc → **couple U17**, là task riêng (M·needs-design), KHÔNG phải tweak harness | task riêng (gắn traceability-engine) |
+| **CLN-1** | F-6 metric `recascade` | ✅ **ĐÃ ĐO ĐƯỢC** — `impact.py cmd_complete` ghi 1 dòng/round vào `<feature>/traceability/.cascade-log.jsonl`; harness `metric_recascade` đếm round/feature (mechanical khi có log; fallback baseline ≥4 cho snapshot cũ). +2 test impact +2 test harness | ✅ U23 |
 | **CLN-2** | B7-2 auto-traceability | ◑ **đã covered ở gate** (U17 cascade-ENFORCED: block tới khi impact chạy) + create-skill *suggest* (`auto_sync_after_update`). Auto-call-từ-skill chỉ là tiện-ích → **optional**, không phải correctness-gap | để optional (bật `auto_sync_after_update` nếu muốn) |
 | **CLN-3** | B17-2 menu-code | ⚠️→✅ **CÒN THẬT** rồi đã sửa: `hbc-agent-architect/customize.toml` menu er-diagram `code = "DB"` → **`ERD`** (khớp canonical module-help.csv) | ✅ U23 |
 | **CLN-4** | B2-9 churn order | ✅ **ĐÃ XONG** (commit ad87918) — `churn_assessment` xử lý cả version-first + date-first. *Flag plan cũ đã stale.* | (none) |
 | **CLN-5** | B9 / principle #6 | ⚠️→✅ **CÒN THẬT** rồi đã sửa: cite **ISO/IEC/IEEE 29119-3** + ghi chú IEEE-829-withdrawn vào `hbc-create-test-plan` | ✅ U23 |
 | **CLN-6** | F-2 caveat #4 dep-ngược | ✅ **đã tự gỡ** bởi §10 thứ-tự foundation-first (U0/U1 trước; mọi prereq forward) → chỉ là note | note §8 |
 
-**Còn lại sau U23:** CLN-1 (re-cascade — task riêng) + CLN-2 (optional). Mọi thứ khác đã đóng.
+**Còn lại sau U23:** chỉ **CLN-2** (auto-traceability — optional, gate đã enforce cascade). Mọi thứ khác đã đóng.

@@ -279,12 +279,44 @@ def metric_model_drift(root: Path) -> dict:
 
 
 def metric_recascade(root: Path) -> dict:
-    """Cascade rounds across the project timeline.
+    """Cascade rounds per feature.
 
-    HISTORICAL — not derivable from a single static snapshot (it counts repeated
-    full-stack rewrites over time). Reported honestly as non-mechanical with its
-    documented baseline and provenance, never fabricated as if measured.
+    MECHANICAL when runtime cascade-logs exist: `hbc-traceability impact complete`
+    appends one line per completed cascade round to
+    `<feature>/traceability/.cascade-log.jsonl` (CLN-1). We count rounds per feature
+    and report the worst (target <=1).
+
+    FALLBACK for a historical snapshot that predates the logging mechanism (e.g. the
+    RCA fixture): report the documented baseline (>=4) honestly as non-mechanical —
+    never fabricated as if measured.
     """
+    per_feature: dict[str, int] = {}
+    for log in root.glob("**/traceability/.cascade-log.jsonl"):
+        feat = log.parent.parent.name
+        try:
+            n = sum(1 for ln in log.read_text(encoding="utf-8").splitlines() if ln.strip())
+        except OSError:
+            n = 0
+        per_feature[feat] = max(per_feature.get(feat, 0), n)
+
+    if per_feature:
+        worst = max(per_feature.values())
+        return {
+            "id": "recascade",
+            "title": "Re-cascade rounds",
+            "mechanical": True,
+            "baseline_measured": worst,
+            "documented_baseline": 4,
+            "rca_claimed": ">=4",
+            "target": "1",
+            "per_feature": per_feature,
+            "detail": (
+                f"Measured from .cascade-log.jsonl: worst feature = {worst} cascade "
+                f"round(s) (target <=1). Per-feature: {per_feature}."
+            ),
+            "provenance": "hbc-traceability impact 'complete' logs one line per round (CLN-1)",
+        }
+
     return {
         "id": "recascade",
         "title": "Re-cascade rounds",
@@ -294,9 +326,9 @@ def metric_recascade(root: Path) -> dict:
         "rca_claimed": ">=4",
         "target": "1",
         "detail": (
+            "No runtime cascade-log found (historical snapshot predates CLN-1). "
             "Process metric: RCA documented 4+ manual cascade rounds "
-            "(v2.0->2.1->2.2->2.3, ~7 docs each). Cannot be reconstructed from a "
-            "single snapshot; tracked manually against the documented baseline (>=4)."
+            "(v2.0->2.1->2.2->2.3, ~7 docs each); tracked against baseline (>=4)."
         ),
         "provenance": "process-review/process-retrospective-rca-2026-06-20.md §1, §2",
     }

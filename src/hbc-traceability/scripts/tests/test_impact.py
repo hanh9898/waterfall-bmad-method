@@ -138,12 +138,39 @@ def test_complete_set_difference(tmp_path):
     assert r["missing"] == ["REQ-010"], r
 
 
+def test_complete_logs_cascade_round(tmp_path):
+    # CLN-1: a COMPLETED cascade round appends exactly one line to
+    # .cascade-log.jsonl beside the state file → re-cascade becomes measurable.
+    state = tmp_path / ".cascade-state.json"
+    state.write_text(json.dumps({"dispositions": {"REQ-010": "reconciled",
+                                                   "REQ-022": "deferred"}}), encoding="utf-8")
+    out = run("complete", "--state", str(state), "--changed", "REQ-010, REQ-022")
+    assert out["complete"] is True and out["cascade_round"] == 1, out
+    log = tmp_path / ".cascade-log.jsonl"
+    assert log.exists()
+    assert len([l for l in log.read_text(encoding="utf-8").splitlines() if l.strip()]) == 1
+    # a second completed round increments the count
+    out2 = run("complete", "--state", str(state), "--changed", "REQ-010, REQ-022")
+    assert out2["cascade_round"] == 2, out2
+    assert len([l for l in log.read_text(encoding="utf-8").splitlines() if l.strip()]) == 2
+
+
+def test_complete_incomplete_does_not_log(tmp_path):
+    # An incomplete round (missing disposition) is NOT a cascade round → no log.
+    state = tmp_path / ".cascade-state.json"
+    state.write_text(json.dumps({"dispositions": {"REQ-010": "reconciled"}}), encoding="utf-8")
+    out = run("complete", "--state", str(state), "--changed", "REQ-010, REQ-022")
+    assert out["complete"] is False and out["cascade_round"] is None, out
+    assert not (tmp_path / ".cascade-log.jsonl").exists()
+
+
 if __name__ == "__main__":
     import tempfile
     for fn in [test_freeze_task_tier_done, test_analyze_horizontal_spread,
                test_analyze_unknown_req, test_detect_declared_split,
                test_detect_empty_changeset_noop, test_detect_matrix_missing_blocked,
                test_detect_untraced_change_blocks, test_freeze_matrix_priority_and_fallback,
-               test_freeze_phase_gate_tier, test_complete_set_difference]:
+               test_freeze_phase_gate_tier, test_complete_set_difference,
+               test_complete_logs_cascade_round, test_complete_incomplete_does_not_log]:
         fn(Path(tempfile.mkdtemp()))
     print("ALL PASS")

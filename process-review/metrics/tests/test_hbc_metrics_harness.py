@@ -136,3 +136,25 @@ def test_fixture_integrity_check_passes():
         text=True,
     )
     assert proc.returncode == 0, proc.stderr
+
+
+def test_recascade_fallback_when_no_logs(tmp_path):
+    """No runtime cascade-log → non-mechanical fallback with documented baseline (CLN-1)."""
+    m = h.metric_recascade(tmp_path)
+    assert m["mechanical"] is False
+    assert m["baseline_measured"] is None
+    assert m["documented_baseline"] == 4
+
+
+def test_recascade_mechanical_when_logs_present(tmp_path):
+    """With .cascade-log.jsonl present, re-cascade is measured = worst-feature round count (CLN-1)."""
+    tr = tmp_path / "features" / "auth" / "traceability"
+    tr.mkdir(parents=True)
+    (tr / ".cascade-log.jsonl").write_text('{"round": 1}\n{"round": 2}\n', encoding="utf-8")
+    tr2 = tmp_path / "features" / "billing" / "traceability"
+    tr2.mkdir(parents=True)
+    (tr2 / ".cascade-log.jsonl").write_text('{"round": 1}\n', encoding="utf-8")
+    m = h.metric_recascade(tmp_path)
+    assert m["mechanical"] is True
+    assert m["baseline_measured"] == 2  # worst feature (auth)
+    assert m["per_feature"] == {"auth": 2, "billing": 1}

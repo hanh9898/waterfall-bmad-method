@@ -323,12 +323,33 @@ def cmd_complete(args):
             _emit({"blocked": "state_unreadable", "state": args.state}, 1)
     accounted = [c for c in changed if c in dispositions]
     missing = [c for c in changed if c not in dispositions]
+    complete = not missing
+    # CLN-1 (F-6 re-cascade metric): a completed round IS one cascade round —
+    # append one line to <feature>/traceability/.cascade-log.jsonl so re-cascade
+    # becomes mechanically measurable (target <=1). The state file lives in the
+    # feature's traceability dir, so derive the log path from it.
+    cascade_round = None
+    if complete and changed:
+        try:
+            from datetime import datetime, timezone
+            log_p = state_p.parent / ".cascade-log.jsonl"
+            prior = sum(1 for ln in log_p.read_text(encoding="utf-8").splitlines()
+                        if ln.strip()) if log_p.exists() else 0
+            cascade_round = prior + 1
+            rec = {"round": cascade_round, "changed": changed,
+                   "changed_count": len(changed),
+                   "ts": datetime.now(timezone.utc).isoformat()}
+            with log_p.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        except OSError:
+            cascade_round = None  # logging is best-effort, never fail the command
     _emit({
         "status": "ok",
-        "complete": not missing,
+        "complete": complete,
         "accounted": accounted,
         "missing": missing,
         "dispositions": {k: dispositions[k] for k in accounted},
+        "cascade_round": cascade_round,
     })
 
 
