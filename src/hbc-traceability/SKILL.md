@@ -9,39 +9,25 @@ description: "Living traceability matrix + cascade document sync for the HBC inc
 
 Maintain a living traceability matrix **per feature** that maps requirements through design, implementation, and testing. Updated incrementally after each phase — each invoke adds data, never removes. Each feature has its own matrix at `{workflow.matrix_path}` (`{feature}` resolved at runtime); a cross-feature **roll-up** at `{workflow.rollup_path}` aggregates them. The matrix is the single source of truth for "which requirement is covered where."
 
-Eight-column matrix: `feature` (the primary grouping — the matrix file is per-feature; rows for shared REQs are marked `feature = shared`), `req_id`, `story_id` (optional — links the REQ to a BMM story ID when one exists; left empty otherwise, and never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage/completeness is measured only on `design_ref`, `code_ref`, `test_ref` — **per feature**. Five capabilities: **Initialize**, **Update**, **Report** (includes the cross-feature roll-up), **Audit**, **Impact** (cascade sync — reads matrix + task-status + phase-gate + git to suggest propagating a change; never edits content itself).
+Eight-column matrix: `feature` (primary grouping; shared REQs marked `feature = shared`), `req_id`, `story_id` (optional BMM story link; never counted toward coverage), `design_ref`, `code_ref`, `test_ref`, `gate_status`, `timestamp`. Coverage is measured only on `design_ref`/`code_ref`/`test_ref` — **per feature**. Five capabilities: **Initialize**, **Update**, **Report** (incl. cross-feature roll-up), **Audit**, **Impact** (cascade sync — reads matrix + task-status + phase-gate + git to suggest propagating a change; never edits content itself).
 
 **Args:** Capability name (`init`, `update`, `report`, `audit`, `impact`); **`feature=<slug>`** (mandatory in headless; interactive resolves the active feature in the session or asks). Optional: `--headless` for non-interactive JSON output. Requires Python 3.10+ for the deterministic scripts.
 
 ## Conventions
 
-- Bare paths (e.g. `assets/matrix-template.md`) resolve from the skill root.
-- `{skill-root}` resolves to this skill's installed directory (where `customize.toml` lives).
-- `{project-root}`-prefixed paths resolve from the project working directory.
-- `{skill-name}` resolves to the skill directory's basename.
-- Capability report strings follow `{communication_language}`.
+Bare paths resolve from the skill root; `{skill-root}` = this skill's installed dir; `{project-root}`-prefixed paths resolve from the project working dir; `{skill-name}` = the skill dir basename. Capability report strings follow `{communication_language}`.
 
 ## Headless Mode
 
-When invoked with `--headless` or by another skill passing `headless=true` (full I/O contract — input args, per-capability return schema, blocked reasons: `references/headless-contract.md`):
-
-1. Capability is **required** (no interactive prompt).
-2. Skip all user-facing output.
-3. Return JSON with `status` (`complete` or `blocked`), `capability`, `matrix_path`, `decision_log` (path to `.trace-decisions.md`, present when Update writes new entries), and summary stats. On `blocked`, include `reason`. Matrix file is still written/updated on disk.
-4. For `impact`: return `changed`, `affected` (each labeled apply/verify), `frozen` (→ new-task), `suggested` (skill + order), and after apply `reconciled`/`blocked`. Closed-set blocked reasons: `matrix_not_found`, `empty_changeset` (no-op), `untraced_change`, `skill_no_update_contract`, `skill_runtime_error`, `reconcile_unverified`. Full contract: `references/impact-capability.md`.
+`--headless` / `headless=true` from another skill (full I/O contract: `references/headless-contract.md`): capability is **required** (no prompt); skip user-facing output; return JSON with `status` (`complete`/`blocked`), `capability`, `matrix_path`, `decision_log` (when Update writes), summary stats, and `reason` on `blocked`. Matrix is still written on disk. For `impact`: return `changed`, `affected` (apply/verify), `frozen` (→ new-task), `suggested` (skill + order), and after apply `reconciled`/`blocked`. Closed-set blocked reasons: `matrix_not_found`, `empty_changeset`, `untraced_change`, `skill_no_update_contract`, `skill_runtime_error`, `reconcile_unverified`.
 
 ## On Activation
 
 Resolve customization, load persistent facts and config per standard BMad activation.
 
-**Resolve active feature (B):** use the `feature=<slug>` arg if present; otherwise take the active feature the orchestrating agent holds in the session; if still none → ask the user. In **headless**, `feature=<slug>` is **mandatory** — if missing, return `blocked` with `reason=feature_required`. Validate the slug against `^[a-z0-9][a-z0-9-]*$`. Use it to resolve every `{feature}` in the paths below.
+**Resolve active feature (B):** `feature=<slug>` arg, else the session's active feature, else ask. Headless: `feature=<slug>` is **mandatory** — missing → `blocked` `reason=feature_required`. Validate slug `^[a-z0-9][a-z0-9-]*$`; resolve every `{feature}` below.
 
-Then determine capability:
-- Explicit argument (e.g. "traceability init") → use that capability.
-- Agent context → infer: BA after Phase 1 gate → `init`, Architect/Dev/Tester after gate → `update`.
-- Otherwise → ask user which capability (`init`, `update`, `report`, `audit`, `impact`).
-
-When capability is inferred (not explicit), confirm with user: _"Inferred 'update' from Dev context. Proceed?"_ Skip confirmation in headless mode.
+Then determine capability: explicit arg → use it; agent context → infer (BA after Phase 1 gate → `init`; Architect/Dev/Tester after gate → `update`); else ask (`init`/`update`/`report`/`audit`/`impact`). When inferred, confirm with the user (skip in headless).
 
 ## Initialize
 
@@ -65,9 +51,9 @@ Populate columns for the current phase. First check for `{output_folder}/feature
 
 Detect phase via prepass: `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --detect-phase`. If matrix missing, suggest `init` first. The script returns `{next_phase, empty_columns, total_rows}` — use this to route below. Before starting, note which REQs have empty target columns (the diff baseline). Write state marker: `{"update_in_progress": "{column}", "phase": N, "started": "{timestamp}"}`. Clear on completion.
 
-**Phase 2 — design_ref + test_ref:** Extract TC IDs from D-27 via `python3 scripts/extract-trace-ids.py --source {output_folder}/features/{feature}/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`. Read D-19 by **path-existence precedence (b)**: if `{output_folder}/features/{feature}/planning-artifacts/D-19-*` exists, use it; otherwise fall back to `{output_folder}/shared/erd/D-19-*`. D-19 is the ER/component diagram — use LLM judgment to extract named tables, entities, or modules and map each REQ to the design elements that structurally realize it, plus test cases from D-27. **Before writing:** present proposed mappings as a table and confirm with user. In headless mode, write directly and log confidence levels. Populate `design_ref` and `test_ref`. If the REQ traces to a BMM story, also populate `story_id` with that story ID; otherwise leave it empty.
+Each phase self-writes its OWN column (B7-2); Report `--verify-columns` checks the result. **Phase 2 — design_ref + test_ref:** extract TC IDs from D-27 (`python3 scripts/extract-trace-ids.py --source {output_folder}/features/{feature}/planning-artifacts/D-27-* --pattern "TC-\d{3,}" --project-root {project-root}`). Read D-19 by **path-existence precedence**: per-feature `{output_folder}/features/{feature}/planning-artifacts/D-19-*` else `{output_folder}/shared/erd/D-19-*`. Use LLM judgment to map each REQ to the design elements (tables/entities/modules) that realize it, plus its D-27 TCs. **Before writing** present the mappings + confirm (headless: write + log confidence). Populate `design_ref`, `test_ref`, and `story_id` if a BMM story exists.
 
-> **Re-pull `test_ref` when D-27 grows (DF-9).** D-27 is not frozen at Phase 2 — a later cascade (e.g. [Impact] adding TC-044…082) or a test-spec revision appends test cases the matrix never received, so `test_ref` silently under-reports coverage. On EVERY re-run of this phase, re-extract TC↔REQ from the current D-27 and refresh `test_ref` to match — do not assume the first population still holds. The drift detector below is the trigger: if Audit reports `test_ref_drift`, run Phase 2 update again to back-fill the `missing` TCs (and drop the `stale` ones).
+> **Re-pull `test_ref` when D-27 grows (DF-9).** D-27 is not frozen at Phase 2 — a later cascade or revision appends TCs the matrix never received. On EVERY re-run, re-extract TC↔REQ from the current D-27 and refresh `test_ref` (don't assume the first population holds). Trigger: Audit `test_ref_drift` → re-run Phase 2 to back-fill `missing` (and drop `stale`).
 
 **Phase 3 — code_ref:** Use `{workflow.source_code_path}` if configured, otherwise ask user (tip: _"Set `source_code_path` in customize override to skip this prompt."_). For each REQ, use LLM judgment to identify implementing files/functions. **Before writing:** present proposed mappings and confirm. Populate `code_ref` with `file:function` references.
 
@@ -89,19 +75,23 @@ Generate coverage summary from current matrix state.
 
    Returns JSON: total requirements, per-column fill counts, fully-traced count (all columns non-empty).
 
-2. **Present summary:**
-   - Total requirements: {total}
-   - Per-column coverage: design_ref {X}/{total}, code_ref {Y}/{total}, test_ref {Z}/{total}
-   - Fully traced (all columns): {W}/{total} ({percentage}%)
-   - If gaps exist, list the first 10 gap REQ IDs.
+2. **Present summary:** total requirements; per-column coverage (design_ref/code_ref/test_ref {X}/{total}); fully traced {W}/{total} ({%}); list the first 10 gap REQ IDs if any.
 
-3. **Cross-feature roll-up (TRR):** aggregate coverage across all features:
+3. **Verify per-phase columns (B7-2).** Each phase self-writes its column via Update/TRU; Report VERIFIES the result — no blank trace axis slipped through:
+
+   ```
+   python3 scripts/trace-report.py --matrix {workflow.matrix_path} --verify-columns
+   ```
+
+   `all_columns_filled` false (exit 1) → list the `gapped_reqs` and route each to the owning phase's Update.
+
+4. **Cross-feature roll-up (TRR):** aggregate coverage across all features:
 
    ```
    python3 scripts/trace-report.py --rollup "{output_folder}/features/*/traceability/matrix.md" --out {workflow.rollup_path}
    ```
 
-   Write `{workflow.rollup_path}`: one line per feature (total / fully-traced / %) + the project-wide total. Shows "which feature is done, which is still in progress" without mixing them up.
+   Write `{workflow.rollup_path}`: one line per feature (total / fully-traced / %) + the project-wide total — which feature is done vs in progress, without mixing them.
 
 ## Audit
 
@@ -109,18 +99,9 @@ Find gaps — requirements without coverage in any column.
 
 1. **Run report** (same as above) to get per-column data.
 
-1b. **Detect stale `test_ref` against D-27 (DF-9).** A filled `test_ref` cell is not proof it is current — D-27 may have grown past it. Cross-check:
+1b. **Detect stale `test_ref` against D-27 (DF-9).** A filled `test_ref` is not proof it is current. Cross-check `python3 scripts/trace-report.py --matrix {workflow.matrix_path} --d27 {output_folder}/features/{feature}/planning-artifacts/D-27-*`: `d27_sync.test_ref_drift` = `{req: {missing, stale}}`. Any drift is **HIGH** (matrix misrepresents coverage) → re-run **Update Phase 2**. Same check as `hbc-check-implementation-readiness` at the Phase 2 seam.
 
-   ```
-   python3 scripts/trace-report.py --matrix {workflow.matrix_path} --d27 {output_folder}/features/{feature}/planning-artifacts/D-27-*
-   ```
-
-   `d27_sync.test_ref_drift` = `{req: {missing, stale}}` (`missing` = TC bound in D-27 but absent from the matrix; `stale` = TC in the matrix but no longer in D-27). Any drift is **HIGH** — the matrix misrepresents test coverage. Remediate by re-running **Update Phase 2** (re-pulls `test_ref` from D-27). This is the same check `hbc-check-implementation-readiness` runs at the Phase 2 readiness seam.
-
-2. **For each gap:** identify which columns are empty and suggest the remediation skill:
-   - Missing `design_ref` → _"REQ-002: no design reference. Update after Phase 2 design completion."_
-   - Missing `code_ref` → _"REQ-015: no code reference. Update after Phase 3 implementation."_
-   - Missing `test_ref` → _"REQ-021: no test reference. Check D-27 for missing test cases — use `hbc-create-test-spec`."_
+2. **For each gap:** name the empty columns + the remediation skill: missing `design_ref` → Update after Phase 2; `code_ref` → Update after Phase 3; `test_ref` → check D-27, run `hbc-create-test-spec`.
 
 3. **Classify gap severity:**
    - Required REQ with empty `test_ref` after Phase 4 → **CRITICAL** — untested requirement.
@@ -135,4 +116,14 @@ When a document changes, suggest propagating the change down to every affected a
 
 Lifecycle **DECLARE → IMPACT → FREEZE-CHECK → SUGGEST → (validate-plan) → APPLY → RECONCILE → ADVISORY (non-REQ)** — each stage reads a source of truth then suggests, with `scripts/impact.py` (detect/analyze/freeze/complete) doing the deterministic part.
 
-Per-stage operational detail (CLI + `{workflow.*}` flags, freeze priority, anti-loop, reconcile, advisory): `references/impact-capability.md`. Boundary rules: `references/edge-handling.md`.
+### Cascade Pre-check — ENFORCED gate (B7-1/3/5/6)
+
+**The cascade is ENFORCED, not advisory.** Before any document with downstream consumers reaches "complete"/phase-transition (and as the first thing `impact` does), run `scripts/cascade-precheck.py` (`--d02 --matrix` + optional `--d27 --task-breakdown --gate-reports-glob --design --code-dir`). Impact stays READ-only — the gate *reports* a blocker; backfill is the owning step's job. On `blocked`/`reason: untraced_change`/`cascade_required: true` (exit 1) the complete/gate step **MUST NOT transition** — prompt backfill of the listed missing rows, then re-run.
+
+CLI, per-B7 detail (B7-6/1 untraced-block, B7-3 drift-watch, B7-5 rebaseline route, B7-4 reconcile-adversarial) + per-stage flow (`{workflow.*}` flags, freeze priority, anti-loop, reconcile, advisory): `references/impact-capability.md`. Boundary rules: `references/edge-handling.md`.
+
+## Autonomy (A5)
+
+Mechanical (path resolution, which capability, report formatting) — decide and proceed. The gate verdict is mechanical: a non-empty blocker set BLOCKS — never soft-pedal an untraced change into a pass (that *is* the RCA cascade failure). Domain — whether a surfaced gap is an accepted deferral (e.g. REQ deliberately out-of-scope this phase): **ASK; never fabricate a clean matrix.** Headless: `--strict` stops at the first gap; `--assumptions-allowed` (CI default) treats every gap as real (non-green), logs that no deferral was confirmed, never blocks the first turn — CI never gets a false green from an untraced change.
+
+> **T2.11 (revision-churn) / T2.12 (semantic-review frontmatter) — N/A:** traceability MANAGES the matrix; it authors no versioned D-xx doc with a revision history or `semanticReview` block (stated per §0.1).

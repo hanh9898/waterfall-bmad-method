@@ -4,7 +4,25 @@ Operational detail for the **Impact** capability (the 5th, beside Initialize/Upd
 
 **Core principle:** Impact only READS the existing sources of truth (matrix, task-breakdown status, phase-gate, git), infers the impact, and SUGGESTS — **it never edits content itself**. Every edit goes through the owning-skill in `update` mode. Humans decide, the system suggests.
 
-Lifecycle: **DECLARE → IMPACT → FREEZE-CHECK → SUGGEST → (validate-plan) → APPLY → RECONCILE → ADVISORY (non-REQ)**.
+Lifecycle: **CASCADE PRE-CHECK → DECLARE → IMPACT → FREEZE-CHECK → SUGGEST → (validate-plan) → APPLY → RECONCILE → ADVISORY (non-REQ)**.
+
+## Stage 0 — CASCADE PRE-CHECK (ENFORCED gate, B7-1/3/5/6)
+
+The cascade is **ENFORCED, not advisory** — this gate runs first (and the complete/phase-transition step runs it independently before allowing a transition). It is READ-only: it *reports* a blocker; backfill goes through the owning skill's `update`.
+
+```
+python3 scripts/cascade-precheck.py --d02 <D-02> --matrix {workflow.matrix_path} \
+  [--d27 <D-27>] [--task-breakdown {workflow.task_breakdown_path}] \
+  [--gate-reports-glob {workflow.gate_reports_glob}] [--design <D-19> --code-dir <feature code>] \
+  [--strict | --assumptions-allowed]
+```
+
+- **B7-6 + B7-1 (BLOCK):** D-02 defines a REQ with no matrix row, a row has a blank `design_ref`/`code_ref`/`test_ref`, or the matrix has REQ ids but no parseable table → `blocked`, `reason: untraced_change`, `cascade_required: true`, exit 1. The complete/gate step **must NOT transition**; prompt backfill of the listed `missing_from_matrix` rows, then re-run. Reuses shared `missing_from_matrix` + `matrix_coverage_gaps`. When a matrix HAS rows (a downstream exists) and is not clean, `cascade_required` stays true until impact + backfill clear it.
+- **B7-3 drift-watch (WARN, minimal):** a downstream doc (task-breakdown / gate report / D-27) pinning a STALE D-02 version → `drift_watch` = `[{source, doc, cited, declared}]`. Re-pull the citing doc from the current D-02. This is the **minimal** drift signal (shared `doc_version` + `version_coherence`), independent of the build-graph kernel (TA.1) — not matrix-as-view / v_pair-edges.
+- **B7-5 structural-change route (WARN):** a model declared in D-19 but absent from `--code-dir` (`structural_route` = the `model_drift.design_only` list) → emit a "consider `hbc-rebaseline`" note. The actual cross-feature rebaseline engine is `hbc-rebaseline` (TA.7, spike-gated); this is a **routing touchpoint only** — never rebaseline here.
+- **B7-4 reconcile-adversarial:** the deterministic sets this gate emits (`missing_from_matrix`, `coverage_gaps`, `drift_watch`, `structural_route`) ARE the independent evidence the RECONCILE skeptic (Stage 5) judges against — the cascade is never self-graded "looks done".
+
+A5 autonomy: `--strict` exits 1 on any surfaced gap (stop for a human to confirm a deliberate deferral); `--assumptions-allowed` (CI default) treats every gap as real (non-green), logs that no deferral was confirmed, and only a real block exits 1 — CI never fabricates a clean matrix.
 
 Every `impact.py` command passes the `{workflow.*}` values configured in `customize.toml` (git baseline, flood-threshold, gate-reports-glob, task-breakdown, reconcile-max-retries) — nothing hardcoded.
 

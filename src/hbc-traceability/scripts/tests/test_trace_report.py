@@ -177,7 +177,7 @@ def test_d02_sync_detects_orphan_and_missing():
             "| REQ-099 | | E | c | TC-9 | | |\n"
         )
         d02 = Path(tmp) / "D-02.md"
-        d02.write_text("## Yêu cầu chức năng\n\n| REQ ID |\n|---|\n| REQ-001 |\n| REQ-002 |\n")
+        d02.write_text("## Yêu cầu chức năng\n\n| REQ ID |\n|---|\n| REQ-001 |\n| REQ-002 |\n", encoding="utf-8")
         data, code = run(str(matrix), ["--d02", str(d02)])
         sync = data["d02_sync"]
         assert sync["in_sync"] is False
@@ -216,7 +216,8 @@ def test_d02_sync_multisegment_feature_code():
         d02 = Path(tmp) / "D-02.md"
         d02.write_text(
             "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n"
-            "| REQ-RESOURCE-PLAN-BILLABLE-001 | Billable plan |\n"
+            "| REQ-RESOURCE-PLAN-BILLABLE-001 | Billable plan |\n",
+            encoding="utf-8",
         )
         data, code = run(str(matrix), ["--d02", str(d02), "--strict"])
         sync = data["d02_sync"]
@@ -238,7 +239,8 @@ def test_d02_sync_ignores_prose_req_refs():
         d02 = Path(tmp) / "D-02.md"
         d02.write_text(
             "## Giả định\nREQ-999 sẽ làm ở v2.\n\n"
-            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n| REQ-001 | Login |\n"
+            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n| REQ-001 | Login |\n",
+            encoding="utf-8",
         )
         data, code = run(str(matrix), ["--d02", str(d02), "--strict"])
         sync = data["d02_sync"]
@@ -261,7 +263,8 @@ def test_d02_sync_empty_table_does_not_fall_back_to_prose():
         d02 = Path(tmp) / "D-02.md"
         d02.write_text(
             "## Giả định\nREQ-999 dự kiến làm sau.\n\n"
-            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n"  # header + separator, NO data rows
+            "## Yêu cầu chức năng\n\n| REQ ID | Mô tả |\n|---|---|\n",  # header + separator, NO data rows
+            encoding="utf-8",
         )
         data, _ = run(str(matrix), ["--d02", str(d02)])
         sync = data["d02_sync"]
@@ -319,3 +322,39 @@ def test_d27_sync_in_sync_passes_strict():
         data, code = run(str(matrix), ["--d27", str(d27), "--strict"])
         assert data["d27_sync"]["in_sync"] is True, data["d27_sync"]
         assert code == 0
+
+
+# --- B7-2: per-phase column verification ---
+
+def test_verify_columns_all_filled_exit0():
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|--------|----------|------------|----------|----------|-------------|----------|\n"
+            "| REQ-001 | | E | c.py | TC-001 | | |\n",
+            encoding="utf-8",
+        )
+        data, code = run(str(matrix), ["--verify-columns"])
+        assert data["all_columns_filled"] is True, data
+        assert data["coverage_gaps"] == {}
+        assert code == 0
+
+
+def test_verify_columns_blank_column_exit1():
+    # B7-2: a phase that never wrote its column (blank code_ref) → exit 1, gap surfaced.
+    with tempfile.TemporaryDirectory() as tmp:
+        matrix = Path(tmp) / "matrix.md"
+        matrix.write_text(
+            "# Matrix\n\n"
+            "| req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp |\n"
+            "|--------|----------|------------|----------|----------|-------------|----------|\n"
+            "| REQ-001 | | E | | TC-001 | | |\n",
+            encoding="utf-8",
+        )
+        data, code = run(str(matrix), ["--verify-columns"])
+        assert data["all_columns_filled"] is False, data
+        assert "REQ-001" in data["gapped_reqs"]
+        assert "code_ref" in data["coverage_gaps"]["REQ-001"]
+        assert code == 1

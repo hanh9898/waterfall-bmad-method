@@ -123,6 +123,28 @@ def generate_report(rows: list[dict]) -> dict:
     }
 
 
+def verify_columns(matrix_text: str) -> dict:
+    """B7-2: verify each phase wrote its own column (design_ref/code_ref/test_ref).
+
+    The matrix engine SUPPORTS each phase self-writing its column via Update/TRU;
+    Report/TRR VERIFIES the result by reusing the shared `matrix_coverage_gaps` —
+    the single source of truth for "which REQ row has a blank trace axis". Returns
+    `{coverage_gaps: {req: [empty_cols]}, gapped_reqs, all_columns_filled}`. A blank
+    column here is exactly the per-phase write that never landed.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hbc-shared" / "lib"))
+    try:
+        from hbc_validation import matrix_coverage_gaps  # noqa: E402
+    except ModuleNotFoundError:
+        return {"error": "shared lib 'hbc_validation' unavailable", "all_columns_filled": False}
+    gaps = matrix_coverage_gaps(matrix_text)
+    return {
+        "coverage_gaps": gaps,
+        "gapped_reqs": sorted(gaps),
+        "all_columns_filled": not gaps,
+    }
+
+
 def detect_phase(rows: list[dict]) -> dict:
     """Determine which phase update is needed from empty column analysis."""
     total = len(rows)
@@ -358,6 +380,10 @@ def main():
         help="Validate matrix structure (column count, duplicate/empty req_ids)",
     )
     parser.add_argument(
+        "--verify-columns", action="store_true",
+        help="B7-2: verify per-phase columns (design/code/test_ref) are non-empty",
+    )
+    parser.add_argument(
         "--d02", help="Path to D-02 — cross-check matrix REQ ids vs D-02 (A-4)",
     )
     parser.add_argument(
@@ -389,6 +415,8 @@ def main():
         result = validate_matrix(rows)
     elif args.detect_phase:
         result = detect_phase(rows)
+    elif args.verify_columns:
+        result = verify_columns(matrix_path.read_text(encoding="utf-8"))
     else:
         result = generate_report(rows)
 
@@ -415,6 +443,9 @@ def main():
         sys.exit(0 if result.get("valid") and d02_in_sync and d27_in_sync else 1)
     if args.detect_phase:
         sys.exit(0)
+    if args.verify_columns:
+        # B7-2 verify is a gate: exit 1 when a per-phase column is still blank.
+        sys.exit(0 if result.get("all_columns_filled") else 1)
     sys.exit(1 if (args.strict and (result.get("gaps") or not d02_in_sync or not d27_in_sync)) else 0)
 
 

@@ -60,7 +60,9 @@ Per-capability notes (fields sourced from the real scripts):
 }
 ```
 
-The deterministic core (`impact.py`) backs this: `detect` → `changed_set`/`untraced_changes`; `analyze` → `apply`/`verify`/`flood`/`unknown_reqs`/`incomplete_rows`; `freeze` → per-REQ `{frozen, decided_by, task_status, phase_gate, matrix_gate_status}`; `complete` → `{complete, accounted, missing}`.
+The deterministic core (`impact.py`) backs this: `detect` → `changed_set`/`untraced_changes` + `cascade_required` and, when a changed file maps to no REQ, `status: blocked`/`reason: untraced_change` (exit 1 — cascade ENFORCED, B7-1); `analyze` → `apply`/`verify`/`flood`/`unknown_reqs`/`incomplete_rows`; `freeze` → per-REQ `{frozen, decided_by, task_status, phase_gate, matrix_gate_status}`; `complete` → `{complete, accounted, missing}`.
+
+The **cascade pre-check** gate (`cascade-precheck.py`, B7-1/3/5/6) emits `{blocked, reason: "untraced_change", cascade_required, blockers, warnings, missing_from_matrix, coverage_gaps, drift_watch, structural_route}` + the honest `verdict` fields — the complete/phase-transition step honors `blocked`/`cascade_required` (exit 1) and must not transition. Full stage detail: `references/impact-capability.md` (Stage 0).
 
 ## Status Values
 

@@ -116,8 +116,15 @@ def cmd_detect(args):
         _emit({"status": "noop", "message": "In sync — no changes",
                "changed_set": []}, 2)  # #3
 
+    # B7-1: a changed file that maps to NO REQ is an untraced change — the cascade
+    # is ENFORCED, so this is a blocking signal the complete/gate step honors, not a
+    # silent note. impact stays READ-only (it reports the block; backfill is the
+    # owning step's job). `cascade_required` true whenever there IS a changed-set to
+    # propagate downstream.
     _emit({
-        "status": "ok",
+        "status": "blocked" if untraced else "ok",
+        "reason": "untraced_change" if untraced else None,
+        "cascade_required": bool(changed_set) or bool(untraced),
         "changed_set": changed_set,
         "declared": declared_valid,
         "declared_invalid": declared_invalid,
@@ -125,7 +132,7 @@ def cmd_detect(args):
         "git_suggested_reqs": sorted(git_reqs),
         "untraced_changes": untraced,
         "baseline": diff_target,
-    })
+    }, 1 if untraced else 0)
 
 
 # -------------------------------------------------------------------------- analyze
