@@ -2,7 +2,7 @@
 
 > 🌐 **Tiếng Việt** (mặc định) · [English](README.en.md)
 
-Workflow phát triển cho HBLAB theo mô hình **giao tăng dần từng tính năng** (incremental, per-feature). Quy trình gồm **4 phase** cho mỗi tính năng, nhưng **bắt buộc chạy Phase 0 — Project Init trước tiên**: đúng một lần cho cả dự án (hoặc chạy lại để **update trực tiếp** khi cần) nhằm tạo các deliverable **dùng chung**. Sau đó **mỗi tính năng** đi trọn 4 phase có cổng kiểm soát + TDD (test-first, có bằng chứng RED), truy vết yêu cầu → test.
+Workflow phát triển cho HBLAB theo mô hình **bàn giao tăng dần từng tính năng** (incremental, per-feature). Quy trình gồm **4 phase** cho mỗi tính năng, nhưng **bắt buộc chạy Phase 0 — Project Init trước tiên**: đúng một lần cho cả dự án (hoặc chạy lại để **update trực tiếp** khi cần) nhằm tạo các deliverable **dùng chung**. Sau đó **mỗi tính năng** đi trọn 4 phase có cổng kiểm soát + TDD (test-first, có bằng chứng RED), truy vết yêu cầu → test.
 
 ## Mục lục
 
@@ -72,7 +72,7 @@ HBC xử lý:
 - **Dành cho:** team làm theo incremental + TDD — BA, Architect, QA, Developer, Tester.
 - **Gõ lệnh ở đâu:** trong **AI coding agent** của bạn (Claude Code, Cursor…), **không phải** terminal thường.
 
-> ℹ️ *Dự án này **giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. Chi tiết: [Vì sao Incremental + TDD](docs/vi/explanation/why-incremental-tdd.md)*
+> ℹ️ *Dự án này **bàn giao tăng dần theo từng tính năng** (incremental): mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao. Chi tiết: [Vì sao Incremental + TDD](docs/vi/explanation/why-incremental-tdd.md)*
 
 > 📖 Lần đầu nghe "deliverable / phase gate / traceability"? → [Glossary khái niệm](docs/vi/reference/concept-glossary.md).
 

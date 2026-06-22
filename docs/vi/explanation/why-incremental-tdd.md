@@ -2,9 +2,9 @@
 
 > 🌐 [English](../../en/explanation/why-incremental-tdd.md) · **Tiếng Việt**
 >
-> 💡 **Explanation** — bài này lý giải lựa chọn nền tảng của HBC: *giao tăng dần theo từng tính năng (incremental / staged delivery)*, mỗi tính năng chạy một chu trình *có cổng, thiết kế-trước* kết hợp *TDD*.
+> 💡 **Explanation** — bài này lý giải lựa chọn nền tảng của HBC: *bàn giao tăng dần theo từng tính năng (incremental / staged delivery)*, mỗi tính năng chạy một chu trình *có cổng, thiết kế-trước* kết hợp *TDD*.
 
-HBC kết hợp hai tầng: **quy trình có cổng, thiết kế-trước** (mỗi feature đi tuần tự Analysis → Design → Implementation → Testing) ở tầng triển khai, và **TDD** ở tầng viết code. Toàn bộ áp dụng **theo từng tính năng** — và v2 *đảm bảo* tính độc lập đó bằng cách cô lập đầu ra theo feature, gate theo feature, nghiệm thu theo feature. Nên ở cấp dự án đây là **incremental (giao tăng dần)**, không phải làm một-lượt cả dự án. Sự kết hợp này là có chủ đích.
+HBC kết hợp hai tầng: **quy trình có cổng, thiết kế-trước** (mỗi feature đi tuần tự Analysis → Design → Implementation → Testing) ở tầng triển khai, và **TDD** ở tầng viết code. Toàn bộ áp dụng **theo từng tính năng** — và v2 *đảm bảo* tính độc lập đó bằng cách cô lập đầu ra theo feature, gate theo feature, nghiệm thu theo feature. Nên ở cấp dự án đây là **incremental (bàn giao tăng dần)**, không phải làm một-lượt cả dự án. Sự kết hợp này là có chủ đích.
 
 ---
 
@@ -97,7 +97,7 @@ flowchart LR
     end
 ```
 
-> 📌 **Ở dự án này:** HBC được triển khai theo **(B) — incremental, từng tính năng**. Sau Phase 0 dựng nền chung, mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao (đầu ra cô lập trong `features/<feature>/...`, gate và nghiệm thu riêng), xong feature này sang feature khác. Nên ở cấp dự án đây là **giao tăng dần (incremental / staged delivery)**, không phải làm một-lượt cả dự án. Cái thứ-tự-có-cổng chỉ mô tả *kỷ luật bên trong một feature* (thiết kế trước, duyệt từng mốc, tài liệu đầy đủ) — không phải mô hình giao hàng cả dự án.
+> 📌 **Ở dự án này:** HBC được triển khai theo **(B) — incremental, từng tính năng**. Sau Phase 0 dựng nền chung, mỗi feature đi trọn 4 giai đoạn có cổng + TDD rồi giao (đầu ra cô lập trong `features/<feature>/...`, gate và nghiệm thu riêng), xong feature này sang feature khác. Nên ở cấp dự án đây là **bàn giao tăng dần (incremental / staged delivery)**, không phải làm một-lượt cả dự án. Cái thứ-tự-có-cổng chỉ mô tả *kỷ luật bên trong một feature* (thiết kế trước, duyệt từng mốc, tài liệu đầy đủ) — không phải mô hình giao hàng cả dự án.
 
 Ngoài ra, ngay *bên trong một feature* kỷ luật tuần tự của HBC cũng đã mềm hơn một quy trình tuần tự giáo khoa: test được **đặc tả sớm (Design) chạy muộn (Testing)** — hình chữ **V**; và có **dung sai phản hồi** (gate `fail → fix → re-run`, chế độ `update`).
 
@@ -112,7 +112,7 @@ Ngoài ra, ngay *bên trong một feature* kỷ luật tuần tự của HBC cũ
 | Cơ chế | Phase + Gate + Traceability (per-feature) | RED-GREEN-REFACTOR (cưỡng chế mềm qua bằng chứng RED) |
 | Hợp khi | Yêu cầu ổn, cần truy vết | Mọi lúc viết code |
 
-> 🏷️ **Thuật ngữ đúng:** mô hình giao hàng của HBC là **incremental (giao tăng dần) / staged delivery** — Phase 0 dựng nền chung một lần, rồi mỗi tính năng là một chu trình có cổng, thiết kế-trước + TDD, cô lập và giao độc lập.
+> 🏷️ **Thuật ngữ đúng:** mô hình giao hàng của HBC là **incremental (bàn giao tăng dần) / staged delivery** — Phase 0 dựng nền chung một lần, rồi mỗi tính năng là một chu trình có cổng, thiết kế-trước + TDD, cô lập và giao độc lập.
 
 ## Đọc tiếp
 

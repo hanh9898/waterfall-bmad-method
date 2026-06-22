@@ -1,7 +1,7 @@
 # HBC Documentation / Tài liệu HBC
 
 Welcome to the documentation for **HBLAB BMad Custom (HBC)** — incremental per-feature delivery with a one-time **Phase 0 (project-init)**.
-Chào mừng đến tài liệu **HBLAB BMad Custom (HBC)** — giao tăng dần theo từng tính năng, kèm **Phase 0 (project-init)** chạy một lần.
+Chào mừng đến tài liệu **HBLAB BMad Custom (HBC)** — bàn giao tăng dần theo từng tính năng, kèm **Phase 0 (project-init)** chạy một lần.
 
 ## Choose your language / Chọn ngôn ngữ
 

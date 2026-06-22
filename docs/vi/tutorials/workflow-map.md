@@ -4,9 +4,9 @@
 >
 > 📘 **Tutorial** — toàn cảnh HBC trong một trang. Dùng đây như tấm bản đồ: thấy mình đang ở đâu, vừa làm gì, sắp tới đâu.
 
-## Mô hình giao hàng: giao tăng dần theo từng tính năng
+## Mô hình giao hàng: bàn giao tăng dần theo từng tính năng
 
-HBC là module mở rộng của BMad Method. Cách giao hàng là **giao tăng dần theo từng tính năng (staged delivery)**: mỗi tính năng đi qua 4 phase có cổng + TDD rồi nghiệm thu — **độc lập** với các tính năng khác.
+HBC là module mở rộng của BMad Method. Cách giao hàng là **bàn giao tăng dần theo từng tính năng (staged delivery)**: mỗi tính năng đi qua 4 phase có cổng + TDD rồi nghiệm thu — **độc lập** với các tính năng khác.
 
 Mô hình giao hàng là *cách bạn chia phạm vi*, **không phải** kiến trúc của HBC. Bên trong **một** tính năng, HBC giữ **kỷ luật tuần tự, thiết kế-trước** (thiết kế trước, chốt từng mốc bằng gate); nhưng ở cấp dự án, việc chia theo từng tính năng khiến tổng thể là *incremental*, không phải làm một-lượt cả dự án.
 

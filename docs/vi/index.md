@@ -21,7 +21,7 @@ Dành cho người mới, muốn được dắt tay từng bước.
 Dành cho người muốn nắm tư duy đằng sau.
 
 - [Khái niệm cốt lõi](explanation/concepts.md) — Phase 0, Phase Gate, Deliverable D-xx, phạm vi (per-feature·shared·dual), Traceability.
-- [Vì sao Incremental + TDD](explanation/why-incremental-tdd.md) — lựa chọn nền tảng của HBC: giao tăng dần per-feature, test-first với bằng chứng RED.
+- [Vì sao Incremental + TDD](explanation/why-incremental-tdd.md) — lựa chọn nền tảng của HBC: bàn giao tăng dần per-feature, test-first với bằng chứng RED.
 
 ## 🔧 How-to — giải quyết một việc cụ thể
 

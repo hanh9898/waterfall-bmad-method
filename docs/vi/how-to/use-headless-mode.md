@@ -8,7 +8,7 @@
 
 Chạy một skill ở chế độ tự động (không dừng lại hỏi bạn) cho script, CI, hoặc khi đầu vào đã đủ rõ — đồng thời chỉ đúng **tính năng** (feature) mà skill cần thao tác.
 
-Vì HBC giao tăng dần theo từng tính năng (incremental per-feature delivery), hầu hết skill phải biết mình đang chạy cho feature nào. Ở chế độ tương tác agent có thể hỏi; ở chế độ headless **không có ai để hỏi**, nên bạn phải truyền `feature=<slug>` ngay trong lệnh.
+Vì HBC bàn giao tăng dần theo từng tính năng (incremental per-feature delivery), hầu hết skill phải biết mình đang chạy cho feature nào. Ở chế độ tương tác agent có thể hỏi; ở chế độ headless **không có ai để hỏi**, nên bạn phải truyền `feature=<slug>` ngay trong lệnh.
 
 ## Cú pháp
 

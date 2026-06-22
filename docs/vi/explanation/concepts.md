@@ -4,7 +4,7 @@
 >
 > 💡 **Explanation** — tài liệu này giải thích *vì sao* HBC được thiết kế như vậy. Không phải các bước làm (xem [Tutorial](../tutorials/getting-started-hbc.md)), mà là tư duy đằng sau.
 
-HBC là module mở rộng cho BMad Method. Cách giao hàng của nó là **giao tăng dần theo từng tính năng (incremental per-feature delivery)**: mỗi tính năng đi qua 4 phase có cổng + lõi TDD rồi *ship độc lập*, không cần chờ các tính năng khác.
+HBC là module mở rộng cho BMad Method. Cách giao hàng của nó là **bàn giao tăng dần theo từng tính năng (incremental per-feature delivery)**: mỗi tính năng đi qua 4 phase có cổng + lõi TDD rồi *ship độc lập*, không cần chờ các tính năng khác.
 
 Để hiểu cả phương pháp, bạn cần nắm các khái niệm sau: **Tính năng & Phạm vi**, **Phase 0 (Project Init)**, **Phase & Phase Gate**, **Deliverable D-xx**, **Readiness (IR)**, **TDD với bằng chứng RED**, và **Traceability + Cascade Sync**.
 
@@ -79,7 +79,7 @@ Với *mỗi* tính năng, HBC chạy **tuần tự, có cổng** qua 4 phase: m
 | 3 · Implementation | *Viết code thế nào?* | Code (theo TDD) |
 | 4 · Testing | *Đã đúng chưa?* | Báo cáo nghiệm thu |
 
-Đây là *bộ xương* tuần tự, thiết kế-trước — nhưng đó chỉ là **cách kỷ luật bên trong một tính năng** (design-first, chốt từng mốc), *không phải* mô hình giao hàng của HBC. Mô hình giao hàng của HBC là **giao tăng dần theo từng tính năng**: nhiều chu trình nhỏ chạy song song theo nhịp riêng, chứ không phải một chu trình lớn cho cả dự án (xem [Mô hình giao hàng của HBC](why-incremental-tdd.md#mô-hình-giao-hàng-của-hbc-từng-tính-năng-không-làm-một-lượt)).
+Đây là *bộ xương* tuần tự, thiết kế-trước — nhưng đó chỉ là **cách kỷ luật bên trong một tính năng** (design-first, chốt từng mốc), *không phải* mô hình giao hàng của HBC. Mô hình giao hàng của HBC là **bàn giao tăng dần theo từng tính năng**: nhiều chu trình nhỏ chạy song song theo nhịp riêng, chứ không phải một chu trình lớn cho cả dự án (xem [Mô hình giao hàng của HBC](why-incremental-tdd.md#mô-hình-giao-hàng-của-hbc-từng-tính-năng-không-làm-một-lượt)).
 
 **Vì sao tuần tự bên trong tính năng?** Mỗi phase đứng trên vai phase trước. Bạn không thể thiết kế DB nếu chưa rõ yêu cầu; không thể viết code đúng nếu chưa có thiết kế. Đi đúng thứ tự giúp tránh làm lại tốn kém vì hiểu sai từ đầu.
 
@@ -234,6 +234,6 @@ flowchart TD
 
 - 📘 Muốn thấy các khái niệm này vận hành: [Bắt đầu với HBC](../tutorials/getting-started-hbc.md).
 - 🗺️ Toàn cảnh skill & deliverable: [Bản đồ quy trình](../tutorials/workflow-map.md).
-- 🤔 Vì sao giao tăng dần + TDD: [Giao tăng dần & TDD](why-incremental-tdd.md).
+- 🤔 Vì sao bàn giao tăng dần + TDD: [Giao tăng dần & TDD](why-incremental-tdd.md).
 - 🔧 Thực hành cụ thể: [Chạy Phase Gate](../how-to/run-a-phase-gate.md) · [Quản lý Traceability](../how-to/manage-traceability.md).
 - 📖 Tra nhanh một thuật ngữ: [Glossary khái niệm](../reference/concept-glossary.md) · [Bảng deliverable](../reference/deliverables-glossary.md).

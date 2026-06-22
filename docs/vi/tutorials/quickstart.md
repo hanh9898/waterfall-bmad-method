@@ -180,7 +180,7 @@ Agent sẽ hỏi tên tính năng và phỏng vấn bạn về một yêu cầu.
 
 - ▶️ **Đi trọn vòng đời:** [Bắt đầu với HBC (walkthrough 4 phase)](getting-started-hbc.md) — từ D-02 đến nghiệm thu, ship một tính năng độc lập.
 - 🗺️ Xem toàn cảnh: [Bản đồ quy trình](workflow-map.md).
-- 💡 Hiểu khái niệm: [Khái niệm cốt lõi](../explanation/concepts.md) · [Vì sao giao tăng dần + TDD](../explanation/why-incremental-tdd.md).
+- 💡 Hiểu khái niệm: [Khái niệm cốt lõi](../explanation/concepts.md) · [Vì sao bàn giao tăng dần + TDD](../explanation/why-incremental-tdd.md).
 - 🔧 Việc cụ thể: [Chạy Phase Gate](../how-to/run-a-phase-gate.md) · [Quản lý Traceability](../how-to/manage-traceability.md) · [Chế độ Headless](../how-to/use-headless-mode.md) · [Tùy chỉnh cấu hình](../how-to/customize-config.md).
 
 > 💡 Bất cứ lúc nào không biết làm gì tiếp — gõ `bmad-help`.
