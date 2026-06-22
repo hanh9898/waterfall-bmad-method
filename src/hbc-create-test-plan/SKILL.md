@@ -7,9 +7,7 @@ description: "Generate D-26 Test Plan with strategy, scope, and schedule. Use wh
 
 ## Overview
 
-Generate D-26 (Test Plan) — test strategy, scope, schedule, environment, entry/exit criteria, and risk. The strategic "WHAT to test"; D-27 covers the detailed "HOW." Each in-scope area states a test technique linked to D-27 (B9-4). Risk likelihood/impact is **proposed by the LLM, confirmed by the user** (B9-2). The schedule is never fabricated (B9-1); in/out-scope is **confirmed with the user before the plan body is generated** (B9-3).
-
-**Standard (B9 / principle #6):** the document structure follows **ISO/IEC/IEEE 29119-3** — the current test-documentation standard. (IEEE 829 was **withdrawn in 2013**; use it only as a historical reference for section naming, not as the governing standard.)
+Generate D-26 (Test Plan) — test strategy, scope, schedule, environment, entry/exit criteria, and risk. The strategic "WHAT to test"; D-27 covers the detailed "HOW." Each in-scope area states a test technique linked to D-27 (B9-4). Risk likelihood/impact is **proposed by the LLM, confirmed by the user** (B9-2). The schedule is never fabricated (B9-1); in/out-scope is **confirmed with the user before the plan body is generated** (B9-3). Doc structure follows **ISO/IEC/IEEE 29119-3** (B9 / principle #6; IEEE 829 withdrawn 2013 — historical naming reference only).
 
 Workflow: Prerequisites → Scope confirmation → Discovery → Generation → Grounding → Validation → Semantic review → Save. Supports resume, headless, parallel-lens. Python 3.10+.
 
@@ -17,13 +15,11 @@ Workflow: Prerequisites → Scope confirmation → Discovery → Generation → 
 
 ## Conventions
 
-- Bare paths resolve from the skill root; `{skill-root}` = this skill's installed dir.
-- `{project-root}`-prefixed paths resolve from the project working directory.
-- `{skill-name}` = the skill directory's basename.
+- `{skill-root}` = installed dir (bare paths resolve from it); `{project-root}` = project working dir; `{skill-name}` = skill dir basename.
 
 ## Autonomy (A5)
 
-Separate **mechanical** decisions from **domain** decisions. Mechanical — section ordering, formatting, mapping a REQ to a scope area, milestone phrasing — decide and proceed. Domain — **in vs out of scope** (B9-3), a **risk's likelihood/impact** (B9-2), a **schedule date** not grounded in real input (B9-1), whether a technique fits an area — **ASK; never invent a default**. An ungrounded schedule is left ASSUMPTION/ADR or marked pending, never fabricated.
+Separate **mechanical** decisions from **domain** decisions. Mechanical — section ordering, formatting, REQ→scope-area mapping — decide and proceed. Domain — **in vs out of scope** (B9-3), a **risk's likelihood/impact** (B9-2), a **schedule date** not grounded in real input (B9-1), whether a technique fits an area — **ASK; never invent a default** (ungrounded schedule → ASSUMPTION/ADR or pending).
 
 Headless resolves domain decisions two ways:
 - `--strict` — stop at the first unresolved domain decision and return `blocked` with the question.
@@ -31,7 +27,7 @@ Headless resolves domain decisions two ways:
 
 ## Headless Mode
 
-When `--headless`: all stages run non-interactively per `references/headless-contract.md` (args, return schema, blocked reasons). Domain decisions follow the Autonomy mode above.
+When `--headless`: stages run non-interactively per `references/headless-contract.md`; domain decisions follow the Autonomy mode above.
 
 ## On Activation
 
