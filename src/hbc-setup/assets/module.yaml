@@ -50,5 +50,5 @@ post-install-notes: |
   Phase 2 Design: [AD] Architecture (conditional), [ERD] ER Diagram, [BD] Behavioral Design (conditional), [UX] UX Design (conditional), [CS] Coding Standards, [API] API Spec, [TP] Test Plan, [TS] Test Spec, [IR] Check Readiness
   Phase 3 Implementation: [TB] Task Breakdown, [IM] Implement (TDD)
   Phase 4 Testing: [TE] Test Execution, [AC] Acceptance Check
-  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Sync (impact analysis when documents change)
+  Cross-cutting: [PG] Phase Gate, [TRI/TRU/TRR/TRA] Traceability Matrix (init/update/report/audit), [SYNC] Cascade Sync (impact analysis when documents change), [RBL] Re-baseline (cross-feature blast-radius when a shared/core model changes after Phase 3 — dry-run → apply)
   Start with: [BA] Business Analyst or [REQ] Create Requirements

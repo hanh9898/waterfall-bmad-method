@@ -1,0 +1,29 @@
+# DO NOT EDIT -- overwritten on every update.
+#
+# Workflow customization surface for hbc-rebaseline.
+# Team overrides:     {project-root}/_bmad/custom/hbc-rebaseline.toml
+# Personal overrides: {project-root}/_bmad/custom/hbc-rebaseline.user.toml
+
+[workflow]
+
+# --- Configurable below. Overrides merge per BMad structural rules: ---
+#   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
+
+activation_steps_prepend = []
+
+activation_steps_append = []
+
+persistent_facts = [
+  "file:{project-root}/**/project-context.md",
+]
+
+# Cross-feature re-baseline engine. Deterministic graph-load / model-surface extract /
+# blast-radius rollup / envelope write / idempotency live here. Override to use a custom
+# engine with the same CLI (--root, --changed, --change-id, --apply, --out-root, --json).
+rebaseline_script = "{skill-root}/scripts/rebaseline.py"
+
+# Feature root scanned for the blast-radius (per-feature artifacts live here).
+features_dir = "{output_folder}/features"
+
+# Where the baseline-change epic envelope is written on --apply (the level ABOVE feature).
+baseline_change_dir = "{output_folder}/baseline-change"

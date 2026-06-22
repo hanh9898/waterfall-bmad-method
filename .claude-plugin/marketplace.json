@@ -22,6 +22,7 @@
         "./src/hbc-agent-tester",
         "./src/hbc-project-init",
         "./src/hbc-migrate",
+        "./src/hbc-rebaseline",
         "./src/hbc-create-requirements",
         "./src/hbc-create-glossary",
         "./src/hbc-create-business-flow-diagram",

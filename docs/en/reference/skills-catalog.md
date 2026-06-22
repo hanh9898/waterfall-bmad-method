@@ -96,6 +96,7 @@ Output: `_bmad-output/features/<feature>/implementation-artifacts/`.
 | `TRR` | `hbc-traceability` (report) | Coverage report — how many REQ IDs have complete traceability chains; can roll up across features | `-H` | per-feature + rollup |
 | `TRA` | `hbc-traceability` (audit) | Gap identification and severity classification for missing links | `-H` | per-feature |
 | `SYNC` | `hbc-traceability` (impact) | **Cascade Sync** — impact analysis when a source document changes, proposes cascading updates to downstream docs/tests/code (read-only) | `<change> \| --since <ref> -H` | per-feature |
+| `RBL` | `hbc-rebaseline` | **Cross-feature re-baseline** — when a shared/core model changes after Phase 3, compute the **blast-radius** (which features/artifacts go stale) via build-graph rollup, plan a per-feature re-baseline, record a **baseline-change epic** ABOVE the feature level; dry-run → apply, idempotent. A SEPARATE engine, not an extension of `MIG` | `plan \| apply changed=<model.token> -H` | cross-feature (baseline-change) |
 
 8-column traceability matrix: `feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp`. Coverage counts `design_ref`/`code_ref`/`test_ref`. Output: `_bmad-output/features/<feature>/traceability/`; gates: `features/<feature>/gates/`.
 

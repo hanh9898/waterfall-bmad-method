@@ -156,6 +156,64 @@ class TestErrorHandling:
         assert data["reqs_without_task"] == []
 
 
+class TestTwoWayCoverage:
+    """TA.5 — the machine bidirectional 100%-rule (REQ<->task) as a view over the
+    build-graph. Exercises both directions + the orphan/dangling distinction."""
+
+    def test_clean_two_way_complete(self, tmp_path):
+        # every D-02 REQ has a task AND every task cites a live REQ
+        tb = write(tmp_path, "tb.md", TB_GOOD)
+        d02 = write(tmp_path, "d02.md", D02)
+        data, _ = run([str(tb), "--d02", str(d02)])
+        cov = data["two_way_coverage"]
+        assert cov["two_way_complete"] is True, cov
+        assert cov["reqs_without_task"] == []
+        assert cov["orphan_tasks"] == []
+
+    def test_dangling_task_is_orphan(self, tmp_path):
+        # a task citing REQ-999, which is NOT in D-02 (renumbered/removed) → orphan
+        tb_text = TB_GOOD + (
+            "| TASK-009 | stale slice REQ-999 | REQ-999 | Old | TC-099 | CHANGE | 9 | TODO | - |\n"
+        )
+        tb = write(tmp_path, "tb.md", tb_text)
+        d02 = write(tmp_path, "d02.md", D02)
+        data, code = run([str(tb), "--d02", str(d02)])
+        cov = data["two_way_coverage"]
+        orphans = {o["task_id"] for o in cov["orphan_tasks"]}
+        assert "TASK-009" in orphans, cov["orphan_tasks"]
+        assert cov["two_way_complete"] is False
+        assert code == 1
+        assert any(i["type"] == "ORPHAN_TASK" for i in data["issues"])
+
+    def test_bare_cite_not_false_orphan(self, tmp_path):
+        # TASK rows cite bare REQ-001/002/003; D-02 defines canonical REQ-DEMO-00x.
+        # Trailing-number identity must reconcile — NO orphan from bare-vs-canonical.
+        tb = write(tmp_path, "tb.md", TB_GOOD)
+        d02 = write(tmp_path, "d02.md", D02)
+        data, _ = run([str(tb), "--d02", str(d02)])
+        assert data["two_way_coverage"]["orphan_tasks"] == []
+
+    def test_task_without_req_is_advisory_not_orphan(self, tmp_path):
+        # an infra/scaffold task citing zero REQ is reported separately and does NOT
+        # fail the two-way rule on its own
+        tb_text = TB_GOOD + (
+            "| TASK-009 | infra scaffold manifest | | module | TC-099 | NEW | 9 | TODO | - |\n"
+        )
+        tb = write(tmp_path, "tb.md", tb_text)
+        d02 = write(tmp_path, "d02.md", D02)
+        data, _ = run([str(tb), "--d02", str(d02)])
+        cov = data["two_way_coverage"]
+        assert "TASK-009" in cov["tasks_without_req"], cov
+        assert all(o["task_id"] != "TASK-009" for o in cov["orphan_tasks"])
+        # no missing REQ and no orphan → still two-way complete despite the infra task
+        assert cov["two_way_complete"] is True
+
+    def test_no_d02_yields_null_coverage(self, tmp_path):
+        tb = write(tmp_path, "tb.md", TB_GOOD)
+        data, _ = run([str(tb)])
+        assert data["two_way_coverage"] is None
+
+
 class TestRealFixture:
     """TD.0 regression: the STALE breakdown (v1.8, 39 REQ) must surface the
     headline missing slices REQ-040/041/042 against the v2.3 D-02."""
@@ -175,3 +233,15 @@ class TestRealFixture:
         missing_tail = {r[-3:] for r in data["reqs_without_task"]}
         assert {"040", "041", "042"} <= missing_tail, data["reqs_without_task"]
         assert code == 1
+
+    def test_two_way_incomplete_on_broken_fixture(self):
+        tb, d02 = self._paths()
+        if not tb.is_file() or not d02.is_file():
+            import pytest
+
+            pytest.skip("TD.0 fixture not present")
+        data, _ = run([str(tb), "--d02", str(d02)])
+        cov = data["two_way_coverage"]
+        assert cov["two_way_complete"] is False
+        missing_tail = {r[-3:] for r in cov["reqs_without_task"]}
+        assert {"040", "041", "042"} <= missing_tail, cov["reqs_without_task"]

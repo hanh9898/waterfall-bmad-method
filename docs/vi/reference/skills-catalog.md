@@ -96,6 +96,7 @@ Output: `_bmad-output/features/<feature>/implementation-artifacts/`.
 | `TRR` | `hbc-traceability` (report) | Báo cáo coverage — bao nhiêu REQ ID có chuỗi truy vết đầy đủ; có thể roll up xuyên feature | `-H` | per-feature + rollup |
 | `TRA` | `hbc-traceability` (audit) | Phát hiện gap và phân loại mức nghiêm trọng cho link truy vết thiếu | `-H` | per-feature |
 | `SYNC` | `hbc-traceability` (impact) | **Đồng bộ lan truyền (Cascade Sync)** — phân tích tác động khi một tài liệu nguồn thay đổi, đề xuất cập nhật lan truyền xuống docs/test/code downstream (read-only) | `<change> \| --since <ref> -H` | per-feature |
+| `RBL` | `hbc-rebaseline` | **Re-baseline xuyên feature** — khi một model lõi/shared đổi sau Phase 3, tính **blast-radius** (feature/artifact nào stale) bằng build-graph rollup, lập kế hoạch re-baseline per-feature, ghi nhận **epic/baseline-change** ở cấp TRÊN feature; dry-run → apply, idempotent. Engine RIÊNG, không phải mở rộng `MIG` | `plan \| apply changed=<model.token> -H` | cross-feature (baseline-change) |
 
 Ma trận truy vết 8 cột: `feature | req_id | story_id | design_ref | code_ref | test_ref | gate_status | timestamp`. Coverage đếm `design_ref`/`code_ref`/`test_ref`. Output: `_bmad-output/features/<feature>/traceability/`; gate: `features/<feature>/gates/`.
 

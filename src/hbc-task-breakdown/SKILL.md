@@ -93,11 +93,9 @@ python3 {workflow.validation_script} "{workflow.output_dir}/task-breakdown.md" -
 python3 {workflow.coverage_script} "{workflow.output_dir}/task-breakdown.md" --project-root {project-root} --d02 "{d02_path}"
 ```
 
-`validate-task-breakdown.py` checks task-id uniqueness, dependency ordering, D-19 entity coverage (design_ref column), D-27 assignment; returns `churn`. `check-task-coverage.py` is **advisory** (the blocking REQ↔task↔design reconcile is `hbc-check-implementation-readiness` [IR], B13-2) and returns `reqs_without_task` (B4-7 — D-02 REQs with no task; add a slice or mark out-of-scope, never silently drop; slash-shorthand `REQ-005/006/007` is expanded so dense cells aren't false-flagged) and `input_gaps` (B4-2 — input dimensions with no marker; confirm each was consulted). If a script is unavailable, fall back to LLM-only validation.
+`validate-task-breakdown.py` checks task-id uniqueness, dependency ordering, D-19 entity coverage (design_ref column), D-27 assignment; returns `churn`. `check-task-coverage.py` is **advisory** (the blocking REQ↔task↔design reconcile is `hbc-check-implementation-readiness` [IR], B13-2) and returns the machine **two-way 100%-rule** `two_way_coverage` — a view over the TA.1 build-graph (`references/two-way-coverage.md`): `reqs_without_task` (B4-7), `orphan_tasks` (TA.5 — tasks citing only dangling REQs), `two_way_complete` (both empty), and `input_gaps` (B4-2). Slash-shorthand `REQ-005/006/007` expands so dense cells aren't false-flagged; a missing REQ → add a slice or mark out-of-scope, never silently drop. If a script is unavailable, fall back to LLM-only validation.
 
 **LLM judgment:** each task is a genuine vertical slice (INVEST); SPIDR splits are sound; the test list is concrete and behavioral; no task is too large; dependency ordering is logical.
-
-> **Two-way 100%-rule coverage (machine)** — REQ↔task as a graph + orphan-task detection — is gated by spike TA.5 and intentionally NOT built here. B4-7 above is the non-spike forward check.
 
 ## Stage 4b: STALE re-derive (B4-3 — advisory, forward-ref T2.4)
 

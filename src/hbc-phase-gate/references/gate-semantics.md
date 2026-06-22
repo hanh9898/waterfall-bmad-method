@@ -101,7 +101,13 @@ Wired as advisory notes the gate surfaces; the enforcing engines land in later u
 - **A4 ADR-gate** — open `ADR`/`TBD`/`[NEEDS CLARIFICATION]` markers should block "complete"; note them. Full ADR engine is **T2.5**.
 - **Maturity-gating** — read the catalog maturity modifier (`hbc-shared/references/deliverable-catalog.yaml`): `exploratory` may downgrade non-core required→optional and relax B6-5 sign-off, but the **correctness floor (matrix/model/entry-gate) is INVARIANT**. Apply only the sign-off relaxation here as advisory; full ceremony-gating is **T3.16**.
 
-## Spike-gated (NOT built — leave the §9 boxes)
+## Trục-A outcome: two-stage gate + RECYCLE (TA.3 — built)
 
-Recycle / 2-tier exit-criteria / circuit-breaker (`TA.3`/`TA.4`/`TA.8`, trục-A) are gated
-by spike TA.0 — do not implement here.
+Spike TA.0 passed (GO), so the RECYCLE outcome is now built in `scripts/gate-outcome.py`:
+
+- **Stage 1** = the checklist evaluator (this file's rules) — "are this phase's own artifacts OK?"
+- **Stage 2** = the TA.1 build-graph `dirty_set` over the feature — "is any artifact this phase depends on stale?"
+- **Outcome state-machine:** `BLOCKED` (stage-1 crash, OR recycle loop-cap hit) → `RECYCLE→phase-(n−k)` (an earlier phase owns the earliest dirty upstream — hand control back there, not a flat FAIL) → `FAIL` (local failure, no dirty upstream) → `PASS` (stage-1 PASS and no dirty upstream). A crash is never a PASS; `--recycle-cap` bounds the loop (exceed → BLOCKED/escalate).
+- Recycle target = the **lowest** owning-phase number among dirty nodes strictly upstream of phase N (earliest = root cause).
+
+Still NOT built here (later trục-A waves): **TA.4** 2-tier exit-criteria (must-knockout / should-scorecard) and **TA.8** circuit-breaker — `gate-outcome.py` leaves clean seams for both.
