@@ -9,11 +9,11 @@ description: "Phase gate validation engine for HBC incremental + TDD lifecycle. 
 
 Validation engine for phase transitions in the HBC Incremental-TDD lifecycle. Receives a phase number, loads the gate checklist, evaluates each item against project artifacts, and produces a gate report. Act as a strict, evidence-based reviewer — no handwaving.
 
-This is a **GATE** — blocking is its job. The cardinal sin is a false PASS (the RCA case passed a Phase-2 gate whose evaluator had crashed and whose matrix was missing REQ-040/041/042). Never go green on un-computed, ambiguous, or unadjudicated evidence.
+This is a **GATE** — blocking is its job. The cardinal sin is a false PASS (the RCA case passed a Phase-2 gate whose evaluator had crashed and whose matrix was missing REQs). Never go green on un-computed, ambiguous, or unadjudicated evidence.
 
 Four phases: Analysis (1), Design (2), Implementation (3), Testing (4). Each checklist defines items with evaluation types: `[FILE]` (artifact exists), `[CONTENT]` (pattern present), `[METRIC]` (numeric threshold), `[MATRIX]` (REQ→matrix coverage, script-computed), `[REVIEW]` (semanticReview passed), `[QUALITY]` (LLM judgment). Gate PASSES only when every required item is PASS or `NA`.
 
-**Correctness items** (entry-gate · `[MATRIX]` · any item tagged `[correctness]`) are non-negotiable: a FAIL is never downgraded by lenient mode and never silenced by a waiver. **Verdicts:** `PASSED` / `FAILED` / `WARNING` (lenient, non-correctness) / `CONTESTED` (unresolvable required item or QUALITY-lens disagreement — adjudicate, never auto-pass) / `BLOCKED` (evaluator crashed — never a PASS). Full semantics in [`references/gate-semantics.md`](references/gate-semantics.md).
+**Correctness items** (entry-gate · `[MATRIX]` · any item tagged `[correctness]`) are non-negotiable: a FAIL is never downgraded by lenient mode and never silenced by a waiver. **Verdicts:** `PASSED` / `FAILED` / `WARNING` (lenient, non-correctness) / `CONTESTED` (unresolvable required item or QUALITY-lens disagreement — adjudicate, never auto-pass) / `BLOCKED` (crash — never a PASS). Full semantics in [`references/gate-semantics.md`](references/gate-semantics.md).
 
 `gate_mode` config: `strict` blocks next phase on failure, `lenient` warns — **except** correctness + CONTESTED items, which block in either mode.
 
@@ -71,10 +71,10 @@ Execute `{workflow.activation_steps_prepend}`, load `{workflow.persistent_facts}
 
 ### Report and Present
 
-4. **Determine overall status** — the script computes `summary.overall_status`; mirror it after resolving QUALITY items. Precedence: **BLOCKED** (crash) → **FAILED** (any required FAIL) → **CONTESTED** (a required item unresolvable, or lens-disagreement) → **PASSED** (all required PASS/`NA`). Lenient downgrades FAILED→**WARNING** **except** entry-gate (`entry_gate_failed`), other correctness (`correctness_failed`: `[MATRIX]`/MODEL_DRIFT — B6-3 extend), and CONTESTED items — these block in either mode.
+4. **Determine overall status** — the script computes `summary.overall_status`; mirror it after resolving QUALITY items. Precedence: **BLOCKED** (crash) → **FAILED** (any required FAIL) → **CONTESTED** (a required item unresolvable, or lens-disagreement) → **PASSED** (all required PASS/`NA`). Lenient downgrades FAILED→**WARNING** **except** entry-gate (`entry_gate_failed`), other correctness (`correctness_failed`), and CONTESTED items — these block in either mode.
    - **Waiver (B6-4):** `--na D-NN` skips an inapplicable D-19/D-21 (one-line rationale in D-02 frontmatter); it may **never** waive a correctness item — the script reports `waiver_rejected` and still evaluates it.
    - **B6-5 design-phase sign-off:** a Phase 1/2 PASS additionally requires explicit **USER sign-off** recorded in the report decision section (headless `--assumptions-allowed` → `PASSED_PENDING_SIGNOFF`, not a clean PASS; `--strict` blocks). `maturity: exploratory` relaxes it to a lightweight ack.
-   - Detail + autonomy + forward-refs (A2/A8 stale, A4 ADR, maturity-gating, TA.3 RECYCLE `gate-outcome.py`): [`references/gate-semantics.md`](references/gate-semantics.md).
+   - Detail + autonomy + forward-refs (A2/A8 stale, A4 ADR, maturity-gating, TA.3 RECYCLE `gate-outcome.py`, TA.4 2-tier `gate-tier.py`, TA.8 cap-hit circuit-breaker): [`references/gate-semantics.md`](references/gate-semantics.md).
 
 5. **Write gate report and decision log:**
    - Write gate report to `{workflow.gate_output_path}/phase-{N}-gate.md` using `{workflow.gate_report_template}` in `{document_output_language}`. Include: timestamp, phase, overall status, item-by-item results with evidence, summary statistics. Also save the final evaluation JSON (with QUALITY items resolved) to `{workflow.gate_output_path}/phase-{N}-gate-results.json` — the delta script consumes this directly on re-evaluation.

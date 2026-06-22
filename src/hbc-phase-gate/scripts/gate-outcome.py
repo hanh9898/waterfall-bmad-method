@@ -66,17 +66,19 @@ read from the gate log), the state-machine refuses to recycle again and returns
 BLOCKED with `reason: recycle_cap_exceeded` so a human breaks the loop. This is
 the seam TA.8's circuit-breaker extends (blow-appetite → re-slice/defer/kill).
 
-CLEAN SEAMS FOR LATER WAVES (same file, sequential)
-===================================================
-  * TA.4 (2-tier exit-criteria: must-knockout / should-scorecard) hooks into
-    `compose_outcome` BETWEEN stage-1 and the dirty check: it will refine the
-    stage-1 verdict into must/should tiers before this module decides PASS vs
-    FAIL. The `stage1_status` input and the `tier` field reserved in the output
-    are its attach points. We do NOT tier here.
-  * TA.8 (circuit-breaker) extends the BLOCKED branch: when the loop cap is hit,
-    instead of a flat BLOCKED it will choose re-slice/defer/kill. The
-    `recycle_cap_exceeded` reason + the `recycle_count`/`recycle_cap` fields are
-    its attach points. We only cap → BLOCKED here.
+WIRED-IN LATER WAVES (same file, sequential)
+============================================
+  * TA.4 (2-tier exit-criteria: must-knockout / should-scorecard) is computed in
+    the companion `gate-tier.py` and threaded through `compose_outcome` via the
+    optional `tier` arg — the tier verdict's `knockout` status is what feeds
+    `stage1_status`, and the full tier dict is attached to the output `tier`
+    field (was reserved). The tiering happens BEFORE this state-machine; here the
+    stage-1 verdict is already-final.
+  * TA.8 (circuit-breaker) extends the loop-cap branch: when the recycle cap is
+    hit (appetite blown), the outcome is still BLOCKED but now carries a
+    `circuit_breaker` decision surface — re-slice / defer / kill — that the gate
+    RECOMMENDS to the user (it never auto-acts). Built on the
+    `recycle_cap_exceeded` reason + `recycle_count`/`recycle_cap` seam.
   * TA.2 reconcile primitive (machine-floor + semantic-ceiling, CONTESTED) lives
     in hbc-shared; this module uses the build-graph `dirty_set` it exposes and
     does NOT re-implement reconcile.
@@ -159,24 +161,82 @@ def select_recycle_target(dirty: dict, current_phase: int) -> dict | None:
     }
 
 
+def circuit_breaker(
+    recycle: dict,
+    current_phase: int,
+    recycle_count: int,
+    recycle_cap: int,
+) -> dict:
+    """TA.8 — the circuit-breaker decision surface for a blown-appetite gate.
+
+    When the recycle loop-cap is hit the feature has *blown its appetite*: it keeps
+    being recycled to the same earlier phase yet the upstream stays dirty — the loop
+    is structurally stuck. A flat BLOCKED would just dead-end the user. Instead this
+    surfaces a STRUCTURED escalation of three outcomes the user can pick from:
+
+      * re-slice — break the feature into smaller pieces; the stuck upstream likely
+        spans too much scope, so a smaller slice can converge where the whole can't.
+      * defer    — park the feature (the upstream churn is real but not now); take it
+        out of the active loop so it stops burning recycles.
+      * kill     — stop work on it; the repeated failure says the cost has exceeded
+        the appetite and it is not worth finishing.
+
+    This is a RECOMMENDATION, not an action: the gate offers the options + a default
+    leaning, and the USER decides (the L·needs-design "machine surfaces, human
+    decides" rule). Deterministic — no time/random; the recommendation is a pure
+    function of the recycle/loop state.
+    """
+    node = recycle.get("node")
+    target = recycle.get("target_phase")
+    # A heuristic, non-binding default leaning so the surface isn't a blank menu:
+    # the broader the dirty upstream (more nodes), the more re-slicing helps; a
+    # single stubborn node that keeps failing leans toward defer/kill.
+    dirty_breadth = len(recycle.get("all_dirty_upstream", []) or [node])
+    recommended = "re-slice" if dirty_breadth > 1 else "defer"
+    return {
+        "triggered": True,
+        "reason": "appetite_blown",
+        "recycle_count": recycle_count,
+        "recycle_cap": recycle_cap,
+        "stuck_transition": {"from_phase": current_phase, "to_phase": target, "node": node},
+        "options": [
+            {"action": "re-slice",
+             "what": f"Break the feature down so the stuck upstream (phase {target}, "
+                     f"'{node}') is split into smaller, independently-convergent slices."},
+            {"action": "defer",
+             "what": "Park the feature out of the active loop; the upstream churn is "
+                     "real but does not have to be resolved now — stop burning recycles."},
+            {"action": "kill",
+             "what": "Stop work on the feature; repeated failure says the cost has "
+                     "exceeded the appetite and it is not worth finishing."},
+        ],
+        "recommended": recommended,
+        "decision": "user",  # the gate recommends; the user decides — never auto-acted.
+    }
+
+
 def compose_outcome(
     stage1_status: str,
     dirty: dict,
     current_phase: int,
     recycle_count: int,
     recycle_cap: int,
+    tier: dict | None = None,
 ) -> dict:
-    """The TA.3 two-stage outcome state-machine.
+    """The TA.3 two-stage outcome state-machine (+ TA.4 tier / TA.8 circuit-breaker).
 
-    Composes stage-1 (the U16 checklist verdict, passed in as ``stage1_status``)
-    with stage-2 (the build-graph ``dirty_set``) into a single outcome. Pure
-    function of its inputs — deterministic and unit-testable, no I/O.
+    Composes stage-1 (the U16 checklist verdict, passed in as ``stage1_status`` —
+    in the wired flow this is the TA.4 tier KNOCKOUT status) with stage-2 (the
+    build-graph ``dirty_set``) into a single outcome. Pure function of its inputs —
+    deterministic and unit-testable, no I/O.
 
-    Precedence (see module docstring): BLOCKED(crash) → loop-cap → RECYCLE →
-    FAIL(local) → PASS.
+    Precedence (see module docstring): BLOCKED(crash) → loop-cap(+circuit-breaker)
+    → RECYCLE → FAIL(local) → PASS.
 
-    NOTE (TA.4 seam): the must/should tiering of ``stage1_status`` happens BEFORE
-    this call; this function treats the stage-1 verdict as already-final.
+    TA.4: ``tier`` is the full tier-aware verdict (from ``gate-tier.py``); it is
+    attached to the output ``tier`` field for the report. The must/should tiering of
+    ``stage1_status`` happened BEFORE this call — here the verdict is already-final
+    and a SHOULD-fail can never flip a PASS to FAIL (the knockout already decided it).
     """
     s1 = (stage1_status or "").upper()
     recycle = select_recycle_target(dirty, current_phase)
@@ -187,7 +247,7 @@ def compose_outcome(
         "current_phase": current_phase,
         "recycle_count": recycle_count,
         "recycle_cap": recycle_cap,
-        "tier": None,  # reserved for TA.4 (2-tier exit-criteria)
+        "tier": tier,  # TA.4 tier-aware verdict (None when not wired)
     }
 
     # 1. crash dominates — a BLOCKED stage-1 is never anything but BLOCKED.
@@ -196,13 +256,17 @@ def compose_outcome(
                 "evidence": "Stage-1 evaluator BLOCKED (crash/un-runnable) — never a pass."}
 
     # 2. loop cap — if an upstream is dirty but we've already recycled this
-    #    transition recycle_cap times, refuse to recycle again. Escalate to
-    #    BLOCKED (TA.8 circuit-breaker will choose re-slice/defer/kill here).
+    #    transition recycle_cap times, refuse to recycle again. Escalate to BLOCKED
+    #    AND (TA.8) surface the circuit-breaker re-slice/defer/kill decision surface
+    #    rather than a silent dead-end.
     if recycle is not None and recycle_count >= recycle_cap:
         return {**base, "outcome": "BLOCKED", "reason": "recycle_cap_exceeded",
                 "recycle_target": recycle,
+                "circuit_breaker": circuit_breaker(recycle, current_phase,
+                                                   recycle_count, recycle_cap),
                 "evidence": f"Upstream still dirty after {recycle_count} recycle(s) "
-                            f"(cap {recycle_cap}). Escalating to human — never recycle forever."}
+                            f"(cap {recycle_cap}). Appetite blown — gate recommends "
+                            f"re-slice/defer/kill (user decides); never recycle forever."}
 
     # 3. upstream dirty → RECYCLE to the earliest owning phase, not a flat FAIL.
     if recycle is not None:
@@ -235,6 +299,7 @@ def run(
     stage1_status: str,
     recycle_count: int,
     recycle_cap: int,
+    tier: dict | None = None,
 ) -> dict:
     """Stage 2 (build-graph dirty-set over the feature) + the state-machine.
 
@@ -242,6 +307,10 @@ def run(
     treated as an EMPTY dirty-set with a `stage2_degraded` note — stage 2 cannot
     INVENT a recycle, but it also must not crash the gate. Crash-safety proper is
     the caller's last-resort catch (parity with the U16 evaluator).
+
+    ``tier`` (TA.4) is the optional tier-aware verdict from ``gate-tier.py``; it is
+    threaded into the outcome's ``tier`` field. When supplied, its ``knockout``
+    status is the authoritative ``stage1_status`` the caller should pass in.
     """
     degraded = None
     dirty: dict = {}
@@ -254,7 +323,8 @@ def run(
         except Exception as exc:  # noqa: BLE001 — stage-2 best-effort, never crash the gate
             degraded = f"stage-2 build-graph failed: {type(exc).__name__}: {exc}"
 
-    outcome = compose_outcome(stage1_status, dirty, current_phase, recycle_count, recycle_cap)
+    outcome = compose_outcome(stage1_status, dirty, current_phase, recycle_count,
+                              recycle_cap, tier=tier)
     if degraded:
         outcome["stage2_degraded"] = degraded
     return outcome
@@ -265,19 +335,37 @@ def main():
     p.add_argument("--feature-dir", required=True,
                    help="Feature directory the build-graph loads (stage 2).")
     p.add_argument("--phase", type=int, required=True, help="Current phase number (1-4).")
-    p.add_argument("--stage1-status", required=True,
+    p.add_argument("--stage1-status", default="",
                    help="Stage-1 verdict from evaluate-gate-checklist.py "
-                        "(PASSED/FAILED/CONTESTED/BLOCKED/...).")
+                        "(PASSED/FAILED/CONTESTED/BLOCKED/...). Required UNLESS --tier-json "
+                        "is given, in which case the tier knockout status is used.")
     p.add_argument("--recycle-count", type=int, default=0,
                    help="How many times THIS transition has already recycled "
                         "(read from the gate log; default 0).")
     p.add_argument("--recycle-cap", type=int, default=DEFAULT_RECYCLE_CAP,
                    help=f"Max recycles before escalating to BLOCKED (default {DEFAULT_RECYCLE_CAP}).")
+    p.add_argument("--tier-json",
+                   help="Optional TA.4 tier verdict JSON (from gate-tier.py); attached "
+                        "to the `tier` field. If given and --stage1-status is omitted, "
+                        "its knockout status is used as the stage-1 verdict.")
     p.add_argument("-o", "--output", help="Output file (default stdout).")
     args = p.parse_args()
 
-    result = run(args.feature_dir, args.phase, args.stage1_status,
-                 args.recycle_count, args.recycle_cap)
+    if not args.stage1_status and not args.tier_json:
+        p.error("one of --stage1-status or --tier-json is required")
+
+    tier = None
+    stage1 = args.stage1_status
+    if args.tier_json:
+        tier = json.loads(Path(args.tier_json).read_text(encoding="utf-8"))
+        if not stage1:
+            # Knockout status (PASSED/FAILED) is the authoritative stage-1 verdict;
+            # a must-blocked tier propagates as BLOCKED.
+            stage1 = (tier.get("tier_verdict") if tier.get("tier_verdict") == "BLOCKED"
+                      else tier.get("knockout", {}).get("status", ""))
+
+    result = run(args.feature_dir, args.phase, stage1,
+                 args.recycle_count, args.recycle_cap, tier=tier)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")

@@ -110,4 +110,23 @@ Spike TA.0 passed (GO), so the RECYCLE outcome is now built in `scripts/gate-out
 - **Outcome state-machine:** `BLOCKED` (stage-1 crash, OR recycle loop-cap hit) → `RECYCLE→phase-(n−k)` (an earlier phase owns the earliest dirty upstream — hand control back there, not a flat FAIL) → `FAIL` (local failure, no dirty upstream) → `PASS` (stage-1 PASS and no dirty upstream). A crash is never a PASS; `--recycle-cap` bounds the loop (exceed → BLOCKED/escalate).
 - Recycle target = the **lowest** owning-phase number among dirty nodes strictly upstream of phase N (earliest = root cause).
 
-Still NOT built here (later trục-A waves): **TA.4** 2-tier exit-criteria (must-knockout / should-scorecard) and **TA.8** circuit-breaker — `gate-outcome.py` leaves clean seams for both.
+## Trục-A: 2-tier verdict (TA.4 — built)
+
+Checklist items split into two **tiers**, computed by `scripts/gate-tier.py` over the
+evaluator JSON (the evaluator itself is untouched):
+
+- **MUST (knockout)** — every correctness item (entry-gate · `[MATRIX]` · `[correctness]`-tagged) **and** every `required` item. ANY must-FAIL is a **knockout → gate FAILED**, full stop; a must-CONTESTED → CONTESTED; a must-BLOCKED → BLOCKED. This is the existing knockout behaviour, now made explicit per tier — the knockout set never shrinks vs U16, so a SHOULD-fail can never demote a MUST.
+- **SHOULD (scorecard)** — non-required, non-correctness items. **Scored** `passed/total` over only the items actually evaluated to PASS/FAIL (PENDING_LLM / NA / SKIP / CONTESTED excluded from the denominator — an un-judged or waived should is not a failure). A low scorecard **does NOT hard-block**: in `lenient` mode a ratio below the floor (default 0.8) surfaces a **WARNING**; in `strict` a clean knockout is simply PASSED regardless of the scorecard.
+
+`gate-tier.py` emits `{tier_verdict, knockout, scorecard}`. Verdict precedence honors U16:
+**BLOCKED**(must) > **FAILED**(must knockout) > **CONTESTED**(must) > **WARNING**(should below floor, lenient only) > **PASSED**. The `knockout.status` (`PASSED`/`FAILED`) is the authoritative **stage-1 status** fed to `gate-outcome.py`; the full tier dict rides in the outcome `tier` field for the report. Run: `python3 scripts/gate-tier.py <eval-results.json> [--gate-mode lenient] [--should-floor 0.8]`.
+
+## Trục-A: circuit-breaker on blown appetite (TA.8 — built)
+
+When the recycle **loop-cap is hit** (`gate-outcome.py` reason `recycle_cap_exceeded`) the feature has **blown its appetite** — it keeps recycling to the same earlier phase yet the upstream stays dirty. Instead of a silent dead-end BLOCKED, the outcome now carries a **`circuit_breaker`** decision surface with three options:
+
+- **re-slice** — break the feature into smaller, independently-convergent slices (the stuck upstream likely spans too much scope);
+- **defer** — park the feature out of the active loop so it stops burning recycles;
+- **kill** — stop work; repeated failure says the cost exceeded the appetite.
+
+It is a **RECOMMENDATION, not an action** (`decision: "user"`): the gate offers the options + a non-binding default leaning (broad dirty upstream → re-slice; single stuck node → defer) and the **user decides**. It triggers ONLY on a genuine cap-hit with dirty upstream — never on a normal RECYCLE (below cap), a local FAIL (no dirty upstream), or a stage-1 crash (which BLOCKS first as a crash, not a blown appetite). Deterministic; the outcome stays BLOCKED so CI never reads it as green.

@@ -21,6 +21,7 @@ _spec.loader.exec_module(mod)
 
 compose_outcome = mod.compose_outcome
 select_recycle_target = mod.select_recycle_target
+circuit_breaker = mod.circuit_breaker
 run = mod.run
 DEFAULT_RECYCLE_CAP = mod.DEFAULT_RECYCLE_CAP
 
@@ -210,3 +211,117 @@ class TestCli:
         data = json.loads(r.stdout)
         assert data["outcome"] == "BLOCKED"
         assert data["reason"] == "recycle_cap_exceeded"
+
+
+# --- TA.8 circuit-breaker -------------------------------------------------
+
+class TestCircuitBreaker:
+    def test_cap_hit_surfaces_circuit_breaker_not_silent_blocked(self):
+        # Cap hit with dirty upstream → BLOCKED, but now with a circuit_breaker
+        # decision surface (re-slice/defer/kill), not a dead-end.
+        o = compose_outcome("FAILED", {"D-02": ["x"]}, current_phase=3,
+                            recycle_count=3, recycle_cap=3)
+        assert o["outcome"] == "BLOCKED"
+        assert o["reason"] == "recycle_cap_exceeded"
+        cb = o["circuit_breaker"]
+        assert cb["triggered"] is True
+        assert cb["reason"] == "appetite_blown"
+        actions = {opt["action"] for opt in cb["options"]}
+        assert actions == {"re-slice", "defer", "kill"}
+        assert cb["decision"] == "user"  # gate recommends; user decides
+        assert cb["recommended"] in actions
+
+    def test_circuit_breaker_only_on_cap_not_normal_recycle(self):
+        # Below cap → RECYCLE, no circuit-breaker (it is not a blown appetite yet).
+        o = compose_outcome("FAILED", {"D-02": ["x"]}, current_phase=3,
+                            recycle_count=2, recycle_cap=3)
+        assert o["outcome"] == "RECYCLE"
+        assert "circuit_breaker" not in o
+
+    def test_circuit_breaker_not_on_local_fail(self):
+        # No dirty upstream → local FAIL, never a circuit-breaker even at high count.
+        o = compose_outcome("FAILED", {}, current_phase=3,
+                            recycle_count=9, recycle_cap=3)
+        assert o["outcome"] == "FAIL"
+        assert "circuit_breaker" not in o
+
+    def test_circuit_breaker_not_on_stage1_crash(self):
+        # A stage-1 crash blocks first; it is a crash, not a blown appetite.
+        o = compose_outcome("BLOCKED", {"D-02": ["x"]}, current_phase=3,
+                            recycle_count=9, recycle_cap=3)
+        assert o["outcome"] == "BLOCKED"
+        assert o["reason"] == "stage1_blocked"
+        assert "circuit_breaker" not in o
+
+    def test_breadth_drives_recommendation(self):
+        wide = circuit_breaker({"node": "D-02", "target_phase": 1,
+                                "all_dirty_upstream": ["D-02", "matrix"]}, 4, 3, 3)
+        narrow = circuit_breaker({"node": "D-02", "target_phase": 1,
+                                  "all_dirty_upstream": ["D-02"]}, 4, 3, 3)
+        assert wide["recommended"] == "re-slice"   # broad churn → re-slice
+        assert narrow["recommended"] == "defer"    # single stuck node → defer
+
+    def test_circuit_breaker_deterministic(self):
+        a = circuit_breaker({"node": "D-02", "target_phase": 1,
+                             "all_dirty_upstream": ["D-02"]}, 3, 3, 3)
+        b = circuit_breaker({"node": "D-02", "target_phase": 1,
+                             "all_dirty_upstream": ["D-02"]}, 3, 3, 3)
+        assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+    def test_cli_cap_surfaces_circuit_breaker(self):
+        r = subprocess.run(
+            [sys.executable, str(_SCRIPT), "--feature-dir", str(BROKEN),
+             "--phase", "4", "--stage1-status", "FAILED",
+             "--recycle-count", "3", "--recycle-cap", "3"],
+            capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(r.stdout)
+        assert data["outcome"] == "BLOCKED"
+        assert data["circuit_breaker"]["triggered"] is True
+
+
+# --- TA.4 tier threading into the outcome ---------------------------------
+
+class TestTierThreading:
+    def test_tier_dict_attached_to_output(self):
+        tier = {"tier_verdict": "PASSED", "knockout": {"status": "PASSED"},
+                "scorecard": {"passed": 3, "total": 4}}
+        o = compose_outcome("PASSED", {}, current_phase=2,
+                            recycle_count=0, recycle_cap=3, tier=tier)
+        assert o["tier"] == tier
+        assert o["outcome"] == "PASS"
+
+    def test_tier_none_default_still_reserved(self):
+        # No regression to TA.3: default tier is None, field still present.
+        o = compose_outcome("PASSED", {}, current_phase=2, recycle_count=0, recycle_cap=3)
+        assert o["tier"] is None
+
+    def test_must_knockout_status_drives_outcome_fail(self):
+        # The TA.4 knockout (FAILED) fed as stage-1 → local FAIL with no dirty upstream.
+        tier = {"tier_verdict": "FAILED", "knockout": {"status": "FAILED",
+                "must_failed": ["M1"]}, "scorecard": {"passed": 4, "total": 4}}
+        o = compose_outcome(tier["knockout"]["status"], {}, current_phase=2,
+                            recycle_count=0, recycle_cap=3, tier=tier)
+        assert o["outcome"] == "FAIL"
+        # the perfect scorecard does NOT rescue the must-knockout
+        assert o["tier"]["scorecard"]["passed"] == 4
+
+    def test_cli_tier_json_drives_stage1(self, tmp_path):
+        tier = {"tier_verdict": "FAILED", "knockout": {"status": "FAILED"}}
+        tf = tmp_path / "tier.json"
+        tf.write_text(json.dumps(tier), encoding="utf-8")
+        r = subprocess.run(
+            [sys.executable, str(_SCRIPT), "--feature-dir",
+             str(BROKEN / "does-not-exist"), "--phase", "2",
+             "--tier-json", str(tf)],
+            capture_output=True, text=True, encoding="utf-8")
+        data = json.loads(r.stdout)
+        # no dirty upstream resolvable + knockout FAILED → local FAIL, tier attached
+        assert data["outcome"] == "FAIL"
+        assert data["tier"]["knockout"]["status"] == "FAILED"
+
+    def test_cli_requires_stage1_or_tier(self):
+        r = subprocess.run(
+            [sys.executable, str(_SCRIPT), "--feature-dir", str(BROKEN), "--phase", "2"],
+            capture_output=True, text=True, encoding="utf-8")
+        assert r.returncode != 0
+        assert "stage1-status or --tier-json" in r.stderr
