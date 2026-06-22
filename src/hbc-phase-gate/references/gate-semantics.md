@@ -151,11 +151,15 @@ verbatim** from the verdict (the drift tokens `design_only`/`code_only`, the `mi
 the gate never re-counts. A `RECYCLE`/`FAIL` on a reconcile RED additionally carries
 `invariant_fail_nodes` at top level for an actionable report.
 
-**Degraded stage-2 (asymmetry).** When the build-graph kernel is un-importable or `load_corpus`
-fails, `reconcile` is `None` (a `stage2_degraded` note is attached) and the knockout is simply
-**not applied** — a degraded reconcile cannot *assert* a RED, so a degraded stage-2 can still
-PASS on a stage-1 PASS. The knockout fires ONLY on a real, computed machine-floor RED. Stage-2
-is best-effort and never crashes the gate.
+**Degraded stage-2 (fail-SAFE, not fail-open).** When the build-graph kernel is un-importable or
+`load_corpus`/`reconcile_report` raises, `reconcile` is `None` and a `stage2_degraded` note is
+attached. A degraded reconcile cannot *assert* a RED (the knockout fires ONLY on a real, computed
+machine-floor RED) — but it also must not let the gate go green on an un-run floor: a would-be
+**PASS** under a degraded stage-2 is downgraded to **CONTESTED** (`reason:
+stage2_degraded_unverified_floor`), so a human verifies the floor by hand. (A degraded stage-2
+under a FAIL/BLOCKED/RECYCLE leaves that verdict unchanged — only PASS is downgraded.) Stage-2 is
+best-effort and never crashes the gate; the cardinal sin (a false PASS) is never reachable through
+the degraded path.
 
 ## Trục-A: 2-tier verdict (TA.4 — built)
 
